@@ -23,37 +23,29 @@ This steps can be done with the next commands in a Linux environment:
 $ sudo -u postgres createuser -S -R -D -P --interactive torodb
 
 $ sudo -u postgres createdb -O torodb torod
-
-$ sudo adduser torodb
 ```
 
 The easiest way to check if the database can be used is connecting to it using the new role. If it is accessible then ToroDB Stampede should be able to do replication using it.
 
 ```no-highlight
-$ sudo -u torodb psql torod
+$ psql -U torodb torod
 ```
 
 ## How to execute ToroDB Stampede binary distribution?
 
 To execute ToroDB Stampede the binary distribution is necessary and it can be downloaded from  [here](https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0). After download and when file is uncompressed then ToroDB Stampede can be launched using the PostgreSQL connection information.
 
-Create a PostgreSQL credentials configuration file, using the `.pgpass` file structure. The right format is one or more lines formatted as `<host>:<port>:<database>:<user>:<password>`.
-
-```no-highlight
-echo "localhost:5432:torod:torodb:torodb" | sudo -u torodb tee ~/.toropass
-```
-
-Once the credentials file is created ToroDB Stampede can be launched.
+Following commands will allow ToroDB Stampede to be launched.
 
 ```no-highlight
 $ wget "https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0" -O torodb-stampede-0.50.0-SNAPSHOT.tar.bz2
 
 $ tar xjf torodb-stampede-0.50.0-SNAPSHOT.tar.bz2
 
-$ torodb-stampede-0.50.0-SNAPSHOT/bin/torodb-stampede
+$ torodb-stampede-0.50.0-SNAPSHOT/bin/torodb-stampede --ask-for-password
 ```
 
-If all goes fine, ToroDB Stampede is up and running and it will be replicating the operations done in MongoDB.
+ToroDB Stampede will ask for the PostgreSQL torodb user's password to be provided. If all goes fine, ToroDB Stampede is up and running and it will be replicating the operations done in MongoDB.
 
 ## Replication example
 

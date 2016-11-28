@@ -18,6 +18,14 @@
 
 package com.torodb.mongodb.repl;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+import java.util.regex.Pattern;
+
+import org.junit.Test;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
@@ -30,774 +38,560 @@ import org.junit.Test;
 import java.util.regex.Pattern;
 
 public class ReplicationFiltersTest {
-
-  @Test
-  public void unfilteredTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistDatabaseTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of()),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void blacklistDatabaseTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of()));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistAndBlacklistSameDatabaseTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of()),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of()));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistAndBlacklistTwoDatabasesTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of()),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test1"), ImmutableMap.of()));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistCollectionTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void blacklistCollectionTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistAndBlacklistSameCollectionTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistCollectionInAllDatabasesTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void blacklistCollectionInAllDatabasesTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistCollectionInAllDatabasesAndAnotherCollectionTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
-            Pattern.compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of()),
-            Pattern.compile("test"), ImmutableMap.of(Pattern.compile("two"), ImmutableList.of())),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void blacklistCollectionInAllDatabasesAndAnotherCollectionTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
-            Pattern.compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of()),
-            Pattern.compile("test"), ImmutableMap.of(Pattern.compile("two"), ImmutableList.of())));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistAllInADatabaseAndBlacklistCollectionTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
-            Pattern.compile("test"), ImmutableMap.of(Pattern.compile(".*"), ImmutableList.of())),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
-            Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistAllInADatabaseAndBlacklistSomeCollectionsTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
-            Pattern.compile("test"), ImmutableMap.of(Pattern.compile(".*"), ImmutableList.of())),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
-            Pattern.compile("test"), ImmutableMap.of(Pattern.compile("t.*"), ImmutableList.of())));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistIndexTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"),
-            ImmutableList.of(new IndexPattern(Pattern.compile("index"), null, ImmutableList.of())))),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistIndexWithUniqueTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"),
-            ImmutableList.of(new IndexPattern(Pattern.compile("index"), false, ImmutableList.of())))),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", true,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void whitelistIndexWithUniqueAndFieldsTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"),
-            ImmutableList.of(new IndexPattern(Pattern.compile("index"), false,
-                ImmutableList.of(new IndexFieldPattern(ImmutableList.of(Pattern.compile("subdoc"),
-                    Pattern.compile("value")), Pattern.compile("1"))))))),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertFalse(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.desc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"),
-            KnownType.asc.getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-  }
-
-  @Test
-  public void blacklistIndexTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"),
-            ImmutableList.of(new IndexPattern(Pattern.compile("index"), null, ImmutableList.of())))));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void blacklistIndexWithUniqueTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"),
-            ImmutableList.of(new IndexPattern(Pattern.compile("index"), false, ImmutableList.of())))));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", true,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of()));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false,
-        ImmutableList.of()));
-  }
-
-  @Test
-  public void blacklistIndexWithUniqueAndFieldsTest() {
-    ReplicationFilters filterProvider = new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern
-            .compile("test"), ImmutableMap.of(Pattern.compile("one"),
-            ImmutableList.of(new IndexPattern(Pattern.compile("index"), false,
-                ImmutableList.of(new IndexFieldPattern(ImmutableList.of(Pattern.compile("subdoc"),
-                    Pattern.compile("value")), Pattern.compile("1"))))))));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("test1"));
-    Assert.assertTrue(filterProvider.getDatabasePredicate().test("other"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
-    Assert.assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
-    Assert.assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.desc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"),
-            KnownType.asc.getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-    Assert.assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false,
-        ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc
-            .getIndexType()))));
-  }
+	
+	private static final List<IndexOptions.Key> EmptyList = ImmutableList.of();
+    
+    @Test
+    public void unfilteredTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistDatabaseTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of()), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void blacklistDatabaseTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of()));
+        assertFalse(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistAndBlacklistSameDatabaseTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of()), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of()));
+        assertFalse(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistAndBlacklistTwoDatabasesTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of()), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test1"), ImmutableMap.of()));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistCollectionTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void blacklistCollectionTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistAndBlacklistSameCollectionTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistCollectionInAllDatabasesTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void blacklistCollectionInAllDatabasesTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistCollectionInAllDatabasesAndAnotherCollectionTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
+                        Pattern.compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of()),
+                        Pattern.compile("test"), ImmutableMap.of(Pattern.compile("two"), ImmutableList.of())), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void blacklistCollectionInAllDatabasesAndAnotherCollectionTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
+                        Pattern.compile(".*"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of()),
+                        Pattern.compile("test"), ImmutableMap.of(Pattern.compile("two"), ImmutableList.of())));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistAllInADatabaseAndBlacklistCollectionTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
+                        Pattern.compile("test"), ImmutableMap.of(Pattern.compile(".*"), ImmutableList.of())), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
+                        Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), ImmutableList.of())));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistAllInADatabaseAndBlacklistSomeCollectionsTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
+                        Pattern.compile("test"), ImmutableMap.of(Pattern.compile(".*"), ImmutableList.of())), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(
+                        Pattern.compile("test"), ImmutableMap.of(Pattern.compile("t.*"), ImmutableList.of())));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "three", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("other", "three", "index", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistIndexTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), 
+                        ImmutableList.of(new IndexPattern(Pattern.compile("index"), null, ImmutableList.of())))), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistIndexWithUniqueTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), 
+                        ImmutableList.of(new IndexPattern(Pattern.compile("index"), false, ImmutableList.of())))), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", true, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false, EmptyList));
+    }
+    
+    @Test
+    public void whitelistIndexWithUniqueAndFieldsTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), 
+                        ImmutableList.of(new IndexPattern(Pattern.compile("index"), false, 
+                                ImmutableList.of(new IndexFieldPattern(ImmutableList.of(Pattern.compile("subdoc"),Pattern.compile("value")), Pattern.compile("1"))))))), 
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of());
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertFalse(filterProvider.getDatabasePredicate().test("test1"));
+        assertFalse(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertFalse(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.desc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+    }
+    
+    @Test
+    public void blacklistIndexTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), 
+                        ImmutableList.of(new IndexPattern(Pattern.compile("index"), null, ImmutableList.of())))));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false, EmptyList));
+    }
+    
+    @Test
+    public void blacklistIndexWithUniqueTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"), 
+                        ImmutableList.of(new IndexPattern(Pattern.compile("index"), false, ImmutableList.of())))));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "three"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("other", "three"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, EmptyList));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", true, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, EmptyList));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false, EmptyList));
+    }
+    
+    @Test
+    public void blacklistIndexWithUniqueAndFieldsTest() {
+        ReplicationFilters filterProvider = new ReplicationFilters(
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(),
+                ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>>of(Pattern.compile("test"), ImmutableMap.of(Pattern.compile("one"),
+                        ImmutableList.of(new IndexPattern(Pattern.compile("index"), false, 
+                                ImmutableList.of(new IndexFieldPattern(ImmutableList.of(Pattern.compile("subdoc"),Pattern.compile("value")), Pattern.compile("1"))))))));
+        assertTrue(filterProvider.getDatabasePredicate().test("test"));
+        assertTrue(filterProvider.getDatabasePredicate().test("test1"));
+        assertTrue(filterProvider.getDatabasePredicate().test("other"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "one"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test", "two"));
+        assertTrue(filterProvider.getCollectionPredicate().test("test1", "one"));
+        assertFalse(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc1", "value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value1"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.desc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("1subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "1value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value", "another"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "two", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+        assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
+    }
 }

@@ -10,8 +10,13 @@ pages:
     - 'Installation with binaries': installation/binaries.md
     - 'Installation from source code': installation/source-code.md
     - 'Configuration': installation/configuration.md
+    - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
   - 'How to use?': how-to-use.md
+  - 'Supported backends': supported-backends.md
   - 'FAQ': faq.md
+  - 'Glossary': glossary.md
   - 'Appendix': appendix.md
 extra_css:
   - css/8kdata.css
+markdown_extensions:
+  - admonition:
