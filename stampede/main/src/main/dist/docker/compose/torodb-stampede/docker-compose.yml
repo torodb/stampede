@@ -1,0 +1,14 @@
+version: '2'
+services:
+  torodb-stampede:
+    image: torodb/stampede
+    environment:
+      - POSTGRES_PASSWORD
+      - TORODB_SETUP=false
+      - TORODB_SYNC_SOURCE
+      - TORODB_BACKEND_HOST
+      - TORODB_BACKEND_PORT
+      - TORODB_BACKEND_DATABASE
+      - TORODB_BACKEND_USER
+      - TORODB_BACKEND_PASSWORD
+      - DEBUG

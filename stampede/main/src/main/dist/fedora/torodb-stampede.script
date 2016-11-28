@@ -1,0 +1,33 @@
+#!/bin/bash
+# ToroDB wrapper script
+# matteom@8kdata.com
+
+set -e
+
+. /etc/sysconfig/torodb
+
+if ! [ -f $TOROPASSFILE ]
+then
+    echo "File $TOROPASSFILE not found. Please run torodb-setup command or check online documentation to configure torodb at http://github.com/torodb/torodb" >&2
+    exit 1
+fi
+
+# Source functions library
+if [ -f /usr/share/java-utils/java-functions ] ; then 
+    . /usr/share/java-utils/java-functions
+else
+    echo "Can't find functions library, aborting"
+    exit 1
+fi
+
+set_jvm
+
+TORODB_OPTIONS="$OPTIONS"
+
+OPTIONS=
+
+MAIN_CLASS="@{assembler.mainClass}"
+
+CLASSPATH="$TOROLIBDIR"/@{assembler.name}-@{version}.jar
+
+run $TORODB_OPTIONS "$@"

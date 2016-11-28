@@ -1,0 +1,19 @@
+<config>
+    <logging>
+        <level>NONE</level>
+        <packages>
+            <com.torodb>DEBUG</com.torodb>
+        </packages>
+    </logging>
+    <replication>
+        <replSetName>rs1</replSetName>
+        <syncSource>localhost:27017</syncSource>
+    </replication>
+    <backend>
+        <postgres>
+            <host>localhost</host>
+            <port>5432</port>
+            <user>root</user>
+        </postgres>
+    </backend>
+</config>

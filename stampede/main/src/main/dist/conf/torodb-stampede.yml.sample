@@ -1,0 +1,118 @@
+# ToroDB Stampede configuration file
+
+# ToroDB Stampede logging configuration
+# logging:
+
+  # Level of log emitted (will overwrite default log4j2 configuration)
+  # Valid values are:
+  #  - NONE
+  #  - INFO
+  #  - ERROR
+  #  - WARNING
+  #  - DEBUG
+  #  - TRACE
+  # logLevel: <value>
+  # File where log will be written
+  # logFile: <log file path>
+  # Specifies level of log emitted for packages
+  # logPackages:
+    # Specify DEBUG log level for package com.torodb.
+    # For example:
+    # com.torodb: DEBUG
+  # Logback configuration file
+  # log4j2File: <log4j.xml file path>
+
+# Enable or disable metrics system
+metricsEnabled: false
+
+# MongoDB replication configuration
+replication:
+  # The name of the MongoDB Replica Set where this instance will attach
+  replSetName: rs1
+  # The host and port (<host>:<port>) of the node from ToroDB has to replicate.
+  syncSource: localhost:27017
+  # You can specify a file that use .pgpass syntax: <host>:<port>:<database>:<user>:<password> (can have multiple lines)
+  # mongopassFile: <mongopass file path>
+    
+  # A map of databases and/or collections and/or indexes to exclusively replicate.
+  # include:
+    # Each entry represent a database name under which a list of collection names can be specified.
+    # <database>:
+    #   - <collection>
+    # Each collection can contain a list of indexes each formed by one or more of those fields:
+    #   - <collection>:
+    #     - name: <the index name>
+    #       unique: <true when index is unique, false otherwise>
+    #       keys:
+    #         <the name of the field indexed>: <the index direction or type> 
+    # Character '*' can be used to denote "any-character" and character '\' to escape characters. 
+
+  # A map of databases and/or collections and/or indexes that will not be replicated (override include property).
+  # exclude:
+    # Each entry represent a database name under which a list of collection names can be specified.
+    # <database>:
+    #   - <collection>
+    # Each collection can contain a list of indexes each formed by one or more of those fields:
+    #   - <collection>:
+    #     - name: <the index name>
+    #       unqiue: <true when index is unique, false otherwise>
+    #       keys:
+    #         <the name of the field indexed>: <the index direction or type> 
+    # Character '*' can be used to denote "any-character" and character '\' to escape characters. 
+  
+  # SSL configuration for replication connection to MongoDB
+  ssl:
+    # Enable or disable SSL/TLS layer
+    enabled: false
+    # Disable hostname verification
+    allowInvalidHostnames: false
+    # The path to the Java Key Store file containing the Certification Authority. If caFile is specified it will be used instead
+    # trustStoreFile: /etc/torodb-stampede/trust.jks
+    # The password of the Java Key Store file containing the Certification Authority
+    # trustStorePassword: <secret>
+    # The path to the Java Key Store file containing the certificate and private key used to authenticate client
+    # keyStoreFile: /etc/torodb-stampede/key.jsk
+    # The password of the Java Key Store file containing and private key used to authenticate client
+    # keyStorePassword: <secret>
+    # The password of the private key used to authenticate client
+    # keyPassword: <secret>
+    # Enable FIPS 140-2 mode
+    fipsMode: false
+    # The path to the Certification Authority in PEM format
+    # caFile: /etc/torodb-stampede/ca.pem
+
+ # Authentication configuration for replication connection to MongoDB
+  auth:
+    # The authentication mode
+    # Valid modes are:
+    # - disabled # Disable authentication mechanism. No authentication will be done
+    # - negotiate # The client will negotiate best mechanism to authenticate. With server version 3.0 or above, the driver will authenticate using the SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate using the Challenge Response mechanism
+    # - cr # Challenge Response authentication
+    # - x509 # X.509 authentication
+    # - scram_sha1 # SCRAM-SHA-1 SASL authentication
+    mode: disabled 
+    # The user that will be authenticate
+    # user: <user name>
+    # The source database where the user is present
+    # source: <source database>
+
+# The backend configuration
+backend:
+  pool:
+    # The timeout in milliseconds after which retrieve a connection from the pool will fail.
+    connectionPoolTimeout: 10000 
+    # Maximum number of connections to establish to the database. It must be higher or equal than 3
+    connectionPoolSize: 30
+  postgres:
+    # The host or ip that will be used to connect
+    host: "localhost"
+    # The port that will be used to connect
+    port: 5432
+    # The database that will be used
+    database: "torod"
+    # The user that will be used to connect
+    user: "torodb"
+    # You can specify a file that use .pgpass syntax: <host>:<port>:<database>:<user>:<password> (can have multiple lines)
+    # toropassFile: <toropass file path>
+    # The application name used by driver to connect
+    applicationName: "toro"

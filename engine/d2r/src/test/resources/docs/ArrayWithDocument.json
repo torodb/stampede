@@ -1,0 +1,8 @@
+{
+    "name": "John",
+    "department": [
+        {
+            "name": "dept1"
+        }
+    ]
+}

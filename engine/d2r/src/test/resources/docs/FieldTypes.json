@@ -1,0 +1,14 @@
+{
+    "_id": {
+        "$oid": "5298a5a03b3f4220588fe57c"
+    },
+    "null": null,
+    "boolean": true,
+    "integer": 10,
+    "double": 10.2,
+    "long": 10020202020,
+    "string": "john",
+    "date": {
+        "$date": "2015-06-18T16:43:58.967Z"
+    }
+}

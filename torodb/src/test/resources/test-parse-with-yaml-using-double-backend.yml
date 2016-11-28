@@ -1,9 +1,0 @@
-backend:
-  postgres:
-    host: localhost
-    port: 5432
-    user: root
-  greenplum:
-    host: localhost
-    port: 5432
-    user: root
