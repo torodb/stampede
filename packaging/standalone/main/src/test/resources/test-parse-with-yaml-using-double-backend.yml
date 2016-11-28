@@ -1,9 +1,0 @@
-backend:
-  postgres:
-    host: localhost
-    port: 5432
-    user: root
-  derby:
-    host: localhost
-    port: 5432
-    user: root
