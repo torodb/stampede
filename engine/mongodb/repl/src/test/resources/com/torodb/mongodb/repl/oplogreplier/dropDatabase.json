@@ -1,0 +1,22 @@
+{
+    "initialState": {
+        "db1": {
+            "col1": [
+                {
+                    "_id": 1
+                }
+            ]
+        }
+    },
+    "expectedState": {
+    },
+    "oplog": [
+        {
+            "op": "c",
+            "ns": "db1.$cmd",
+            "o": {
+                "dropDatabase": 1
+            }
+        }
+    ]
+}

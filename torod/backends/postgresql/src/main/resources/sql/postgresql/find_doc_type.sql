@@ -1,1 +1,0 @@
-CREATE TYPE torodb.find_doc_type AS (did int, typeid int, index int, _json text);

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %level '%t' %logger{1.} %msg%n%throwable{none}"/>
+        </Console>
+        <Async name="ASYNC">
+            <AppenderRef ref="CONSOLE"/>
+        </Async>
+    </Appenders>
+    <Loggers>
+        <!-- 8kData & ToroDB code -->
+
+        <Logger name="com.torodb" level="FATAL" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+
+        <Logger name="com.eightkdata" level="FATAL" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+
+        <!-- Third party libraries -->
+
+        <Logger name="com.zaxxer.hikari" level="FATAL" additivity="false"/>
+        <Logger name="org.jooq" level="FATAL" additivity="false"/>
+        <Logger name="org.mongodb" level="FATAL" additivity="false"/>
+        <Logger name="org.hibernate" level="FATAL" additivity="false"/>
+        <Logger name="org.postgresql" level="FATAL" additivity="false"/>
+        <Logger name="org.jboss" level="FATAL" additivity="false"/>
+        <Logger name="io.netty" level="FATAL" additivity="false"/>
+
+        <!-- Root -->
+
+        <Root level="FATAL">
+            <AppenderRef ref="ASYNC"/>
+        </Root>
+    </Loggers>
+</Configuration>

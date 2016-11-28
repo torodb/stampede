@@ -1,0 +1,12 @@
+{
+    "name": "John",
+    "department": [
+        {
+            "name": "Accounting"
+        },
+        {
+            "id": "dept1",
+            "location": "Madrid"
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "name": "John",
+    "departments": [
+        {
+            "dept": {
+                "name": "dept1"
+            }
+        },
+        {
+            "dept": [
+                {
+                    "name": "dept2"
+                },
+                {
+                    "name": "dept3"
+                }
+
+            ]
+        }
+    ]
+}
