@@ -141,10 +141,12 @@ public class SmartRetrierTest {
 
   public static class MyRuntimeException extends RuntimeException {
 
+    private static final long serialVersionUID = 58348581394717347L;
+
   }
 
   public static class MyError extends Error {
-
+    private static final long serialVersionUID = 5834858139441217347L;
   }
 
 }
