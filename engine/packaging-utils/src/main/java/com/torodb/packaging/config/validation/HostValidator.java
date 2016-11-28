@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
 
 import java.net.URI;
@@ -25,20 +26,20 @@ import javax.validation.ConstraintValidatorContext;
 
 public class HostValidator implements ConstraintValidator<Host, String> {
 
-	@Override
-	public void initialize(Host constraintAnnotation) {
-	}
+  @Override
+  public void initialize(Host constraintAnnotation) {
+  }
 
-	@Override
-	public boolean isValid(String value, ConstraintValidatorContext context) {
-		if (value != null) {
-			try {
-				return new URI("my://userinfo@" + value + ":80").getHost() != null;
-			} catch (URISyntaxException e) {
-				return false;
-			}
-		}
-		
-		return true;
-	}
+  @Override
+  public boolean isValid(String value, ConstraintValidatorContext context) {
+    if (value != null) {
+      try {
+        return new URI("my://userinfo@" + value + ":80").getHost() != null;
+      } catch (URISyntaxException e) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }

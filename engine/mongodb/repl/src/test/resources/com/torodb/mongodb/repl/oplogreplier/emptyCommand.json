@@ -29,9 +29,9 @@
     },
     "oplog": [
         { 
-            "op" : "c", 
-            "ns" : "test.$cmd", 
-            "o" : { 
+            "op": "c", 
+            "ns": "test.$cmd", 
+            "o": { 
             }
         }
     ]

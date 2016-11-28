@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,58 +13,60 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.jooq;
 
-import java.sql.Types;
-
-import org.jooq.util.postgres.PostgresDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.BooleanSqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.values.KvBoolean;
+import org.jooq.util.postgres.PostgresDataType;
+
+import java.sql.Types;
 
 /**
  *
  */
-public class BooleanValueConverter implements KVValueConverter<Boolean, Boolean, KVBoolean> {
-    private static final long serialVersionUID = 1L;
+public class BooleanValueConverter implements KvValueConverter<Boolean, Boolean, KvBoolean> {
 
-    public static final DataTypeForKV<KVBoolean> TYPE = DataTypeForKV.from(PostgresDataType.BOOL, new BooleanValueConverter(), Types.BIT);
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return BooleanType.INSTANCE;
-    }
+  public static final DataTypeForKv<KvBoolean> TYPE = DataTypeForKv.from(PostgresDataType.BOOL,
+      new BooleanValueConverter(), Types.BIT);
 
-    @Override
-    public KVBoolean from(Boolean databaseObject) {
-        return KVBoolean.from(databaseObject);
-    }
+  @Override
+  public KvType getErasuredType() {
+    return BooleanType.INSTANCE;
+  }
 
-    @Override
-    public Boolean to(KVBoolean userObject) {
-        return userObject.getValue();
-    }
+  @Override
+  public KvBoolean from(Boolean databaseObject) {
+    return KvBoolean.from(databaseObject);
+  }
 
-    @Override
-    public Class<Boolean> fromType() {
-        return Boolean.class;
-    }
+  @Override
+  public Boolean to(KvBoolean userObject) {
+    return userObject.getValue();
+  }
 
-    @Override
-    public Class<KVBoolean> toType() {
-        return KVBoolean.class;
-    }
+  @Override
+  public Class<Boolean> fromType() {
+    return Boolean.class;
+  }
 
-    @Override
-    public SqlBinding<Boolean> getSqlBinding() {
-        return BooleanSqlBinding.INSTANCE;
-    }
+  @Override
+  public Class<KvBoolean> toType() {
+    return KvBoolean.class;
+  }
+
+  @Override
+  public SqlBinding<Boolean> getSqlBinding() {
+    return BooleanSqlBinding.INSTANCE;
+  }
 
 }

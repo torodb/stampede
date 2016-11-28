@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.exceptions;
 
 import com.torodb.core.exceptions.InvalidDatabaseException;
@@ -23,31 +24,32 @@ import com.torodb.core.exceptions.InvalidDatabaseException;
  *
  */
 public class InvalidDatabaseSchemaException extends InvalidDatabaseException {
-    private static final long serialVersionUID = 1L;
 
-    private final String schemaName;
+  private static final long serialVersionUID = 1L;
 
-    public InvalidDatabaseSchemaException(String schemaName) {
-        this.schemaName = schemaName;
-    }
+  private final String schemaName;
 
-    public InvalidDatabaseSchemaException(String schemaName, String message) {
-        super(message);
-        this.schemaName = schemaName;
-    }
+  public InvalidDatabaseSchemaException(String schemaName) {
+    this.schemaName = schemaName;
+  }
 
-    public InvalidDatabaseSchemaException(String schemaName, String message, Throwable cause) {
-        super(message, cause);
-        this.schemaName = schemaName;
-    }
+  public InvalidDatabaseSchemaException(String schemaName, String message) {
+    super(message);
+    this.schemaName = schemaName;
+  }
 
-    public InvalidDatabaseSchemaException(String schemaName, Throwable cause) {
-        super(cause);
-        this.schemaName = schemaName;
-    }
+  public InvalidDatabaseSchemaException(String schemaName, String message, Throwable cause) {
+    super(message, cause);
+    this.schemaName = schemaName;
+  }
 
-    public String getSchemaName() {
-        return schemaName;
-    }
-    
+  public InvalidDatabaseSchemaException(String schemaName, Throwable cause) {
+    super(cause);
+    this.schemaName = schemaName;
+  }
+
+  public String getSchemaName() {
+    return schemaName;
+  }
+
 }

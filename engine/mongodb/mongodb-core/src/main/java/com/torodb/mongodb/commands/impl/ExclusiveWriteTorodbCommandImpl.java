@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,20 +13,19 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl;
 
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 
-/**
- *
- */
-public interface ExclusiveWriteTorodbCommandImpl<Arg, Result> extends TorodbCommandImpl<Arg, Result, ExclusiveWriteMongodTransaction>{
+public interface ExclusiveWriteTorodbCommandImpl<A, R> extends
+    TorodbCommandImpl<A, R, ExclusiveWriteMongodTransaction> {
 
-    @Override
-    default public boolean requiresWritePermission() {
-        return true;
-    }
+  @Override
+  public default boolean requiresWritePermission() {
+    return true;
+  }
 
 }

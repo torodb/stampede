@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,32 +13,33 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.array;
+
+import com.torodb.kvdocument.values.KvTime;
+import com.torodb.kvdocument.values.heap.LocalTimeKvTime;
+import org.jooq.tools.json.JSONValue;
 
 import java.time.LocalTime;
 
 import javax.json.JsonString;
 
-import org.jooq.tools.json.JSONValue;
-
-import com.torodb.kvdocument.values.KVTime;
-import com.torodb.kvdocument.values.heap.LocalTimeKVTime;
-
 /**
  *
  */
-public class TimeToArrayConverter implements ArrayConverter<JsonString, KVTime> {
-    private static final long serialVersionUID = 1L;
+public class TimeToArrayConverter implements ArrayConverter<JsonString, KvTime> {
 
-    @Override
-    public String toJsonLiteral(KVTime value) {
-        return JSONValue.toJSONString(value.toString());
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVTime fromJsonValue(JsonString value) {
-        return new LocalTimeKVTime(LocalTime.parse(value.toString()));
-    }
+  @Override
+  public String toJsonLiteral(KvTime value) {
+    return JSONValue.toJSONString(value.toString());
+  }
+
+  @Override
+  public KvTime fromJsonValue(JsonString value) {
+    return new LocalTimeKvTime(LocalTime.parse(value.toString()));
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend;
 
 import java.sql.Connection;
 
 public enum TransactionIsolationLevel {
-    TRANSACTION_NONE(Connection.TRANSACTION_NONE),
-    TRANSACTION_READ_UNCOMMITTED(Connection.TRANSACTION_READ_UNCOMMITTED),
-    TRANSACTION_READ_COMMITTED(Connection.TRANSACTION_READ_COMMITTED),
-    TRANSACTION_REPEATABLE_READ(Connection.TRANSACTION_REPEATABLE_READ),
-    TRANSACTION_SERIALIZABLE(Connection.TRANSACTION_SERIALIZABLE);
-    
-    private final int level;
-    
-    private TransactionIsolationLevel(int level) {
-        this.level = level;
-    }
-    
-    public int level() {
-        return level;
-    }
+  TRANSACTION_NONE(Connection.TRANSACTION_NONE),
+  TRANSACTION_READ_UNCOMMITTED(Connection.TRANSACTION_READ_UNCOMMITTED),
+  TRANSACTION_READ_COMMITTED(Connection.TRANSACTION_READ_COMMITTED),
+  TRANSACTION_REPEATABLE_READ(Connection.TRANSACTION_REPEATABLE_READ),
+  TRANSACTION_SERIALIZABLE(Connection.TRANSACTION_SERIALIZABLE);
+
+  private final int level;
+
+  private TransactionIsolationLevel(int level) {
+    this.level = level;
+  }
+
+  public int level() {
+    return level;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Stampede service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.stampede.config.model.backend;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+package com.torodb.stampede.config.model.backend;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -33,45 +31,47 @@ import com.torodb.stampede.config.jackson.BackendDeserializer;
 import com.torodb.stampede.config.jackson.BackendSerializer;
 import com.torodb.stampede.config.model.backend.postgres.Postgres;
 
-@JsonSerialize(using=BackendSerializer.class)
-@JsonDeserialize(using=BackendDeserializer.class)
-public class Backend extends AbstractBackend {
-    public static final ImmutableMap<String, Class<? extends BackendImplementation>> BACKEND_CLASSES =
-            ImmutableMap.<String, Class<? extends BackendImplementation>>builder()
-            .put("postgres", Postgres.class)
-            .build();
-    
-    @Description("config.pool")
-    @NotNull
-    @Valid
-    @JsonProperty(required=true)
-    private Pool pool = new Pool();
-    
-    public Backend() {
-        this(new Postgres());
-    }
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
-    public Backend(BackendImplementation backendImplementation) {
-        super(BACKEND_CLASSES);
-        setBackendImplementation(backendImplementation);
-    }
-	
-    @NotNull
-    @Valid
-    @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)
-    @JsonSubTypes({
-        @JsonSubTypes.Type(name="postgres", value=Postgres.class),
-    })
-    @JsonProperty(required=true)
-	public BackendImplementation getBackendImplementation() {
-		return super.getBackendImplementation();
-	}
-    
-    public Pool getPool() {
-        return pool;
-    }
-    
-    public void setPool(Pool pool) {
-        this.pool = pool;
-    }
+@JsonSerialize(using = BackendSerializer.class)
+@JsonDeserialize(using = BackendDeserializer.class)
+public class Backend extends AbstractBackend {
+
+  public static final ImmutableMap<String, Class<? extends BackendImplementation>> BACKEND_CLASSES =
+      ImmutableMap.<String, Class<? extends BackendImplementation>>builder()
+          .put("postgres", Postgres.class)
+          .build();
+
+  @Description("config.pool")
+  @NotNull
+  @Valid
+  @JsonProperty(required = true)
+  private Pool pool = new Pool();
+
+  public Backend() {
+    this(new Postgres());
+  }
+
+  public Backend(BackendImplementation backendImplementation) {
+    super(BACKEND_CLASSES);
+    setBackendImplementation(backendImplementation);
+  }
+
+  @NotNull
+  @Valid
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
+  @JsonSubTypes({@JsonSubTypes.Type(name = "postgres", value = Postgres.class)})
+  @JsonProperty(required = true)
+  public BackendImplementation getBackendImplementation() {
+    return super.getBackendImplementation();
+  }
+
+  public Pool getPool() {
+    return pool;
+  }
+
+  public void setPool(Pool pool) {
+    this.pool = pool;
+  }
 }

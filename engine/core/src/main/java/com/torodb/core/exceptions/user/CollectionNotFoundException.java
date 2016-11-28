@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,34 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.exceptions.user;
 
 public class CollectionNotFoundException extends UserException {
 
-    private static final long serialVersionUID = 1L;
-    
-    private final String database;
-    private final String collection;
+  private static final long serialVersionUID = 1L;
 
-    public CollectionNotFoundException(String database, String collection) {
-        super();
-        this.database = database;
-        this.collection = collection;
-    }
+  private final String database;
+  private final String collection;
 
-    public String getDatabase() {
-        return database;
-    }
+  public CollectionNotFoundException(String database, String collection) {
+    super();
+    this.database = database;
+    this.collection = collection;
+  }
 
-    public String getCollection() {
-        return collection;
-    }
+  public String getDatabase() {
+    return database;
+  }
 
-    @Override
-    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
-        return visitor.visit(this, arg);
-    }
+  public String getCollection() {
+    return collection;
+  }
+
+  @Override
+  public <R, A> R accept(UserExceptionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
 }

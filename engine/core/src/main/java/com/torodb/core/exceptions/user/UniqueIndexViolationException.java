@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.exceptions.user;
 
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
+
 import javax.annotation.Nullable;
 
 /**
@@ -25,44 +27,45 @@ import javax.annotation.Nullable;
  */
 public class UniqueIndexViolationException extends IndexException {
 
-    private static final long serialVersionUID = 1;
+  private static final long serialVersionUID = 1;
 
-    @Nullable
-    private final KVValue<?> repeatedValue;
+  @Nullable
+  private final KvValue<?> repeatedValue;
 
-    public UniqueIndexViolationException(String index, KVValue<?> repeatedValue) {
-        super(null, null, index);
-        this.repeatedValue = repeatedValue;
-    }
+  public UniqueIndexViolationException(String index, KvValue<?> repeatedValue) {
+    super(null, null, index);
+    this.repeatedValue = repeatedValue;
+  }
 
-    public UniqueIndexViolationException(String index, KVValue<?> repeatedValue, String message) {
-        super(message, null, null, index);
-        this.repeatedValue = repeatedValue;
-    }
+  public UniqueIndexViolationException(String index, KvValue<?> repeatedValue, String message) {
+    super(message, null, null, index);
+    this.repeatedValue = repeatedValue;
+  }
 
-    public UniqueIndexViolationException(String index, KVValue<?> repeatedValue, String message, Throwable cause) {
-        super(message, cause, null, null, index);
-        this.repeatedValue = repeatedValue;
-    }
+  public UniqueIndexViolationException(String index, KvValue<?> repeatedValue, String message,
+      Throwable cause) {
+    super(message, cause, null, null, index);
+    this.repeatedValue = repeatedValue;
+  }
 
-    public UniqueIndexViolationException(String message) {
-        super(message, null, null, null);
-        this.repeatedValue = null;
-    }
+  public UniqueIndexViolationException(String message) {
+    super(message, null, null, null);
+    this.repeatedValue = null;
+  }
 
-    public UniqueIndexViolationException(String message, Throwable cause) {
-        super(message, cause, null, null, null);
-        this.repeatedValue = null;
-    }
+  public UniqueIndexViolationException(String message, Throwable cause) {
+    super(message, cause, null, null, null);
+    this.repeatedValue = null;
+  }
 
-    @Nullable
-    public KVValue<?> getRepeatedValue() {
-        return repeatedValue;
-    }
+  @Nullable
+  public KvValue<?> getRepeatedValue() {
+    return repeatedValue;
+  }
 
-    @Override
-    public <Result, Argument> Result accept(UserExceptionVisitor<Result, Argument> visitor, Argument arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public <R, A> R accept(UserExceptionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
 }

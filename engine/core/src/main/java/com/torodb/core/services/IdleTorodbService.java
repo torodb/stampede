@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.services;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
@@ -26,18 +28,18 @@ import java.util.concurrent.ThreadFactory;
  */
 public abstract class IdleTorodbService extends AbstractIdleService implements TorodbService {
 
-    private final ThreadFactory threadFactory;
+  private final ThreadFactory threadFactory;
 
-    public IdleTorodbService(ThreadFactory threadFactory) {
-        this.threadFactory = threadFactory;
-    }
+  public IdleTorodbService(ThreadFactory threadFactory) {
+    this.threadFactory = threadFactory;
+  }
 
-    @Override
-    protected Executor executor() {
-        return (Runnable command) -> {
-            Thread thread = threadFactory.newThread(command);
-            thread.start();
-        };
-    }
+  @Override
+  protected Executor executor() {
+    return (Runnable command) -> {
+      Thread thread = threadFactory.newThread(command);
+      thread.start();
+    };
+  }
 
 }

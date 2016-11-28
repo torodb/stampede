@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,41 +13,42 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
 
 import com.torodb.backend.converters.ValueConverter;
 import com.torodb.common.util.HexUtils;
-import com.torodb.kvdocument.values.KVMongoObjectId;
-import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
+import com.torodb.kvdocument.values.KvMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 
 /**
  *
  */
 public class MongoObjectIdValueToJsonConverter implements
-        ValueConverter<String, KVMongoObjectId> {
+    ValueConverter<String, KvMongoObjectId> {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends String> getJsonClass() {
-        return String.class;
+  @Override
+  public Class<? extends String> getJsonClass() {
+    return String.class;
+  }
+
+  @Override
+  public Class<? extends KvMongoObjectId> getValueClass() {
+    return KvMongoObjectId.class;
+  }
+
+  @Override
+  public KvMongoObjectId toValue(String value) {
+    if (!value.startsWith("\\x")) {
+      throw new RuntimeException(
+          "A bytea in escape format was expected, but " + value
+          + " was found"
+      );
     }
-
-    @Override
-    public Class<? extends KVMongoObjectId> getValueClass() {
-        return KVMongoObjectId.class;
-    }
-
-    @Override
-    public KVMongoObjectId toValue(String value) {
-        if (!value.startsWith("\\x")) {
-            throw new RuntimeException(
-                    "A bytea in escape format was expected, but " + value
-                    + " was found"
-            );
-        }
-        return new ByteArrayKVMongoObjectId(HexUtils.hex2Bytes(value.substring(2)));
-    }
+    return new ByteArrayKvMongoObjectId(HexUtils.hex2Bytes(value.substring(2)));
+  }
 }

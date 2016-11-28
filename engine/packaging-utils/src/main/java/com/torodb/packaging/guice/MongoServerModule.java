@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.guice;
 
 import com.eightkdata.mongowp.server.MongoServerConfig;
@@ -28,26 +29,26 @@ import com.torodb.packaging.config.model.protocol.ProtocolListenerConfig;
 
 public class MongoServerModule extends AbstractModule {
 
-    private final ProtocolListenerConfig protocolListenerConfig;
-    
-	public MongoServerModule(
-	        ProtocolListenerConfig protocolListenerConfig) {
-        this.protocolListenerConfig = protocolListenerConfig;
-	}
-	
-	@Override
-	protected void configure() {
-        bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
+  private final ProtocolListenerConfig protocolListenerConfig;
 
-        bind(MongoServerConfig.class)
-                .toInstance(() -> protocolListenerConfig.getPort());
-	}
+  public MongoServerModule(
+      ProtocolListenerConfig protocolListenerConfig) {
+    this.protocolListenerConfig = protocolListenerConfig;
+  }
 
-    @Provides
-    public MongodServerConfig createMongodServerConfig() {
-        return new MongodServerConfig(HostAndPort.fromParts(
-                protocolListenerConfig.getBindIp(),
-                protocolListenerConfig.getPort()
-        ));
-    }
+  @Override
+  protected void configure() {
+    bind(BuildProperties.class).to(DefaultBuildProperties.class).asEagerSingleton();
+
+    bind(MongoServerConfig.class)
+        .toInstance(() -> protocolListenerConfig.getPort());
+  }
+
+  @Provides
+  public MongodServerConfig createMongodServerConfig() {
+    return new MongodServerConfig(HostAndPort.fromParts(
+        protocolListenerConfig.getBindIp(),
+        protocolListenerConfig.getPort()
+    ));
+  }
 }

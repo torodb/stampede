@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,31 +13,32 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
-import java.util.Collection;
-
 import com.torodb.core.language.AttributeReference;
+
+import java.util.Collection;
 
 /**
  *
  */
 public class SetCurrentDateUpdateAction extends SingleFieldUpdateAction {
 
-    public SetCurrentDateUpdateAction(Collection<AttributeReference> modifiedField) {
-        super(modifiedField);
-    }
+  public SetCurrentDateUpdateAction(Collection<AttributeReference> modifiedField) {
+    super(modifiedField);
+  }
 
-    @Override
-    public void apply(UpdatedToroDocumentBuilder builder) {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public void apply(UpdatedToroDocumentBuilder builder) {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public <R, A> R accept(UpdateActionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
 }

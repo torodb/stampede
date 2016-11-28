@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
 
 import static java.lang.annotation.ElementType.FIELD;
@@ -31,16 +32,17 @@ import javax.validation.ReportAsSingleViolation;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
-@Target({ FIELD, METHOD, PARAMETER })
+@Target({FIELD, METHOD, PARAMETER})
 @Retention(RUNTIME)
-@Constraint(validatedBy = { })
+@Constraint(validatedBy = {})
 @ReportAsSingleViolation
 @Min(0)
 @Max(65535)
 public @interface Port {
-	String message() default "{config.validation.Port.message}";
 
-	Class<?>[] groups() default {};
+  String message() default "{config.validation.Port.message}";
 
-	Class<? extends Payload>[] payload() default {};
+  Class<?>[] groups() default {};
+
+  Class<? extends Payload>[] payload() default {};
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,47 +13,48 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
 
 import com.google.common.io.ByteSource;
 import com.torodb.backend.converters.ValueConverter;
 import com.torodb.common.util.HexUtils;
-import com.torodb.kvdocument.values.KVBinary;
-import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
-import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
+import com.torodb.kvdocument.values.KvBinary;
+import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
+import com.torodb.kvdocument.values.heap.ByteSourceKvBinary;
 
 /**
  *
  */
 public class BinaryValueToJsonConverter implements
-        ValueConverter<String, KVBinary> {
+    ValueConverter<String, KvBinary> {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends String> getJsonClass() {
-        return String.class;
+  @Override
+  public Class<? extends String> getJsonClass() {
+    return String.class;
+  }
+
+  @Override
+  public Class<? extends KvBinary> getValueClass() {
+    return KvBinary.class;
+  }
+
+  @Override
+  public KvBinary toValue(String value) {
+    if (!value.startsWith("\\x")) {
+      throw new RuntimeException(
+          "A bytea in escape format was expected, but " + value
+          + " was found"
+      );
     }
-
-    @Override
-    public Class<? extends KVBinary> getValueClass() {
-        return KVBinary.class;
-    }
-
-    @Override
-    public KVBinary toValue(String value) {
-        if (!value.startsWith("\\x")) {
-            throw new RuntimeException(
-                    "A bytea in escape format was expected, but " + value
-                    + " was found"
-            );
-        }
-        return new ByteSourceKVBinary(
-                KVBinarySubtype.MONGO_GENERIC,
-                (byte) 0,
-                ByteSource.wrap(HexUtils.hex2Bytes(value.substring(2)))
-        );
-    }
+    return new ByteSourceKvBinary(
+        KvBinarySubtype.MONGO_GENERIC,
+        (byte) 0,
+        ByteSource.wrap(HexUtils.hex2Bytes(value.substring(2)))
+    );
+  }
 }

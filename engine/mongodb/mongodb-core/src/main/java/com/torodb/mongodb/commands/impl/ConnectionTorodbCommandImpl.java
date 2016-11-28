@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,16 +13,15 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl;
 
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.torodb.mongodb.core.MongodConnection;
 
-/**
- *
- */
-public abstract class ConnectionTorodbCommandImpl<Arg, Result> implements CommandImplementation<Arg, Result, MongodConnection> {
+public abstract class ConnectionTorodbCommandImpl<A, R> implements
+    CommandImplementation<A, R, MongodConnection> {
 
 }

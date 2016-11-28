@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Stampede service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,27 +13,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.stampede.config.jackson;
-
-import java.util.function.BiConsumer;
-
-import org.jooq.lambda.tuple.Tuple2;
 
 import com.google.common.collect.ImmutableMap;
 import com.torodb.packaging.config.jackson.AbstractBackendDeserializer;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.backend.Pool;
+import org.jooq.lambda.tuple.Tuple2;
+
+import java.util.function.BiConsumer;
 
 public class BackendDeserializer extends AbstractBackendDeserializer<Backend> {
-    
-    public BackendDeserializer() {
-        super(() -> new Backend(),
-                ImmutableMap.<String, Tuple2<Class<?>, BiConsumer<Backend, Object>>>of(
-                        "pool", new Tuple2<>(Pool.class, (backend, value) -> backend.setPool((Pool) value))
-                )
-        );
-    }
+
+  public BackendDeserializer() {
+    super(() -> new Backend(),
+        ImmutableMap.<String, Tuple2<Class<?>, BiConsumer<Backend, Object>>>of(
+            "pool", new Tuple2<>(Pool.class, (backend, value) -> backend.setPool((Pool) value))
+        )
+    );
+  }
 
 }

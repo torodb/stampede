@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,14 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.annotation;
 
-import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,13 +29,13 @@ import java.lang.annotation.Target;
 import javax.inject.Qualifier;
 
 /**
- * 
+ *
  */
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE,FIELD,METHOD})
+@Target({TYPE, FIELD, METHOD})
 public @interface Description {
 
-	String value();
+  String value();
 
 }

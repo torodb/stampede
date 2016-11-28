@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.json;
 
 import com.torodb.backend.converters.array.ValueToArrayConverterProvider;
@@ -25,9 +26,9 @@ import com.torodb.backend.converters.json.BaseArrayValueToJsonConverter;
  */
 public class ArrayValueToJsonConverter extends BaseArrayValueToJsonConverter {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public ArrayValueToJsonConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {
-        super(valueToArrayConverterProvider);
-    }
+  public ArrayValueToJsonConverter(ValueToArrayConverterProvider valueToArrayConverterProvider) {
+    super(valueToArrayConverterProvider);
+  }
 }

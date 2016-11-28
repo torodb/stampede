@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.core.transaction;
 
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-import java.util.function.Function;
+package com.torodb.core.transaction;
 
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
@@ -26,33 +24,44 @@ import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.function.Function;
+
 /**
  *
  */
-public class ExclusiveWriteInternalTransaction extends WriteInternalTransaction<ExclusiveWriteBackendTransaction> {
-    private ExclusiveWriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, ExclusiveWriteBackendTransaction backendTransaction, WriteLock writeLock) {
-        super(metainfoRepository, metaSnapshot, backendTransaction, writeLock);
-    }
+public class ExclusiveWriteInternalTransaction
+    extends WriteInternalTransaction<ExclusiveWriteBackendTransaction> {
 
-    static ExclusiveWriteInternalTransaction createExclusiveWriteTransaction(BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
-        WriteLock exclusiveLock = exclusiveLock();
-        exclusiveLock.lock();
-        try {
-            return createWriteTransaction(metainfoRepository, snapshot -> new ExclusiveWriteInternalTransaction(metainfoRepository, snapshot, backendConnection.openExclusiveWriteTransaction(), exclusiveLock));
-        } catch(Throwable throwable) {
-            exclusiveLock.unlock();
-            throw throwable;
-        }
-    }
-    
-    protected static <T extends WriteInternalTransaction<?>> T createWriteTransaction(
-            MetainfoRepository metainfoRepository, Function<MutableMetaSnapshot, T> internalTransactionSupplier) {
-        try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
-            
-            MutableMetaSnapshot snapshot = snapshotStage.createMutableSnapshot();
+  private ExclusiveWriteInternalTransaction(MetainfoRepository metainfoRepository,
+      MutableMetaSnapshot metaSnapshot, ExclusiveWriteBackendTransaction backendTransaction,
+      WriteLock writeLock) {
+    super(metainfoRepository, metaSnapshot, backendTransaction, writeLock);
+  }
 
-            return internalTransactionSupplier.apply(snapshot);
-        }
+  static ExclusiveWriteInternalTransaction createExclusiveWriteTransaction(
+      BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
+    WriteLock exclusiveLock = exclusiveLock();
+    exclusiveLock.lock();
+    try {
+      return createWriteTransaction(metainfoRepository, snapshot ->
+          new ExclusiveWriteInternalTransaction(metainfoRepository, snapshot, backendConnection
+              .openExclusiveWriteTransaction(), exclusiveLock));
+    } catch (Throwable throwable) {
+      exclusiveLock.unlock();
+      throw throwable;
     }
-    
+  }
+
+  protected static <T extends WriteInternalTransaction<?>> T createWriteTransaction(
+      MetainfoRepository metainfoRepository,
+      Function<MutableMetaSnapshot, T> internalTransactionSupplier) {
+    try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
+
+      MutableMetaSnapshot snapshot = snapshotStage.createMutableSnapshot();
+
+      return internalTransactionSupplier.apply(snapshot);
+    }
+  }
+
 }

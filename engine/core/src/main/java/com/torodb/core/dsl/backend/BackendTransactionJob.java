@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.dsl.backend;
 
 import com.torodb.core.backend.WriteBackendTransaction;
@@ -25,6 +26,6 @@ import com.torodb.core.exceptions.user.UserException;
  */
 public interface BackendTransactionJob {
 
-    public void execute(WriteBackendTransaction connection) throws UserException;
+  public void execute(WriteBackendTransaction connection) throws UserException;
 
 }

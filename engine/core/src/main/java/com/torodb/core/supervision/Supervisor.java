@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.supervision;
 
 /**
@@ -22,6 +23,6 @@ package com.torodb.core.supervision;
  */
 public interface Supervisor {
 
-    public SupervisorDecision onError(Object supervised, Throwable error);
+  public SupervisorDecision onError(Object supervised, Throwable error);
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,35 +13,43 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.guice;
 
 import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.eightkdata.mongowp.client.core.GuavaCachedMongoClientFactory;
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
 import com.eightkdata.mongowp.client.wrapper.MongoClientWrapperFactory;
-import com.google.inject.*;
+import com.google.inject.Exposed;
+import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
+
 import java.time.Duration;
+
+import javax.inject.Singleton;
 
 /**
  *
  */
 public class MongoClientWrapperModule extends PrivateModule {
 
-    @Override
-    protected void configure() {
+  @Override
+  protected void configure() {
 
-        bind(MongoClientWrapperFactory.class)
-                .in(Singleton.class);
-        bind(MongoClientFactory.class)
-                .to(CachedMongoClientFactory.class);
-        expose(MongoClientFactory.class);
-    }
+    bind(MongoClientWrapperFactory.class)
+        .in(Singleton.class);
+    bind(MongoClientFactory.class)
+        .to(CachedMongoClientFactory.class);
+    expose(MongoClientFactory.class);
+  }
 
-    @Provides @Singleton @Exposed
-    CachedMongoClientFactory getMongoClientFactory(MongoClientWrapperFactory wrapperFactory) {
-        return new GuavaCachedMongoClientFactory(wrapperFactory, Duration.ofMinutes(10));
-    }
+  @Provides
+  @Singleton
+  @Exposed
+  CachedMongoClientFactory getMongoClientFactory(MongoClientWrapperFactory wrapperFactory) {
+    return new GuavaCachedMongoClientFactory(wrapperFactory, Duration.ofMinutes(10));
+  }
 
 }

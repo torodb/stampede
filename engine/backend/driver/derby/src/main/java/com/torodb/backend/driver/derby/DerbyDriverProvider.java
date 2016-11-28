@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Derby driver
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,10 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.backend.driver.derby;
 
+package com.torodb.backend.driver.derby;
 
 import javax.sql.DataSource;
 
@@ -25,5 +25,6 @@ import javax.sql.DataSource;
  * A provider for the Derby driver interface so that it is independent of the driver implementation
  */
 public interface DerbyDriverProvider {
-    DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName);
+
+  DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName);
 }

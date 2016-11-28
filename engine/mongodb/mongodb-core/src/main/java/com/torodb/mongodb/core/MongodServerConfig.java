@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.server.MongoServerConfig;
@@ -26,20 +27,21 @@ import com.google.common.net.HostAndPort;
  */
 public class MongodServerConfig implements MongoServerConfig {
 
-    private final HostAndPort hostAndPort;
+  private final HostAndPort hostAndPort;
 
-    public MongodServerConfig(HostAndPort hostAndPort) {
-        this.hostAndPort = hostAndPort;
-        Preconditions.checkArgument(hostAndPort.hasPort(), "The host and port of a given mongod server must have a port");
-    }
+  public MongodServerConfig(HostAndPort hostAndPort) {
+    this.hostAndPort = hostAndPort;
+    Preconditions.checkArgument(hostAndPort.hasPort(),
+        "The host and port of a given mongod server must have a port");
+  }
 
-    public HostAndPort getHostAndPort() {
-        return hostAndPort;
-    }
+  public HostAndPort getHostAndPort() {
+    return hostAndPort;
+  }
 
-    @Override
-    public int getPort() {
-        return hostAndPort.getPort();
-    }
+  @Override
+  public int getPort() {
+    return hostAndPort.getPort();
+  }
 
 }

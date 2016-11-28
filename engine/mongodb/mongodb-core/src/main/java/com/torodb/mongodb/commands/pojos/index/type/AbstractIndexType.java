@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,41 +13,41 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.pojos.index.type;
 
 import com.eightkdata.mongowp.bson.BsonValue;
 
 public abstract class AbstractIndexType implements IndexType {
-    
-    public final BsonValue<?> bsonValue;
-    public final String name;
-    
-    protected AbstractIndexType(BsonValue<?> bsonValue) {
-        this.name = bsonValue.isString() ? bsonValue.asString().getValue() : bsonValue.toString();
-        this.bsonValue = bsonValue;
-    }
 
-    @Override
-    public BsonValue<?> toBsonValue() {
-        return bsonValue;
-    }
-    
-    @Override
-    public String getName() {
-        return name;
-    }
+  public final BsonValue<?> bsonValue;
+  public final String name;
 
-    @Override
-    public boolean equalsToBsonValue(BsonValue<?> bsonValue) {
-        return this.bsonValue.equals(bsonValue);
-    }
-    
-    protected boolean sameNumber(BsonValue<?> bsonValue) {
-        return bsonValue.isNumber() && 
-                toBsonValue().asInt32()
-                    .equals(bsonValue.asInt32());
-    }
+  protected AbstractIndexType(BsonValue<?> bsonValue) {
+    this.name = bsonValue.isString() ? bsonValue.asString().getValue() : bsonValue.toString();
+    this.bsonValue = bsonValue;
+  }
+
+  @Override
+  public BsonValue<?> toBsonValue() {
+    return bsonValue;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public boolean equalsToBsonValue(BsonValue<?> bsonValue) {
+    return this.bsonValue.equals(bsonValue);
+  }
+
+  protected boolean sameNumber(BsonValue<?> bsonValue) {
+    return bsonValue.isNumber() && toBsonValue().asInt32()
+        .equals(bsonValue.asInt32());
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,98 +13,104 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.guice;
 
-import com.eightkdata.mongowp.annotations.MongoWP;
+import com.eightkdata.mongowp.annotations.MongoWp;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction;
 import com.torodb.core.annotations.ParallelLevel;
+import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.annotations.TorodbRunnableService;
+
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.ThreadFactory;
-import com.torodb.core.annotations.TorodbIdleService;
-import com.torodb.core.annotations.TorodbRunnableService;
 
 /**
  *
  */
 public class ExecutorServicesModule extends AbstractModule {
-    
+
+  @Override
+  protected void configure() {
+
+    bind(Integer.class)
+        .annotatedWith(ParallelLevel.class)
+        .toInstance(Runtime.getRuntime().availableProcessors());
+
+    ThreadFactory threadFactory = new ThreadFactoryBuilder()
+        .setNameFormat("torodb-%d")
+        .build();
+
+    bind(ThreadFactory.class)
+        .toInstance(threadFactory);
+
+    bind(ThreadFactory.class)
+        .annotatedWith(TorodbIdleService.class)
+        .toInstance(threadFactory);
+
+    bind(ThreadFactory.class)
+        .annotatedWith(TorodbRunnableService.class)
+        .toInstance(threadFactory);
+
+    bind(ThreadFactory.class)
+        .annotatedWith(MongoWp.class)
+        .toInstance(threadFactory);
+
+    bind(ForkJoinWorkerThreadFactory.class)
+        .toInstance(ForkJoinPool.defaultForkJoinWorkerThreadFactory);
+
+    bind(DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction.class)
+        .toInstance(new CustomBlockerThreadFactoryFunction());
+
+    bind(DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction.class)
+        .toInstance(new CustomForkJoinThreadFactoryFunction());
+  }
+
+  private static class CustomBlockerThreadFactoryFunction implements BlockerThreadFactoryFunction {
+
     @Override
-    protected void configure() {
+    public ThreadFactory apply(String prefix) {
+      return new ThreadFactoryBuilder()
+          .setNameFormat(prefix + "-%d")
+          .build();
+    }
+  }
 
-        bind(Integer.class)
-                .annotatedWith(ParallelLevel.class)
-                .toInstance(Runtime.getRuntime().availableProcessors());
+  private static class CustomForkJoinThreadFactoryFunction
+      implements ForkJoinThreadFactoryFunction {
 
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("torodb-%d")
-                .build();
+    @Override
+    public ForkJoinWorkerThreadFactory apply(String prefix) {
+      return new CustomForkJoinThreadFactory(prefix);
+    }
+  }
 
-        bind(ThreadFactory.class)
-                .toInstance(threadFactory);
+  private static class CustomForkJoinThreadFactory implements ForkJoinWorkerThreadFactory {
 
-        bind(ThreadFactory.class)
-                .annotatedWith(TorodbIdleService.class)
-                .toInstance(threadFactory);
+    private final String prefix;
+    private volatile int idProvider = 0;
 
-        bind(ThreadFactory.class)
-                .annotatedWith(TorodbRunnableService.class)
-                .toInstance(threadFactory);
-
-        bind(ThreadFactory.class)
-                .annotatedWith(MongoWP.class)
-                .toInstance(threadFactory);
-
-        bind(ForkJoinWorkerThreadFactory.class)
-                .toInstance(ForkJoinPool.defaultForkJoinWorkerThreadFactory);
-
-        bind(DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction.class)
-                .toInstance(new CustomBlockerThreadFactoryFunction());
-
-        bind(DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction.class)
-                .toInstance(new CustomForkJoinThreadFactoryFunction());
+    public CustomForkJoinThreadFactory(String prefix) {
+      super();
+      this.prefix = prefix;
     }
 
-    private static class CustomBlockerThreadFactoryFunction implements BlockerThreadFactoryFunction {
-        @Override
-        public ThreadFactory apply(String prefix) {
-            return new ThreadFactoryBuilder()
-                    .setNameFormat(prefix + "-%d")
-                    .build();
-        }
+    @Override
+    public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+      ForkJoinWorkerThread newThread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(
+          pool);
+      int id = idProvider++;
+      newThread.setName(prefix + '-' + id);
+      return newThread;
     }
-    
-    private static class CustomForkJoinThreadFactoryFunction implements ForkJoinThreadFactoryFunction {
-        @Override
-        public ForkJoinWorkerThreadFactory apply(String prefix) {
-            return new CustomForkJoinThreadFactory(prefix);
-        }
-    }
-    
-    private static class CustomForkJoinThreadFactory implements ForkJoinWorkerThreadFactory {
-        private final String prefix;
-        private volatile int idProvider = 0;
-        
-        public CustomForkJoinThreadFactory(String prefix) {
-            super();
-            this.prefix = prefix;
-        }
-
-        @Override
-        public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
-            ForkJoinWorkerThread newThread = ForkJoinPool
-                    .defaultForkJoinWorkerThreadFactory.newThread(pool);
-            int id = idProvider++;
-            newThread.setName(prefix + '-' + id);
-            return newThread;
-        }
-    }
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.impl.sql;
 
 import com.google.common.base.Preconditions;
@@ -22,42 +23,44 @@ import com.torodb.core.backend.BackendCursor;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.document.ToroDocument;
-import javax.annotation.Nonnull;
 import com.torodb.torod.cursors.TorodCursor;
+
+import javax.annotation.Nonnull;
 
 /**
  *
  */
 public class LazyTorodCursor implements TorodCursor {
 
-    private final R2DTranslator r2dTranslator;
-    private final BackendCursor backendCursor;
-    private FromBackendDocCursor docCursor;
-    private boolean usedAsDidCursor = false;
+  private final R2DTranslator r2dTranslator;
+  private final BackendCursor backendCursor;
+  private FromBackendDocCursor docCursor;
+  private boolean usedAsDidCursor = false;
 
-    public LazyTorodCursor(@Nonnull R2DTranslator r2dTranslator, 
-            BackendCursor backendCursor) {
-        this.r2dTranslator = r2dTranslator;
-        this.backendCursor = backendCursor;
+  public LazyTorodCursor(@Nonnull R2DTranslator r2dTranslator,
+      BackendCursor backendCursor) {
+    this.r2dTranslator = r2dTranslator;
+    this.backendCursor = backendCursor;
+  }
+
+  @Override
+  public Cursor<ToroDocument> asDocCursor() {
+    Preconditions.checkState(!usedAsDidCursor, "This cursor has already been used as a did cursor");
+
+    if (docCursor == null) {
+      docCursor = new FromBackendDocCursor(
+          r2dTranslator, backendCursor.asDocPartResultCursor());
     }
 
-    @Override
-    public Cursor<ToroDocument> asDocCursor() {
-        Preconditions.checkState(!usedAsDidCursor, "This cursor has already been used as a did cursor");
+    return docCursor;
+  }
 
-        if (docCursor == null) {
-            docCursor = new FromBackendDocCursor(
-                    r2dTranslator, backendCursor.asDocPartResultCursor());
-        }
-
-        return docCursor;
-    }
-
-    @Override
-    public Cursor<Integer> asDidCursor() {
-        Preconditions.checkState(docCursor == null, "This cursor has already been used as a doc cursor");
-        usedAsDidCursor = true;
-        return backendCursor.asDidCursor();
-    }
+  @Override
+  public Cursor<Integer> asDidCursor() {
+    Preconditions.checkState(docCursor == null, "This cursor has already been used as a doc "
+        + "cursor");
+    usedAsDidCursor = true;
+    return backendCursor.asDidCursor();
+  }
 
 }

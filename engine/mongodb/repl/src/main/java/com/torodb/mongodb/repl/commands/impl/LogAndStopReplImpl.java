@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.repl.commands.impl;
 
-import javax.inject.Inject;
+package com.torodb.mongodb.repl.commands.impl;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
@@ -28,24 +27,27 @@ import com.torodb.mongodb.repl.commands.LogAndStopCommand;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
+import javax.inject.Inject;
+
 /**
  * The implementation of {@link LogAndStopCommand}.
  */
 public class LogAndStopReplImpl extends ReplCommandImpl<String, Empty> {
-    
-    private final Supervisor supervisor;
 
-    @Inject
-    public LogAndStopReplImpl(@MongoDbRepl Supervisor supervisor) {
-        this.supervisor = supervisor;
-    }
+  private final Supervisor supervisor;
 
-    @Override
-    public Status<Empty> apply(Request req, Command<? super String, ? super Empty> command, String arg, SharedWriteTorodTransaction trans) {
-        UnsupportedOperationException ex = new UnsupportedOperationException(
-                "Command " +arg+ " is not supported yet");
-        supervisor.onError(this, ex);
-        throw ex;
-    }
+  @Inject
+  public LogAndStopReplImpl(@MongoDbRepl Supervisor supervisor) {
+    this.supervisor = supervisor;
+  }
+
+  @Override
+  public Status<Empty> apply(Request req, Command<? super String, ? super Empty> command, 
+      String arg, SharedWriteTorodTransaction trans) {
+    UnsupportedOperationException ex = new UnsupportedOperationException(
+        "Command " + arg + " is not supported yet");
+    supervisor.onError(this, ex);
+    throw ex;
+  }
 
 }

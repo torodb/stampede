@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.utils;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -25,15 +26,16 @@ import com.eightkdata.mongowp.bson.BsonValue;
  */
 public class DefaultIdUtils {
 
-    public static final String DEFAULT_ID_KEY = "_id";
+  public static final String DEFAULT_ID_KEY = "_id";
 
-    private DefaultIdUtils() {}
+  private DefaultIdUtils() {
+  }
 
-    public static boolean containsDefaultId(BsonDocument doc) {
-        return doc.containsKey(DEFAULT_ID_KEY);
-    }
+  public static boolean containsDefaultId(BsonDocument doc) {
+    return doc.containsKey(DEFAULT_ID_KEY);
+  }
 
-    public static BsonValue getDefaultId(BsonDocument doc) {
-        return doc.get(DEFAULT_ID_KEY);
-    }
+  public static BsonValue getDefaultId(BsonDocument doc) {
+    return doc.get(DEFAULT_ID_KEY);
+  }
 }

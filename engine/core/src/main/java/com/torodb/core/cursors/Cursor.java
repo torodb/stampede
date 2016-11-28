@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,63 +13,66 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.cursors;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+
 import javax.annotation.Nonnull;
 
-/**
- *
- */
 public interface Cursor<E> extends AutoCloseable, Iterator<E> {
 
-    /**
-     * Gets up to maxSize elements from the current position.
-     *
-     * @param maxSize
-     * @return
-     */
-    default @Nonnull List<E> getNextBatch(int maxSize) {
-        List<E> elements = new ArrayList<>(maxSize);
+  /**
+   * Gets up to maxSize elements from the current position.
+   *
+   * @param maxSize
+   * @return
+   */
+  @Nonnull
+  default List<E> getNextBatch(int maxSize) {
+    List<E> elements = new ArrayList<>(maxSize);
 
-        for (int index = 0; index < maxSize && hasNext(); index++) {
-            elements.add(next());
-        }
-
-        return elements;
+    for (int index = 0; index < maxSize && hasNext(); index++) {
+      elements.add(next());
     }
 
-    /**
-     * Gets remaining elements from the current position.
-     *
-     * @return 
-     */
-    default @Nonnull List<E> getRemaining() {
-        List<E> elements = new ArrayList<>();
+    return elements;
+  }
 
-        while (hasNext()) {
-            elements.add(next());
-        }
-        return elements;
-    }
+  /**
+   * Gets remaining elements from the current position.
+   *
+   * @return
+   */
+  @Nonnull
+  default List<E> getRemaining() {
+    List<E> elements = new ArrayList<>();
 
-    default @Nonnull <O> Cursor<O> transform(Function<E, O> transformation) {
-        return new TransformCursor<>(this, transformation);
+    while (hasNext()) {
+      elements.add(next());
     }
+    return elements;
+  }
 
-    default @Nonnull BatchCursor<E> batch(int size) {
-        return new BatchCursor<E>(this, size);
-    }
-    
-    /**
-     * Releases this {@code Cursor} object's resources immediately.
-     */
-    @Override
-    void close();
+  @Nonnull
+  default <O> Cursor<O> transform(Function<E, O> transformation) {
+    return new TransformCursor<>(this, transformation);
+  }
+
+  @Nonnull
+  default BatchCursor<E> batch(int size) {
+    return new BatchCursor<>(this, size);
+  }
+
+  /**
+   * Releases this {@code Cursor} object's resources immediately.
+   */
+  @Override
+  void close();
 
 }

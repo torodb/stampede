@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.packaging.config.jackson;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map.Entry;
+package com.torodb.packaging.config.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,20 +26,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.generic.LogPackages;
 
-public class LogPackagesDeserializer extends JsonDeserializer<LogPackages> {
-	@Override
-	public LogPackages deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-		LogPackages logPackages = new LogPackages();
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
-		JsonNode node = jp.getCodec().readTree(jp);
-		
-		Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
-		while (fieldsIterator.hasNext()) {
-			Entry<String, JsonNode> field = fieldsIterator.next();
-			
-			logPackages.put(field.getKey(), LogLevel.valueOf(field.getValue().asText()));
-		}
-		
-		return logPackages;
-	}
+public class LogPackagesDeserializer extends JsonDeserializer<LogPackages> {
+
+  @Override
+  public LogPackages deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException,
+      JsonProcessingException {
+    LogPackages logPackages = new LogPackages();
+
+    JsonNode node = jp.getCodec().readTree(jp);
+
+    Iterator<Entry<String, JsonNode>> fieldsIterator = node.fields();
+    while (fieldsIterator.hasNext()) {
+      Entry<String, JsonNode> field = fieldsIterator.next();
+
+      logPackages.put(field.getKey(), LogLevel.valueOf(field.getValue().asText()));
+    }
+
+    return logPackages;
+  }
 }

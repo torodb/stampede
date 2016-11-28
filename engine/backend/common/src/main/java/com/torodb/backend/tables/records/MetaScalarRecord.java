@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.tables.records;
 
 import com.torodb.backend.tables.MetaScalarTable;
@@ -27,269 +28,270 @@ import org.jooq.Record5;
 import org.jooq.Row5;
 import org.jooq.impl.UpdatableRecordImpl;
 
-public abstract class MetaScalarRecord<TableRefType> extends UpdatableRecordImpl<MetaScalarRecord<TableRefType>> 
-        implements Record5<String, String, TableRefType, FieldType, String> {
+@SuppressWarnings("checkstyle:OverloadMethodsDeclarationOrder")
+public abstract class MetaScalarRecord<TableRefTypeT>
+    extends UpdatableRecordImpl<MetaScalarRecord<TableRefTypeT>>
+    implements Record5<String, String, TableRefTypeT, FieldType, String> {
 
-    private static final long serialVersionUID = -1107968478;
+  private static final long serialVersionUID = -1107968478;
 
-    /**
-     * Setter for <code>torodb.scalar.database</code>.
-     */
-    public void setDatabase(String value) {
-        set(0, value);
-    }
+  /**
+   * Setter for <code>torodb.scalar.database</code>.
+   */
+  public void setDatabase(String value) {
+    set(0, value);
+  }
 
-    /**
-     * Getter for <code>torodb.scalar.database</code>.
-     */
-    public String getDatabase() {
-        return (String) getValue(0);
-    }
+  /**
+   * Getter for <code>torodb.scalar.database</code>.
+   */
+  public String getDatabase() {
+    return (String) getValue(0);
+  }
 
-    /**
-     * Setter for <code>torodb.scalar.collection</code>.
-     */
-    public void setCollection(String value) {
-        set(1, value);
-    }
+  /**
+   * Setter for <code>torodb.scalar.collection</code>.
+   */
+  public void setCollection(String value) {
+    set(1, value);
+  }
 
-    /**
-     * Getter for <code>torodb.scalar.collection</code>.
-     */
-    public String getCollection() {
-        return (String) getValue(1);
-    }
+  /**
+   * Getter for <code>torodb.scalar.collection</code>.
+   */
+  public String getCollection() {
+    return (String) getValue(1);
+  }
 
-    /**
-     * Setter for <code>torodb.scalar.tableRef</code>.
-     */
-    public void setTableRef(TableRefType value) {
-        set(2, value);
-    }
+  /**
+   * Setter for <code>torodb.scalar.tableRef</code>.
+   */
+  public void setTableRef(TableRefTypeT value) {
+    set(2, value);
+  }
 
-    /**
-     * Getter for <code>torodb.scalar.tableRef</code>.
-     */
-    @SuppressWarnings("unchecked")
-    public TableRefType getTableRef() {
-        return (TableRefType) getValue(2);
-    }
+  /**
+   * Getter for <code>torodb.scalar.tableRef</code>.
+   */
+  @SuppressWarnings("unchecked")
+  public TableRefTypeT getTableRef() {
+    return (TableRefTypeT) getValue(2);
+  }
 
-    /**
-     * Setter for <code>torodb.scalar.type</code>.
-     */
-    public void setType(FieldType value) {
-        set(3, value);
-    }
+  /**
+   * Setter for <code>torodb.scalar.type</code>.
+   */
+  public void setType(FieldType value) {
+    set(3, value);
+  }
 
-    /**
-     * Getter for <code>torodb.scalar.type</code>.
-     */
-    public FieldType getType() {
-        return (FieldType) getValue(3);
-    }
+  /**
+   * Getter for <code>torodb.scalar.type</code>.
+   */
+  public FieldType getType() {
+    return (FieldType) getValue(3);
+  }
 
-    /**
-     * Setter for <code>torodb.scalar.idenftifier</code>.
-     */
-    public void setIdentifier(String value) {
-        set(4, value);
-    }
+  /**
+   * Setter for <code>torodb.scalar.idenftifier</code>.
+   */
+  public void setIdentifier(String value) {
+    set(4, value);
+  }
 
-    /**
-     * Getter for <code>torodb.scalar.idenftifier</code>.
-     */
-    public String getIdentifier() {
-        return (String) getValue(4);
-    }
+  /**
+   * Getter for <code>torodb.scalar.idenftifier</code>.
+   */
+  public String getIdentifier() {
+    return (String) getValue(4);
+  }
 
-	// -------------------------------------------------------------------------
-	// Primary key information
-	// -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Primary key information
+  // -------------------------------------------------------------------------
+  @SuppressWarnings("unchecked")
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Record4<String, String, String, String> key() {
+    return (Record4<String, String, String, String>) super.key();
+  }
 
-	@SuppressWarnings("unchecked")
-    /**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Record4<String, String, String, String> key() {
-		return (Record4<String, String, String, String>) super.key();
-	}
+  // -------------------------------------------------------------------------
+  // Record7 type implementation
+  // -------------------------------------------------------------------------
+  /**
+   * {@inheritDoc}
+   */
+  @SuppressWarnings("unchecked")
+  @Override
+  public Row5<String, String, TableRefTypeT, FieldType, String> fieldsRow() {
+    return (Row5<String, String, TableRefTypeT, FieldType, String>) super.fieldsRow();
+  }
 
-	// -------------------------------------------------------------------------
-	// Record7 type implementation
-	// -------------------------------------------------------------------------
+  /**
+   * {@inheritDoc}
+   */
+  @SuppressWarnings("unchecked")
+  @Override
+  public Row5<String, String, TableRefTypeT, FieldType, String> valuesRow() {
+    return (Row5<String, String, TableRefTypeT, FieldType, String>) super.valuesRow();
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@SuppressWarnings("unchecked")
-    @Override
-	public Row5<String, String, TableRefType, FieldType, String> fieldsRow() {
-		return (Row5<String, String, TableRefType, FieldType, String>) super.fieldsRow();
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<String> field1() {
+    return metaScalarTable.DATABASE;
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@SuppressWarnings("unchecked")
-    @Override
-	public Row5<String, String, TableRefType, FieldType, String> valuesRow() {
-		return (Row5<String, String, TableRefType, FieldType, String>) super.valuesRow();
-	}
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<String> field2() {
+    return metaScalarTable.COLLECTION;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field1() {
-        return metaScalarTable.DATABASE;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<TableRefTypeT> field3() {
+    return metaScalarTable.TABLE_REF;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field2() {
-        return metaScalarTable.COLLECTION;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<FieldType> field4() {
+    return metaScalarTable.TYPE;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<TableRefType> field3() {
-        return metaScalarTable.TABLE_REF;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public Field<String> field5() {
+    return metaScalarTable.IDENTIFIER;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<FieldType> field4() {
-        return metaScalarTable.TYPE;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String value1() {
+    return getDatabase();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Field<String> field5() {
-        return metaScalarTable.IDENTIFIER;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String value2() {
+    return getCollection();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value1() {
-        return getDatabase();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public TableRefTypeT value3() {
+    return getTableRef();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value2() {
-        return getCollection();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public FieldType value4() {
+    return getType();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public TableRefType value3() {
-        return getTableRef();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String value5() {
+    return getIdentifier();
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FieldType value4() {
-        return getType();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaScalarRecord<TableRefTypeT> value1(String value) {
+    setDatabase(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String value5() {
-        return getIdentifier();
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaScalarRecord<TableRefTypeT> value2(String value) {
+    setCollection(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaScalarRecord<TableRefType> value1(String value) {
-        setDatabase(value);
-        return this;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaScalarRecord<TableRefTypeT> value3(TableRefTypeT value) {
+    setTableRef(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaScalarRecord<TableRefType> value2(String value) {
-        setCollection(value);
-        return this;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaScalarRecord<TableRefTypeT> value4(FieldType value) {
+    setType(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaScalarRecord<TableRefType> value3(TableRefType value) {
-        setTableRef(value);
-        return this;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public MetaScalarRecord<TableRefTypeT> value5(String value) {
+    setIdentifier(value);
+    return this;
+  }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaScalarRecord<TableRefType> value4(FieldType value) {
-        setType(value);
-        return this;
-    }
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public abstract MetaScalarRecord<TableRefTypeT> values(String database, String collection,
+      TableRefTypeT tableRef, FieldType type, String identifier);
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MetaScalarRecord<TableRefType> value5(String value) {
-        setIdentifier(value);
-        return this;
-    }
+  public MetaScalarRecord<TableRefTypeT> values(String database, String collection, 
+      TableRef tableRef, FieldType type, String identifier) {
+    return values(database, collection, toTableRefType(tableRef), type, identifier);
+  }
 
-	/**
-	 * {@inheritDoc}
-	 */
-    @Override
-    public abstract MetaScalarRecord<TableRefType> values(String database, String collection, TableRefType tableRef, FieldType type, String identifier);
+  protected abstract TableRefTypeT toTableRefType(TableRef tableRef);
 
-    public MetaScalarRecord<TableRefType> values(String database, String collection, TableRef tableRef, FieldType type, String identifier) {
-        return values(database, collection, toTableRefType(tableRef), type, identifier);
-    }
-    
-    protected abstract TableRefType toTableRefType(TableRef tableRef);
-    
-    public abstract TableRef getTableRefValue(TableRefFactory tableRefFactory);
+  public abstract TableRef getTableRefValue(TableRefFactory tableRefFactory);
 
-    // -------------------------------------------------------------------------
-    // Constructors
-    // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Constructors
+  // -------------------------------------------------------------------------
+  private final MetaScalarTable<TableRefTypeT, MetaScalarRecord<TableRefTypeT>> metaScalarTable;
 
-    private final MetaScalarTable<TableRefType, MetaScalarRecord<TableRefType>> metaScalarTable;
-    
-    /**
-     * Create a detached MetaScalarRecord
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public MetaScalarRecord(MetaScalarTable metaScalarTable) {
-        super(metaScalarTable);
-        
-        this.metaScalarTable = metaScalarTable;
-    }
+  /**
+   * Create a detached MetaScalarRecord
+   */
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public MetaScalarRecord(MetaScalarTable metaScalarTable) {
+    super(metaScalarTable);
+
+    this.metaScalarTable = metaScalarTable;
+  }
 }

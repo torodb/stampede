@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl;
 
 /**
@@ -22,24 +23,23 @@ package com.torodb.mongodb.repl;
  */
 public enum ReplCoordinatorState {
 
-    /**
-     * The replication coordinator is not started yet.
-     */
-    STARTUP,
-    /**
-     * Replication coordinator is on recovery mode.
-     */
-    RECOVERY,
-    /**
-     * Replication coordinator is on secondary mode.
-     */
-    SECONDARY,
-    /**
-     * Replication coordinator is not an active mode (it is initating or
-     * transiting to another state).
-     */
-    IDLE,
-    ERROR,
-    TERMINATED;
+  /**
+   * The replication coordinator is not started yet.
+   */
+  STARTUP,
+  /**
+   * Replication coordinator is on recovery mode.
+   */
+  RECOVERY,
+  /**
+   * Replication coordinator is on secondary mode.
+   */
+  SECONDARY,
+  /**
+   * Replication coordinator is not an active mode (it is initating or transiting to another state).
+   */
+  IDLE,
+  ERROR,
+  TERMINATED;
 
 }

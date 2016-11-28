@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.topology;
 
 import com.eightkdata.mongowp.client.core.MongoConnection.RemoteCommandResponse;
@@ -22,13 +23,17 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatReply;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
  *
  */
 public interface HeartbeatNetworkHandler {
-    public CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> sendHeartbeat(RemoteCommandRequest<ReplSetHeartbeatArgument> req);
 
-    public CompletableFuture<RemoteCommandResponse<ReplicaSetConfig>> askForConfig(RemoteCommandRequest<Empty> req);
+  public CompletableFuture<RemoteCommandResponse<ReplSetHeartbeatReply>> sendHeartbeat(
+      RemoteCommandRequest<ReplSetHeartbeatArgument> req);
+
+  public CompletableFuture<RemoteCommandResponse<ReplicaSetConfig>> askForConfig(
+      RemoteCommandRequest<Empty> req);
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,39 +13,40 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
 import com.torodb.core.exceptions.user.UpdateException;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
 
 /**
  *
  */
 interface ResolvedCallback<R> {
-    
-    public <K> R objectReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key,
-            UpdatedToroDocumentBuilder child
-    ) throws UpdateException;
-    
-    public <K> R arrayReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key,
-            UpdatedToroDocumentArrayBuilder child
-    ) throws UpdateException;
-    
-    public <K> R valueReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key,
-            KVValue<?> child
-    ) throws UpdateException;
-    
-    public <K> R newElementReferenced(
-            BuilderCallback<K> parentBuilder, 
-            K key
-    ) throws UpdateException;
+
+  public <K> R objectReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      UpdatedToroDocumentBuilder child
+  ) throws UpdateException;
+
+  public <K> R arrayReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      UpdatedToroDocumentArrayBuilder child
+  ) throws UpdateException;
+
+  public <K> R valueReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      KvValue<?> child
+  ) throws UpdateException;
+
+  public <K> R newElementReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key
+  ) throws UpdateException;
 
 }

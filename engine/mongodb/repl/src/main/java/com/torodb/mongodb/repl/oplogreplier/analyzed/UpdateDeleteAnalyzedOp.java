@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,51 +13,52 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
 import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.KvValue;
 
 /**
  *
  */
 public class UpdateDeleteAnalyzedOp extends AbstractAnalyzedOp {
 
-    UpdateDeleteAnalyzedOp(KVValue<?> mongoDocId) {
-        super(mongoDocId, AnalyzedOpType.UPDATE_DELETE, null);
-    }
+  UpdateDeleteAnalyzedOp(KvValue<?> mongoDocId) {
+    super(mongoDocId, AnalyzedOpType.UPDATE_DELETE, null);
+  }
 
-    @Override
-    public AnalyzedOp andThenInsert(KVDocument doc) {
-        return new UpdateSetAnalyzedOp(getMongoDocId(), doc);
-    }
+  @Override
+  public AnalyzedOp andThenInsert(KvDocument doc) {
+    return new UpdateSetAnalyzedOp(getMongoDocId(), doc);
+  }
 
-    @Override
-    public AnalyzedOp andThenUpdateMod(UpdateOplogOperation op) {
-        return this;
-    }
+  @Override
+  public AnalyzedOp andThenUpdateMod(UpdateOplogOperation op) {
+    return this;
+  }
 
-    @Override
-    public AnalyzedOp andThenUpdateSet(UpdateOplogOperation op) {
-        return this;
-    }
+  @Override
+  public AnalyzedOp andThenUpdateSet(UpdateOplogOperation op) {
+    return this;
+  }
 
-    @Override
-    public AnalyzedOp andThenUpsertMod(UpdateOplogOperation op) {
-        return new UpdateSetAnalyzedOp(getMongoDocId(), createUpdateSetAsDocument(op));
-    }
+  @Override
+  public AnalyzedOp andThenUpsertMod(UpdateOplogOperation op) {
+    return new UpdateSetAnalyzedOp(getMongoDocId(), createUpdateSetAsDocument(op));
+  }
 
-    @Override
-    public AnalyzedOp andThenDelete(DeleteOplogOperation op) {
-        return this;
-    }
+  @Override
+  public AnalyzedOp andThenDelete(DeleteOplogOperation op) {
+    return this;
+  }
 
-    @Override
-    public String toString() {
-        return "u&d(" + getMongoDocId() + ')';
-    }
- }
+  @Override
+  public String toString() {
+    return "u&d(" + getMongoDocId() + ')';
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,24 +13,22 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.repl.commands.impl;
 
-import org.apache.logging.log4j.Logger;
+package com.torodb.mongodb.repl.commands.impl;
 
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
-public abstract  class ReplCommandImpl<Arg, Res> implements CommandImplementation<Arg, Res, SharedWriteTorodTransaction>{
+public abstract class ReplCommandImpl<A, R> 
+    implements CommandImplementation<A, R, SharedWriteTorodTransaction> {
 
-    protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
-        logger.warn(cmd.getCommandName() + " command execution failed. "
-                    + "Ignoring it", t);
-    }
+  protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
+    logger.warn(cmd.getCommandName() + " command execution failed. "
+        + "Ignoring it", t);
+  }
 
 }

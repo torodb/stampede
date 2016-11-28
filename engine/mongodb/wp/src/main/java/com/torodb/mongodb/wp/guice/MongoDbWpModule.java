@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB WP
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.wp.guice;
 
 import com.eightkdata.mongowp.bson.netty.NettyStringReader;
@@ -39,44 +40,44 @@ import com.torodb.mongodb.wp.TorodbSafeRequestProcessor;
  */
 public class MongoDbWpModule extends PrivateModule {
 
-    @Override
-    protected void configure() {
-        bind(NettyStringReader.class)
-                .to(PooledNettyStringReader.class)
-                .in(Singleton.class);
+  @Override
+  protected void configure() {
+    bind(NettyStringReader.class)
+        .to(PooledNettyStringReader.class)
+        .in(Singleton.class);
 
-        configureStringPool();
+    configureStringPool();
 
-        bind(RequestIdGenerator.class)
-                .to(DefaultRequestIdGenerator.class);
+    bind(RequestIdGenerator.class)
+        .to(DefaultRequestIdGenerator.class);
 
-        bind(ErrorHandler.class)
-                .to(ToroErrorHandler.class)
-                .in(Singleton.class);
-    }
+    bind(ErrorHandler.class)
+        .to(ToroErrorHandler.class)
+        .in(Singleton.class);
+  }
 
-    private void configureStringPool() {
-        bind(StringPool.class)
-//                .toInstance(new InternStringPool(
-//                        OnlyLikelyStringPoolPolicy.getInstance()
-//                                .or(new ShortStringPoolPolicy(5))
-//                ));
+  private void configureStringPool() {
+    bind(StringPool.class)
+        //                .toInstance(new InternStringPool(
+        //                        OnlyLikelyStringPoolPolicy.getInstance()
+        //                                .or(new ShortStringPoolPolicy(5))
+        //                ));
 
-//                .toInstance(new GuavaStringPool(
-//                        OnlyLikelyStringPoolPolicy.getInstance()
-//                                .or(new ShortStringPoolPolicy(5)),
-//                        CacheBuilder.newBuilder().maximumSize(100_000)
-//                ));
-                .toInstance(new WeakMapStringPool(
-                        OnlyLikelyStringPoolPolicy.getInstance()
-                                .or(new ShortStringPoolPolicy(5))
-                ));
-    }
+        //                .toInstance(new GuavaStringPool(
+        //                        OnlyLikelyStringPoolPolicy.getInstance()
+        //                                .or(new ShortStringPoolPolicy(5)),
+        //                        CacheBuilder.newBuilder().maximumSize(100_000)
+        //                ));
+        .toInstance(new WeakMapStringPool(
+            OnlyLikelyStringPoolPolicy.getInstance()
+                .or(new ShortStringPoolPolicy(5))
+        ));
+  }
 
-    @Provides
-    RequestProcessor createRequestProcessorAdaptor(TorodbSafeRequestProcessor tsrp, ErrorHandler errorHandler) {
-        return new RequestProcessorAdaptor<>(tsrp, errorHandler);
-    }
-
+  @Provides
+  RequestProcessor createRequestProcessorAdaptor(TorodbSafeRequestProcessor tsrp,
+      ErrorHandler errorHandler) {
+    return new RequestProcessorAdaptor<>(tsrp, errorHandler);
+  }
 
 }

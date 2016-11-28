@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,28 +13,29 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import javax.annotation.Nonnull;
 
 /**
- * Implementations of this interface represent the column that stores the scalar values contained
- * on an array.
+ * Implementations of this interface represent the column that stores the scalar values contained on
+ * an array.
  *
  * They are pretty simmilar to {@link MetaField metafields}, but MetaScalars do not have a name.
  */
 public interface MetaScalar {
 
-    @Nonnull
-    FieldType getType();
+  @Nonnull
+  FieldType getType();
 
-    @Nonnull
-    String getIdentifier();
+  @Nonnull
+  String getIdentifier();
 
-    public default String defautToString() {
-        return "field{type:" + getType() + ", id:" + getIdentifier() + '}';
-    }
+  public default String defautToString() {
+    return "field{type:" + getType() + ", id:" + getIdentifier() + '}';
+  }
 
 }

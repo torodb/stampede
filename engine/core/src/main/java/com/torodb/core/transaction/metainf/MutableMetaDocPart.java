@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,92 +13,96 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
+
+import com.torodb.core.annotations.DoNotChange;
+import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
 import java.util.stream.Stream;
-
-import org.jooq.lambda.tuple.Tuple2;
-
-import com.torodb.core.annotations.DoNotChange;
 
 /**
  *
  */
 public interface MutableMetaDocPart extends MetaDocPart {
 
-    @Override
-    public ImmutableMetaField getMetaFieldByNameAndType(String fieldName, FieldType type);
+  @Override
+  public ImmutableMetaField getMetaFieldByNameAndType(String fieldName, FieldType type);
 
-    @Override
-    public Stream<? extends ImmutableMetaField> streamMetaFieldByName(String fieldName);
+  @Override
+  public Stream<? extends ImmutableMetaField> streamMetaFieldByName(String fieldName);
 
-    @Override
-    public ImmutableMetaField getMetaFieldByIdentifier(String fieldId);
+  @Override
+  public ImmutableMetaField getMetaFieldByIdentifier(String fieldId);
 
-    @Override
-    public Stream<? extends ImmutableMetaField> streamFields();
+  @Override
+  public Stream<? extends ImmutableMetaField> streamFields();
 
-    @Override
-    public Stream<? extends MetaScalar> streamScalars();
-    
-    @Override
-    public abstract Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes();
+  @Override
+  public Stream<? extends MetaScalar> streamScalars();
 
-    /**
-     * Adds a new field to this table.
-     *
-     * @param name
-     * @param identifier
-     * @param type
-     * @return the new column
-     * @throws IllegalArgumentException if this table already contains a column with the same
-     *                                  {@link DbColumn#getIdentifier() id} or with the same pair
-     *                                  {@link DbColumn#getName() name} and
-     *                                  {@link DbColumn#getType() type}.
-     */
-    public abstract ImmutableMetaField addMetaField(String name, String identifier, FieldType type) throws IllegalArgumentException;
+  @Override
+  public abstract Stream<? extends MetaIdentifiedDocPartIndex> streamIndexes();
 
-    /**
-     *
-     * @return
-     * @throws IllegalArgumentException if this table already contains a scalar with the
-     *                                          same type or name
-     */
-    public abstract ImmutableMetaScalar addMetaScalar(String identifier, FieldType type) throws IllegalArgumentException;
+  /**
+   * Adds a new field to this table.
+   *
+   * @param name
+   * @param identifier
+   * @param type
+   * @return the new column
+   * @throws IllegalArgumentException if this table already contains a column with the same
+   *                                  {@link DbColumn#getIdentifier() id} or with the same pair
+   *                                  {@link DbColumn#getName() name} and
+   *                                  {@link DbColumn#getType() type}.
+   */
+  public abstract ImmutableMetaField addMetaField(String name, String identifier, FieldType type)
+      throws IllegalArgumentException;
 
-    @DoNotChange
-    public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
-    
-    public abstract ImmutableMetaField getAddedFieldByIdentifier(String identifier);
+  /**
+   *
+   * @return @throws IllegalArgumentException if this table already contains a scalar with the same
+   *         type or name
+   */
+  public abstract ImmutableMetaScalar addMetaScalar(String identifier, FieldType type) throws
+      IllegalArgumentException;
 
-    @DoNotChange
-    public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
+  @DoNotChange
+  public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
 
-    /**
-     * Add a non existent index to this doc part
-     * 
-     * @param unique
-     * @return
-     */
-    public abstract MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique);
+  public abstract ImmutableMetaField getAddedFieldByIdentifier(String identifier);
 
-    /**
-     * Remove an index from this doc part
-     * @param indexId
-     * @return
-     */
-    public boolean removeMetaDocPartIndexByIdentifier(String indexId);
-    
-    @DoNotChange
-    public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
-    
-    @DoNotChange
-    public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes();
+  @DoNotChange
+  public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
 
-    public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(MetaIndex missingIndex, List<String> identifiers, MetaField newField);
-    
-    public abstract ImmutableMetaDocPart immutableCopy();
+  /**
+   * Add a non existent index to this doc part
+   *
+   * @param unique
+   * @return
+   */
+  public abstract MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique);
+
+  /**
+   * Remove an index from this doc part
+   *
+   * @param indexId
+   * @return
+   */
+  public boolean removeMetaDocPartIndexByIdentifier(String indexId);
+
+  @DoNotChange
+  @SuppressWarnings("checkstyle:LineLength")
+  public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
+
+  @DoNotChange
+  public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes();
+
+  public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(
+      MetaIndex missingIndex, List<String> identifiers, MetaField newField);
+
+  public abstract ImmutableMetaDocPart immutableCopy();
 }

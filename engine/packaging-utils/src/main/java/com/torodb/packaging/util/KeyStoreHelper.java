@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.util;
 
-import com.torodb.packaging.config.model.protocol.mongo.SSL;
+import com.torodb.packaging.config.model.protocol.mongo.Ssl;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,21 +34,23 @@ import java.security.cert.CertificateException;
  */
 public class KeyStoreHelper {
 
-    private KeyStoreHelper() {}
+  private KeyStoreHelper() {
+  }
 
-    public static KeyStore getKeyStore(SSL ssl) throws FileNotFoundException, KeyStoreException, IOException,
-            NoSuchAlgorithmException, CertificateException {
-        try (InputStream is = new FileInputStream(ssl.getKeyStoreFile())) {
-            char[] storePassword = null;
-    
-            if (ssl.getKeyStorePassword() != null) {
-                storePassword = ssl.getKeyStorePassword().toCharArray();
-            }
-    
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-            ks.load(is, storePassword);
-            return ks;
-        }
+  public static KeyStore getKeyStore(Ssl ssl) throws FileNotFoundException, KeyStoreException,
+      IOException,
+      NoSuchAlgorithmException, CertificateException {
+    try (InputStream is = new FileInputStream(ssl.getKeyStoreFile())) {
+      char[] storePassword = null;
+
+      if (ssl.getKeyStorePassword() != null) {
+        storePassword = ssl.getKeyStorePassword().toCharArray();
+      }
+
+      KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+      ks.load(is, storePassword);
+      return ks;
     }
+  }
 
 }

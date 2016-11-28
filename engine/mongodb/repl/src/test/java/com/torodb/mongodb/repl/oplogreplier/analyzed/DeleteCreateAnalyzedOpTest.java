@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,68 +13,69 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
-import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
+import com.torodb.kvdocument.values.KvValue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 
 /**
  *
  */
-public class DeleteCreateAnalyzedOpTest extends AbstractAnalyzedOpTest<DeleteCreateAnalyzedOp>{
+public class DeleteCreateAnalyzedOpTest extends AbstractAnalyzedOpTest<DeleteCreateAnalyzedOp> {
 
-    private static final Logger LOGGER = LogManager.getLogger(DeleteCreateAnalyzedOpTest.class);
+  private static final Logger LOGGER = LogManager.getLogger(DeleteCreateAnalyzedOpTest.class);
 
-    @Override
-    DeleteCreateAnalyzedOp getAnalyzedOp(KVValue<?> mongoDocId) {
-        return new DeleteCreateAnalyzedOp(mongoDocId, DefaultBsonValues.newDocument("_id", MongoWPConverter.translate(mongoDocId)));
-    }
+  @Override
+  DeleteCreateAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {
+    return new DeleteCreateAnalyzedOp(mongoDocId, DefaultBsonValues.newDocument("_id",
+        MongoWpConverter.translate(mongoDocId)));
+  }
 
-    @Override
-    Logger getLogger() {
-        return LOGGER;
-    }
+  @Override
+  Logger getLogger() {
+    return LOGGER;
+  }
 
-    //TODO: Callback checks can be improved
-    @Override
-    void andThenInsertTest() {
-        andThenInsert(this::emptyConsumer3,this::emptyBiConsumer);
-    }
+  //TODO: Callback checks can be improved
+  @Override
+  void andThenInsertTest() {
+    andThenInsert(this::emptyConsumer3, this::emptyBiConsumer);
+  }
 
-    //TODO: Callback checks can be improved
-    @Override
-    void andThenUpdateModTest() {
-        andThenUpdateMod(this::emptyConsumer3,this::emptyBiConsumer);
-    }
+  //TODO: Callback checks can be improved
+  @Override
+  void andThenUpdateModTest() {
+    andThenUpdateMod(this::emptyConsumer3, this::emptyBiConsumer);
+  }
 
-    //TODO: Callback checks can be improved
-    @Override
-    void andThenUpdateSetTest() {
-        andThenUpdateSet(this::emptyConsumer3,this::emptyBiConsumer);
-    }
+  //TODO: Callback checks can be improved
+  @Override
+  void andThenUpdateSetTest() {
+    andThenUpdateSet(this::emptyConsumer3, this::emptyBiConsumer);
+  }
 
-    //TODO: Callback checks can be improved
-    @Override
-    void andThenUpsertModTest() {
-        andThenUpsertMod(this::emptyConsumer3,this::emptyBiConsumer);
-    }
+  //TODO: Callback checks can be improved
+  @Override
+  void andThenUpsertModTest() {
+    andThenUpsertMod(this::emptyConsumer3, this::emptyBiConsumer);
+  }
 
-    //TODO: Callback checks can be improved
-    @Override
-    void andThenUpsertSetTest() {
-        andThenUpsertSet(this::emptyConsumer3,this::emptyBiConsumer);
-    }
+  //TODO: Callback checks can be improved
+  @Override
+  void andThenUpsertSetTest() {
+    andThenUpsertSet(this::emptyConsumer3, this::emptyBiConsumer);
+  }
 
-    //TODO: Callback checks can be improved
-    @Override
-    void andThenDeleteTest() {
-        andThenDelete(this::emptyConsumer3,this::emptyBiConsumer);
-    }
+  //TODO: Callback checks can be improved
+  @Override
+  void andThenDeleteTest() {
+    andThenDelete(this::emptyConsumer3, this::emptyBiConsumer);
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
@@ -29,65 +30,69 @@ import org.apache.logging.log4j.Logger;
  *
  */
 abstract class MongodTransactionImpl implements MongodTransaction {
-    private static final Logger LOGGER = LogManager.getLogger(MongodTransactionImpl.class);
 
-    private final MongodConnection connection;
-    private Request currentRequest;
-    private boolean closed = false;
+  private static final Logger LOGGER = LogManager.getLogger(MongodTransactionImpl.class);
 
-    MongodTransactionImpl(MongodConnection connection) {
-        this.connection = connection;
+  private final MongodConnection connection;
+  private Request currentRequest;
+  private boolean closed = false;
+
+  MongodTransactionImpl(MongodConnection connection) {
+    this.connection = connection;
+  }
+
+  protected abstract <A, R> Status<R> executeProtected(Request req,
+      Command<? super A, ? super R> command, A arg);
+
+  @Override
+  public MongodConnection getConnection() {
+    return connection;
+  }
+
+  @Override
+  public <A, R> Status<R> execute(Request req,
+      Command<? super A, ? super R> command, A arg) throws RollbackException {
+    Preconditions.checkState(currentRequest == null,
+        "Another request is currently under execution. Request is " + currentRequest);
+    this.currentRequest = req;
+    try {
+      Status<R> status = executeProtected(req, command, arg);
+      return status;
+    } finally {
+      this.currentRequest = null;
     }
+  }
 
-    protected abstract <Arg, Result> Status<Result> executeProtected(Request req, Command<? super Arg, ? super Result> command, Arg arg);
+  @Override
+  public Request getCurrentRequest() {
+    return currentRequest;
+  }
 
-    @Override
-    public MongodConnection getConnection() {
-        return connection;
+  @Override
+  public void rollback() {
+    getTorodTransaction().rollback();
+  }
+
+  @Override
+  public void close() {
+    if (!closed) {
+      closed = true;
+      getTorodTransaction().close();
+      connection.onTransactionClosed(this);
     }
+  }
 
-    @Override
-    public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg) throws RollbackException {
-        Preconditions.checkState(currentRequest == null, "Another request is currently under execution. Request is " + currentRequest);
-        this.currentRequest = req;
-        try {
-            Status<Result> status = executeProtected(req, command, arg);
-            return status;
-        } finally {
-            this.currentRequest = null;
-        }
-    }
+  @Override
+  public boolean isClosed() {
+    return closed;
+  }
 
-    @Override
-    public Request getCurrentRequest() {
-        return currentRequest;
+  @Override
+  protected void finalize() throws Throwable {
+    if (!closed) {
+      LOGGER.warn(this.getClass() + " finalized without being closed");
+      close();
     }
-
-    @Override
-    public void rollback() {
-        getTorodTransaction().rollback();
-    }
-
-    @Override
-    public void close() {
-        if (!closed) {
-            closed = true;
-            getTorodTransaction().close();
-            connection.onTransactionClosed(this);
-        }
-    }
-
-    @Override
-    public boolean isClosed() {
-        return closed;
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        if (!closed) {
-            LOGGER.warn(this.getClass() + " finalized without being closed");
-            close();
-        }
-    }
+  }
 
 }

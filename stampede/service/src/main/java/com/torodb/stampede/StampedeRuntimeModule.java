@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Stampede service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.stampede;
 
-import javax.inject.Singleton;
+package com.torodb.stampede;
 
 import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
@@ -30,40 +29,44 @@ import com.torodb.torod.TorodBundle;
 import com.torodb.torod.TorodBundleFactory;
 import com.torodb.torod.guice.SqlTorodModule;
 
+import javax.inject.Singleton;
+
 /**
  *
  */
 public class StampedeRuntimeModule extends PrivateModule {
 
-    private final BackendBundle backend;
-    private final StampedeService stampedeService;
-    private final ConsistencyHandler consistencyHandler;
+  private final BackendBundle backend;
+  private final StampedeService stampedeService;
+  private final ConsistencyHandler consistencyHandler;
 
-    public StampedeRuntimeModule(BackendBundle backend,
-            StampedeService stampedeService,
-            ConsistencyHandler consistencyHandler) {
-        this.backend = backend;
-        this.stampedeService = stampedeService;
-        this.consistencyHandler = consistencyHandler;
-    }
+  public StampedeRuntimeModule(BackendBundle backend,
+      StampedeService stampedeService,
+      ConsistencyHandler consistencyHandler) {
+    this.backend = backend;
+    this.stampedeService = stampedeService;
+    this.consistencyHandler = consistencyHandler;
+  }
 
-    @Override
-    protected void configure() {
-        binder().requireExplicitBindings();
-        bind(ConsistencyHandler.class)
-                .toInstance(consistencyHandler);
-        expose(ConsistencyHandler.class);
-        bind(BackendService.class)
-                .toInstance(backend.getBackendService());
-        expose(BackendService.class);
-        
-        install(new D2RModule());
-        install(new SqlTorodModule());
-    }
+  @Override
+  protected void configure() {
+    binder().requireExplicitBindings();
+    bind(ConsistencyHandler.class)
+        .toInstance(consistencyHandler);
+    expose(ConsistencyHandler.class);
+    bind(BackendService.class)
+        .toInstance(backend.getBackendService());
+    expose(BackendService.class);
 
-    @Provides @Singleton @Exposed
-    TorodBundle createTorodBundle(TorodBundleFactory factory) {
-        return factory.createBundle(stampedeService, backend);
-    }
+    install(new D2RModule());
+    install(new SqlTorodModule());
+  }
+
+  @Provides
+  @Singleton
+  @Exposed
+  TorodBundle createTorodBundle(TorodBundleFactory factory) {
+    return factory.createBundle(stampedeService, backend);
+  }
 
 }

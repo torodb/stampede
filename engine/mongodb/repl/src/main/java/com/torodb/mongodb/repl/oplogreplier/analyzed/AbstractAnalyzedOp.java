@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,18 +13,21 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
-import com.torodb.kvdocument.conversion.mongowp.MongoWPConverter;
-import com.torodb.kvdocument.values.KVDocument;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
+import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.KvValue;
+
 import java.util.function.Function;
+
 import javax.annotation.Nullable;
 
 /**
@@ -32,81 +35,83 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractAnalyzedOp extends AnalyzedOp {
 
-    private final KVValue<?> mongoDocId;
-    private final AnalyzedOpType type;
-    @Nullable
-    private final Function<KVDocument, KVDocument> calculateFun;
+  private final KvValue<?> mongoDocId;
+  private final AnalyzedOpType type;
+  @Nullable
+  private final Function<KvDocument, KvDocument> calculateFun;
 
-    public AbstractAnalyzedOp(KVValue<?> mongoDocId, AnalyzedOpType type,
-            @Nullable Function<KVDocument, KVDocument> calculateFun) {
-        this.mongoDocId = mongoDocId;
-        this.type = type;
-        this.calculateFun = calculateFun;
+  public AbstractAnalyzedOp(KvValue<?> mongoDocId, AnalyzedOpType type,
+      @Nullable Function<KvDocument, KvDocument> calculateFun) {
+    this.mongoDocId = mongoDocId;
+    this.type = type;
+    this.calculateFun = calculateFun;
+  }
+
+  abstract AnalyzedOp andThenInsert(KvDocument doc);
+
+  @Override
+  AnalyzedOp andThenInsert(InsertOplogOperation op) {
+    return andThenInsert(MongoWpConverter.toEagerDocument(op.getDocToInsert()));
+  }
+
+  @Override
+  public abstract String toString();
+
+  @Override
+  AnalyzedOp andThenUpsertSet(UpdateOplogOperation op) {
+    return andThenInsert(UpdateActionsTool.applyAsUpsert(op));
+  }
+
+  @Override
+  public AnalyzedOpType getType() {
+    return type;
+  }
+
+  @Override
+  public KvValue<?> getMongoDocId() {
+    return mongoDocId;
+  }
+
+  @Override
+  public Status<?> getMismatchErrorMessage() throws UnsupportedOperationException {
+    if (!requiresMatch()) {
+      throw new UnsupportedOperationException();
     }
+    return Status.from(ErrorCode.OPERATION_FAILED);
+  }
 
-    abstract AnalyzedOp andThenInsert(KVDocument doc);
-
-    @Override
-    public abstract String toString();
-
-    @Override
-    AnalyzedOp andThenInsert(InsertOplogOperation op) {
-        return andThenInsert(MongoWPConverter.toEagerDocument(op.getDocToInsert()));
+  @Override
+  public KvDocument calculateDocToInsert(Function<AnalyzedOp, KvDocument> fetchedDocFun) {
+    if (calculateFun == null) {
+      return null;
     }
-
-    @Override
-    AnalyzedOp andThenUpsertSet(UpdateOplogOperation op) {
-        return andThenInsert(UpdateActionsTool.applyAsUpsert(op));
+    KvDocument fetchedDoc = null;
+    if (requiresFetch()) {
+      fetchedDoc = fetchedDocFun.apply(this);
     }
+    return calculateFun.apply(fetchedDoc);
+  }
 
-    @Override
-    public AnalyzedOpType getType() {
-        return type;
-    }
+  protected final Function<KvDocument, KvDocument> createUpdateSetAsDocument(
+      UpdateOplogOperation op) {
+    //This is more a warning than an upsertion. Remove if want to do fancy things
+    assert UpdateActionsTool.isSetModification(op);
 
-    @Override
-    public KVValue<?> getMongoDocId() {
-        return mongoDocId;
-    }
+    //A simple assertion to fail before the callback is called when an illegal update is recived
+    assert UpdateActionsTool.applyAsUpsert(op) != null;
 
-    @Override
-    public Status<?> getMismatchErrorMessage() throws UnsupportedOperationException {
-        if (!requiresMatch()) {
-            throw new UnsupportedOperationException();
-        }
-        return Status.from(ErrorCode.OPERATION_FAILED);
-    }
+    return (ignored) -> UpdateActionsTool.applyAsUpsert(op);
+  }
 
-    @Override
-    public KVDocument calculateDocToInsert(Function<AnalyzedOp, KVDocument> fetchedDocFun) {
-        if (calculateFun == null) {
-            return null;
-        }
-        KVDocument fetchedDoc = null;
-        if (requiresFetch()) {
-            fetchedDoc = fetchedDocFun.apply(this);
-        }
-        return calculateFun.apply(fetchedDoc);
-    }
+  protected final Function<KvDocument, KvDocument> createUpdateMergeChain(UpdateOplogOperation op) {
+    //A simple assertion to fail before the callback is called when an illegal update is recived
+    assert UpdateActionsTool.parseUpdateAction(op) != null;
 
-    protected final Function<KVDocument, KVDocument> createUpdateSetAsDocument(UpdateOplogOperation op) {
-        assert UpdateActionsTool.isSetModification(op); //This is more a warning than an upsertion. Remove if want to do fancy things
+    assert calculateFun != null;
 
-        //A simple assertion to fail before the callback is called when an illegal update is recived
-        assert UpdateActionsTool.applyAsUpsert(op) != null;
-
-        return (ignored) -> UpdateActionsTool.applyAsUpsert(op);
-    }
-
-    protected final Function<KVDocument, KVDocument> createUpdateMergeChain(UpdateOplogOperation op) {
-        //A simple assertion to fail before the callback is called when an illegal update is recived
-        assert UpdateActionsTool.parseUpdateAction(op) != null;
-
-        assert calculateFun != null;
-
-        return (fetch) -> UpdateActionsTool.applyModification(
-                calculateFun.apply(fetch),
-                UpdateActionsTool.parseUpdateAction(op)
-        );
-    }
+    return (fetch) -> UpdateActionsTool.applyModification(
+        calculateFun.apply(fetch),
+        UpdateActionsTool.parseUpdateAction(op)
+    );
+  }
 }

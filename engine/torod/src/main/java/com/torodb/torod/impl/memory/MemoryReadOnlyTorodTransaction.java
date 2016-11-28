@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,32 +13,34 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.impl.memory;
 
 import com.torodb.torod.ReadOnlyTorodTransaction;
-import com.torodb.torod.impl.memory.MemoryData.MDTransaction;
+import com.torodb.torod.impl.memory.MemoryData.MdTransaction;
 
 /**
  *
  */
-public class MemoryReadOnlyTorodTransaction extends MemoryTorodTransaction implements ReadOnlyTorodTransaction {
+public class MemoryReadOnlyTorodTransaction extends MemoryTorodTransaction implements
+    ReadOnlyTorodTransaction {
 
-    private final MemoryData.MDReadTransaction trans;
+  private final MemoryData.MdReadTransaction trans;
 
-    public MemoryReadOnlyTorodTransaction(MemoryTorodConnection connection) {
-        super(connection);
-        trans = connection.getServer().getData().openReadTransaction();
-    }
+  public MemoryReadOnlyTorodTransaction(MemoryTorodConnection connection) {
+    super(connection);
+    trans = connection.getServer().getData().openReadTransaction();
+  }
 
-    @Override
-    public void rollback() {
-    }
+  @Override
+  public void rollback() {
+  }
 
-    @Override
-    protected MDTransaction getTransaction() {
-        return trans;
-    }
+  @Override
+  protected MdTransaction getTransaction() {
+    return trans;
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Server service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.standalone;
 
-import javax.inject.Singleton;
+package com.torodb.standalone;
 
 import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
@@ -34,38 +33,42 @@ import com.torodb.torod.TorodBundle;
 import com.torodb.torod.TorodBundleFactory;
 import com.torodb.torod.guice.SqlTorodModule;
 
+import javax.inject.Singleton;
+
 /**
  *
  */
 public class ToroDbRuntimeModule extends PrivateModule {
 
-    private final BackendBundle backend;
-    private final Supervisor supervisor;
+  private final BackendBundle backend;
+  private final Supervisor supervisor;
 
-    public ToroDbRuntimeModule(BackendBundle backend,
-            Supervisor supervisor) {
-        this.backend = backend;
-        this.supervisor = supervisor;
-    }
+  public ToroDbRuntimeModule(BackendBundle backend,
+      Supervisor supervisor) {
+    this.backend = backend;
+    this.supervisor = supervisor;
+  }
 
-    @Override
-    protected void configure() {
-        binder().requireExplicitBindings();
-        bind(BackendService.class)
-                .toInstance(backend.getBackendService());
-        expose(BackendService.class);
-        
-        install(new D2RModule());
-        install(new SqlTorodModule());
-        install(new MongoLayerModule());
-        expose(MongodServer.class);
-        expose(TorodbCommandsLibrary.class);
-        expose(ObjectIdFactory.class);
-    }
+  @Override
+  protected void configure() {
+    binder().requireExplicitBindings();
+    bind(BackendService.class)
+        .toInstance(backend.getBackendService());
+    expose(BackendService.class);
 
-    @Provides @Singleton @Exposed
-    TorodBundle createTorodBundle(TorodBundleFactory factory) {
-        return factory.createBundle(supervisor, backend);
-    }
+    install(new D2RModule());
+    install(new SqlTorodModule());
+    install(new MongoLayerModule());
+    expose(MongodServer.class);
+    expose(TorodbCommandsLibrary.class);
+    expose(ObjectIdFactory.class);
+  }
+
+  @Provides
+  @Singleton
+  @Exposed
+  TorodBundle createTorodBundle(TorodBundleFactory factory) {
+    return factory.createBundle(supervisor, backend);
+  }
 
 }

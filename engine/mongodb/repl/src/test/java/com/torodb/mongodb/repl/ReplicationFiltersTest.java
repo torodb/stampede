@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl;
 
 import static org.junit.Assert.assertFalse;
@@ -31,6 +32,10 @@ import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
 import com.torodb.mongodb.repl.ReplicationFilters.IndexFieldPattern;
 import com.torodb.mongodb.repl.ReplicationFilters.IndexPattern;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.regex.Pattern;
 
 public class ReplicationFiltersTest {
 	

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -25,23 +26,23 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public interface TableRefFactory {
 
-    /**
-     * 
-     * @return
-     */
-    public TableRef createRoot();
+  /**
+   *
+   * @return
+   */
+  public TableRef createRoot();
 
-    /**
-     * 
-     * @param name
-     * @return
-     */
-    public TableRef createChild(TableRef parent, String name);
-    
-    /**
-     * 
-     * @param arrayDimension
-     * @return
-     */
-    public TableRef createChild(TableRef parent, int arrayDimension);
+  /**
+   *
+   * @param name
+   * @return
+   */
+  public TableRef createChild(TableRef parent, String name);
+
+  /**
+   *
+   * @param arrayDimension
+   * @return
+   */
+  public TableRef createChild(TableRef parent, int arrayDimension);
 }

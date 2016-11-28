@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,15 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.d2r;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
-
-import org.jooq.Converter;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.DataTypeProvider;
@@ -30,7 +25,7 @@ import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
 import com.torodb.backend.MetaDataReadInterface;
 import com.torodb.backend.SqlHelper;
-import com.torodb.backend.converters.jooq.DataTypeForKV;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaDocPartRecord;
 import com.torodb.core.d2r.DocPartResult;
@@ -38,166 +33,173 @@ import com.torodb.core.d2r.DocPartResultRow;
 import com.torodb.core.d2r.IllegalDocPartRowException;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
+import org.jooq.Converter;
 
-/**
- *
- */
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Collection;
+
 public class ResultSetDocPartResult implements DocPartResult {
 
-    private final MetaDataReadInterface metaDataReadInterface;
-    private final DataTypeProvider dataTypeProvider;
-    private final ErrorHandler errorHandler;
-    private final MetaDocPart metaDocPart;
-    private final ResultSet rs;
-    /**
-     * true iff {@link ResultSet#next() rs.next()} must be called before use the result set.
-     */
-    private boolean lastRowConsumed = true;
-    private boolean hasNext = false;
-    private final SqlHelper sqlHelper;
+  private final MetaDataReadInterface metaDataReadInterface;
+  private final DataTypeProvider dataTypeProvider;
+  private final ErrorHandler errorHandler;
+  private final MetaDocPart metaDocPart;
+  private final ResultSet rs;
+  /**
+   * true iff {@link ResultSet#next() rs.next()} must be called before use the result set.
+   */
+  private boolean lastRowConsumed = true;
+  private boolean hasNext = false;
+  private final SqlHelper sqlHelper;
 
-    public ResultSetDocPartResult(MetaDataReadInterface metaDataReadInterface,
-            DataTypeProvider dataTypeProvider, ErrorHandler errorHandler,
-            MetaDocPart metaDocPart, ResultSet rs, SqlHelper sqlHelper) {
-        this.metaDataReadInterface = metaDataReadInterface;
-        this.dataTypeProvider = dataTypeProvider;
-        this.errorHandler = errorHandler;
-        this.metaDocPart = metaDocPart;
-        this.rs = rs;
-        this.sqlHelper = sqlHelper;
+  public ResultSetDocPartResult(MetaDataReadInterface metaDataReadInterface,
+      DataTypeProvider dataTypeProvider, ErrorHandler errorHandler,
+      MetaDocPart metaDocPart, ResultSet rs, SqlHelper sqlHelper) {
+    this.metaDataReadInterface = metaDataReadInterface;
+    this.dataTypeProvider = dataTypeProvider;
+    this.errorHandler = errorHandler;
+    this.metaDocPart = metaDocPart;
+    this.rs = rs;
+    this.sqlHelper = sqlHelper;
+  }
+
+  @Override
+  public MetaDocPart getMetaDocPart() {
+    return metaDocPart;
+  }
+
+  @Override
+  public boolean hasNext() {
+    if (lastRowConsumed) {
+      lastRowConsumed = false;
+
+      try {
+        hasNext = rs.next();
+      } catch (SQLException sqlException) {
+        throw errorHandler.handleException(Context.FETCH, sqlException);
+      }
     }
+    return hasNext;
+  }
 
-    @Override
-    public MetaDocPart getMetaDocPart() {
-        return metaDocPart;
+  @Override
+  public DocPartResultRow next() {
+    Preconditions.checkState(hasNext());
+
+    ResultSetNewDocPartRow result = new ResultSetNewDocPartRow();
+    lastRowConsumed = true;
+
+    return result;
+  }
+
+  @Override
+  public void close() {
+    try {
+      rs.close();
+    } catch (SQLException ex) {
+      throw errorHandler.handleException(Context.FETCH, ex);
     }
+  }
 
-    @Override
-    public boolean hasNext() {
-        if (lastRowConsumed) {
-            lastRowConsumed = false;
+  private class ResultSetNewDocPartRow implements DocPartResultRow {
 
-            try {
-                hasNext = rs.next();
-            } catch (SQLException sqlException) {
-                throw errorHandler.handleException(Context.FETCH, sqlException);
-            }
-        }
-        return hasNext;
-    }
+    private final int did;
+    private final int rid;
+    private final int pid;
+    private final Integer seq;
+    private final int firstUserColumnIndex;
 
-    @Override
-    public DocPartResultRow next() {
-        Preconditions.checkState(hasNext());
+    public ResultSetNewDocPartRow() throws IllegalDocPartRowException {
+      Collection<InternalField<?>> internalFields = metaDataReadInterface
+          .getInternalFields(metaDocPart);
 
-        ResultSetNewDocPartRow result = new ResultSetNewDocPartRow();
-        lastRowConsumed = true;
+      Integer didTemp = null;
+      Integer pidTemp = null;
+      Integer ridTemp = null;
+      Integer seqTemp = null;
+      int columnIndex = 1;
+      MetaDocPartTable<Object, MetaDocPartRecord<Object>> metaDocPartTable = metaDataReadInterface
+          .getMetaDocPartTable();
 
-        return result;
-    }
-
-    @Override
-    public void close() {
+      for (InternalField<?> internalField : internalFields) {
         try {
-            rs.close();
-        } catch (SQLException ex) {
-            throw errorHandler.handleException(Context.FETCH, ex);
+          if (internalField.isDid()) {
+            didTemp = metaDocPartTable.DID.getValue(rs, columnIndex);
+          } else if (internalField.isRid()) {
+            ridTemp = metaDocPartTable.RID.getValue(rs, columnIndex);
+          } else if (internalField.isPid()) {
+            pidTemp = metaDocPartTable.PID.getValue(rs, columnIndex);
+          } else if (internalField.isSeq()) {
+            seqTemp = metaDocPartTable.SEQ.getValue(rs, columnIndex);
+          }
+        } catch (SQLException sqlException) {
+          throw errorHandler.handleException(Context.FETCH, sqlException);
         }
+        columnIndex++;
+
+        if (didTemp == null) {
+          throw new IllegalDocPartRowException(null, ridTemp, pidTemp, seqTemp,
+              "did was not found for doc part " + metaDocPart.getTableRef());
+        }
+
+        if (ridTemp == null) {
+          ridTemp = didTemp;
+        }
+
+        if (pidTemp == null) {
+          pidTemp = didTemp;
+        }
+      }
+
+      this.did = didTemp;
+      this.rid = ridTemp;
+      this.pid = pidTemp;
+      this.seq = seqTemp;
+      this.firstUserColumnIndex = columnIndex;
     }
 
-    private class ResultSetNewDocPartRow implements DocPartResultRow {
-
-        private final int did, rid, pid;
-        private final Integer seq;
-        private final int firstUserColumnIndex;
-
-        public ResultSetNewDocPartRow() throws IllegalDocPartRowException {
-            Collection<InternalField<?>> internalFields = metaDataReadInterface
-                    .getInternalFields(metaDocPart);
-
-            Integer _did = null;
-            Integer _pid = null;
-            Integer _rid = null;
-            Integer _seq = null;
-            int columnIndex = 1;
-            MetaDocPartTable<Object,MetaDocPartRecord<Object>> metaDocPartTable = metaDataReadInterface.getMetaDocPartTable();
-
-            for (InternalField<?> internalField : internalFields) {
-                try {
-                    if (internalField.isDid()) {
-                        _did = metaDocPartTable.DID.getValue(rs, columnIndex);
-                    } else if (internalField.isRid()) {
-                        _rid = metaDocPartTable.RID.getValue(rs, columnIndex);
-                    } else if (internalField.isPid()) {
-                        _pid = metaDocPartTable.PID.getValue(rs, columnIndex);
-                    } else if (internalField.isSeq()) {
-                        _seq = metaDocPartTable.SEQ.getValue(rs, columnIndex);
-                    }
-                } catch (SQLException sqlException) {
-                    throw errorHandler.handleException(Context.FETCH, sqlException);
-                }
-                columnIndex++;
-
-                if (_did == null) {
-                    throw new IllegalDocPartRowException(null, _rid, _pid, _seq,
-                            "did was not found for doc part " + metaDocPart.getTableRef());
-                }
-
-                if (_rid == null) {
-                    _rid = _did;
-                }
-
-                if (_pid == null) {
-                    _pid = _did;
-                }
-            }
-
-            this.did = _did;
-            this.rid = _rid;
-            this.pid = _pid;
-            this.seq = _seq;
-            this.firstUserColumnIndex = columnIndex;
-        }
-
-        @Override
-        public int getDid() {
-            return did;
-        }
-
-        @Override
-        public int getRid() {
-            return rid;
-        }
-
-        @Override
-        public int getPid() {
-            return pid;
-        }
-
-        @Override
-        public Integer getSeq() {
-            return seq;
-        }
-
-        @Override
-        public KVValue<?> getUserValue(int fieldIndex, FieldType fieldType) {
-            Object databaseValue;
-            try {
-                databaseValue = sqlHelper.getResultSetValue(fieldType, rs, fieldIndex + firstUserColumnIndex);
-            } catch (SQLException sqlException) {
-                throw errorHandler.handleException(Context.FETCH, sqlException);
-            }
-
-            if (databaseValue == null) {
-                return null;
-            }
-
-            DataTypeForKV<?> dataType = dataTypeProvider.getDataType(fieldType);
-            @SuppressWarnings("unchecked")
-            Converter<Object, KVValue<?>> converter = (Converter<Object, KVValue<?>>) dataType.getConverter();
-            return converter.from(databaseValue);
-        }
-
+    @Override
+    public int getDid() {
+      return did;
     }
+
+    @Override
+    public int getRid() {
+      return rid;
+    }
+
+    @Override
+    public int getPid() {
+      return pid;
+    }
+
+    @Override
+    public Integer getSeq() {
+      return seq;
+    }
+
+    @Override
+    public KvValue<?> getUserValue(int fieldIndex, FieldType fieldType) {
+      Object databaseValue;
+      try {
+        databaseValue = sqlHelper
+            .getResultSetValue(fieldType, rs, fieldIndex + firstUserColumnIndex);
+      } catch (SQLException sqlException) {
+        throw errorHandler.handleException(Context.FETCH, sqlException);
+      }
+
+      if (databaseValue == null) {
+        return null;
+      }
+
+      DataTypeForKv<?> dataType = dataTypeProvider.getDataType(fieldType);
+      @SuppressWarnings("unchecked")
+      Converter<Object, KvValue<?>> converter = (Converter<Object, KvValue<?>>) dataType
+          .getConverter();
+      return converter.from(databaseValue);
+    }
+
+  }
 }

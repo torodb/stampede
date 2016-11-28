@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,15 +13,22 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<Result, Argument> {
-    public Result visit(DatabaseNotFoundException userException, Argument arg);
-    public Result visit(CollectionNotFoundException userException, Argument arg);
-    public Result visit(IndexNotFoundException userException, Argument arg);
-    public Result visit(UnsupportedUniqueIndexException userException, Argument arg);
-    public Result visit(UpdateException userException, Argument arg);
-    public Result visit(UniqueIndexViolationException userException, Argument arg);
+public interface UserExceptionVisitor<R, A> {
+
+  public R visit(DatabaseNotFoundException userException, A arg);
+
+  public R visit(CollectionNotFoundException userException, A arg);
+
+  public R visit(IndexNotFoundException userException, A arg);
+
+  public R visit(UnsupportedUniqueIndexException userException, A arg);
+
+  public R visit(UpdateException userException, A arg);
+
+  public R visit(UniqueIndexViolationException userException, A arg);
 }

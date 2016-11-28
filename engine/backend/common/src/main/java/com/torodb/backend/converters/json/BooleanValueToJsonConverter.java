@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,34 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.json;
 
 import com.torodb.backend.converters.ValueConverter;
-import com.torodb.kvdocument.values.KVBoolean;
+import com.torodb.kvdocument.values.KvBoolean;
 
 /**
  *
  */
 public class BooleanValueToJsonConverter implements
-        ValueConverter<Boolean, KVBoolean> {
+    ValueConverter<Boolean, KvBoolean> {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public Class<? extends Boolean> getJsonClass() {
-        return Boolean.class;
-    }
+  @Override
+  public Class<? extends Boolean> getJsonClass() {
+    return Boolean.class;
+  }
 
-    @Override
-    public Class<? extends KVBoolean> getValueClass() {
-        return KVBoolean.class;
-    }
+  @Override
+  public Class<? extends KvBoolean> getValueClass() {
+    return KvBoolean.class;
+  }
 
-    @Override
-    public KVBoolean toValue(Boolean value) {
-        return KVBoolean.from(value);
-    }
-    
+  @Override
+  public KvBoolean toValue(Boolean value) {
+    return KvBoolean.from(value);
+  }
+
 }

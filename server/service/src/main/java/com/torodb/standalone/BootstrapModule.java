@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Server service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.standalone;
 
-import java.time.Clock;
+package com.torodb.standalone;
 
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
@@ -35,44 +34,46 @@ import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
 import com.torodb.standalone.config.model.Config;
 
+import java.time.Clock;
+
 /**
  *
  */
 class BootstrapModule extends AbstractModule {
 
-    private final Config config;
-    private final Clock clock;
-    
-    public BootstrapModule(Config config, Clock clock) {
-        this.config = config;
-        this.clock = clock;
-    }
+  private final Config config;
+  private final Clock clock;
 
-    @Override
-    protected void configure() {
-        binder().requireExplicitBindings();
-        install(new PackagingModule(clock));
-        install(new CoreModule());
-        install(new ExecutorServicesModule());
-        install(new ConcurrentModule());
-        install(new MetainfModule());
-        install(new MetricsModule(config.getGeneric()));
+  public BootstrapModule(Config config, Clock clock) {
+    this.config = config;
+    this.clock = clock;
+  }
 
-        install(new BackendMultiImplementationModule(
-                config.getProtocol().getMongo(),
-                config.getGeneric(),
-                config.getBackend().getBackendImplementation(),
-                new BackendPostgresImplementationModule(),
-                new BackendDerbyImplementationModule()
-        ));
-        
-        bind(Config.class)
-                .toInstance(config);
-        bind(MongodServerConfig.class)
-                .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)));
-        bind(BuildProperties.class)
-                .to(DefaultBuildProperties.class)
-                .asEagerSingleton();
-    }
-    
+  @Override
+  protected void configure() {
+    binder().requireExplicitBindings();
+    install(new PackagingModule(clock));
+    install(new CoreModule());
+    install(new ExecutorServicesModule());
+    install(new ConcurrentModule());
+    install(new MetainfModule());
+    install(new MetricsModule(config.getGeneric()));
+
+    install(new BackendMultiImplementationModule(
+        config.getProtocol().getMongo(),
+        config.getGeneric(),
+        config.getBackend().getBackendImplementation(),
+        new BackendPostgresImplementationModule(),
+        new BackendDerbyImplementationModule()
+    ));
+
+    bind(Config.class)
+        .toInstance(config);
+    bind(MongodServerConfig.class)
+        .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)));
+    bind(BuildProperties.class)
+        .to(DefaultBuildProperties.class)
+        .asEagerSingleton();
+  }
+
 }

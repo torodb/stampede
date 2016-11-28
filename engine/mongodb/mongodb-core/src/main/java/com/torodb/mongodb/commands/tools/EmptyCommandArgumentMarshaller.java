@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.tools;
 
 import com.eightkdata.mongowp.MongoConstants;
@@ -28,12 +29,12 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
  */
 public class EmptyCommandArgumentMarshaller {
 
-    private EmptyCommandArgumentMarshaller() {
+  private EmptyCommandArgumentMarshaller() {
 
-    }
+  }
 
-    public static BsonDocument marshallEmptyArgument(Command<Empty, ?> command) {
-        return DefaultBsonValues.newDocument(command.getCommandName(), MongoConstants.BSON_OK);
-    }
+  public static BsonDocument marshallEmptyArgument(Command<Empty, ?> command) {
+    return DefaultBsonValues.newDocument(command.getCommandName(), MongoConstants.BSON_OK);
+  }
 
 }

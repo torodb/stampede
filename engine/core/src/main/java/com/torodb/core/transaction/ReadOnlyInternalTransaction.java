@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction;
 
 import com.torodb.core.backend.BackendConnection;
@@ -28,39 +29,41 @@ import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
  */
 public class ReadOnlyInternalTransaction implements InternalTransaction {
 
-    private final ReadOnlyBackendTransaction backendTransaction;
-    private final ImmutableMetaSnapshot metaSnapshot;
+  private final ReadOnlyBackendTransaction backendTransaction;
+  private final ImmutableMetaSnapshot metaSnapshot;
 
-    private ReadOnlyInternalTransaction(ImmutableMetaSnapshot metaSnapshot, ReadOnlyBackendTransaction backendTransaction) {
-        this.metaSnapshot = metaSnapshot;
-        this.backendTransaction = backendTransaction;
+  private ReadOnlyInternalTransaction(ImmutableMetaSnapshot metaSnapshot,
+      ReadOnlyBackendTransaction backendTransaction) {
+    this.metaSnapshot = metaSnapshot;
+    this.backendTransaction = backendTransaction;
+  }
+
+  static ReadOnlyInternalTransaction createReadOnlyTransaction(BackendConnection backendConnection,
+      MetainfoRepository metainfoRepository) {
+    try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
+      ImmutableMetaSnapshot snapshot = snapshotStage.createImmutableSnapshot();
+
+      return new ReadOnlyInternalTransaction(snapshot, backendConnection.openReadOnlyTransaction());
     }
+  }
 
-    static ReadOnlyInternalTransaction createReadOnlyTransaction(BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
-        try (SnapshotStage snapshotStage = metainfoRepository.startSnapshotStage()) {
-            ImmutableMetaSnapshot snapshot = snapshotStage.createImmutableSnapshot();
+  @Override
+  public ReadOnlyBackendTransaction getBackendTransaction() {
+    return backendTransaction;
+  }
 
-            return new ReadOnlyInternalTransaction(snapshot, backendConnection.openReadOnlyTransaction());
-        }
-    }
+  @Override
+  public ImmutableMetaSnapshot getMetaSnapshot() {
+    return metaSnapshot;
+  }
 
-    @Override
-    public ReadOnlyBackendTransaction getBackendTransaction() {
-        return backendTransaction;
-    }
+  @Override
+  public void rollback() {
+  }
 
-    @Override
-    public ImmutableMetaSnapshot getMetaSnapshot() {
-        return metaSnapshot;
-    }
-
-    @Override
-    public void rollback() {
-    }
-
-    @Override
-    public void close() {
-        backendTransaction.close();
-    }
+  @Override
+  public void close() {
+    backendTransaction.close();
+  }
 
 }

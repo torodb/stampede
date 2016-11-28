@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,142 +13,147 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.language.update;
 
-import java.util.Collection;
+package com.torodb.mongodb.language.update;
 
 import com.torodb.core.exceptions.user.UpdateException;
 import com.torodb.core.language.AttributeReference;
-import com.torodb.kvdocument.values.KVDouble;
-import com.torodb.kvdocument.values.KVInteger;
-import com.torodb.kvdocument.values.KVLong;
-import com.torodb.kvdocument.values.KVNumeric;
-import com.torodb.kvdocument.values.KVValue;
-import com.torodb.kvdocument.values.KVValueAdaptor;
+import com.torodb.kvdocument.values.KvDouble;
+import com.torodb.kvdocument.values.KvInteger;
+import com.torodb.kvdocument.values.KvLong;
+import com.torodb.kvdocument.values.KvNumeric;
+import com.torodb.kvdocument.values.KvValue;
+import com.torodb.kvdocument.values.KvValueAdaptor;
+
+import java.util.Collection;
 
 /**
  *
  */
-public class MultiplyUpdateAction extends SingleFieldUpdateAction implements ResolvedCallback<Boolean> {
+public class MultiplyUpdateAction extends SingleFieldUpdateAction implements
+    ResolvedCallback<Boolean> {
 
-    private static final Multiplicator MULTIPLICATOR = new Multiplicator();
-    
-    private final KVNumeric<?> multiplier;
+  private static final Multiplicator MULTIPLICATOR = new Multiplicator();
 
-    public MultiplyUpdateAction(Collection<AttributeReference> modifiedField, KVNumeric<?> multiplier) {
-        super(modifiedField);
-        this.multiplier = multiplier;
+  private final KvNumeric<?> multiplier;
+
+  public MultiplyUpdateAction(
+      Collection<AttributeReference> modifiedField,
+      KvNumeric<?> multiplier) {
+    super(modifiedField);
+    this.multiplier = multiplier;
+  }
+
+  public KvNumeric<?> getMultiplier() {
+    return multiplier;
+  }
+
+  @Override
+  public void apply(UpdatedToroDocumentBuilder builder) throws UpdateException {
+    for (AttributeReference key : getModifiedField()) {
+      if (multiply(new ObjectBuilderCallback(builder), key, multiplier)) {
+        builder.setUpdated();
+        return;
+      }
     }
+  }
 
-    public KVNumeric<?> getMultiplier() {
-        return multiplier;
+  <K> boolean multiply(
+      BuilderCallback<K> builder,
+      AttributeReference key,
+      KvNumeric<?> multiplier
+  ) throws UpdateException {
+    Boolean result = AttributeReferenceToBuilderCallback.resolve(
+        builder,
+        key.getKeys(),
+        true,
+        this
+    );
+    if (result == null) {
+      return false;
+    }
+    return result;
+  }
+
+  @Override
+  public <K> Boolean objectReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      UpdatedToroDocumentBuilder child
+  ) throws UpdateException {
+    throw new UpdateException(
+        "Cannot multiply a value of a non-numeric type. "
+        + parentBuilder + " has the field '" + key + "' of "
+        + "non-numeric type object");
+  }
+
+  @Override
+  public <K> Boolean arrayReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      UpdatedToroDocumentArrayBuilder child
+  ) throws UpdateException {
+    throw new UpdateException(
+        "Cannot multiply a value of a non-numeric type. "
+        + parentBuilder + " has the field '" + key + "' of "
+        + "non-numeric type array");
+  }
+
+  @Override
+  public <K> Boolean valueReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key,
+      KvValue<?> child
+  ) throws UpdateException {
+    if (!(child instanceof KvNumeric)) {
+      throw new UpdateException(
+          "Cannot increment a value of a non-numeric type. "
+          + parentBuilder + " has the field '" + key + "' of "
+          + "non-numeric type " + child.getType());
+    }
+    KvNumeric<?> numericChild = (KvNumeric<?>) child;
+    parentBuilder.setValue(key, numericChild.accept(MULTIPLICATOR, multiplier));
+    return true;
+  }
+
+  @Override
+  public <K> Boolean newElementReferenced(
+      BuilderCallback<K> parentBuilder,
+      K key
+  ) {
+    parentBuilder.setValue(key, multiplier.accept(MULTIPLICATOR, KvInteger.of(0)));
+    return true;
+  }
+
+  @Override
+  public <R, A> R accept(UpdateActionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
+
+  private static class Multiplicator extends KvValueAdaptor<KvNumeric<?>, KvNumeric<?>> {
+
+    @Override
+    public KvNumeric<?> visit(KvDouble value, KvNumeric<?> arg) {
+      return KvDouble.of(value.doubleValue() * arg.doubleValue());
     }
 
     @Override
-    public void apply(UpdatedToroDocumentBuilder builder) throws UpdateException {
-        for (AttributeReference key : getModifiedField()) {
-            if (multiply(new ObjectBuilderCallback(builder), key, multiplier)) {
-                builder.setUpdated();
-                return;
-            }
-        }
-    }
-    
-    <K> boolean multiply(
-            BuilderCallback<K> builder,
-            AttributeReference key,
-            KVNumeric<?> multiplier
-    ) throws UpdateException {
-        Boolean result = AttributeReferenceToBuilderCallback.resolve(
-                builder,
-                key.getKeys(),
-                true,
-                this
-        );
-        if (result == null) {
-            return false;
-        }
-        return result;
+    public KvNumeric<?> visit(KvLong value, KvNumeric<?> arg) {
+      return KvDouble.of(value.doubleValue() * arg.doubleValue());
     }
 
     @Override
-    public <K> Boolean objectReferenced(
-            BuilderCallback<K> parentBuilder,
-            K key,
-            UpdatedToroDocumentBuilder child
-    ) throws UpdateException {
-        throw new UpdateException(
-                "Cannot multiply a value of a non-numeric type. "
-                + parentBuilder + " has the field '" + key + "' of "
-                + "non-numeric type object");
+    public KvNumeric<?> visit(KvInteger value, KvNumeric<?> arg) {
+      return KvDouble.of(value.doubleValue() * arg.doubleValue());
     }
 
     @Override
-    public <K> Boolean arrayReferenced(
-            BuilderCallback<K> parentBuilder,
-            K key,
-            UpdatedToroDocumentArrayBuilder child
-    ) throws UpdateException {
-        throw new UpdateException(
-                "Cannot multiply a value of a non-numeric type. "
-                + parentBuilder + " has the field '" + key + "' of "
-                + "non-numeric type array");
+    public KvNumeric<?> defaultCase(KvValue<?> value, KvNumeric<?> arg) {
+      throw new AssertionError("Trying to multiply a value of type " + value.getType()
+          + " which is not a number");
     }
 
-    @Override
-    public <K> Boolean valueReferenced(
-            BuilderCallback<K> parentBuilder,
-            K key,
-            KVValue<?> child
-    ) throws UpdateException {
-        if (!(child instanceof KVNumeric)) {
-            throw new UpdateException(
-                    "Cannot increment a value of a non-numeric type. "
-                    + parentBuilder + " has the field '" + key + "' of "
-                    + "non-numeric type " + child.getType());
-        }
-        KVNumeric<?> numericChild = (KVNumeric<?>) child;
-        parentBuilder.setValue(key, numericChild.accept(MULTIPLICATOR, multiplier));
-        return true;
-    }
-
-    @Override
-    public <K> Boolean newElementReferenced(
-            BuilderCallback<K> parentBuilder,
-            K key
-    ) {
-        parentBuilder.setValue(key, multiplier.accept(MULTIPLICATOR, KVInteger.of(0)));
-        return true;
-    }
-
-    @Override
-    public <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
-
-    private static class Multiplicator extends KVValueAdaptor<KVNumeric<?>, KVNumeric<?>> {
-
-        @Override
-        public KVNumeric<?> visit(KVDouble value, KVNumeric<?> arg) {
-            return KVDouble.of(value.doubleValue() * arg.doubleValue());
-        }
-
-        @Override
-        public KVNumeric<?> visit(KVLong value, KVNumeric<?> arg) {
-            return KVDouble.of(value.doubleValue() * arg.doubleValue());
-        }
-
-        @Override
-        public KVNumeric<?> visit(KVInteger value, KVNumeric<?> arg) {
-            return KVDouble.of(value.doubleValue() * arg.doubleValue());
-        }
-
-        @Override
-        public KVNumeric<?> defaultCase(KVValue<?> value, KVNumeric<?> arg) {
-            throw new AssertionError("Trying to multiply a value of type " + value.getType() + " which is not a number");
-        }
-
-    }
+  }
 }

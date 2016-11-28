@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
+
+import com.torodb.core.TableRef;
+import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -23,47 +27,44 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.jooq.lambda.tuple.Tuple2;
-
-import com.torodb.core.TableRef;
-
 /**
  */
 public interface MetaCollection {
 
-    /**
-     * The name of the collection on the doc model.
-     * @return
-     */
-    @Nonnull
-    public abstract String getName();
+  /**
+   * The name of the collection on the doc model.
+   *
+   * @return
+   */
+  @Nonnull
+  public abstract String getName();
 
-    /**
-     * The identifier of the collection on the SQL model.
-     * @return
-     */
-    @Nonnull
-    public abstract String getIdentifier();
+  /**
+   * The identifier of the collection on the SQL model.
+   *
+   * @return
+   */
+  @Nonnull
+  public abstract String getIdentifier();
 
-    public abstract Stream<? extends MetaDocPart> streamContainedMetaDocParts();
+  public abstract Stream<? extends MetaDocPart> streamContainedMetaDocParts();
 
-    @Nullable
-    public abstract MetaDocPart getMetaDocPartByIdentifier(String docPartId);
+  @Nullable
+  public abstract MetaDocPart getMetaDocPartByIdentifier(String docPartId);
 
-    @Nullable
-    public abstract MetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
+  @Nullable
+  public abstract MetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
 
+  public Stream<? extends MetaIndex> streamContainedMetaIndexes();
 
-    public Stream<? extends MetaIndex> streamContainedMetaIndexes();
+  @Nullable
+  public MetaIndex getMetaIndexByName(String indexName);
 
-    @Nullable
-    public MetaIndex getMetaIndexByName(String indexName);
+  public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
+      MutableMetaDocPart docPart, MetaField newField);
 
-    public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
-            MutableMetaDocPart docPart, MetaField newField);
-    
-    public default String defautToString() {
-        return "col{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
-    }
-    
+  public default String defautToString() {
+    return "col{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
+  }
+
 }

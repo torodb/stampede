@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction;
 
 import com.torodb.core.backend.BackendTransaction;
@@ -25,13 +26,13 @@ import com.torodb.core.transaction.metainf.MetaSnapshot;
  */
 public interface InternalTransaction extends AutoCloseable {
 
-    public MetaSnapshot getMetaSnapshot();
+  public MetaSnapshot getMetaSnapshot();
 
-    public BackendTransaction getBackendTransaction();
+  public BackendTransaction getBackendTransaction();
 
-    public void rollback();
+  public void rollback();
 
-    @Override
-    public void close();
+  @Override
+  public void close();
 
 }

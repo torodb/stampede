@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,16 +13,18 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.signatures.internal;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.bson.BsonTimestamp;
+import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.pojos.MemberState;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
-import com.google.common.net.HostAndPort;
+
 import java.time.Duration;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -32,50 +34,49 @@ import java.util.OptionalInt;
  */
 public interface ReplSetHeartbeatReply {
 
-    public ErrorCode getErrorCode();
+  public ErrorCode getErrorCode();
 
-    public Optional<String> getErrMsg();
+  public Optional<String> getErrMsg();
 
-    public Optional<BsonTimestamp> getElectionTime();
+  public Optional<BsonTimestamp> getElectionTime();
 
-    public Optional<Duration> getTime();
+  public Optional<Duration> getTime();
 
-    public Optional<OpTime> getAppliedOpTime();
+  public Optional<OpTime> getAppliedOpTime();
 
-    public Optional<OpTime> getDurableOptime();
+  public Optional<OpTime> getDurableOptime();
 
-    public Optional<Boolean> getElectable();
+  public Optional<Boolean> getElectable();
 
-    public Optional<Boolean> getHasData();
+  public Optional<Boolean> getHasData();
 
-    public boolean isMismatch();
+  public boolean isMismatch();
 
-    public boolean isStateDisagreement();
+  public boolean isStateDisagreement();
 
-    public Optional<MemberState> getState();
+  public Optional<MemberState> getState();
 
-    public long getConfigVersion();
+  public long getConfigVersion();
 
-    public Optional<String> getSetName();
+  public Optional<String> getSetName();
 
-    public String getHbmsg();
+  public String getHbmsg();
 
-    public Optional<HostAndPort> getSyncingTo();
+  public Optional<HostAndPort> getSyncingTo();
 
-    public Optional<ReplicaSetConfig> getConfig();
+  public Optional<ReplicaSetConfig> getConfig();
 
-    public OptionalInt getPrimaryId();
+  public OptionalInt getPrimaryId();
 
-    public long getTerm();
+  public long getTerm();
 
-    /**
-     * Returns an optional that indicates if the node is on a replica set or on
-     * a master slave replication.
-     *
-     * @return an optional whose value is true if the node is on a replica set,
-     *         false if it is on master slave or empty if it is unknown
-     */
-    public Optional<Boolean> getIsReplSet();
-    
+  /**
+   * Returns an optional that indicates if the node is on a replica set or on a master slave
+   * replication.
+   *
+   * @return an optional whose value is true if the node is on a replica set, false if it is on
+   *         master slave or empty if it is unknown
+   */
+  public Optional<Boolean> getIsReplSet();
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,9 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.pipeline;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Iterables;
 import com.torodb.core.TableRefFactory;
@@ -23,12 +27,10 @@ import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaDocPart;
-import java.util.function.Consumer;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import java.util.function.Consumer;
 
 /**
  *
@@ -36,84 +38,83 @@ import static org.mockito.Mockito.*;
  */
 public class BatchMetaDocPartTest {
 
-    private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-    private BatchMetaDocPart docPart;
-    private WrapperMutableMetaDocPart delegate;
-    private Consumer<BatchMetaDocPart> testChangeConsumer;
-    private Consumer<WrapperMutableMetaDocPart> delegateChangeConsumer;
+  private final TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+  private BatchMetaDocPart docPart;
+  private WrapperMutableMetaDocPart delegate;
+  private Consumer<BatchMetaDocPart> testChangeConsumer;
+  private Consumer<WrapperMutableMetaDocPart> delegateChangeConsumer;
 
-    public BatchMetaDocPartTest() {
-    }
+  public BatchMetaDocPartTest() {
+  }
 
-    @Before
-    @SuppressWarnings("unchecked")
-    public void setUp() throws Exception {
-        testChangeConsumer = mock(Consumer.class);
-        delegateChangeConsumer = mock(Consumer.class);
+  @Before
+  @SuppressWarnings("unchecked")
+  public void setUp() throws Exception {
+    testChangeConsumer = mock(Consumer.class);
+    delegateChangeConsumer = mock(Consumer.class);
 
-        delegate = new WrapperMutableMetaDocPart(
-                new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartId"),
-                delegateChangeConsumer
-        );
-        docPart = new BatchMetaDocPart(delegate, testChangeConsumer, true);
-    }
+    delegate = new WrapperMutableMetaDocPart(
+        new ImmutableMetaDocPart(tableRefFactory.createRoot(), "docPartId"),
+        delegateChangeConsumer
+    );
+    docPart = new BatchMetaDocPart(delegate, testChangeConsumer, true);
+  }
 
-    @Test
-    public void testNewBatch() {
-        //PRECONDITIONS ON THE INITIAL STATE
-        assertTrue(Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
+  @Test
+  public void testNewBatch() {
+    //PRECONDITIONS ON THE INITIAL STATE
+    assertTrue(Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
 
-        docPart.addMetaField("aFieldName", "aFieldId", FieldType.TIME);
-        assertFalse("addMetaField is not working as expected", Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
+    docPart.addMetaField("aFieldName", "aFieldId", FieldType.TIME);
+    assertFalse("addMetaField is not working as expected", Iterables.isEmpty(docPart
+        .getOnBatchModifiedMetaFields()));
 
-        docPart.setCreatedOnCurrentBatch(true);
+    docPart.setCreatedOnCurrentBatch(true);
 
-        //METHOD TO TEST CALL
-        docPart.newBatch();
+    //METHOD TO TEST CALL
+    docPart.newBatch();
 
-        //POST CONDITIONS
-        assertFalse("newBatch should set isCreatedOnCurrentBatch to false",
-                docPart.isCreatedOnCurrentBatch());
-        assertTrue("newBatch did not clear onBatchModifiedMetaFields",
-                Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
-    }
+    //POST CONDITIONS
+    assertFalse("newBatch should set isCreatedOnCurrentBatch to false",
+        docPart.isCreatedOnCurrentBatch());
+    assertTrue("newBatch did not clear onBatchModifiedMetaFields",
+        Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
+  }
 
-    @Test
-    public void testCreatedOnCurrentBatch() {
-        docPart.setCreatedOnCurrentBatch(true);
-        assertTrue(docPart.isCreatedOnCurrentBatch());
+  @Test
+  public void testCreatedOnCurrentBatch() {
+    docPart.setCreatedOnCurrentBatch(true);
+    assertTrue(docPart.isCreatedOnCurrentBatch());
 
-        docPart.setCreatedOnCurrentBatch(false);
-        assertFalse(docPart.isCreatedOnCurrentBatch());
-    }
+    docPart.setCreatedOnCurrentBatch(false);
+    assertFalse(docPart.isCreatedOnCurrentBatch());
+  }
 
-    @Test
-    public void testAddMetaField() {
-        String fieldName = "aFieldName";
-        String fieldId = "aFieldID";
-        FieldType fieldType = FieldType.INTEGER;
+  @Test
+  public void testAddMetaField() {
+    String fieldName = "aFieldName";
+    String fieldId = "aFieldID";
+    FieldType fieldType = FieldType.INTEGER;
 
-        assertNull(delegate.getMetaFieldByIdentifier(fieldId));
-        assertNull(delegate.getMetaFieldByNameAndType(fieldName, fieldType));
+    assertNull(delegate.getMetaFieldByIdentifier(fieldId));
+    assertNull(delegate.getMetaFieldByNameAndType(fieldName, fieldType));
 
-        assertNull(docPart.getMetaFieldByIdentifier(fieldId));
-        assertNull(docPart.getMetaFieldByNameAndType(fieldName, fieldType));
+    assertNull(docPart.getMetaFieldByIdentifier(fieldId));
+    assertNull(docPart.getMetaFieldByNameAndType(fieldName, fieldType));
 
+    docPart.addMetaField(fieldName, fieldId, fieldType);
 
-        docPart.addMetaField(fieldName, fieldId, fieldType);
+    assertNotNull(delegate.getMetaFieldByIdentifier(fieldId));
+    assertNotNull(delegate.getMetaFieldByNameAndType(fieldName, fieldType));
 
-        
-        assertNotNull(delegate.getMetaFieldByIdentifier(fieldId));
-        assertNotNull(delegate.getMetaFieldByNameAndType(fieldName, fieldType));
+    assertNotNull(docPart.getMetaFieldByIdentifier(fieldId));
+    assertNotNull(docPart.getMetaFieldByNameAndType(fieldName, fieldType));
 
-        assertNotNull(docPart.getMetaFieldByIdentifier(fieldId));
-        assertNotNull(docPart.getMetaFieldByNameAndType(fieldName, fieldType));
+    assertFalse(Iterables.isEmpty(docPart.getAddedMetaFields()));
+    assertFalse(Iterables.isEmpty(delegate.getAddedMetaFields()));
+    assertFalse(Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
 
-        assertFalse(Iterables.isEmpty(docPart.getAddedMetaFields()));
-        assertFalse(Iterables.isEmpty(delegate.getAddedMetaFields()));
-        assertFalse(Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
-
-        verify(testChangeConsumer).accept(docPart);
-        verifyNoMoreInteractions(testChangeConsumer);
-    }
+    verify(testChangeConsumer).accept(docPart);
+    verifyNoMoreInteractions(testChangeConsumer);
+  }
 }

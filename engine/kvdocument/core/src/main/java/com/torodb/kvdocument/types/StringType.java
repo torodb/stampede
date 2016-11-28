@@ -1,5 +1,5 @@
 /*
- * ToroDB - KVDocument: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,35 +13,37 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.kvdocument.types;
 
 /**
  *
  */
-public class StringType implements KVType {
-    private static final long serialVersionUID = 1L;
+public class StringType implements KvType {
 
-    public static final StringType INSTANCE = new StringType();
+  private static final long serialVersionUID = 1L;
 
-    private StringType() {
-    }
+  public static final StringType INSTANCE = new StringType();
 
-    @Override
-    public boolean equals(Object o) {
-        return o != null && o.getClass().equals(this.getClass());
-    }
+  private StringType() {
+  }
 
-    @Override
-    public int hashCode() {
-        int hash = 31;
-        return hash;
-    }
+  @Override
+  public boolean equals(Object o) {
+    return o != null && o.getClass().equals(this.getClass());
+  }
 
-    @Override
-    public <Result, Arg> Result accept(KVTypeVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public int hashCode() {
+    int hash = 31;
+    return hash;
+  }
+
+  @Override
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
 }

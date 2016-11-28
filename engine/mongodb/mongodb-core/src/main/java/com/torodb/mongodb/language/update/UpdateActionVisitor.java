@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,29 +13,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
-/**
- *
- */
-public interface UpdateActionVisitor<Result, Arg> {
+public interface UpdateActionVisitor<R, A> {
 
-    public Result visit(CompositeUpdateAction action, Arg arg);
+  public R visit(CompositeUpdateAction action, A arg);
 
-    public Result visit(IncrementUpdateAction action, Arg arg);
+  public R visit(IncrementUpdateAction action, A arg);
 
-    public Result visit(MoveUpdateAction action, Arg arg);
+  public R visit(MoveUpdateAction action, A arg);
 
-    public Result visit(MultiplyUpdateAction action, Arg arg);
+  public R visit(MultiplyUpdateAction action, A arg);
 
-    public Result visit(SetCurrentDateUpdateAction action, Arg arg);
+  public R visit(SetCurrentDateUpdateAction action, A arg);
 
-    public Result visit(SetDocumentUpdateAction action, Arg arg);
+  public R visit(SetDocumentUpdateAction action, A arg);
 
-    public Result visit(SetFieldUpdateAction action, Arg arg);
+  public R visit(SetFieldUpdateAction action, A arg);
 
-    public Result visit(UnsetFieldUpdateAction action, Arg arg);
+  public R visit(UnsetFieldUpdateAction action, A arg);
 
 }

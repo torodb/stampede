@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -25,16 +26,16 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public interface TorodConnection extends AutoCloseable {
 
-    public ReadOnlyTorodTransaction openReadOnlyTransaction();
+  public ReadOnlyTorodTransaction openReadOnlyTransaction();
 
-    public SharedWriteTorodTransaction openWriteTransaction(boolean concurrent);
+  public SharedWriteTorodTransaction openWriteTransaction(boolean concurrent);
 
-    public ExclusiveWriteTorodTransaction openExclusiveWriteTransaction(boolean concurrent);
+  public ExclusiveWriteTorodTransaction openExclusiveWriteTransaction(boolean concurrent);
 
-    public int getConnectionId();
+  public int getConnectionId();
 
-    public TorodServer getServer();
+  public TorodServer getServer();
 
-    @Override
-    public void close();
+  @Override
+  public void close();
 }

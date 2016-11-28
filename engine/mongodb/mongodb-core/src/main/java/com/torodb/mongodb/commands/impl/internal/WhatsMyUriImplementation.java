@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,28 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl.internal;
 
 import com.eightkdata.mongowp.Status;
-import com.torodb.mongodb.commands.signatures.internal.WhatsMyUriCommand.WhatsMyUriReply;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
+import com.torodb.mongodb.commands.signatures.internal.WhatsMyUriCommand.WhatsMyUriReply;
 import com.torodb.mongodb.core.MongodConnection;
 
 public class WhatsMyUriImplementation extends ConnectionTorodbCommandImpl<Empty, WhatsMyUriReply> {
 
-    @Override
-    public Status<WhatsMyUriReply> apply(Request req, Command<? super Empty, ? super WhatsMyUriReply> command,
-            Empty arg, MongodConnection context) {
-        return Status.ok(new WhatsMyUriReply(
-                req.getExternalClientInfo().getClientAddress().getCanonicalHostName(), 
-                req.getExternalClientInfo().getClientPort()));
-    }
+  @Override
+  public Status<WhatsMyUriReply> apply(Request req,
+      Command<? super Empty, ? super WhatsMyUriReply> command,
+      Empty arg, MongodConnection context) {
+    return Status.ok(new WhatsMyUriReply(
+        req.getExternalClientInfo().getClientAddress().getCanonicalHostName(),
+        req.getExternalClientInfo().getClientPort()));
+  }
 
 }

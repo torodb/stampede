@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend;
 
 import javax.annotation.Nonnegative;
@@ -24,14 +25,24 @@ import javax.annotation.Nonnegative;
  */
 public interface BackendConfiguration {
 
-    long getCursorTimeout();
-    long getConnectionPoolTimeout();
-    int getConnectionPoolSize();
-    int getReservedReadPoolSize();
-    String getUsername();
-    String getPassword();
-    String getDbHost();
-    String getDbName();
-    @Nonnegative int getDbPort();
-    boolean includeForeignKeys();
+  long getCursorTimeout();
+
+  long getConnectionPoolTimeout();
+
+  int getConnectionPoolSize();
+
+  int getReservedReadPoolSize();
+
+  String getUsername();
+
+  String getPassword();
+
+  String getDbHost();
+
+  String getDbName();
+
+  @Nonnegative
+  int getDbPort();
+
+  boolean includeForeignKeys();
 }

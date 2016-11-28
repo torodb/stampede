@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,38 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.backend.converters.array;
 
-import javax.json.JsonString;
+package com.torodb.backend.converters.array;
 
 import com.google.common.io.ByteSource;
 import com.torodb.common.util.HexUtils;
-import com.torodb.kvdocument.values.KVBinary;
-import com.torodb.kvdocument.values.KVBinary.KVBinarySubtype;
-import com.torodb.kvdocument.values.heap.ByteSourceKVBinary;
+import com.torodb.kvdocument.values.KvBinary;
+import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
+import com.torodb.kvdocument.values.heap.ByteSourceKvBinary;
+
+import javax.json.JsonString;
 
 /**
  *
  */
-public class BinaryToArrayConverter implements ArrayConverter<JsonString, KVBinary> {
-    private static final long serialVersionUID = 1L;
+public class BinaryToArrayConverter implements ArrayConverter<JsonString, KvBinary> {
 
-    @Override
-    public String toJsonLiteral(KVBinary value) {
-        return value.toString();
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVBinary fromJsonValue(JsonString value) {
-        byte[] bytes = HexUtils.hex2Bytes(value.getString());
-        return new ByteSourceKVBinary(
-                KVBinarySubtype.MONGO_GENERIC,
-                (byte) 0,
-                ByteSource.wrap(bytes)
-        );
-    }
+  @Override
+  public String toJsonLiteral(KvBinary value) {
+    return value.toString();
+  }
+
+  @Override
+  public KvBinary fromJsonValue(JsonString value) {
+    byte[] bytes = HexUtils.hex2Bytes(value.getString());
+    return new ByteSourceKvBinary(
+        KvBinarySubtype.MONGO_GENERIC,
+        (byte) 0,
+        ByteSource.wrap(bytes)
+    );
+  }
 }

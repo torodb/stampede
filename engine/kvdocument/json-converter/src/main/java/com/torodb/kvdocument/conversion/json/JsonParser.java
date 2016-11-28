@@ -1,5 +1,5 @@
 /*
- * ToroDB - KVDocument: Gson Converter
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,27 +13,28 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.kvdocument.conversion.json;
+
+import com.torodb.kvdocument.values.KvDocument;
 
 import java.io.InputStream;
 import java.util.List;
 
-import com.torodb.kvdocument.values.KVDocument;
-
 public interface JsonParser {
 
-    KVDocument createFromJson(String json);
+  KvDocument createFromJson(String json);
 
-    List<KVDocument> createListFromJson(String json);
+  List<KvDocument> createListFromJson(String json);
 
-	KVDocument createFrom(InputStream is);
-	
-	List<KVDocument> createListFrom(InputStream is);
+  KvDocument createFrom(InputStream is);
 
-    KVDocument createFromResource(String name);
+  List<KvDocument> createListFrom(InputStream is);
 
-    List<KVDocument> createListFromResource(String name);
+  KvDocument createFromResource(String name);
+
+  List<KvDocument> createListFromResource(String name);
 
 }

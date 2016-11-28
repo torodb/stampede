@@ -1,3 +1,0 @@
-TOROPASSFILE=/etc/@{assembler.name}/.toropass
-TOROLIBDIR=/var/lib/@{assembler.name}/lib
-OPTIONS="-c /etc/@{assembler.name}/@{assembler.name}.conf --toropass-file=$TOROPASSFILE"

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import javax.annotation.concurrent.Immutable;
@@ -25,34 +26,35 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class ImmutableMetaDocPartIndexColumn implements MetaDocPartIndexColumn {
 
-    private final int position;
-    private final String identifier;
-    private final FieldIndexOrdering ordering;
+  private final int position;
+  private final String identifier;
+  private final FieldIndexOrdering ordering;
 
-    public ImmutableMetaDocPartIndexColumn(int position, String identifier, FieldIndexOrdering ordering) {
-        this.position = position;
-        this.identifier = identifier;
-        this.ordering = ordering;
-    }
+  public ImmutableMetaDocPartIndexColumn(int position, String identifier,
+      FieldIndexOrdering ordering) {
+    this.position = position;
+    this.identifier = identifier;
+    this.ordering = ordering;
+  }
 
-    @Override
-    public int getPosition() {
-        return position;
-    }
+  @Override
+  public int getPosition() {
+    return position;
+  }
 
-    @Override
-    public String getIdentifier() {
-        return identifier;
-    }
+  @Override
+  public String getIdentifier() {
+    return identifier;
+  }
 
-    @Override
-    public FieldIndexOrdering getOrdering() {
-        return ordering;
-    }
+  @Override
+  public FieldIndexOrdering getOrdering() {
+    return ordering;
+  }
 
-    @Override
-    public String toString() {
-        return defautToString();
-    }
+  @Override
+  public String toString() {
+    return defautToString();
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.backend.derby.tables.records;
 
-import javax.json.JsonArray;
+package com.torodb.backend.derby.tables.records;
 
 import com.torodb.backend.converters.TableRefConverter;
 import com.torodb.backend.derby.tables.DerbyMetaFieldIndexTable;
@@ -27,46 +26,52 @@ import com.torodb.core.TableRefFactory;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.core.transaction.metainf.FieldType;
 
+import javax.json.JsonArray;
+
 public class DerbyMetaFieldIndexRecord extends MetaFieldIndexRecord<JsonArray> {
 
-    private static final long serialVersionUID = -4698190965933336115L;
+  private static final long serialVersionUID = -4698190965933336115L;
 
-    /**
-	 * Create a detached MetaFieldRecord
-	 */
-	public DerbyMetaFieldIndexRecord() {
-		super(DerbyMetaFieldIndexTable.FIELD_INDEX);
-	}
+  /**
+   * Create a detached MetaFieldRecord
+   */
+  public DerbyMetaFieldIndexRecord() {
+    super(DerbyMetaFieldIndexTable.FIELD_INDEX);
+  }
 
-	/**
-	 * Create a detached, initialised MetaFieldRecord
-	 */
-	public DerbyMetaFieldIndexRecord(String database, String identifier, String collection, Integer position, JsonArray tableRef, String name, FieldType type, FieldIndexOrdering fieldIndexOrdering) {
-		super(DerbyMetaFieldIndexTable.FIELD_INDEX);
-		
-		values(database, identifier, position, collection, tableRef, name, type, fieldIndexOrdering);
-	}
+  /**
+   * Create a detached, initialised MetaFieldRecord
+   */
+  public DerbyMetaFieldIndexRecord(String database, String identifier, String collection,
+      Integer position, JsonArray tableRef, String name, FieldType type,
+      FieldIndexOrdering fieldIndexOrdering) {
+    super(DerbyMetaFieldIndexTable.FIELD_INDEX);
 
-    @Override
-    public MetaFieldIndexRecord<JsonArray> values(String database, String identifier, Integer position, String collection, JsonArray tableRef, String name, FieldType type, FieldIndexOrdering fieldIndexOrdering) {
-        setDatabase(database);
-        setIdentifier(identifier);
-        setPosition(position);
-        setCollection(collection);
-        setTableRef(tableRef);
-        setName(name);
-        setType(type);
-        setOrdering(fieldIndexOrdering);
-        return this;
-    }
+    values(database, identifier, position, collection, tableRef, name, type, fieldIndexOrdering);
+  }
 
-    @Override
-    protected JsonArray toTableRefType(TableRef tableRef) {
-        return TableRefConverter.toJsonArray(tableRef);
-    }
+  @Override
+  public MetaFieldIndexRecord<JsonArray> values(String database, String identifier, 
+      Integer position, String collection, JsonArray tableRef, String name, FieldType type,
+      FieldIndexOrdering fieldIndexOrdering) {
+    setDatabase(database);
+    setIdentifier(identifier);
+    setPosition(position);
+    setCollection(collection);
+    setTableRef(tableRef);
+    setName(name);
+    setType(type);
+    setOrdering(fieldIndexOrdering);
+    return this;
+  }
 
-    @Override
-    public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
-        return TableRefConverter.fromJsonArray(tableRefFactory, getTableRef());
-    }
+  @Override
+  protected JsonArray toTableRefType(TableRef tableRef) {
+    return TableRefConverter.toJsonArray(tableRef);
+  }
+
+  @Override
+  public TableRef getTableRefValue(TableRefFactory tableRefFactory) {
+    return TableRefConverter.fromJsonArray(tableRefFactory, getTableRef());
+  }
 }

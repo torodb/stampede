@@ -41,13 +41,13 @@
     },
     "oplog": [
         { 
-            "op" : "c", 
-            "ns" : "test.$cmd", 
-            "o" : { 
-                "renameCollection" : "db1.col1", 
-                "to" : "db2.col2", 
-                "stayTemp" : false, 
-                "dropTarget" : true
+            "op": "c", 
+            "ns": "test.$cmd", 
+            "o": { 
+                "renameCollection": "db1.col1", 
+                "to": "db2.col2", 
+                "stayTemp": false, 
+                "dropTarget": true
             }
         }
     ]

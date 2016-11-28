@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,19 +13,29 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands;
 
-import java.time.Clock;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.function.Supplier;
-
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
-
-import com.torodb.mongodb.commands.signatures.MongoDb30Commands.MongoDb30CommandsImplementationBuilder;
+import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandImplementation;
+import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
+import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.net.HostAndPort;
+import com.google.inject.Injector;
+import com.torodb.core.BuildProperties;
+import com.torodb.core.annotations.DoNotChange;
+import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
+import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.BuildInfoImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.GetLogImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
+import com.torodb.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
+import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
+import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
+import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.commands.signatures.admin.AdminCommands.AdminCommandsImplementationsBuilder;
 import com.torodb.mongodb.commands.signatures.admin.CollModCommand.CollModArgument;
 import com.torodb.mongodb.commands.signatures.admin.CollModCommand.CollModResult;
@@ -82,303 +92,292 @@ import com.torodb.mongodb.commands.signatures.repl.ReplSetGetStatusCommand.ReplS
 import com.torodb.mongodb.commands.signatures.repl.ReplSetReconfigCommand.ReplSetReconfigArgument;
 import com.torodb.mongodb.commands.signatures.repl.ReplSetStepDownCommand.ReplSetStepDownArgument;
 import com.torodb.mongodb.commands.signatures.repl.ReplSetSyncFromCommand.ReplSetSyncFromReply;
-import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
-import com.eightkdata.mongowp.server.api.tools.Empty;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.net.HostAndPort;
-import com.google.inject.Injector;
-import com.torodb.core.BuildProperties;
-import com.torodb.core.annotations.DoNotChange;
-import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
-import com.torodb.mongodb.commands.impl.authentication.GetNonceImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.BuildInfoImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.GetLogImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.PingImplementation;
-import com.torodb.mongodb.commands.impl.diagnostic.ServerStatusImplementation;
-import com.torodb.mongodb.commands.impl.internal.WhatsMyUriImplementation;
-import com.torodb.mongodb.commands.impl.replication.IsMasterImplementation;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServerConfig;
 
-/**
- *
- */
+import java.time.Clock;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+
 @ThreadSafe
+@SuppressWarnings("checkstyle:LineLength")
 public class ConnectionCommandsExecutor {
 
-    private final ImmutableMap<Command<?,?>, CommandImplementation<?,?, ? super MongodConnection>> map;
+  private final ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super MongodConnection>> map;
 
-    @Inject
-    ConnectionCommandsExecutor(Injector injector) {
-        this(new MapFactory(injector));
+  @Inject
+  ConnectionCommandsExecutor(Injector injector) {
+    this(new MapFactory(injector));
+  }
+
+  protected ConnectionCommandsExecutor(
+      Supplier<ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super MongodConnection>>> mapFactory) {
+    map = mapFactory.get();
+  }
+
+  @DoNotChange
+  Set<Command<?, ?>> getSupportedCommands() {
+    return map.keySet();
+  }
+
+  public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super MongodConnection>> getMap() {
+    return map;
+  }
+
+  static class MapFactory extends AbstractCommandMapFactory<MongodConnection> {
+
+    public MapFactory(Injector injector) {
+      super(
+          new MyAdminCommandsImplementationBuilder(),
+          new MyAggregationCommandsImplementationBuilder(),
+          new MyAuthenticationCommandsImplementationsBuilder(injector),
+          new MyDiagnosticCommandsImplementationBuilder(injector),
+          new MyGeneralCommandsImplementationBuilder(),
+          new MyInternalCommandsImplementationsBuilder(),
+          new MyReplCommandsImplementationsBuilder(injector)
+      );
     }
 
-    protected ConnectionCommandsExecutor(Supplier<ImmutableMap<Command<?,?>, CommandImplementation<?, ?, ? super MongodConnection>>> mapFactory) {
-        map = mapFactory.get();
-    }
-    
-    @DoNotChange
-    Set<Command<?, ?>> getSupportedCommands() {
-        return map.keySet();
-    }
+  }
 
-    public ImmutableMap<Command<?, ?>, CommandImplementation<?, ?, ? super MongodConnection>> getMap() {
-        return map;
-    }
-    
-    static class MapFactory extends AbstractCommandMapFactory<MongodConnection> {
+  static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<MongodConnection> {
 
-        public MapFactory(Injector injector) {
-            super(
-                    new MyAdminCommandsImplementationBuilder(),
-                    new MyAggregationCommandsImplementationBuilder(),
-                    new MyAuthenticationCommandsImplementationsBuilder(injector),
-                    new MyDiagnosticCommandsImplementationBuilder(injector),
-                    new MyGeneralCommandsImplementationBuilder(),
-                    new MyInternalCommandsImplementationsBuilder(),
-                    new MyReplCommandsImplementationsBuilder(injector)
-            );
-        }
-
+    @Override
+    public CommandImplementation<CollModArgument, CollModResult, ? super MongodConnection> getCollModImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyAdminCommandsImplementationBuilder extends AdminCommandsImplementationsBuilder<MongodConnection> {
-
-        @Override
-        public CommandImplementation<CollModArgument, CollModResult, ? super MongodConnection> getCollModImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, MongodConnection> getListCollectionsImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, Empty, MongodConnection> getDropDatabaseImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<CollectionCommandArgument, Empty, MongodConnection> getDropCollectionImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<CreateCollectionArgument, Empty, MongodConnection> getCreateCollectionImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ListIndexesArgument, ListIndexesResult, MongodConnection> getListIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, MongodConnection> getCreateIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super MongodConnection> getDropIndexesImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<RenameCollectionArgument, Empty, ? super MongodConnection> getRenameCollectionImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
+    @Override
+    public CommandImplementation<ListCollectionsArgument, ListCollectionsResult, MongodConnection> getListCollectionsImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<MongodConnection> {
-
-        @Override
-        public CommandImplementation<CountArgument, Long, MongodConnection> getCountImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
+    @Override
+    public CommandImplementation<Empty, Empty, MongodConnection> getDropDatabaseImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyAuthenticationCommandsImplementationsBuilder extends AuthenticationCommandsImplementationsBuilder<MongodConnection> {
-
-        private MyAuthenticationCommandsImplementationsBuilder(Injector injector) {
-        }
-        
-        @Override
-        public GetNonceImplementation getGetNonceImplementation() {
-            return new GetNonceImplementation();
-        }
-
+    @Override
+    public CommandImplementation<CollectionCommandArgument, Empty, MongodConnection> getDropCollectionImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<MongodConnection> {
-
-        private final Injector injector;
-
-        public MyDiagnosticCommandsImplementationBuilder(Injector injector) {
-            this.injector = injector;
-        }
-
-        @Override
-        public CommandImplementation<CollStatsArgument, CollStatsReply, MongodConnection> getCollStatsImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, ListDatabasesReply, MongodConnection> getListDatabasesImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, BuildInfoResult, MongodConnection> getBuildInfoImplementation() {
-            return new BuildInfoImplementation(injector.getInstance(BuildProperties.class));
-        }
-
-        @Override
-        public CommandImplementation<ServerStatusArgument, ServerStatusReply, MongodConnection> getServerStatusImplementation() {
-            return new ServerStatusImplementation(injector.getInstance(MongodServerConfig.class));
-        }
-
-        @Override
-        public CommandImplementation<GetLogArgument, GetLogReply, MongodConnection> getGetLogImplementation() {
-            return new GetLogImplementation();
-        }
-
-        @Override
-        public CommandImplementation<Empty, Empty, MongodConnection> getPingCommandImplementation() {
-            return new PingImplementation();
-        }
-
+    @Override
+    public CommandImplementation<CreateCollectionArgument, Empty, MongodConnection> getCreateCollectionImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<MongodConnection> {
-
-        @Override
-        public CommandImplementation<FindArgument, FindResult, MongodConnection> getFindImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, MongodConnection> getGetLastErrrorImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<InsertArgument, InsertResult, MongodConnection> getInsertImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<DeleteArgument, Long, MongodConnection> getDeleteImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<UpdateArgument, UpdateResult, MongodConnection> getUpdateImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
+    @Override
+    public CommandImplementation<ListIndexesArgument, ListIndexesResult, MongodConnection> getListIndexesImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyInternalCommandsImplementationsBuilder extends InternalCommandsImplementationsBuilder<MongodConnection> {
-
-        @Override
-        public CommandImplementation<HandshakeArgument, Empty, MongodConnection> getHandshakeImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, ReplSetGetRBIDReply, MongodConnection> getReplSetGetRBIDImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetUpdatePositionArgument, Empty, MongodConnection> getReplSetUpdateImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetElectArgument, ReplSetElectReply, MongodConnection> getReplSetElectImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetFreshArgument, ReplSetFreshReply, MongodConnection> getReplSetFreshImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetHeartbeatArgument, ReplSetHeartbeatReply, MongodConnection> getReplSetHeartbeatImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, WhatsMyUriReply, MongodConnection> getWhatsMyUriImplementation() {
-            return new WhatsMyUriImplementation();
-        }
+    @Override
+    public CommandImplementation<CreateIndexesArgument, CreateIndexesResult, MongodConnection> getCreateIndexesImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
 
-    static class MyReplCommandsImplementationsBuilder extends ReplCommandsImplementationsBuilder<MongodConnection> {
-
-        private final Injector injector;
-
-        public MyReplCommandsImplementationsBuilder(Injector injector) {
-            this.injector = injector;
-        }
-
-        @Override
-        public CommandImplementation<ApplyOpsArgument, ApplyOpsReply, MongodConnection> getApplyOpsImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetFreezeArgument, ReplSetFreezeReply, MongodConnection> getReplSetFreezeImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, IsMasterReply, MongodConnection> getIsMasterImplementation() {
-            return new IsMasterImplementation(injector.getInstance(Clock.class), injector.getInstance(MongodServerConfig.class));
-        }
-
-        @Override
-        public CommandImplementation<Empty, ReplicaSetConfig, MongodConnection> getReplSetGetConfigImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Empty, ReplSetGetStatusReply, MongodConnection> getReplSetGetStatusImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplicaSetConfig, Empty, MongodConnection> getReplSetInitiateImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<Boolean, Empty, MongodConnection> getReplSetMaintenanceImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetReconfigArgument, Empty, MongodConnection> getReplSetReconfigImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<ReplSetStepDownArgument, Empty, MongodConnection> getReplSetStepDownImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
-        @Override
-        public CommandImplementation<HostAndPort, ReplSetSyncFromReply, MongodConnection> getReplSetSyncFromImplementation() {
-            return NotImplementedCommandImplementation.build();
-        }
-
+    @Override
+    public CommandImplementation<DropIndexesArgument, DropIndexesResult, ? super MongodConnection> getDropIndexesImplementation() {
+      return NotImplementedCommandImplementation.build();
     }
+
+    @Override
+    public CommandImplementation<RenameCollectionArgument, Empty, ? super MongodConnection> getRenameCollectionImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+  }
+
+  static class MyAggregationCommandsImplementationBuilder extends AggregationCommandsImplementationsBuilder<MongodConnection> {
+
+    @Override
+    public CommandImplementation<CountArgument, Long, MongodConnection> getCountImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+  }
+
+  static class MyAuthenticationCommandsImplementationsBuilder extends AuthenticationCommandsImplementationsBuilder<MongodConnection> {
+
+    private MyAuthenticationCommandsImplementationsBuilder(Injector injector) {
+    }
+
+    @Override
+    public GetNonceImplementation getGetNonceImplementation() {
+      return new GetNonceImplementation();
+    }
+
+  }
+
+  static class MyDiagnosticCommandsImplementationBuilder extends DiagnosticCommandsImplementationsBuilder<MongodConnection> {
+
+    private final Injector injector;
+
+    public MyDiagnosticCommandsImplementationBuilder(Injector injector) {
+      this.injector = injector;
+    }
+
+    @Override
+    public CommandImplementation<CollStatsArgument, CollStatsReply, MongodConnection> getCollStatsImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Empty, ListDatabasesReply, MongodConnection> getListDatabasesImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Empty, BuildInfoResult, MongodConnection> getBuildInfoImplementation() {
+      return new BuildInfoImplementation(injector.getInstance(BuildProperties.class));
+    }
+
+    @Override
+    public CommandImplementation<ServerStatusArgument, ServerStatusReply, MongodConnection> getServerStatusImplementation() {
+      return new ServerStatusImplementation(injector.getInstance(MongodServerConfig.class));
+    }
+
+    @Override
+    public CommandImplementation<GetLogArgument, GetLogReply, MongodConnection> getGetLogImplementation() {
+      return new GetLogImplementation();
+    }
+
+    @Override
+    public CommandImplementation<Empty, Empty, MongodConnection> getPingCommandImplementation() {
+      return new PingImplementation();
+    }
+
+  }
+
+  static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<MongodConnection> {
+
+    @Override
+    public CommandImplementation<FindArgument, FindResult, MongodConnection> getFindImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, MongodConnection> getGetLastErrrorImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<InsertArgument, InsertResult, MongodConnection> getInsertImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<DeleteArgument, Long, MongodConnection> getDeleteImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<UpdateArgument, UpdateResult, MongodConnection> getUpdateImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+  }
+
+  static class MyInternalCommandsImplementationsBuilder extends InternalCommandsImplementationsBuilder<MongodConnection> {
+
+    @Override
+    public CommandImplementation<HandshakeArgument, Empty, MongodConnection> getHandshakeImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Empty, ReplSetGetRBIDReply, MongodConnection> getReplSetGetRBIDImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetUpdatePositionArgument, Empty, MongodConnection> getReplSetUpdateImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetElectArgument, ReplSetElectReply, MongodConnection> getReplSetElectImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetFreshArgument, ReplSetFreshReply, MongodConnection> getReplSetFreshImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetHeartbeatArgument, ReplSetHeartbeatReply, MongodConnection> getReplSetHeartbeatImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Empty, WhatsMyUriReply, MongodConnection> getWhatsMyUriImplementation() {
+      return new WhatsMyUriImplementation();
+    }
+  }
+
+  static class MyReplCommandsImplementationsBuilder extends ReplCommandsImplementationsBuilder<MongodConnection> {
+
+    private final Injector injector;
+
+    public MyReplCommandsImplementationsBuilder(Injector injector) {
+      this.injector = injector;
+    }
+
+    @Override
+    public CommandImplementation<ApplyOpsArgument, ApplyOpsReply, MongodConnection> getApplyOpsImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetFreezeArgument, ReplSetFreezeReply, MongodConnection> getReplSetFreezeImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Empty, IsMasterReply, MongodConnection> getIsMasterImplementation() {
+      return new IsMasterImplementation(injector.getInstance(Clock.class), injector.getInstance(
+          MongodServerConfig.class));
+    }
+
+    @Override
+    public CommandImplementation<Empty, ReplicaSetConfig, MongodConnection> getReplSetGetConfigImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Empty, ReplSetGetStatusReply, MongodConnection> getReplSetGetStatusImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplicaSetConfig, Empty, MongodConnection> getReplSetInitiateImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<Boolean, Empty, MongodConnection> getReplSetMaintenanceImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetReconfigArgument, Empty, MongodConnection> getReplSetReconfigImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<ReplSetStepDownArgument, Empty, MongodConnection> getReplSetStepDownImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+    @Override
+    public CommandImplementation<HostAndPort, ReplSetSyncFromReply, MongodConnection> getReplSetSyncFromImplementation() {
+      return NotImplementedCommandImplementation.build();
+    }
+
+  }
 }

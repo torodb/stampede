@@ -1,5 +1,5 @@
 /*
- * ToroDB - KVDocument: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,25 +13,25 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.kvdocument.types;
 
 /**
  *
  */
-public class MongoTimestampType implements KVType {
+public class MongoTimestampType implements KvType {
 
-    public static final MongoTimestampType INSTANCE = new MongoTimestampType();
-    private static final long serialVersionUID = 1L;
+  public static final MongoTimestampType INSTANCE = new MongoTimestampType();
+  private static final long serialVersionUID = 1L;
 
-    private MongoTimestampType() {
-    }
+  private MongoTimestampType() {
+  }
 
-    @Override
-    public <Result, Arg> Result accept(KVTypeVisitor<Result, Arg> visitor, Arg arg) {
-        return visitor.visit(this, arg);
-    }
-
+  @Override
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
 }

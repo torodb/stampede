@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.packaging.config.jackson;
 
-import java.io.IOException;
-import java.util.Map;
+package com.torodb.packaging.config.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -31,26 +29,31 @@ import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.generic.LogPackages;
 import com.torodb.packaging.config.util.DescriptionFactoryWrapper;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class LogPackagesSerializer extends JsonSerializer<LogPackages> {
-	@Override
-	public void serialize(LogPackages value, JsonGenerator jgen, SerializerProvider provider)
-			throws IOException, JsonProcessingException {
-		jgen.writeStartObject();
 
-		serializeFields(value, jgen);
+  @Override
+  public void serialize(LogPackages value, JsonGenerator jgen, SerializerProvider provider)
+      throws IOException, JsonProcessingException {
+    jgen.writeStartObject();
 
-		jgen.writeEndObject();
-	}
+    serializeFields(value, jgen);
 
-	private void serializeFields(LogPackages value, JsonGenerator jgen) throws IOException {
-		for (Map.Entry<String, LogLevel> logPackage : value.entrySet()) {
-			jgen.writeStringField(logPackage.getKey(), logPackage.getValue().name());
-		}
-	}
+    jgen.writeEndObject();
+  }
 
-	public void acceptJsonFormatVisitor(JsonFormatVisitorWrapper visitor, JavaType type) throws JsonMappingException {
-		if (!(visitor instanceof DescriptionFactoryWrapper)) {
-			super.acceptJsonFormatVisitor(visitor, type);
-		}
-	}
+  private void serializeFields(LogPackages value, JsonGenerator jgen) throws IOException {
+    for (Map.Entry<String, LogLevel> logPackage : value.entrySet()) {
+      jgen.writeStringField(logPackage.getKey(), logPackage.getValue().name());
+    }
+  }
+
+  public void acceptJsonFormatVisitor(JsonFormatVisitorWrapper visitor, JavaType type) throws
+      JsonMappingException {
+    if (!(visitor instanceof DescriptionFactoryWrapper)) {
+      super.acceptJsonFormatVisitor(visitor, type);
+    }
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,48 +13,51 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.core.transaction.metainf;
 
-import java.util.Iterator;
+package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
+
+import java.util.Iterator;
 
 /**
  *
  */
 public interface MutableMetaIndex extends MetaIndex {
 
-    public abstract boolean isUnique();
+  public abstract boolean isUnique();
 
-    @Override
-    public ImmutableMetaIndexField getMetaIndexFieldByPosition(int position);
+  @Override
+  public ImmutableMetaIndexField getMetaIndexFieldByPosition(int position);
 
-    @Override
-    public ImmutableMetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef, String name);
+  @Override
+  public ImmutableMetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef, String name);
 
-    @Override
-    public Iterator<? extends ImmutableMetaIndexField> iteratorFields();
-    
-    @Override
-    public Iterator<? extends ImmutableMetaIndexField> iteratorMetaIndexFieldByTableRef(TableRef tableRef);
+  @Override
+  public Iterator<? extends ImmutableMetaIndexField> iteratorFields();
 
-    /**
-     * Adds a new field to this index.
-     *
-     * @param name
-     * @return the new field
-     * @throws IllegalArgumentException if this index already contains a field with the same
-     *                                  {@link MetaIndexField#getPosition() position} or with the same pair
-     *                                  {@link MetaIndexField#getTableRef() tableRef} and
-     *                                  {@link MetaIndexField#getName() name}.
-     */
-    public abstract ImmutableMetaIndexField addMetaIndexField(TableRef tableRef, String name, FieldIndexOrdering ordering) throws IllegalArgumentException;
+  @Override
+  public Iterator<? extends ImmutableMetaIndexField> iteratorMetaIndexFieldByTableRef(
+      TableRef tableRef);
 
-    @DoNotChange
-    public abstract Iterable<? extends ImmutableMetaIndexField> getAddedMetaIndexFields();
+  /**
+   * Adds a new field to this index.
+   *
+   * @param name
+   * @return the new field
+   * @throws IllegalArgumentException if this index already contains a field with the same
+   *                                  {@link MetaIndexField#getPosition() position} or with the same
+   *                                  pair {@link MetaIndexField#getTableRef() tableRef} and
+   *                                  {@link MetaIndexField#getName() name}.
+   */
+  public abstract ImmutableMetaIndexField addMetaIndexField(TableRef tableRef, String name,
+      FieldIndexOrdering ordering) throws IllegalArgumentException;
 
-    public abstract ImmutableMetaIndex immutableCopy();
+  @DoNotChange
+  public abstract Iterable<? extends ImmutableMetaIndexField> getAddedMetaIndexFields();
+
+  public abstract ImmutableMetaIndex immutableCopy();
 }

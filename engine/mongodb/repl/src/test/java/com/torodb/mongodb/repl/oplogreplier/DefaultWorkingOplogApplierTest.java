@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,46 +13,45 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
-import java.util.Collection;
-
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.google.common.collect.Lists;
-
+import java.util.Collection;
 
 /**
  *
  */
 public class DefaultWorkingOplogApplierTest extends DefaultOplogApplierTest {
 
-    @Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        return loadData(Lists.newArrayList(
-                "deleteIndex",
-                "deleteIndexes",
-                "doNothing",
-                "dropDatabase",
-                "dropIndex",
-                "dropIndexes",
-                "insertRepeated",
-                "insert_update_add",
-                "letschat_upsert",
-                "update_array",
-                "update_no_upsert",
-                "update_upsert",
-                "renameIndex_noDropTarget",
-                "renameIndex_dropTarget"
-        ));
-    }
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> data() {
+    return loadData(Lists.newArrayList(
+        "deleteIndex",
+        "deleteIndexes",
+        "doNothing",
+        "dropDatabase",
+        "dropIndex",
+        "dropIndexes",
+        "insertRepeated",
+        "insert_update_add",
+        "letschat_upsert",
+        "update_array",
+        "update_no_upsert",
+        "update_upsert",
+        "renameIndex_noDropTarget",
+        "renameIndex_dropTarget"
+    ));
+  }
 
-    @Test
-    public void test() throws Exception {
-        super.test();
-    }
+  @Test
+  public void test() throws Exception {
+    super.test();
+  }
 
 }

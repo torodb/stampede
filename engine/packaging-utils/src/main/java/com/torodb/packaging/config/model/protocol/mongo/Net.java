@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,12 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.packaging.config.model.protocol.mongo;
 
-import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlType;
+package com.torodb.packaging.config.model.protocol.mongo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -27,35 +25,39 @@ import com.torodb.packaging.config.model.protocol.ProtocolListenerConfig;
 import com.torodb.packaging.config.validation.Host;
 import com.torodb.packaging.config.validation.Port;
 
+import javax.validation.constraints.NotNull;
+import javax.xml.bind.annotation.XmlType;
+
 @XmlType
-@JsonPropertyOrder({ "bindIp", "port" })
+@JsonPropertyOrder({"bindIp", "port"})
 public class Net implements ProtocolListenerConfig {
-	@Description("config.mongo.net.bindIp")
-	@NotNull
-	@Host
-	@JsonProperty(required=true)
-	private String bindIp = "localhost";
-	@Description("config.mongo.net.port")
-	@NotNull
-	@Port
-	@JsonProperty(required=true)
-	private Integer port = 27018;
 
-	@Override
-	public String getBindIp() {
-		return bindIp;
-	}
+  @Description("config.mongo.net.bindIp")
+  @NotNull
+  @Host
+  @JsonProperty(required = true)
+  private String bindIp = "localhost";
+  @Description("config.mongo.net.port")
+  @NotNull
+  @Port
+  @JsonProperty(required = true)
+  private Integer port = 27018;
 
-	public void setBindIp(String bindIp) {
-		this.bindIp = bindIp;
-	}
+  @Override
+  public String getBindIp() {
+    return bindIp;
+  }
 
-    @Override
-	public Integer getPort() {
-		return port;
-	}
+  public void setBindIp(String bindIp) {
+    this.bindIp = bindIp;
+  }
 
-	public void setPort(Integer port) {
-		this.port = port;
-	}
+  @Override
+  public Integer getPort() {
+    return port;
+  }
+
+  public void setPort(Integer port) {
+    this.port = port;
+  }
 }

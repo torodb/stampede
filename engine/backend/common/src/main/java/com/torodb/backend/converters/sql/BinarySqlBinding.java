@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,32 +13,35 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.sql;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 public class BinarySqlBinding implements SqlBinding<byte[]> {
-    public static final BinarySqlBinding INSTANCE = new BinarySqlBinding();
 
-    @Override
-    @SuppressFBWarnings(value ="PZLA_PREFER_ZERO_LENGTH_ARRAYS",
-    		justification="Null value has different meaning from empty array value")
-    public byte[] get(ResultSet resultSet, int columnIndex) throws SQLException {
-        byte[] value = resultSet.getBytes(columnIndex);
-        if (resultSet.wasNull()) {
-            return null;
-        }
-        return value;
-    }
+  public static final BinarySqlBinding INSTANCE = new BinarySqlBinding();
 
-    @Override
-    public void set(PreparedStatement preparedStatement, int parameterIndex, byte[] value) throws SQLException {
-        preparedStatement.setBytes(parameterIndex, value);
+  @Override
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS",
+      justification = "Null value has different meaning from empty array value")
+  public byte[] get(ResultSet resultSet, int columnIndex) throws SQLException {
+    byte[] value = resultSet.getBytes(columnIndex);
+    if (resultSet.wasNull()) {
+      return null;
     }
+    return value;
+  }
+
+  @Override
+  public void set(PreparedStatement preparedStatement, int parameterIndex, byte[] value) throws
+      SQLException {
+    preparedStatement.setBytes(parameterIndex, value);
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,33 +13,41 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.core.transaction;
 
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+package com.torodb.core.transaction;
 
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+
 /**
  *
  */
-public class SharedWriteInternalTransaction extends WriteInternalTransaction<SharedWriteBackendTransaction> {
-    private SharedWriteInternalTransaction(MetainfoRepository metainfoRepository, MutableMetaSnapshot metaSnapshot, SharedWriteBackendTransaction backendTransaction, ReadLock readLock) {
-        super(metainfoRepository, metaSnapshot, backendTransaction, readLock);
-    }
+public class SharedWriteInternalTransaction
+    extends WriteInternalTransaction<SharedWriteBackendTransaction> {
 
-    static SharedWriteInternalTransaction createSharedWriteTransaction(BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
-        ReadLock sharedLock = sharedLock();
-        sharedLock.lock();
-        try {
-            return createWriteTransaction(metainfoRepository, snapshot -> new SharedWriteInternalTransaction(metainfoRepository, snapshot, backendConnection.openSharedWriteTransaction(), sharedLock));
-        } catch(Throwable throwable) {
-            sharedLock.unlock();
-            throw throwable;
-        }
+  private SharedWriteInternalTransaction(MetainfoRepository metainfoRepository,
+      MutableMetaSnapshot metaSnapshot, SharedWriteBackendTransaction backendTransaction,
+      ReadLock readLock) {
+    super(metainfoRepository, metaSnapshot, backendTransaction, readLock);
+  }
+
+  static SharedWriteInternalTransaction createSharedWriteTransaction(
+      BackendConnection backendConnection, MetainfoRepository metainfoRepository) {
+    ReadLock sharedLock = sharedLock();
+    sharedLock.lock();
+    try {
+      return createWriteTransaction(metainfoRepository, snapshot ->
+          new SharedWriteInternalTransaction(metainfoRepository, snapshot, backendConnection
+              .openSharedWriteTransaction(), sharedLock));
+    } catch (Throwable throwable) {
+      sharedLock.unlock();
+      throw throwable;
     }
+  }
 }

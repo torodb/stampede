@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,17 +13,26 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.pojos.index.type;
 
-public interface IndexTypeVisitor<Arg,Result> {
-    public Result visit(AscIndexType indexType, Arg arg);
-    public Result visit(DescIndexType indexType, Arg arg);
-    public Result visit(TextIndexType indexType, Arg arg);
-    public Result visit(HashedIndexType indexType, Arg arg);
-    public Result visit(TwoDIndexType indexType, Arg arg);
-    public Result visit(TwoDSphereIndexType indexType, Arg arg);
-    public Result visit(GeoHaystackIndexType indexType, Arg arg);
-    public Result visit(UnknownIndexType indexType, Arg arg);
+public interface IndexTypeVisitor<A, R> {
+
+  public R visit(AscIndexType indexType, A arg);
+
+  public R visit(DescIndexType indexType, A arg);
+
+  public R visit(TextIndexType indexType, A arg);
+
+  public R visit(HashedIndexType indexType, A arg);
+
+  public R visit(TwoDIndexType indexType, A arg);
+
+  public R visit(TwoDSphereIndexType indexType, A arg);
+
+  public R visit(GeoHaystackIndexType indexType, A arg);
+
+  public R visit(UnknownIndexType indexType, A arg);
 }

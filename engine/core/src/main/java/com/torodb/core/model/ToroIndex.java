@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.model;
 
 import java.io.Serializable;
@@ -26,17 +27,17 @@ import javax.annotation.Nonnull;
  */
 public interface ToroIndex extends Serializable {
 
-    @Nonnull
-    public IndexedAttributes getAttributes();
+  @Nonnull
+  public IndexedAttributes getAttributes();
 
-    @Nonnull
-    public String getDatabase();
+  @Nonnull
+  public String getDatabase();
 
-    @Nonnull
-    public String getCollection();
+  @Nonnull
+  public String getCollection();
 
-    public boolean isUnique();
-    
-    public UnnamedToroIndex asUnnamed();
+  public boolean isUnique();
+
+  public UnnamedToroIndex asUnnamed();
 
 }

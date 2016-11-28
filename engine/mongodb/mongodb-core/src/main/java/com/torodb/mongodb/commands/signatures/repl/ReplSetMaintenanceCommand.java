@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.signatures.repl;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
@@ -28,46 +29,47 @@ import com.eightkdata.mongowp.utils.BsonReaderTool;
 /**
  *
  */
-public class ReplSetMaintenanceCommand extends AbstractNotAliasableCommand<Boolean, Empty>{
+public class ReplSetMaintenanceCommand extends AbstractNotAliasableCommand<Boolean, Empty> {
 
-    public static final ReplSetMaintenanceCommand INSTANCE = new ReplSetMaintenanceCommand();
+  public static final ReplSetMaintenanceCommand INSTANCE = new ReplSetMaintenanceCommand();
 
-    private ReplSetMaintenanceCommand() {
-        super("replSetMaintenance");
-    }
+  private ReplSetMaintenanceCommand() {
+    super("replSetMaintenance");
+  }
 
-    @Override
-    public Class<? extends Boolean> getArgClass() {
-        return Boolean.class;
-    }
+  @Override
+  public Class<? extends Boolean> getArgClass() {
+    return Boolean.class;
+  }
 
-    @Override
-    public boolean canChangeReplicationState() {
-        return true;
-    }
+  @Override
+  public boolean canChangeReplicationState() {
+    return true;
+  }
 
-    @Override
-    public Boolean unmarshallArg(BsonDocument requestDoc) throws TypesMismatchException, NoSuchKeyException {
-        return BsonReaderTool.getBoolean(requestDoc, getCommandName());
-    }
+  @Override
+  public Boolean unmarshallArg(BsonDocument requestDoc) throws TypesMismatchException,
+      NoSuchKeyException {
+    return BsonReaderTool.getBoolean(requestDoc, getCommandName());
+  }
 
-    @Override
-    public BsonDocument marshallArg(Boolean request) {
-        return DefaultBsonValues.newDocument(getCommandName(), DefaultBsonValues.newBoolean(request));
-    }
+  @Override
+  public BsonDocument marshallArg(Boolean request) {
+    return DefaultBsonValues.newDocument(getCommandName(), DefaultBsonValues.newBoolean(request));
+  }
 
-    @Override
-    public Class<? extends Empty> getResultClass() {
-        return Empty.class;
-    }
+  @Override
+  public Class<? extends Empty> getResultClass() {
+    return Empty.class;
+  }
 
-    @Override
-    public BsonDocument marshallResult(Empty reply) {
-        return null;
-    }
+  @Override
+  public BsonDocument marshallResult(Empty reply) {
+    return null;
+  }
 
-    @Override
-    public Empty unmarshallResult(BsonDocument resultDoc) {
-        return Empty.getInstance();
-    }
+  @Override
+  public Empty unmarshallResult(BsonDocument resultDoc) {
+    return Empty.getInstance();
+  }
 }

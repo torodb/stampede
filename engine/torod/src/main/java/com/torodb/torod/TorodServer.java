@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod;
 
 import com.torodb.core.services.TorodbService;
@@ -24,9 +25,9 @@ import com.torodb.core.services.TorodbService;
  */
 public interface TorodServer extends TorodbService {
 
-    public TorodConnection openConnection();
+  public TorodConnection openConnection();
 
-    public void disableDataImportMode();
+  public void disableDataImportMode();
 
-    public void enableDataImportMode();
+  public void enableDataImportMode();
 }

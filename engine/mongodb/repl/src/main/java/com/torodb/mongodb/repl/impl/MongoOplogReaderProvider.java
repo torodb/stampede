@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.repl.impl;
 
-import javax.inject.Inject;
+package com.torodb.mongodb.repl.impl;
 
 import com.eightkdata.mongowp.client.core.MongoClient;
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
@@ -28,38 +27,39 @@ import com.torodb.mongodb.repl.OplogReader;
 import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
+import javax.inject.Inject;
+
 /**
  *
  */
 public class MongoOplogReaderProvider implements OplogReaderProvider {
-    private final MongoClientFactory mongoClientFactory;
-    
-    @Inject
-    public MongoOplogReaderProvider(MongoClientFactory mongoClientProvider) {
-        this.mongoClientFactory = mongoClientProvider;
+
+  private final MongoClientFactory mongoClientFactory;
+
+  @Inject
+  public MongoOplogReaderProvider(MongoClientFactory mongoClientProvider) {
+    this.mongoClientFactory = mongoClientProvider;
+  }
+
+  @Override
+  public OplogReader newReader(HostAndPort syncSource) throws
+      NoSyncSourceFoundException, UnreachableMongoServerException {
+
+    MongoClient client = null;
+    try {
+      client = mongoClientFactory.createClient(syncSource);
+      return new ClientOwnerMongoOplogReader(client);
+    } catch (Throwable ex) {
+      if (client != null) {
+        client.close();
+      }
+      throw ex;
     }
+  }
 
-
-    @Override
-    public OplogReader newReader(HostAndPort syncSource) throws
-            NoSyncSourceFoundException, UnreachableMongoServerException {
-
-        MongoClient client = null;
-        try {
-            client = mongoClientFactory.createClient(syncSource);
-            return new ClientOwnerMongoOplogReader(client);
-        } catch (Throwable ex) {
-            if (client != null) {
-                client.close();
-            }
-            throw ex;
-        }
-    }
-
-    @Override
-    public OplogReader newReader(MongoConnection connection) {
-        return new ReusedConnectionOplogReader(connection);
-    }
-
+  @Override
+  public OplogReader newReader(MongoConnection connection) {
+    return new ReusedConnectionOplogReader(connection);
+  }
 
 }

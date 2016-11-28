@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.guice;
 
 import com.google.inject.PrivateModule;
@@ -32,41 +33,42 @@ import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.backend.CursorConfig;
 
 public class BackendMultiImplementationModule extends PrivateModule {
-    private final CursorConfig cursorConfig;
-    private final ConnectionPoolConfig connectionPoolConfig;
-	private final BackendImplementation backendImplementation;
-	private final BackendImplementationModule<?, ?>[] backendImplementationModules;
 
-	public BackendMultiImplementationModule(
-	        CursorConfig cursorConfig, 
-	        ConnectionPoolConfig connectionPoolConfig, 
-	        BackendImplementation backendImplementation,
-	        BackendImplementationModule<?, ?>...backendImplementationModules) {
-	    this.cursorConfig = cursorConfig;
-	    this.connectionPoolConfig = connectionPoolConfig;
-		this.backendImplementation = backendImplementation;
-		this.backendImplementationModules = backendImplementationModules;
-	}
+  private final CursorConfig cursorConfig;
+  private final ConnectionPoolConfig connectionPoolConfig;
+  private final BackendImplementation backendImplementation;
+  private final BackendImplementationModule<?, ?>[] backendModules;
 
-	@Override
-	protected void configure() {
-        bind(CursorConfig.class).toInstance(cursorConfig);
-        bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
-        for (BackendImplementationModule<?, ?> backendImplementationModule : backendImplementationModules) {
-            if (backendImplementationModule.isForConfiguration(backendImplementation)) {
-                backendImplementationModule.setConfiguration(backendImplementation);
-                install(backendImplementationModule);
-                expose(SqlHelper.class);
-                expose(SqlInterface.class);
-                expose(SchemaUpdater.class);
-                expose(DbBackendService.class);
-                expose(IdentifierConstraints.class);
-                expose(BackendBundleFactory.class);
-                expose(BackendTransactionJobFactory.class);
-                expose(ReservedIdGenerator.class);
-                expose(SnapshotUpdater.class);
-                break;
-            }
-        }
-	}
+  public BackendMultiImplementationModule(
+      CursorConfig cursorConfig,
+      ConnectionPoolConfig connectionPoolConfig,
+      BackendImplementation backendImplementation,
+      BackendImplementationModule<?, ?>... backendImplementationModules) {
+    this.cursorConfig = cursorConfig;
+    this.connectionPoolConfig = connectionPoolConfig;
+    this.backendImplementation = backendImplementation;
+    this.backendModules = backendImplementationModules;
+  }
+
+  @Override
+  protected void configure() {
+    bind(CursorConfig.class).toInstance(cursorConfig);
+    bind(ConnectionPoolConfig.class).toInstance(connectionPoolConfig);
+    for (BackendImplementationModule<?, ?> backendImplementationModule : backendModules) {
+      if (backendImplementationModule.isForConfiguration(backendImplementation)) {
+        backendImplementationModule.setConfiguration(backendImplementation);
+        install(backendImplementationModule);
+        expose(SqlHelper.class);
+        expose(SqlInterface.class);
+        expose(SchemaUpdater.class);
+        expose(DbBackendService.class);
+        expose(IdentifierConstraints.class);
+        expose(BackendBundleFactory.class);
+        expose(BackendTransactionJobFactory.class);
+        expose(ReservedIdGenerator.class);
+        expose(SnapshotUpdater.class);
+        break;
+      }
+    }
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier.fetcher;
 
 import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
@@ -26,21 +27,21 @@ import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
  */
 public interface OplogFetcher extends AutoCloseable {
 
-    /**
-     * Fetchs a new batch.
-     *
-     * If fetcher has been finished or it is closed, a {@link OplogBatch#isLastOne() finished}
-     * batch is returned. If the fetcher thinks it there are no more elements on the remote oplog
-     * but more could be there in future, the returned batch will return false to
-     * {@link OplogBatch#isReadyForMore()}.
-     *
-     * @return
-     * @throws StopReplicationException
-     * @throws RollbackReplicationException
-     */
-    public OplogBatch fetch() throws StopReplicationException, RollbackReplicationException;
+  /**
+   * Fetchs a new batch.
+   *
+   * If fetcher has been finished or it is closed, a {@link OplogBatch#isLastOne() finished} batch
+   * is returned. If the fetcher thinks it there are no more elements on the remote oplog but more
+   * could be there in future, the returned batch will return false to
+   * {@link OplogBatch#isReadyForMore()}.
+   *
+   * @return
+   * @throws StopReplicationException
+   * @throws RollbackReplicationException
+   */
+  public OplogBatch fetch() throws StopReplicationException, RollbackReplicationException;
 
-    @Override
-    public void close();
+  @Override
+  public void close();
 
 }

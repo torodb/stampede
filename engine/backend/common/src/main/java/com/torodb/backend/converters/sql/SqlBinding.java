@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.sql;
 
 import java.sql.PreparedStatement;
@@ -25,30 +26,36 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public interface SqlBinding<T> {
-    /**
-     * Return the value from the {@code ResultSet} at the specified {@code columnIndex}.
-     * If the value in the {@code ResultSet} is null it must return null too.
-     * @param resultSet
-     * @param columnIndex
-     * @return
-     * @throws SQLException
-     */
-    public @Nullable T get(@Nonnull ResultSet resultSet, int columnIndex) throws SQLException;
-    
-    /**
-     * Set the parameter of {@code PreparedStatement} at specified {@code parameterIndex}.
-     * @param preparedStatement
-     * @param parameterIndex
-     * @param value
-     * @throws SQLException
-     */
-    public void set(@Nonnull PreparedStatement preparedStatement, int parameterIndex, @Nonnull T value) throws SQLException;
-    
-    /**
-     * Return the placeholder for a value to use in SQL statement.
-     * @return
-     */
-    default public String getPlaceholder() {
-        return "?";
-    }
+
+  /**
+   * Return the value from the {@code ResultSet} at the specified {@code columnIndex}. If the value
+   * in the {@code ResultSet} is null it must return null too.
+   *
+   * @param resultSet
+   * @param columnIndex
+   * @return
+   * @throws SQLException
+   */
+  @Nullable
+  public T get(@Nonnull ResultSet resultSet, int columnIndex) throws SQLException;
+
+  /**
+   * Set the parameter of {@code PreparedStatement} at specified {@code parameterIndex}.
+   *
+   * @param preparedStatement
+   * @param parameterIndex
+   * @param value
+   * @throws SQLException
+   */
+  public void set(@Nonnull PreparedStatement preparedStatement, int parameterIndex,
+      @Nonnull T value) throws SQLException;
+
+  /**
+   * Return the placeholder for a value to use in SQL statement.
+   *
+   * @return
+   */
+  public default String getPlaceholder() {
+    return "?";
+  }
 }

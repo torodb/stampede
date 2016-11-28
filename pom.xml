@@ -15,7 +15,7 @@
     <version>0.50.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     
-    <name>ToroDB parent</name>
+    <name>ToroDB: Parent</name>
     <description>
         ToroDB is an open source project that turns your RDBMS into a
         MongoDB-compatible server, supporting the MongoDB query API and
@@ -82,13 +82,16 @@
         <mongowp.version>0.50.0-SNAPSHOT</mongowp.version>
         <jmh.version>1.12</jmh.version>
         <metrics.version>3.1.2</metrics.version>
-        <license.header.file>com/mycila/maven/plugin/license/templates/AGPL-3.txt</license.header.file>
+        <torodb.buildtools.version>0.50.0-SNAPSHOT</torodb.buildtools.version>
+        <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
+        <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
     </properties>
 
     <modules>
         <module>engine</module>
         <module>server</module>
         <module>stampede</module>
+        <module>build-tools</module>
     </modules>
 
     <dependencyManagement>
@@ -501,7 +504,6 @@
                     <failIfMissing>true</failIfMissing>
                     <properties>
                         <project.name>ToroDB</project.name>
-                        <project.description>${project.name}</project.description>
                         <project.inceptionYear>2014</project.inceptionYear>
                         <owner>${project.organization.name}</owner>
                         <email>${project.organization.url}</email>
@@ -522,6 +524,64 @@
                         </goals>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.torodb</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${torodb.buildtools.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <configuration>
+                            <!--<configLocation>google_checks.xml</configLocation>-->
+                            <consoleOutput>true</consoleOutput>
+                            <!--<failsOnError>true</failsOnError>-->
+                            <linkXRef>false</linkXRef>
+                            <violationSeverity>error</violationSeverity>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>            
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>7.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.torodb</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${torodb.buildtools.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.7.201606060606</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -536,61 +596,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>deploy</id> <!-- It must be manually turn on when mvn deploy is executed -->
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.4</version>
-                        <configuration>
-                            <failOnError>false</failOnError>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.7.7.201606060606</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>safer</id> <!-- Slower but safer profile used to look for errors before pushing to SCM -->
             <build>
@@ -676,34 +681,6 @@
             </activation>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>net.wouterdanes</groupId>
-                        <artifactId>mustache-maven-plugin</artifactId>
-                        <version>1.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>run-mustache-template</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>mustache</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <encoding>UTF-8</encoding>
-                            <context>
-                                ---
-                                latestVersion: ${project.version}
-                            </context>
-                            <templates>
-                                <template>
-                                    <templateFile>${project.basedir}/file-templates/README.md.mustache</templateFile>
-                                    <outputPath>${project.basedir}/README.md</outputPath>
-                                </template>
-                            </templates>
-                        </configuration>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>

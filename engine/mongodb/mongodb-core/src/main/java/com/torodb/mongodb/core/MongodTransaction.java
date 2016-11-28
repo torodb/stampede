@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
@@ -27,19 +28,21 @@ import com.torodb.torod.TorodTransaction;
  *
  */
 public interface MongodTransaction extends AutoCloseable {
-    public TorodTransaction getTorodTransaction();
 
-    public MongodConnection getConnection();
+  public TorodTransaction getTorodTransaction();
 
-    public <Arg, Result> Status<Result> execute(Request req, Command<? super Arg, ? super Result> command, Arg arg) throws RollbackException;
+  public MongodConnection getConnection();
 
-    public Request getCurrentRequest();
+  public <A, R> Status<R> execute(Request req,
+      Command<? super A, ? super R> command, A arg) throws RollbackException;
 
-    public void rollback();
+  public Request getCurrentRequest();
 
-    @Override
-    public void close();
+  public void rollback();
 
-    public boolean isClosed();
+  @Override
+  public void close();
+
+  public boolean isClosed();
 
 }

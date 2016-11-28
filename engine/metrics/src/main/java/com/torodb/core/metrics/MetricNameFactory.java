@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Metrics
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,26 +13,27 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.metrics;
 
 public class MetricNameFactory {
 
-	public static final String GROUP_NAME = "com.torodb.metrics";
+  public static final String GROUP_NAME = "com.torodb.metrics";
 
-	private final String type;
+  private final String type;
 
-	public MetricNameFactory(String type) {
-		this.type = type;
-	}
+  public MetricNameFactory(String type) {
+    this.type = type;
+  }
 
-	public MetricName createMetricName(String metricName) {
-		return createMetricName(GROUP_NAME, type, metricName);
-	}
+  public MetricName createMetricName(String metricName) {
+    return createMetricName(GROUP_NAME, type, metricName);
+  }
 
-	public static MetricName createMetricName(String group, String type, String metricName) {
-		return new MetricName(group, type, metricName);
-	}
+  public static MetricName createMetricName(String group, String type, String metricName) {
+    return new MetricName(group, type, metricName);
+  }
 
 }

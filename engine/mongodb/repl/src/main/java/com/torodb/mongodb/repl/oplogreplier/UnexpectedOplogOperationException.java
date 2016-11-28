@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
@@ -25,21 +26,21 @@ import com.torodb.core.exceptions.ToroRuntimeException;
  */
 public class UnexpectedOplogOperationException extends ToroRuntimeException {
 
-    private static final long serialVersionUID = 2106842711139387929L;
+  private static final long serialVersionUID = 2106842711139387929L;
 
-    private final OplogOperation oplogOp;
+  private final OplogOperation oplogOp;
 
-    public UnexpectedOplogOperationException(OplogOperation oplogOp) {
-        this.oplogOp = oplogOp;
-    }
+  public UnexpectedOplogOperationException(OplogOperation oplogOp) {
+    this.oplogOp = oplogOp;
+  }
 
-    public UnexpectedOplogOperationException(OplogOperation oplogOp, String message) {
-        super(message);
-        this.oplogOp = oplogOp;
-    }
+  public UnexpectedOplogOperationException(OplogOperation oplogOp, String message) {
+    super(message);
+    this.oplogOp = oplogOp;
+  }
 
-    public OplogOperation getOplogOp() {
-        return oplogOp;
-    }
+  public OplogOperation getOplogOp() {
+    return oplogOp;
+  }
 
 }

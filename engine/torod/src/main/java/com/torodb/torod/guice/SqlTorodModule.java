@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.guice;
 
 import com.google.inject.PrivateModule;
@@ -31,6 +32,7 @@ import com.torodb.torod.pipeline.InsertPipelineFactory;
 import com.torodb.torod.pipeline.impl.AkkaInsertPipelineFactory;
 import com.torodb.torod.pipeline.impl.DefaultInsertPipelineFactory;
 import com.torodb.torod.pipeline.impl.SameThreadInsertPipeline;
+
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -38,35 +40,36 @@ import java.util.concurrent.ThreadFactory;
  */
 public class SqlTorodModule extends PrivateModule {
 
-    @Override
-    protected void configure() {
-        install(new FactoryModuleBuilder()
-                .implement(SameThreadInsertPipeline.class, SameThreadInsertPipeline.class)
-                .build(SameThreadInsertPipeline.Factory.class)
-        );
-        bind(InsertPipelineFactory.class)
-                .to(DefaultInsertPipelineFactory.class)
-                .in(Singleton.class);
+  @Override
+  protected void configure() {
+    install(new FactoryModuleBuilder()
+        .implement(SameThreadInsertPipeline.class, SameThreadInsertPipeline.class)
+        .build(SameThreadInsertPipeline.Factory.class)
+    );
+    bind(InsertPipelineFactory.class)
+        .to(DefaultInsertPipelineFactory.class)
+        .in(Singleton.class);
 
-        install(new FactoryModuleBuilder()
-                .implement(TorodBundle.class, TorodBundle.class)
-                .build(TorodBundleFactory.class)
-        );
-        expose(TorodBundleFactory.class);
+    install(new FactoryModuleBuilder()
+        .implement(TorodBundle.class, TorodBundle.class)
+        .build(TorodBundleFactory.class)
+    );
+    expose(TorodBundleFactory.class);
 
-        bind(TorodServer.class)
-                .to(SqlTorodServer.class)
-                .in(Singleton.class);
-    }
-        
-    @Provides @Singleton
-    AkkaInsertPipelineFactory createConcurrentPipelineFactory(
-            ThreadFactory threadFactory,
-            ConcurrentToolsFactory concurrentToolsFactory,
-            BackendTransactionJobFactory backendTransactionJobFactory) {
+    bind(TorodServer.class)
+        .to(SqlTorodServer.class)
+        .in(Singleton.class);
+  }
 
-        return new AkkaInsertPipelineFactory(threadFactory, 
-                concurrentToolsFactory, backendTransactionJobFactory, 100);
-    }
-    
+  @Provides
+  @Singleton
+  AkkaInsertPipelineFactory createConcurrentPipelineFactory(
+      ThreadFactory threadFactory,
+      ConcurrentToolsFactory concurrentToolsFactory,
+      BackendTransactionJobFactory backendTransactionJobFactory) {
+
+    return new AkkaInsertPipelineFactory(threadFactory,
+        concurrentToolsFactory, backendTransactionJobFactory, 100);
+  }
+
 }

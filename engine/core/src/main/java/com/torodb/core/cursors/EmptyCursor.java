@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.cursors;
 
 import com.google.common.base.Preconditions;
+
 import java.util.NoSuchElementException;
 
 /**
@@ -25,23 +27,23 @@ import java.util.NoSuchElementException;
  */
 public class EmptyCursor<E> implements Cursor<E> {
 
-    private boolean closed = false;
+  private boolean closed = false;
 
-    @Override
-    public void close() {
-        closed = true;
-    }
+  @Override
+  public void close() {
+    closed = true;
+  }
 
-    @Override
-    public boolean hasNext() {
-        Preconditions.checkState(!closed);
-        return false;
-    }
+  @Override
+  public boolean hasNext() {
+    Preconditions.checkState(!closed);
+    return false;
+  }
 
-    @Override
-    public E next() {
-        Preconditions.checkState(!closed);
-        throw new NoSuchElementException();
-    }
+  @Override
+  public E next() {
+    Preconditions.checkState(!closed);
+    throw new NoSuchElementException();
+  }
 
 }

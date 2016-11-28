@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,28 +13,36 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.dsl.backend;
 
 import com.torodb.core.d2r.DocPartData;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.MetaCollection;
+import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.core.transaction.metainf.MetaDocPart;
+import com.torodb.core.transaction.metainf.MetaField;
+import com.torodb.core.transaction.metainf.MetaScalar;
+import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 
 /**
  *
  */
 public interface BackendTransactionJobFactory {
 
-    AddDatabaseDDLJob createAddDatabaseDDLJob(MetaDatabase db);
+  AddDatabaseDdlJob createAddDatabaseDdlJob(MetaDatabase db);
 
-    AddCollectionDDLJob createAddCollectionDDLJob(MetaDatabase db, MetaCollection col);
+  AddCollectionDdlJob createAddCollectionDdlJob(MetaDatabase db, MetaCollection col);
 
-    AddDocPartDDLJob createAddDocPartDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart);
+  AddDocPartDdlJob createAddDocPartDdlJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart);
 
-    AddFieldDDLJob createAddFieldDDLJob(MetaDatabase db, MetaCollection col, MutableMetaDocPart docPart, MetaField field);
+  AddFieldDdlJob createAddFieldDdlJob(MetaDatabase db, MetaCollection col,
+      MutableMetaDocPart docPart, MetaField field);
 
-    AddScalarDDLJob createAddScalarDDLJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart, MetaScalar scalar);
+  AddScalarDddlJob createAddScalarDdlJob(MetaDatabase db, MetaCollection col, MetaDocPart docPart,
+      MetaScalar scalar);
 
-    InsertBackendJob insert(MetaDatabase db, MetaCollection col, DocPartData data);
+  InsertBackendJob insert(MetaDatabase db, MetaCollection col, DocPartData data);
 
 }

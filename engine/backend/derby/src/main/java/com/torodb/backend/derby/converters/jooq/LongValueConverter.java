@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend Derby
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,61 +13,63 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.derby.converters.jooq;
 
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
+import com.torodb.backend.converters.sql.LongSqlBinding;
+import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.values.KvLong;
 import org.jooq.DataType;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DefaultDataType;
-import org.jooq.impl.SQLDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
-import com.torodb.backend.converters.sql.LongSqlBinding;
-import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
-import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.values.KVLong;
 
 /**
  *
  */
-public class LongValueConverter implements KVValueConverter<Long, Long, KVLong>{
-    private static final long serialVersionUID = 1L;
+public class LongValueConverter implements KvValueConverter<Long, Long, KvLong> {
 
-    public static final DataType<Long> LONG_TYPE = new DefaultDataType<Long>(SQLDialect.DERBY, Long.class, "BIGINT");
-    
-    public static final DataTypeForKV<KVLong> TYPE = DataTypeForKV.from(LONG_TYPE, new LongValueConverter());
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return LongType.INSTANCE;
-    }
+  public static final DataType<Long> LONG_TYPE = new DefaultDataType<Long>(SQLDialect.DERBY,
+      Long.class, "BIGINT");
 
-    @Override
-    public KVLong from(Long databaseObject) {
-        return KVLong.of(databaseObject);
-    }
+  public static final DataTypeForKv<KvLong> TYPE = DataTypeForKv.from(LONG_TYPE,
+      new LongValueConverter());
 
-    @Override
-    public Long to(KVLong userObject) {
-        return userObject.getValue();
-    }
+  @Override
+  public KvType getErasuredType() {
+    return LongType.INSTANCE;
+  }
 
-    @Override
-    public Class<Long> fromType() {
-        return Long.class;
-    }
+  @Override
+  public KvLong from(Long databaseObject) {
+    return KvLong.of(databaseObject);
+  }
 
-    @Override
-    public Class<KVLong> toType() {
-        return KVLong.class;
-    }
+  @Override
+  public Long to(KvLong userObject) {
+    return userObject.getValue();
+  }
 
-    @Override
-    public SqlBinding<Long> getSqlBinding() {
-        return LongSqlBinding.INSTANCE;
-    }
-    
+  @Override
+  public Class<Long> fromType() {
+    return Long.class;
+  }
+
+  @Override
+  public Class<KvLong> toType() {
+    return KvLong.class;
+  }
+
+  @Override
+  public SqlBinding<Long> getSqlBinding() {
+    return LongSqlBinding.INSTANCE;
+  }
+
 }

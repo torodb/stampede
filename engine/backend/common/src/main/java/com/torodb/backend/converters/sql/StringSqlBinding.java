@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.sql;
 
 import java.sql.PreparedStatement;
@@ -22,19 +23,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class StringSqlBinding implements SqlBinding<String> {
-    public static final StringSqlBinding INSTANCE = new StringSqlBinding();
 
-    @Override
-    public String get(ResultSet resultSet, int columnIndex) throws SQLException {
-        String value = resultSet.getString(columnIndex);
-        if (resultSet.wasNull()) {
-            return null;
-        }
-        return value;
-    }
+  public static final StringSqlBinding INSTANCE = new StringSqlBinding();
 
-    @Override
-    public void set(PreparedStatement preparedStatement, int parameterIndex, String value) throws SQLException {
-        preparedStatement.setString(parameterIndex, value);
+  @Override
+  public String get(ResultSet resultSet, int columnIndex) throws SQLException {
+    String value = resultSet.getString(columnIndex);
+    if (resultSet.wasNull()) {
+      return null;
     }
+    return value;
+  }
+
+  @Override
+  public void set(PreparedStatement preparedStatement, int parameterIndex, String value) throws
+      SQLException {
+    preparedStatement.setString(parameterIndex, value);
+  }
 }

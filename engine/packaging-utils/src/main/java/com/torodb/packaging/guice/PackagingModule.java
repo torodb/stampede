@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.guice;
 
 import com.google.inject.AbstractModule;
+
 import java.time.Clock;
 
 /**
@@ -25,16 +27,16 @@ import java.time.Clock;
  */
 public class PackagingModule extends AbstractModule {
 
-    private final Clock clock;
+  private final Clock clock;
 
-    public PackagingModule(Clock clock) {
-        this.clock = clock;
-    }
+  public PackagingModule(Clock clock) {
+    this.clock = clock;
+  }
 
-    @Override
-    protected void configure() {
-        bind(Clock.class)
-                .toInstance(clock);
-    }
+  @Override
+  protected void configure() {
+    bind(Clock.class)
+        .toInstance(clock);
+  }
 
 }

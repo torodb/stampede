@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.transaction.metainf;
 
 import java.util.Iterator;
@@ -24,41 +25,42 @@ import java.util.Iterator;
  */
 public abstract class AbstractMetaDocPartIndex implements MetaDocPartIndex {
 
-    private final boolean unique;
+  private final boolean unique;
 
-    public AbstractMetaDocPartIndex(boolean unique) {
-        this.unique = unique;
+  public AbstractMetaDocPartIndex(boolean unique) {
+    this.unique = unique;
+  }
+
+  @Override
+  public boolean isUnique() {
+    return unique;
+  }
+
+  @Override
+  public boolean hasSameColumns(MetaDocPartIndex docPartIndex) {
+    return hasSameColumns(docPartIndex, iteratorColumns());
+  }
+
+  protected boolean hasSameColumns(MetaDocPartIndex docPartIndex,
+      Iterator<? extends MetaDocPartIndexColumn> columnsIterator) {
+    Iterator<? extends MetaDocPartIndexColumn> docPartIndexColumnsIterator = docPartIndex
+        .iteratorColumns();
+
+    while (columnsIterator.hasNext() && docPartIndexColumnsIterator.hasNext()) {
+      MetaDocPartIndexColumn column = columnsIterator.next();
+      MetaDocPartIndexColumn docPartIndexColumn = docPartIndexColumnsIterator.next();
+      if (!column.getIdentifier().equals(docPartIndexColumn.getIdentifier()) || column.getOrdering()
+          != docPartIndexColumn.getOrdering()) {
+        return false;
+      }
     }
 
-    @Override
-    public boolean isUnique() {
-        return unique;
-    }
+    return !columnsIterator.hasNext() && !docPartIndexColumnsIterator.hasNext();
+  }
 
-    @Override
-    public boolean hasSameColumns(MetaDocPartIndex docPartIndex) {
-        return hasSameColumns(docPartIndex, iteratorColumns());
-    }
-
-    protected boolean hasSameColumns(MetaDocPartIndex docPartIndex, Iterator<? extends MetaDocPartIndexColumn> columnsIterator) {
-        Iterator<? extends MetaDocPartIndexColumn> docPartIndexColumnsIterator = docPartIndex.iteratorColumns();
-        
-        while (columnsIterator.hasNext() && docPartIndexColumnsIterator.hasNext()) {
-            MetaDocPartIndexColumn column = columnsIterator.next();
-            MetaDocPartIndexColumn docPartIndexColumn = docPartIndexColumnsIterator.next();
-            if (!column.getIdentifier().equals(docPartIndexColumn.getIdentifier()) ||
-                    column.getOrdering() != docPartIndexColumn.getOrdering()) {
-                return false;
-            }
-        }
-        
-        return !columnsIterator.hasNext() &&
-                !docPartIndexColumnsIterator.hasNext();
-    }
-    
-    @Override
-    public String toString() {
-        return defautToString();
-    }
+  @Override
+  public String toString() {
+    return defautToString();
+  }
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.impl;
 
 import com.eightkdata.mongowp.ErrorCode;
@@ -28,24 +29,27 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  */
-public final class NotImplementedCommandImplementation<Arg, Result, Context> implements
-        CommandImplementation<Arg, Result, Context>{
+public final class NotImplementedCommandImplementation<A, R, ContextT> implements
+    CommandImplementation<A, R, ContextT> {
 
-    private static final Logger LOGGER
-            = LogManager.getLogger(NotImplementedCommandImplementation.class);
-    private static final NotImplementedCommandImplementation INSTANCE = new NotImplementedCommandImplementation();
+  private static final Logger LOGGER =
+      LogManager.getLogger(NotImplementedCommandImplementation.class);
+  private static final NotImplementedCommandImplementation INSTANCE =
+      new NotImplementedCommandImplementation();
 
-    private NotImplementedCommandImplementation() {
-    }
+  private NotImplementedCommandImplementation() {
+  }
 
-    public static <Arg, Rep, Context> NotImplementedCommandImplementation<Arg, Rep, Context> build() {
-        return INSTANCE;
-    }
+  public static <A, R, ContextT> NotImplementedCommandImplementation<A, R, ContextT> build() {
+    return INSTANCE;
+  }
 
-    @Override
-    public Status<Result> apply(Request req, Command<? super Arg, ? super Result> command, Arg arg, Context context) {
-        LOGGER.warn("Command {} was called, but it is not supported", command.getCommandName());
-        return Status.from(ErrorCode.COMMAND_NOT_SUPPORTED, "Command not supported: " + command.getCommandName());
-    }
+  @Override
+  public Status<R> apply(Request req, Command<? super A, ? super R> command, A arg,
+      ContextT context) {
+    LOGGER.warn("Command {} was called, but it is not supported", command.getCommandName());
+    return Status.from(ErrorCode.COMMAND_NOT_SUPPORTED, "Command not supported: " + command
+        .getCommandName());
+  }
 
 }

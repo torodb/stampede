@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,59 +13,62 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.jooq;
 
-import java.sql.Types;
-
-import org.jooq.util.postgres.PostgresDataType;
-
-import com.torodb.backend.converters.jooq.DataTypeForKV;
-import com.torodb.backend.converters.jooq.KVValueConverter;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.BinarySqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.kvdocument.types.KVType;
+import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.MongoObjectIdType;
-import com.torodb.kvdocument.values.KVMongoObjectId;
-import com.torodb.kvdocument.values.heap.ByteArrayKVMongoObjectId;
+import com.torodb.kvdocument.values.KvMongoObjectId;
+import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
+import org.jooq.util.postgres.PostgresDataType;
+
+import java.sql.Types;
 
 /**
  *
  */
-public class MongoObjectIdValueConverter implements KVValueConverter<byte[], byte[], KVMongoObjectId> {
-    private static final long serialVersionUID = 1L;
+public class MongoObjectIdValueConverter implements
+    KvValueConverter<byte[], byte[], KvMongoObjectId> {
 
-    public static final DataTypeForKV<KVMongoObjectId> TYPE = DataTypeForKV.from(PostgresDataType.BYTEA, new MongoObjectIdValueConverter(),Types.BINARY);
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVType getErasuredType() {
-        return MongoObjectIdType.INSTANCE;
-    }
+  public static final DataTypeForKv<KvMongoObjectId> TYPE = DataTypeForKv.from(
+      PostgresDataType.BYTEA, new MongoObjectIdValueConverter(), Types.BINARY);
 
-    @Override
-    public KVMongoObjectId from(byte[] databaseObject) {
-        return new ByteArrayKVMongoObjectId(databaseObject);
-    }
+  @Override
+  public KvType getErasuredType() {
+    return MongoObjectIdType.INSTANCE;
+  }
 
-    @Override
-    public byte[] to(KVMongoObjectId userObject) {
-        return userObject.getArrayValue();
-    }
+  @Override
+  public KvMongoObjectId from(byte[] databaseObject) {
+    return new ByteArrayKvMongoObjectId(databaseObject);
+  }
 
-    @Override
-    public Class<byte[]> fromType() {
-        return byte[].class;
-    }
+  @Override
+  public byte[] to(KvMongoObjectId userObject) {
+    return userObject.getArrayValue();
+  }
 
-    @Override
-    public Class<KVMongoObjectId> toType() {
-        return KVMongoObjectId.class;
-    }
+  @Override
+  public Class<byte[]> fromType() {
+    return byte[].class;
+  }
 
-    @Override
-    public SqlBinding<byte[]> getSqlBinding() {
-        return BinarySqlBinding.INSTANCE;
-    }
+  @Override
+  public Class<KvMongoObjectId> toType() {
+    return KvMongoObjectId.class;
+  }
+
+  @Override
+  public SqlBinding<byte[]> getSqlBinding() {
+    return BinarySqlBinding.INSTANCE;
+  }
 
 }

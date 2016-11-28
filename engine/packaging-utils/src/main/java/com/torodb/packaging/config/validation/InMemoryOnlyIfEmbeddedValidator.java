@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,27 +13,29 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.validation;
+
+import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
+public class InMemoryOnlyIfEmbeddedValidator implements
+    ConstraintValidator<InMemoryOnlyIfEmbedded, AbstractDerby> {
 
-public class InMemoryOnlyIfEmbeddedValidator implements ConstraintValidator<InMemoryOnlyIfEmbedded, AbstractDerby> {
-	
-	@Override
-	public void initialize(InMemoryOnlyIfEmbedded constraintAnnotation) {
-	}
+  @Override
+  public void initialize(InMemoryOnlyIfEmbedded constraintAnnotation) {
+  }
 
-	@Override
-	public boolean isValid(AbstractDerby value, ConstraintValidatorContext context) {
-		if (value != null && value.getInMemory() != null && value.getEmbedded() != null) {
-		    return  !value.getInMemory() || value.getEmbedded();
-		}
+  @Override
+  public boolean isValid(AbstractDerby value, ConstraintValidatorContext context) {
+    if (value != null && value.getInMemory() != null && value.getEmbedded() != null) {
+      return !value.getInMemory() || value.getEmbedded();
+    }
 
-		return true;
-	}
+    return true;
+  }
 }

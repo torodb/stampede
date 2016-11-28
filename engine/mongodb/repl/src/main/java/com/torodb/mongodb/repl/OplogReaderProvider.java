@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,38 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.repl;
 
-import javax.annotation.Nonnull;
+package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.core.MongoConnection;
 import com.eightkdata.mongowp.client.core.UnreachableMongoServerException;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
+import javax.annotation.Nonnull;
+
 /**
  *
  */
 public interface OplogReaderProvider {
 
-    /**
-     * Returns new oplog reader.
-     *
-     * The created reader uses the given host and port as sync source
-     * @param syncSource
-     * @param mongoClientOptions
-     * @param mongoCredential
-     * @return
-     * @throws NoSyncSourceFoundException
-     * @throws UnreachableMongoServerException
-     */
-    @Nonnull
-    public OplogReader newReader(@Nonnull HostAndPort syncSource)
-            throws NoSyncSourceFoundException, UnreachableMongoServerException;
+  /**
+   * Returns new oplog reader.
+   *
+   * The created reader uses the given host and port as sync source
+   *
+   * @param syncSource
+   * @param mongoClientOptions
+   * @param mongoCredential
+   * @return
+   * @throws NoSyncSourceFoundException
+   * @throws UnreachableMongoServerException
+   */
+  @Nonnull
+  public OplogReader newReader(@Nonnull HostAndPort syncSource)
+      throws NoSyncSourceFoundException, UnreachableMongoServerException;
 
-    public OplogReader newReader(@Nonnull MongoConnection connection);
+  public OplogReader newReader(@Nonnull MongoConnection connection);
 }

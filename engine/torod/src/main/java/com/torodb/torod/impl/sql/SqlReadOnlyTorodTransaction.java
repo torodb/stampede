@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Torod Layer
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.torod.impl.sql;
 
 import com.torodb.core.transaction.ReadOnlyInternalTransaction;
@@ -23,18 +24,19 @@ import com.torodb.torod.ReadOnlyTorodTransaction;
 /**
  *
  */
-public class SqlReadOnlyTorodTransaction extends SqlTorodTransaction<ReadOnlyInternalTransaction> implements ReadOnlyTorodTransaction {
+public class SqlReadOnlyTorodTransaction extends SqlTorodTransaction<ReadOnlyInternalTransaction>
+    implements ReadOnlyTorodTransaction {
 
-    public SqlReadOnlyTorodTransaction(SqlTorodConnection connection) {
-        super(connection);
-    }
+  public SqlReadOnlyTorodTransaction(SqlTorodConnection connection) {
+    super(connection);
+  }
 
-    @Override
-    protected ReadOnlyInternalTransaction createInternalTransaction(SqlTorodConnection connection) {
-        return connection
-                .getServer()
-                .getInternalTransactionManager()
-                .openReadTransaction(getConnection().getBackendConnection());
-    }
+  @Override
+  protected ReadOnlyInternalTransaction createInternalTransaction(SqlTorodConnection connection) {
+    return connection
+        .getServer()
+        .getInternalTransactionManager()
+        .openReadTransaction(getConnection().getBackendConnection());
+  }
 
 }

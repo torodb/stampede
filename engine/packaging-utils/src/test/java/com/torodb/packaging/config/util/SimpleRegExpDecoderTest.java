@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Packaging utils
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.packaging.config.util;
 
 import org.junit.Assert;
@@ -22,16 +23,19 @@ import org.junit.Test;
 
 public class SimpleRegExpDecoderTest {
 
-    @Test
-    public void decodeTest() {
-        Assert.assertEquals("\\Qmine_and_your\\E", SimpleRegExpDecoder.decode("mine_and_your").pattern());
-        Assert.assertEquals("\\Qmine_\\E.*\\Q_your\\E", SimpleRegExpDecoder.decode("mine_*_your").pattern());
-        Assert.assertEquals("\\Qmine_*_your\\E", SimpleRegExpDecoder.decode("mine_\\*_your").pattern());
-        Assert.assertEquals("\\Qmine_\\\\E.*\\Q_your\\E", SimpleRegExpDecoder.decode("min\\e_\\\\*_yo\\ur").pattern());
-        Assert.assertEquals(".*\\Q_and_your\\E", SimpleRegExpDecoder.decode("*_and_your").pattern());
-        Assert.assertEquals("\\Qmine_and_\\E.*", SimpleRegExpDecoder.decode("mine_and_*").pattern());
-        Assert.assertEquals("\\Q*_and_your\\E", SimpleRegExpDecoder.decode("\\*_and_your").pattern());
-        Assert.assertEquals("\\Qmine_and_*\\E", SimpleRegExpDecoder.decode("mine_and_\\*").pattern());
-    }
-    
+  @Test
+  public void decodeTest() {
+    Assert
+        .assertEquals("\\Qmine_and_your\\E", SimpleRegExpDecoder.decode("mine_and_your").pattern());
+    Assert.assertEquals("\\Qmine_\\E.*\\Q_your\\E", SimpleRegExpDecoder.decode("mine_*_your")
+        .pattern());
+    Assert.assertEquals("\\Qmine_*_your\\E", SimpleRegExpDecoder.decode("mine_\\*_your").pattern());
+    Assert.assertEquals("\\Qmine_\\\\E.*\\Q_your\\E", SimpleRegExpDecoder.decode(
+        "min\\e_\\\\*_yo\\ur").pattern());
+    Assert.assertEquals(".*\\Q_and_your\\E", SimpleRegExpDecoder.decode("*_and_your").pattern());
+    Assert.assertEquals("\\Qmine_and_\\E.*", SimpleRegExpDecoder.decode("mine_and_*").pattern());
+    Assert.assertEquals("\\Q*_and_your\\E", SimpleRegExpDecoder.decode("\\*_and_your").pattern());
+    Assert.assertEquals("\\Qmine_and_*\\E", SimpleRegExpDecoder.decode("mine_and_\\*").pattern());
+  }
+
 }

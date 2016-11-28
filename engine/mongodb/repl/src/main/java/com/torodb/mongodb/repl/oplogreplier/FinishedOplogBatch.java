@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -26,34 +28,35 @@ import java.util.List;
  */
 public class FinishedOplogBatch implements OplogBatch {
 
-    private FinishedOplogBatch() {
-    }
+  private FinishedOplogBatch() {
+  }
 
-    public static FinishedOplogBatch getInstance() {
-        return FinishedOplogBatchHolder.INSTANCE;
-    }
+  public static FinishedOplogBatch getInstance() {
+    return FinishedOplogBatchHolder.INSTANCE;
+  }
 
-    @Override
-    public List<OplogOperation> getOps() {
-        return Collections.emptyList();
-    }
+  @Override
+  public List<OplogOperation> getOps() {
+    return Collections.emptyList();
+  }
 
-    @Override
-    public boolean isReadyForMore() {
-        return false;
-    }
+  @Override
+  public boolean isReadyForMore() {
+    return false;
+  }
 
-    @Override
-    public boolean isLastOne() {
-        return true;
-    }
+  @Override
+  public boolean isLastOne() {
+    return true;
+  }
 
-    private static class FinishedOplogBatchHolder {
-        private static final FinishedOplogBatch INSTANCE = new FinishedOplogBatch();
-    }
+  private static class FinishedOplogBatchHolder {
 
-    //@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
-    private Object readResolve()  {
-        return FinishedOplogBatch.getInstance();
-    }
- }
+    private static final FinishedOplogBatch INSTANCE = new FinishedOplogBatch();
+  }
+
+  //@edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "UPM_UNCALLED_PRIVATE_METHOD")
+  private Object readResolve() {
+    return FinishedOplogBatch.getInstance();
+  }
+}

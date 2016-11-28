@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,14 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.commands.impl;
-
-import java.util.Arrays;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
@@ -36,50 +32,52 @@ import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.Crea
 import com.torodb.mongodb.language.Constants;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
+import java.util.Arrays;
+
 public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionArgument, Empty> {
-    private static final Logger LOGGER
-            = LogManager.getLogger(CreateCollectionReplImpl.class);
 
-    @Override
-    public Status<Empty> apply(
-            Request req,
-            Command<? super CreateCollectionArgument, ? super Empty> command,
-            CreateCollectionArgument arg,
-            SharedWriteTorodTransaction trans) {
+  private static final Logger LOGGER =
+      LogManager.getLogger(CreateCollectionReplImpl.class);
 
-        try {
-            LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
-            
-            if (arg.getOptions().isCapped()) {
-                LOGGER.info("Ignoring capped flag for collection {}.{}", req.getDatabase(), arg.getCollection());
-            }
-            
-            if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {
-                trans.createIndex(
-                        req.getDatabase(),
-                        arg.getCollection(),
-                        Constants.ID_INDEX,
-                        ImmutableList.of(
-                                new IndexFieldInfo(
-                                        new AttributeReference(
-                                                Arrays.asList(new Key[] {
-                                                    new ObjectKey(Constants.ID) })
-                                        ),
-                                        FieldIndexOrdering.ASC.isAscending()
-                                )
-                        ), true
-                );
-            }
+  @Override
+  public Status<Empty> apply(
+      Request req,
+      Command<? super CreateCollectionArgument, ? super Empty> command,
+      CreateCollectionArgument arg,
+      SharedWriteTorodTransaction trans) {
 
-            trans.createCollection(req.getDatabase(), arg.getCollection());
-        } catch (UserException ex) {
-            reportErrorIgnored(LOGGER, command, ex);
-        }
-        return Status.ok();
+    try {
+      LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
+
+      if (arg.getOptions().isCapped()) {
+        LOGGER.info("Ignoring capped flag for collection {}.{}", req.getDatabase(), arg
+            .getCollection());
+      }
+
+      if (!trans.existsCollection(req.getDatabase(), arg.getCollection())) {
+        trans.createIndex(
+            req.getDatabase(),
+            arg.getCollection(),
+            Constants.ID_INDEX,
+            ImmutableList.of(
+                new IndexFieldInfo(
+                    new AttributeReference(
+                        Arrays.asList(new Key[]{
+                          new ObjectKey(Constants.ID)})),
+                    FieldIndexOrdering.ASC.isAscending()
+                )
+            ), true
+        );
+      }
+
+      trans.createCollection(req.getDatabase(), arg.getCollection());
+    } catch (UserException ex) {
+      reportErrorIgnored(LOGGER, command, ex);
     }
+    return Status.ok();
+  }
 
 }

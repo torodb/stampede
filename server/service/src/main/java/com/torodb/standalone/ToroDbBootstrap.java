@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Server service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,32 +13,34 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.standalone;
 
-import java.time.Clock;
-import java.util.concurrent.ThreadFactory;
+package com.torodb.standalone;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.standalone.config.model.Config;
 
+import java.time.Clock;
+import java.util.concurrent.ThreadFactory;
+
 /**
  *
  */
 public class ToroDbBootstrap {
 
-    private ToroDbBootstrap() {}
+  private ToroDbBootstrap() {
+  }
 
-    public static Service createStandaloneService(Config config, Clock clock) {
-        Injector bootstrapInjector = Guice.createInjector(new BootstrapModule(
-                config, clock));
-        ThreadFactory threadFactory = bootstrapInjector.getInstance(
-                ThreadFactory.class);
-        
-        return new ToroDbService(threadFactory, bootstrapInjector);
-    }
+  public static Service createStandaloneService(Config config, Clock clock) {
+    Injector bootstrapInjector = Guice.createInjector(new BootstrapModule(
+        config, clock));
+    ThreadFactory threadFactory = bootstrapInjector.getInstance(
+        ThreadFactory.class);
+
+    return new ToroDbService(threadFactory, bootstrapInjector);
+  }
 
 }

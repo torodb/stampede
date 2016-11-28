@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
 import com.torodb.core.exceptions.user.UpdateException;
@@ -24,11 +25,11 @@ import com.torodb.core.exceptions.user.UpdateException;
  */
 public abstract class UpdateAction {
 
-    public abstract void apply(UpdatedToroDocumentBuilder builder) throws UpdateException;
+  public abstract void apply(UpdatedToroDocumentBuilder builder) throws UpdateException;
 
-    public abstract <Result, Arg> Result accept(UpdateActionVisitor<Result, Arg> visitor, Arg arg);
+  public abstract <R, A> R accept(UpdateActionVisitor<R, A> visitor, A arg);
 
-    public boolean isSetModification() {
-        return false;
-    }
+  public boolean isSetModification() {
+    return false;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
@@ -25,33 +26,34 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
-/**
- *
- */
-class ExclusiveWriteMongodTransactionImpl extends MongodTransactionImpl implements ExclusiveWriteMongodTransaction {
+class ExclusiveWriteMongodTransactionImpl extends MongodTransactionImpl implements
+    ExclusiveWriteMongodTransaction {
 
-    private final ExclusiveWriteTorodTransaction torodTransaction;
-    private final CommandsExecutor<? super ExclusiveWriteMongodTransactionImpl> commandsExecutor;
+  private final ExclusiveWriteTorodTransaction torodTransaction;
+  private final CommandsExecutor<? super ExclusiveWriteMongodTransactionImpl> commandsExecutor;
 
-    public ExclusiveWriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
-        super(connection);
-        this.torodTransaction = connection.getTorodConnection().openExclusiveWriteTransaction(concurrent);
-        this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getExclusiveWriteCommandsExecutor();
-    }
+  public ExclusiveWriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
+    super(connection);
+    this.torodTransaction = connection.getTorodConnection()
+        .openExclusiveWriteTransaction(concurrent);
+    this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier()
+        .getExclusiveWriteCommandsExecutor();
+  }
 
-    @Override
-    public ExclusiveWriteTorodTransaction getTorodTransaction() {
-        return torodTransaction;
-    }
+  @Override
+  public ExclusiveWriteTorodTransaction getTorodTransaction() {
+    return torodTransaction;
+  }
 
-    @Override
-    protected <Arg, Result> Status<Result> executeProtected(Request req, Command<? super Arg, ? super Result> command, Arg arg) {
-        return commandsExecutor.execute(req, command, arg, this);
-    }
+  @Override
+  protected <A, R> Status<R> executeProtected(Request req,
+      Command<? super A, ? super R> command, A arg) {
+    return commandsExecutor.execute(req, command, arg, this);
+  }
 
-    @Override
-    public void commit() throws RollbackException, UserException {
-        torodTransaction.commit();
-    }
+  @Override
+  public void commit() throws RollbackException, UserException {
+    torodTransaction.commit();
+  }
 
 }

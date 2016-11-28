@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,80 +13,82 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.language.update;
 
-import com.torodb.kvdocument.values.KVValue;
+import com.torodb.kvdocument.values.KvValue;
 
 /**
  *
  */
 class ObjectBuilderCallback implements BuilderCallback<String> {
-    private final UpdatedToroDocumentBuilder builder;
 
-    public ObjectBuilderCallback(UpdatedToroDocumentBuilder builder) {
-        this.builder = builder;
-    }
+  private final UpdatedToroDocumentBuilder builder;
 
-    @Override
-    public Class<String> getKeyClass() {
-        return String.class;
-    }
+  public ObjectBuilderCallback(UpdatedToroDocumentBuilder builder) {
+    this.builder = builder;
+  }
 
-    @Override
-    public boolean contains(String key) {
-        return builder.contains(key);
-    }
+  @Override
+  public Class<String> getKeyClass() {
+    return String.class;
+  }
 
-    @Override
-    public boolean isValue(String key) {
-        return builder.isValue(key);
-    }
+  @Override
+  public boolean contains(String key) {
+    return builder.contains(key);
+  }
 
-    @Override
-    public KVValue<?> getValue(String key) {
-        return builder.getValue(key);
-    }
+  @Override
+  public boolean isValue(String key) {
+    return builder.isValue(key);
+  }
 
-    @Override
-    public boolean isArrayBuilder(String key) {
-        return builder.isArrayBuilder(key);
-    }
+  @Override
+  public KvValue<?> getValue(String key) {
+    return builder.getValue(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentArrayBuilder getArrayBuilder(String key) {
-        return builder.getArrayBuilder(key);
-    }
+  @Override
+  public boolean isArrayBuilder(String key) {
+    return builder.isArrayBuilder(key);
+  }
 
-    @Override
-    public boolean isObjectBuilder(String key) {
-        return builder.isObjectBuilder(key);
-    }
+  @Override
+  public UpdatedToroDocumentArrayBuilder getArrayBuilder(String key) {
+    return builder.getArrayBuilder(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentBuilder getObjectBuilder(String key) {
-        return builder.getObjectBuilder(key);
-    }
+  @Override
+  public boolean isObjectBuilder(String key) {
+    return builder.isObjectBuilder(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentArrayBuilder newArray(String key) {
-        return builder.newArray(key);
-    }
+  @Override
+  public UpdatedToroDocumentBuilder getObjectBuilder(String key) {
+    return builder.getObjectBuilder(key);
+  }
 
-    @Override
-    public UpdatedToroDocumentBuilder newObject(String key) {
-        return builder.newObject(key);
-    }
+  @Override
+  public UpdatedToroDocumentArrayBuilder newArray(String key) {
+    return builder.newArray(key);
+  }
 
-    @Override
-    public void setValue(String key, KVValue<?> value) {
-        builder.putValue(key, value);
-    }
+  @Override
+  public UpdatedToroDocumentBuilder newObject(String key) {
+    return builder.newObject(key);
+  }
 
-    @Override
-    public boolean unset(String key) {
-        return builder.unset(key);
-    }
-    
+  @Override
+  public void setValue(String key, KvValue<?> value) {
+    builder.putValue(key, value);
+  }
+
+  @Override
+  public boolean unset(String key) {
+    return builder.unset(key);
+  }
+
 }

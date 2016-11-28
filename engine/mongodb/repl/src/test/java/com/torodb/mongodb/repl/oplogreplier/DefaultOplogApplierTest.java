@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.google.common.collect.ImmutableMap;
@@ -38,54 +39,53 @@ import com.torodb.torod.TorodServer;
  */
 public abstract class DefaultOplogApplierTest extends AbstractOplogApplierTest {
 
+  @Override
+  public Module getMongodSpecificTestModule() {
+    return new DefaultMongodModule();
+  }
+
+  private static class DefaultMongodModule extends PrivateModule {
+
     @Override
-    public Module getMongodSpecificTestModule() {
-        return new DefaultMongodModule();
+    protected void configure() {
+      bind(ConcurrentOplogBatchExecutor.class)
+          .in(Singleton.class);
+
+      bind(AnalyzedOplogBatchExecutor.class)
+          .to(ConcurrentOplogBatchExecutor.class)
+          .in(Singleton.class);
+      expose(AnalyzedOplogBatchExecutor.class);
+
+      bind(ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics.class)
+          .in(Singleton.class);
+      bind(AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics.class)
+          .to(ConcurrentOplogBatchExecutorMetrics.class);
+
+      bind(ConcurrentOplogBatchExecutor.SubBatchHeuristic.class)
+          .toInstance((ConcurrentOplogBatchExecutorMetrics metrics) -> 100);
+
+      install(new FactoryModuleBuilder()
+          .implement(BatchAnalyzer.class, BatchAnalyzer.class)
+          .build(BatchAnalyzer.BatchAnalyzerFactory.class)
+      );
+      expose(BatchAnalyzerFactory.class);
+
+      bind(AnalyzedOpReducer.class)
+          .toInstance(new AnalyzedOpReducer(true));
+
+      bind(ReplicationFilters.class)
+          .toInstance(new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of()));
+      expose(ReplicationFilters.class);
+
+      bind(BackendService.class)
+          .to(BackendServiceImpl.class)
+          .asEagerSingleton();
     }
 
-    private static class DefaultMongodModule extends PrivateModule {
-        @Override
-        protected void configure() {
-            bind(ConcurrentOplogBatchExecutor.class)
-                    .in(Singleton.class);
-
-            bind(AnalyzedOplogBatchExecutor.class)
-                    .to(ConcurrentOplogBatchExecutor.class)
-                    .in(Singleton.class);
-            expose(AnalyzedOplogBatchExecutor.class);
-
-            bind(ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics.class)
-                    .in(Singleton.class);
-            bind(AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics.class)
-                    .to(ConcurrentOplogBatchExecutorMetrics.class);
-
-            bind(ConcurrentOplogBatchExecutor.SubBatchHeuristic.class)
-                    .toInstance((ConcurrentOplogBatchExecutorMetrics metrics) -> 100);
-
-
-            install(new FactoryModuleBuilder()
-                    .implement(BatchAnalyzer.class, BatchAnalyzer.class)
-                    .build(BatchAnalyzer.BatchAnalyzerFactory.class)
-            );
-            expose(BatchAnalyzerFactory.class);
-
-            bind(AnalyzedOpReducer.class)
-                    .toInstance(new AnalyzedOpReducer(true));
-
-            bind(ReplicationFilters.class)
-                    .toInstance(new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of()));
-            expose(ReplicationFilters.class);
-
-            bind(BackendService.class)
-                    .to(BackendServiceImpl.class)
-                    .asEagerSingleton();
-        }
-
-        @Provides
-        TorodServer getMongodServer(TorodBundle bundle) {
-            return bundle.getTorodServer();
-        }
+    @Provides
+    TorodServer getMongodServer(TorodBundle bundle) {
+      return bundle.getTorodServer();
     }
-
+  }
 
 }

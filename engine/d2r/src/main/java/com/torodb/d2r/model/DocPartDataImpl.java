@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: D2R Implementation
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.d2r.model;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+package com.torodb.d2r.model;
 
 import com.torodb.core.d2r.DocPartData;
 import com.torodb.core.d2r.DocPartRow;
@@ -27,79 +24,83 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 
-public class DocPartDataImpl implements DocPartData{
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-	private List<DocPartRow> docPartRows = new ArrayList<>();
-	private TableMetadata metadata;
-	private DocPartDataImpl parent;
-	private List<DocPartDataImpl> childs = null;
+public class DocPartDataImpl implements DocPartData {
 
-	public DocPartDataImpl(TableMetadata metadata, DocPartDataImpl parent) {
-		this.metadata = metadata;
-		this.parent= parent;
-		if (parent!=null){
-			this.parent.addChild(this);
-		}
-	}
+  private List<DocPartRow> docPartRows = new ArrayList<>();
+  private TableMetadata metadata;
+  private DocPartDataImpl parent;
+  private List<DocPartDataImpl> childs = null;
 
-	public DocPartRowImpl newRowObject(Integer index, DocPartRowImpl parentRow) {
-		DocPartRowImpl docPartRow = new DocPartRowImpl(metadata, index, parentRow, this);
-		docPartRows.add(docPartRow);
-		return docPartRow;
-	}
+  public DocPartDataImpl(TableMetadata metadata, DocPartDataImpl parent) {
+    this.metadata = metadata;
+    this.parent = parent;
+    if (parent != null) {
+      this.parent.addChild(this);
+    }
+  }
 
-	public MetaDocPart getMetaDocPart(){
-		return metadata.getMetaDocPart();
-	}
-	
-	public DocPartDataImpl getParentDocPartRow() {
-		return parent;
-	}
-	
-	public List<DocPartDataImpl> getChilds(){
-		return childs;
-	}
+  public DocPartRowImpl newRowObject(Integer index, DocPartRowImpl parentRow) {
+    DocPartRowImpl docPartRow = new DocPartRowImpl(metadata, index, parentRow, this);
+    docPartRows.add(docPartRow);
+    return docPartRow;
+  }
 
-	private void addChild(DocPartDataImpl child) {
-		if (childs == null) {
-			childs = new ArrayList<>();
-		}
-		childs.add(child);
-	}
-	
-	@Override
-	public String toString() {
-		return metadata.getMetaDocPart().getTableRef().toString();
-	}
+  public MetaDocPart getMetaDocPart() {
+    return metadata.getMetaDocPart();
+  }
 
-	@Override
-	public Iterator<DocPartRow> iterator() {
-		return docPartRows.iterator();
-	}
+  public DocPartDataImpl getParentDocPartRow() {
+    return parent;
+  }
 
-	@Override
-	public int fieldColumnsCount() {
-		return metadata.getOrdererdFields().size();
-	}
-	
-	@Override
-	public int scalarColumnsCount() {
-		return metadata.getOrdererdScalars().size();
-	}
+  public List<DocPartDataImpl> getChilds() {
+    return childs;
+  }
 
-	@Override
-	public int rowCount() {
-		return docPartRows.size();
-	}
+  private void addChild(DocPartDataImpl child) {
+    if (childs == null) {
+      childs = new ArrayList<>();
+    }
+    childs.add(child);
+  }
 
-	@Override
-	public Iterator<MetaField> orderedMetaFieldIterator() {
-		return metadata.getOrdererdFields().iterator();
-	}
+  @Override
+  public String toString() {
+    return metadata.getMetaDocPart().getTableRef().toString();
+  }
 
-	@Override
-	public Iterator<MetaScalar> orderedMetaScalarIterator() {
-		return metadata.getOrdererdScalars().iterator();
-	}
+  @Override
+  public Iterator<DocPartRow> iterator() {
+    return docPartRows.iterator();
+  }
+
+  @Override
+  public int fieldColumnsCount() {
+    return metadata.getOrdererdFields().size();
+  }
+
+  @Override
+  public int scalarColumnsCount() {
+    return metadata.getOrdererdScalars().size();
+  }
+
+  @Override
+  public int rowCount() {
+    return docPartRows.size();
+  }
+
+  @Override
+  public Iterator<MetaField> orderedMetaFieldIterator() {
+    return metadata.getOrdererdFields().iterator();
+  }
+
+  @Override
+  public Iterator<MetaScalar> orderedMetaScalarIterator() {
+    return metadata.getOrdererdScalars().iterator();
+  }
 
 }

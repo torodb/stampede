@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,13 +13,16 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.core.d2r;
 
 import com.torodb.core.document.ToroDocument;
+
 import java.util.Iterator;
 import java.util.List;
+
 import javax.annotation.Nonnull;
 
 /**
@@ -27,13 +30,14 @@ import javax.annotation.Nonnull;
  */
 public interface R2DTranslator {
 
-    /**
-     * Translates from relational model to the document model the given doc part results.
-     *
-     * @param docPartResultIt
-     * @return a collection that contains the translation of all doc part results that have been translated.
-     */
-    @Nonnull
-    public List<ToroDocument> translate(Iterator<DocPartResult> docPartResultIt);
+  /**
+   * Translates from relational model to the document model the given doc part results.
+   *
+   * @param docPartResultIt
+   * @return a collection that contains the translation of all doc part results that have been
+   *         translated.
+   */
+  @Nonnull
+  public List<ToroDocument> translate(Iterator<DocPartResult> docPartResultIt);
 
 }

@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier;
 
 import java.util.Optional;
@@ -24,10 +25,10 @@ import java.util.Optional;
  */
 public interface OplogTest {
 
-    Optional<String> getTestName();
+  Optional<String> getTestName();
 
-    boolean shouldIgnore();
+  boolean shouldIgnore();
 
-    void execute(OplogTestContext context) throws Exception;
+  void execute(OplogTestContext context) throws Exception;
 
 }

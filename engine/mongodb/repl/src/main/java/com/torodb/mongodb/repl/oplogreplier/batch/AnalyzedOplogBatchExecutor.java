@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,17 +13,10 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.oplogreplier.batch;
-
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
@@ -39,86 +32,95 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException;
 
+import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.annotation.Nonnull;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+
 /**
  *
  */
 @ThreadSafe
 public interface AnalyzedOplogBatchExecutor extends
-        Service,
-        AnalyzedOplogBatchVisitor<OplogOperation, ApplierContext, RetrierGiveUpException> {
+    Service,
+    AnalyzedOplogBatchVisitor<OplogOperation, ApplierContext, RetrierGiveUpException> {
 
-    public void execute(OplogOperation op, ApplierContext context)
-            throws OplogApplyingException, RollbackException, UserException;
+  public void execute(OplogOperation op, ApplierContext context)
+      throws OplogApplyingException, RollbackException, UserException;
 
-    public void execute(CudAnalyzedOplogBatch cudBatch, ApplierContext context)
-            throws RollbackException, UserException, NamespaceJobExecutionException;
+  public void execute(CudAnalyzedOplogBatch cudBatch, ApplierContext context)
+      throws RollbackException, UserException, NamespaceJobExecutionException;
 
-    public default OplogOperation apply(AnalyzedOplogBatch batch, 
-            ApplierContext replContext) throws RetrierGiveUpException, RetrierAbortException {
-        return batch.accept(this, replContext);
+  public default OplogOperation apply(AnalyzedOplogBatch batch,
+      ApplierContext replContext) throws RetrierGiveUpException, RetrierAbortException {
+    return batch.accept(this, replContext);
+  }
+
+  public static class AnalyzedOplogBatchExecutorMetrics {
+
+    protected static final MetricNameFactory NAME_FACTORY =
+        new MetricNameFactory("OplogBatchExecutor");
+    private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
+    private final ToroMetricRegistry metricRegistry;
+    private final Histogram cudBatchSize;
+    private final Timer cudBatchTimer;
+    private final Timer namespaceBatchTimer;
+
+    @Inject
+    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
+      this.metricRegistry = metricRegistry;
+      this.cudBatchSize = metricRegistry.histogram(NAME_FACTORY.createMetricName("batchSize"));
+      this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudTimer"));
+      this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY
+          .createMetricName("namespaceTimer"));
     }
 
-    public static class AnalyzedOplogBatchExecutorMetrics {
-
-        protected static final MetricNameFactory NAME_FACTORY
-                = new MetricNameFactory("OplogBatchExecutor");
-        private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
-        private final ToroMetricRegistry metricRegistry;
-        private final Histogram cudBatchSize;
-        private final Timer cudBatchTimer;
-        private final Timer namespaceBatchTimer;
-
-        @Inject
-        public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
-            this.metricRegistry = metricRegistry;
-            this.cudBatchSize = metricRegistry.histogram(NAME_FACTORY.createMetricName("batchSize"));
-            this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudTimer"));
-            this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("namespaceTimer"));
-        }
-
-        /**
-         * Returns the timer associated with {@link SingleOpAnalyzedOplogBatch} that contains the
-         * given operation.
-         *
-         * @param singleOplogOp
-         * @return
-         */
-        public Timer getSingleOpTimer(OplogOperation singleOplogOp) {
-            String mapKey = getMapKey(singleOplogOp);
-            return singleOpTimers.computeIfAbsent(
-                    mapKey,
-                    (key) -> createSingleTimer(singleOplogOp, key)
-            );
-        }
-
-        public Histogram getCudBatchSize() {
-            return cudBatchSize;
-        }
-
-        public Timer getCudBatchTimer() {
-            return cudBatchTimer;
-        }
-
-        public Timer getNamespaceBatchTimer() {
-            return namespaceBatchTimer;
-        }
-
-        @Nonnull
-        private String getMapKey(OplogOperation oplogOp) {
-            if (oplogOp instanceof DbCmdOplogOperation) {
-                DbCmdOplogOperation cmdOp = (DbCmdOplogOperation) oplogOp;
-                return cmdOp.getCommandName().orElse("unknownCmd");
-            }
-            return oplogOp.getType().name();
-        }
-
-        private Timer createSingleTimer(OplogOperation oplogOp, String mapKey) {
-            String prefix = "single-";
-            if (oplogOp instanceof DbCmdOplogOperation) {
-                return metricRegistry.timer(NAME_FACTORY.createMetricName(prefix + mapKey));
-            }
-            return metricRegistry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
-        }
+    /**
+     * Returns the timer associated with {@link SingleOpAnalyzedOplogBatch} that contains the given
+     * operation.
+     *
+     * @param singleOplogOp
+     * @return
+     */
+    public Timer getSingleOpTimer(OplogOperation singleOplogOp) {
+      String mapKey = getMapKey(singleOplogOp);
+      return singleOpTimers.computeIfAbsent(
+          mapKey,
+          (key) -> createSingleTimer(singleOplogOp, key)
+      );
     }
+
+    public Histogram getCudBatchSize() {
+      return cudBatchSize;
+    }
+
+    public Timer getCudBatchTimer() {
+      return cudBatchTimer;
+    }
+
+    public Timer getNamespaceBatchTimer() {
+      return namespaceBatchTimer;
+    }
+
+    @Nonnull
+    private String getMapKey(OplogOperation oplogOp) {
+      if (oplogOp instanceof DbCmdOplogOperation) {
+        DbCmdOplogOperation cmdOp = (DbCmdOplogOperation) oplogOp;
+        return cmdOp.getCommandName().orElse("unknownCmd");
+      }
+      return oplogOp.getType().name();
+    }
+
+    private Timer createSingleTimer(OplogOperation oplogOp, String mapKey) {
+      String prefix = "single-";
+      if (oplogOp instanceof DbCmdOplogOperation) {
+        return metricRegistry.timer(NAME_FACTORY.createMetricName(prefix + mapKey));
+      }
+      return metricRegistry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
+    }
+  }
 
 }

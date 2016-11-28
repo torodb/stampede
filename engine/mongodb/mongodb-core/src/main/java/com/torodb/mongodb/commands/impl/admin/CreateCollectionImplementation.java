@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,15 +13,13 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.mongodb.commands.impl.admin;
 
-import java.util.Arrays;
+package com.torodb.mongodb.commands.impl.admin;
 
 import com.eightkdata.mongowp.ErrorCode;
 import com.eightkdata.mongowp.Status;
-import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
@@ -32,28 +30,36 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
+import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.language.Constants;
 import com.torodb.torod.IndexFieldInfo;
 
-public class CreateCollectionImplementation implements WriteTorodbCommandImpl<CreateCollectionArgument, Empty> {
+import java.util.Arrays;
 
-    @Override
-    public Status<Empty> apply(Request req, Command<? super CreateCollectionArgument, ? super Empty> command,
-            CreateCollectionArgument arg, WriteMongodTransaction context) {
-        try {
-            if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
-                context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX, 
-                        ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays.asList(new Key[] { new ObjectKey(Constants.ID) })), FieldIndexOrdering.ASC.isAscending())), true);
-            }
-            
-            context.getTorodTransaction().createCollection(req.getDatabase(), arg.getCollection());
-        } catch (UserException ex) {
-            //TODO: Improve error reporting
-            return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
-        }
+public class CreateCollectionImplementation implements
+    WriteTorodbCommandImpl<CreateCollectionArgument, Empty> {
 
-        return Status.ok();
+  @Override
+  public Status<Empty> apply(Request req,
+      Command<? super CreateCollectionArgument, ? super Empty> command,
+      CreateCollectionArgument arg, WriteMongodTransaction context) {
+    try {
+      if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
+        context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(),
+            Constants.ID_INDEX,
+            ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
+                .asList(new Key[]{new ObjectKey(Constants.ID)})), FieldIndexOrdering.ASC
+                .isAscending())), true);
+      }
+
+      context.getTorodTransaction().createCollection(req.getDatabase(), arg.getCollection());
+    } catch (UserException ex) {
+      //TODO: Improve error reporting
+      return Status.from(ErrorCode.COMMAND_FAILED, ex.getLocalizedMessage());
     }
+
+    return Status.ok();
+  }
 
 }

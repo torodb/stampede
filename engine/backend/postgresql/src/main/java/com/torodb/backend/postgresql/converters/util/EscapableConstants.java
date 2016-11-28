@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend PostgreSQL
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,18 +13,19 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.postgresql.converters.util;
 
 public class EscapableConstants {
-    
-    public final static char SQL_ESCAPE_CHARACTER = 1;
-    public final static char ZERO_CHARACTER = 0;
-    
-    public static final char COPY_ESCAPE_CHARACTER = '\\';
-    public static final char ROW_DELIMETER_CHARACTER = '\n';
-    public static final char COLUMN_DELIMETER_CHARACTER = '\t';
-    public static final char CARRIAGE_RETURN_CHARACTER = '\r';
+
+  public static final char SQL_ESCAPE_CHARACTER = 1;
+  public static final char ZERO_CHARACTER = 0;
+
+  public static final char COPY_ESCAPE_CHARACTER = '\\';
+  public static final char ROW_DELIMETER_CHARACTER = '\n';
+  public static final char COLUMN_DELIMETER_CHARACTER = '\t';
+  public static final char CARRIAGE_RETURN_CHARACTER = '\r';
 
 }

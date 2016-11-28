@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,34 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.commands.pojos;
 
-/**
- *
- */
 public enum ReplSetProtocolVersion {
-    V0(0),
-    V1(1);
-    
-    private final long versionId;
+  V0(0),
+  V1(1);
 
-    private ReplSetProtocolVersion(long versionId) {
-        this.versionId = versionId;
-    }
+  private final long versionId;
 
-    public long getVersionId() {
-        return versionId;
+  private ReplSetProtocolVersion(long versionId) {
+    this.versionId = versionId;
+  }
+
+  public long getVersionId() {
+    return versionId;
+  }
+
+  public static ReplSetProtocolVersion fromVersionId(long versionId) {
+    for (ReplSetProtocolVersion value : ReplSetProtocolVersion.values()) {
+      if (value.versionId == versionId) {
+        return value;
+      }
     }
-    
-    public static ReplSetProtocolVersion fromVersionId(long versionId) {
-        for (ReplSetProtocolVersion value : ReplSetProtocolVersion.values()) {
-            if (value.versionId == versionId) {
-                return value;
-            }
-        }
-        throw new IllegalArgumentException(
-                "There is no replica set protocol version whose version id "
-                + "is " + versionId
-        );
-    }
+    throw new IllegalArgumentException(
+        "There is no replica set protocol version whose version id "
+        + "is " + versionId
+    );
+  }
 }

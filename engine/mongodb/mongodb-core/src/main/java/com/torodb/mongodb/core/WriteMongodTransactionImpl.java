@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Core
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
@@ -30,28 +31,30 @@ import com.torodb.torod.SharedWriteTorodTransaction;
  */
 class WriteMongodTransactionImpl extends MongodTransactionImpl implements WriteMongodTransaction {
 
-    private final SharedWriteTorodTransaction torodTransaction;
-    private final CommandsExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
+  private final SharedWriteTorodTransaction torodTransaction;
+  private final CommandsExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
 
-    public WriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
-        super(connection);
-        this.torodTransaction = connection.getTorodConnection().openWriteTransaction(concurrent);
-        this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier().getWriteCommandsExecutor();
-    }
+  public WriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
+    super(connection);
+    this.torodTransaction = connection.getTorodConnection().openWriteTransaction(concurrent);
+    this.commandsExecutor = connection.getServer().getCommandsExecutorClassifier()
+        .getWriteCommandsExecutor();
+  }
 
-    @Override
-    public SharedWriteTorodTransaction getTorodTransaction() {
-        return torodTransaction;
-    }
+  @Override
+  public SharedWriteTorodTransaction getTorodTransaction() {
+    return torodTransaction;
+  }
 
-    @Override
-    protected <Arg, Result> Status<Result> executeProtected(Request req, Command<? super Arg, ? super Result> command, Arg arg) {
-        return commandsExecutor.execute(req, command, arg, this);
-    }
+  @Override
+  protected <A, R> Status<R> executeProtected(Request req,
+      Command<? super A, ? super R> command, A arg) {
+    return commandsExecutor.execute(req, command, arg, this);
+  }
 
-    @Override
-    public void commit() throws RollbackException, UserException {
-        torodTransaction.commit();
-    }
+  @Override
+  public void commit() throws RollbackException, UserException {
+    torodTransaction.commit();
+  }
 
 }

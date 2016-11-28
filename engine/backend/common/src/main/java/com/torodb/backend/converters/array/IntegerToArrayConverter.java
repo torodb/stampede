@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Backend common
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,29 +13,30 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.backend.converters.array;
 
-import javax.json.JsonNumber;
-
+import com.torodb.kvdocument.values.KvInteger;
 import org.jooq.tools.json.JSONValue;
 
-import com.torodb.kvdocument.values.KVInteger;
+import javax.json.JsonNumber;
 
 /**
  *
  */
-public class IntegerToArrayConverter implements ArrayConverter<JsonNumber, KVInteger> {
-    private static final long serialVersionUID = 1L;
+public class IntegerToArrayConverter implements ArrayConverter<JsonNumber, KvInteger> {
 
-    @Override
-    public String toJsonLiteral(KVInteger value) {
-        return JSONValue.toJSONString(value.getValue());
-    }
+  private static final long serialVersionUID = 1L;
 
-    @Override
-    public KVInteger fromJsonValue(JsonNumber value) {
-        return KVInteger.of(value.intValue());
-    }
+  @Override
+  public String toJsonLiteral(KvInteger value) {
+    return JSONValue.toJSONString(value.getValue());
+  }
+
+  @Override
+  public KvInteger fromJsonValue(JsonNumber value) {
+    return KvInteger.of(value.intValue());
+  }
 }

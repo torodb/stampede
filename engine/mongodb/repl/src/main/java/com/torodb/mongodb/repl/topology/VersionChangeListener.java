@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: MongoDB Repl
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,8 +13,9 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.mongodb.repl.topology;
 
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
@@ -25,13 +26,14 @@ import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 @FunctionalInterface
 interface VersionChangeListener {
 
-    /**
-     * A callback called after the configuration contained by the {@link TopologyCoordinator}
-     * has changed.
-     *
-     * @param coord     the topology coordinator
-     * @param oldConfig the older configuration. The new one can be obtained by calling {@link TopologyCoordinator#getRsConfig()}
-     */
-    public void onVersionChange(TopologyCoordinator coord, ReplicaSetConfig oldConfig);
+  /**
+   * A callback called after the configuration contained by the {@link TopologyCoordinator} has
+   * changed.
+   *
+   * @param coord     the topology coordinator
+   * @param oldConfig the older configuration. The new one can be obtained by calling
+   *                  {@link TopologyCoordinator#getRsConfig()}
+   */
+  public void onVersionChange(TopologyCoordinator coord, ReplicaSetConfig oldConfig);
 
 }

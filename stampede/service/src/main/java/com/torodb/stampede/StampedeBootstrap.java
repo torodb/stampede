@@ -1,5 +1,5 @@
 /*
- * ToroDB - ToroDB: Stampede service
+ * ToroDB
  * Copyright © 2014 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,36 +13,38 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.torodb.stampede;
 
-import java.time.Clock;
-import java.util.concurrent.ThreadFactory;
+package com.torodb.stampede;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.stampede.config.model.Config;
 
+import java.time.Clock;
+import java.util.concurrent.ThreadFactory;
+
 /**
  *
  */
 public class StampedeBootstrap {
 
-    private StampedeBootstrap() {}
+  private StampedeBootstrap() {
+  }
 
-    public static Service createStampedeService(Config config, Clock clock) {
-        return createStampedeService(new BootstrapModule(
-                config, clock));
-    }
+  public static Service createStampedeService(Config config, Clock clock) {
+    return createStampedeService(new BootstrapModule(
+        config, clock));
+  }
 
-    public static Service createStampedeService(BootstrapModule bootstrapModule) {
-        Injector bootstrapInjector = Guice.createInjector(bootstrapModule);
-        ThreadFactory threadFactory = bootstrapInjector.getInstance(
-                ThreadFactory.class);
-        
-        return new StampedeService(threadFactory, bootstrapInjector);
-    }
+  public static Service createStampedeService(BootstrapModule bootstrapModule) {
+    Injector bootstrapInjector = Guice.createInjector(bootstrapModule);
+    ThreadFactory threadFactory = bootstrapInjector.getInstance(
+        ThreadFactory.class);
+
+    return new StampedeService(threadFactory, bootstrapInjector);
+  }
 
 }
