@@ -12,7 +12,6 @@ pages:
     - 'Configuration': installation/configuration.md
     - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
   - 'How to use?': how-to-use.md
-  - 'Supported backends': supported-backends.md
   - 'FAQ': faq.md
   - 'Glossary': glossary.md
   - 'Appendix': appendix.md
