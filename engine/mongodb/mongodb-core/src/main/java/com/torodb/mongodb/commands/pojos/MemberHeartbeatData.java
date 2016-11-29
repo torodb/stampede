@@ -163,12 +163,8 @@ public class MemberHeartbeatData {
     authIssue = false;
     lastHeartbeat = now;
 
-    ReplSetHeartbeatReplyBuilder lastResponseBuilder = new ReplSetHeartbeatReplyBuilder(hbResponse);
-    if (!hbResponse.getState().isPresent()) {
-      lastResponseBuilder.setState(MemberState.RS_UNKNOWN);
-    }
-    lastResponseBuilder.setElectionTime(lastResponse.getElectionTime());
-    lastResponseBuilder.setAppliedOpTime(lastResponse.getAppliedOpTime());
+    ReplSetHeartbeatReplyBuilder lastResponseBuilder = new ReplSetHeartbeatReplyBuilder(
+        hbResponse, lastResponse);
 
     // Log if the state changes
     if (!lastResponse.getState().get().equals(hbResponse.getState().get())) {
