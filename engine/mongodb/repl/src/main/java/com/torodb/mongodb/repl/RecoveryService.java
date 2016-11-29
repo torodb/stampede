@@ -418,7 +418,7 @@ public class RecoveryService extends RunnableTorodbService {
 
   private void rebuildIndexes() {
     //TODO: Check if this is necessary
-    LOGGER.warn("Rebuild index is not implemented yet, so indexes have not been rebuild");
+    LOGGER.debug("Rebuild index is not implemented yet, so indexes have not been rebuild");
   }
 
   private boolean isReplicable(String databaseName) {
