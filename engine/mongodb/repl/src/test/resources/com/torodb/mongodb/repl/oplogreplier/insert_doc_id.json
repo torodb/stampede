@@ -1,0 +1,34 @@
+{
+    "comment": "this test is not executed because the given error is not the expected",
+    "ignore": true,
+    "initialState": {
+        "db1": {
+            "col1": [
+            ]
+        }
+    },
+    "expectedState": {
+        "db1": {
+            "col1": [
+            ]
+        }
+    },
+    "oplog": [
+        {
+            "ts": {
+                "$timestamp": {
+                    "t": 1,
+                    "i": 1
+                }
+            },
+            "t": 1,
+            "h": 1,
+            "v": 2,
+            "op": "i",
+            "ns": "db1.col1",
+            "o": {
+                "id": 1
+            }
+        }
+    ]
+}

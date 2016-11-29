@@ -38,7 +38,13 @@ public class DefaultFailingOplogApplierTest extends DefaultOplogApplierTest {
         "emptyCommand",
         "insert_without_id",
         "update_no_upsert_without_id",
-        "delete_without_id"
+        "delete_without_id",
+        "insert_doc_id",
+        "insert_arr_id",
+        "update_doc_id",
+        "update_arr_id",
+        "delete_doc_id",
+        "delete_arr_id"
     ));
   }
 
