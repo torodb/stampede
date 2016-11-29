@@ -277,7 +277,7 @@ public class UpdateActionTranslator {
         }
     }
 
-    private static enum UpdateOperator {
+    private enum UpdateOperator {
 
         INCREMENT("$inc"),
         MOVE("$rename"),

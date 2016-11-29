@@ -124,7 +124,7 @@ public abstract class KVBinary extends KVValue<KVBinary> {
         return visitor.visit(this, arg);
     }
 
-    public static enum KVBinarySubtype {
+    public enum KVBinarySubtype {
         UNDEFINED,
         MONGO_GENERIC,
         MONGO_FUNCTION,
