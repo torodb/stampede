@@ -72,12 +72,12 @@ if "%JAVACMD%"=="" set JAVACMD=java
 
 if "%LIBDIR%"=="" set LIBDIR=%BASEDIR%\lib
 
-if "%TOROCONFIG%"=="" set TOROCONFIG=%BASEDIR%\conf\@{assembler.name}.yml
+if "%TOROCONFIG%"=="" set TOROCONFIG=%BASEDIR%\conf\\@{assembler.name}.yml
 
 set TOROCONFIG_OPTS=
 if EXIST "%TOROCONFIG%" set TOROCONFIG_OPTS=-c "%TOROCONFIG%"
 
-set CLASSPATH="%LIBDIR%"\@{assembler.name}-@{version}.jar
+set CLASSPATH="%LIBDIR%"\\@{assembler.name}-@{version}.jar
 
 set ENDORSED_DIR=
 if NOT "%ENDORSED_DIR%" == "" set CLASSPATH="%BASEDIR%"\%ENDORSED_DIR%\*;%CLASSPATH%
