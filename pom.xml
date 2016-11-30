@@ -12,7 +12,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-pom</artifactId>
-    <version>0.50.0</version>
+    <version>0.50.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     
     <name>ToroDB: Parent</name>
@@ -76,7 +76,7 @@
     </issueManagement>
 
     <properties>
-        <torodb.engine.version>0.50.0</torodb.engine.version>
+        <torodb.engine.version>0.50.1-SNAPSHOT</torodb.engine.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <log4j.version>2.6.1</log4j.version>
         <jackson.version>2.6.3</jackson.version>
