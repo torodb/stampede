@@ -18,7 +18,6 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
@@ -169,9 +168,6 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
 
   @Override
   public ImmutableMetaDocPart immutableCopy() {
-    Preconditions.checkArgument(addedMutableIndexes.isEmpty(),
-        "Some mutable indexes have not been marked immutable");
-
     if (addedFields.isEmpty() && newScalars.isEmpty() && indexesByIdentifier.values().stream()
         .noneMatch(tuple -> tuple.v2().hasChanged())) {
       return wrapped;
