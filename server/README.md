@@ -21,12 +21,6 @@ For more information, please see [ToroDB's website][1], this
 [latest presentation][7] or this [video recording of a presentation][11] about 
 ToroDB.
 
-
-## Code QA
- * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb)
- * Devel branch build status :  [![Devel branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb)
-
-
 ## Requisites
 
 ToroDB is written in Java and requires:
