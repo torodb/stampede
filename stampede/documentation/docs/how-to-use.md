@@ -5,9 +5,9 @@ To understand better how the JSON document to relational storage mapping algorit
 Given that ToroDB Stampede and all its requisites are met, the dataset will be imported into MongoDB to be replicated in PostgreSQL. This is done with next commands.
 
 ```
-$ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
+wget https://www.torodb.com/download/primer-dataset.json
 
-$ mongoimport -d stampede -c primer primer-dataset.json
+mongoimport -d stampede -c primer primer-dataset.json
 ```
 
 The import was done with database `stampede` and collection `primer`, this is important because it determines the schema and table names created in the relational storage. In PostgreSQL the replication is done in the `torod` database, schema `stampede` with one root table #`primer` and some associated tables named like `primer_*`.

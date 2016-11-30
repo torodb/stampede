@@ -20,29 +20,29 @@ ToroDB Stampede expects some basic configuration for the relational backend. The
 This steps can be done with the next commands in a Linux environment:
 
 ```no-highlight
-$ sudo -u postgres createuser -S -R -D -P --interactive torodb
+sudo -u postgres createuser -S -R -D -P --interactive torodb
 
-$ sudo -u postgres createdb -O torodb torod
+sudo -u postgres createdb -O torodb torod
 ```
 
 The easiest way to check if the database can be used is connecting to it using the new role. If it is accessible then ToroDB Stampede should be able to do replication using it.
 
 ```no-highlight
-$ psql -U torodb torod
+psql -U torodb torod
 ```
 
 ## How to execute ToroDB Stampede binary distribution?
 
-To execute ToroDB Stampede the binary distribution is necessary and it can be downloaded from  [here](https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0). After download and when file is uncompressed then ToroDB Stampede can be launched using the PostgreSQL connection information.
+To execute ToroDB Stampede the binary distribution is necessary and it can be downloaded from  [here](https://www.wotodb.com/download/stampede/torodb-stampede-1.0.0-beta1.tar.bz2). After download and when file is uncompressed then ToroDB Stampede can be launched using the PostgreSQL connection information.
 
 Following commands will allow ToroDB Stampede to be launched.
 
 ```no-highlight
-$ wget "https://www.dropbox.com/s/54eyp7jyu8l70aa/torodb-stampede-0.50.0-SNAPSHOT.tar.bz2?dl=0" -O torodb-stampede-0.50.0-SNAPSHOT.tar.bz2
+wget "https://www.wotodb.com/download/stampede/torodb-stampede-1.0.0-beta1.tar.bz2"
 
-$ tar xjf torodb-stampede-0.50.0-SNAPSHOT.tar.bz2
+tar xjf torodb-stampede-1.0.0-beta1.tar.bz2
 
-$ torodb-stampede-0.50.0-SNAPSHOT/bin/torodb-stampede --ask-for-password
+torodb-stampede-1.0.0-beta1/bin/torodb-stampede --ask-for-password
 ```
 
 ToroDB Stampede will ask for the PostgreSQL torodb user's password to be provided. If all goes fine, ToroDB Stampede is up and running and it will be replicating the operations done in MongoDB.
@@ -51,18 +51,18 @@ ToroDB Stampede will ask for the PostgreSQL torodb user's password to be provide
 
 It is easier to understand what ToroDB Stampede does through an example. One dataset will be imported in MongoDB and all data will be available in PostgreSQL thanks to Stampede replication.
 
-If previous steps are done and ToroDB Stampede is up and running, the dataset can be downloaded from  [here](https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0) and the replication done using `mongoimport` command.
+If previous steps are done and ToroDB Stampede is up and running, the dataset can be downloaded from  [here](https://www.torodb.com/download/primer-dataset.json) and the replication done using `mongoimport` command.
 
 ```no-highlight
-$ wget https://www.dropbox.com/s/570d4tyt4hpsn03/primer-dataset.json?dl=0
+wget https://www.torodb.com/download/primer-dataset.json
 
-$ mongoimport -d stampede -c primer primer-dataset.json
+mongoimport -d stampede -c primer primer-dataset.json
 ```
 
 When `mongoimport` finished and replication complete PostgreSQL should have the replicated structure and data stored in the `stampede` schema, because that was the name selected for the database in the `mongoimport` command. Connecting to PostgreSQL console, the data can be accessed.
 
 ```no-highlight
-$ sudo -u torodb psql torod
+sudo -u torodb psql torod
 
 > set schema 'stampede'
 ```
