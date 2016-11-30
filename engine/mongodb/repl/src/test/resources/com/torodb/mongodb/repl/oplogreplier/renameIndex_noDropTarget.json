@@ -1,0 +1,42 @@
+{
+    "initialState": {
+        "db1": {
+            "col1": [
+                {
+                    "_id": 1,
+                    "a": 1
+                },
+                {
+                    "_id": 2,
+                    "a": 2
+                }
+            ]
+        }
+    },
+    "expectedState": {
+        "db2": {
+            "col2": [
+                {
+                    "_id": 1,
+                    "a": 1
+                },
+                {
+                    "_id": 2,
+                    "a": 2
+                }
+            ]
+        }
+    },
+    "oplog": [
+        { 
+            "op": "c", 
+            "ns": "test.$cmd", 
+            "o": { 
+                "renameCollection": "db1.col1", 
+                "to": "db2.col2", 
+                "stayTemp": false, 
+                "dropTarget": false
+            }
+        }
+    ]
+}

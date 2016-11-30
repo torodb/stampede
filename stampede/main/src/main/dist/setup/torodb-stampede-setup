@@ -1,0 +1,125 @@
+#!/bin/bash
+# ----------------------------------------------------------------------------
+#  Copyright 2001-2006 The Apache Software Foundation.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+# ----------------------------------------------------------------------------
+#
+#   Copyright (c) 2001-2006 The Apache Software Foundation.  All rights
+#   reserved.
+
+[ "$DEBUG" == "true" ] && set -x
+[ "$DEBUG" == "true" ] && set -v
+set -e
+
+# resolve links - $0 may be a softlink
+PRG="$0"
+
+while [ -h "$PRG" ]; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`/"$link"
+  fi
+done
+
+PRGDIR=`dirname "$PRG"`
+BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
+
+if [ -z "$ADMIN_USER" ]
+then
+    ADMIN_USER="postgres"
+fi
+
+if [ "$(whoami)" != "root" ]
+then
+    echo "You must run setup as root. Please run this command prepending sudo" >&2
+    exit 1
+fi
+
+if [ -z "$1" ]
+then
+    TOROUSER="$(whoami)"
+else
+    TOROUSER="$1"
+    shift
+    su - $TOROUSER -c "echo 'User $TOROUSER found'"
+fi
+
+if [ -z "$TOROPASSFILE" ]
+then
+    TOROPASSFILE="$(su - "$TOROUSER" -c 'echo "$HOME/.toropass"')"
+fi
+
+POSTGRES_HOST="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/host)"
+POSTGRES_PORT="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/port)"
+POSTGRES_USER="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/user)"
+POSTGRES_DATABASE="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/database)"
+
+PSQL_OPTIONS=()
+if psql --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -c "SELECT 1" > /dev/null 2>&1
+then
+    PSQL_OPTIONS+=("'-U'")
+    PSQL_OPTIONS+=("'$ADMIN_USER'")
+    PSQL_OPTIONS+=("'-h'")
+    PSQL_OPTIONS+=("'$POSTGRES_HOST'")
+    PSQL_OPTIONS+=("'-p'")
+    PSQL_OPTIONS+=("'$POSTGRES_PORT'")
+    ADMIN_USER="root"
+fi
+
+if [ -z "$TORODB_BACKEND_PASSWORD" ]
+then
+    TORODB_BACKEND_PASSWORD=$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)
+fi
+
+if su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c 'SELECT 1'" > /dev/null 2>&1
+then
+    if ! su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -d torod -c 'SELECT 1'" > /dev/null 2>&1
+    then
+        echo "Creating $POSTGRES_USER user"
+        su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c "'"CREATE USER '"$POSTGRES_USER"' WITH PASSWORD '"'$TORODB_BACKEND_PASSWORD'"'"'
+        echo "Creating $POSTGRES_DATABASE database"
+        su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c 'CREATE DATABASE $POSTGRES_DATABASE WITH OWNER $POSTGRES_USER'"
+    else
+        echo "Database $POSTGRES_DATABASE already exists" >&2
+        exit 1
+    fi
+else
+    echo "PostgreSQL must be running to setup @{name}" >&2
+    exit 1
+fi
+
+echo "Creating $TOROPASSFILE for user $TOROUSER"
+echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DATABASE:$POSTGRES_USER:$TORODB_BACKEND_PASSWORD" > "$TOROPASSFILE"
+chmod 400 "$TOROPASSFILE"
+chown "$TOROUSER" "$TOROPASSFILE"
+
+if ! su "$TOROUSER" -c "PGPASSFILE='$TOROPASSFILE' psql --no-readline -U $POSTGRES_USER -d $POSTGRES_DATABASE -h $POSTGRES_HOST -p $POSTGRES_PORT -c 'SELECT 1'" > /dev/null 2>&1
+then
+    echo "Seem that we can not connect to PostgreSQL due to some security restrictions. Please add those lines to pg_hba.conf file:" >&2
+    echo >&2
+    if [ "$POSTGRES_HOST" == "localhost" ]
+    then
+        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          ::1/128                 md5" >&2
+        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          127.0.0.1/32            md5" >&2
+    else
+        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          <PostgreSQL's machine IPv6>     md5" >&2
+        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          <PostgreSQL's machine IP>       md5" >&2
+    fi
+    echo >&2
+    echo "...and then restart PostgreSQL server" >&2 
+    exit 1
+fi

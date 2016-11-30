@@ -1,1 +1,0 @@
-CREATE TYPE torodb.mongo_timestamp AS (secs int, counter int);

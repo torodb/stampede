@@ -1,0 +1,22 @@
+version: '2'
+services:
+  torodb-stampede:
+    image: torodb/stampede
+    links:
+      - postgres
+    environment:
+      - POSTGRES_PASSWORD
+      - TORODB_SETUP=true
+      - TORODB_SYNC_SOURCE
+      - TORODB_BACKEND_HOST=postgres
+      - TORODB_BACKEND_PORT=5432
+      - TORODB_BACKEND_DATABASE
+      - TORODB_BACKEND_USER
+      - TORODB_BACKEND_PASSWORD
+      - DEBUG
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_PASSWORD
+    ports:
+      - "15432:5432"
