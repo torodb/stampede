@@ -23,11 +23,11 @@ real time from a MongoDB replica set into a SQL database, allowing you to use
 any business intelligence products (like [Tableau][3] or [Pentaho][4]) to 
 analyze NoSQL data.
 
-More information about ToroDB Server can be found on 
+More information about ToroDB Stampede can be found on 
 [its own folder](/stampede) in this repository.
 
 ## Code QA
- * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb)
+ * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb)
  * Devel branch build status :  [![Devel branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb)
 
 ## Are you a developer? Want to contribute? Questions about the source code?
