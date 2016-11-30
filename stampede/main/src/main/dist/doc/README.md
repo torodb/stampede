@@ -100,3 +100,12 @@ View all logs:
 To stop ToroDB Stampede service:
 
     systemctl stop torodb-stampede
+
+# Environment variables
+
+Those are the environment variables you can use to configure ToroDB Stampede execution:
+
+* `JAVA_HOME`: The path where Java is installed. This variable is automatically configured by execution script.
+* `JAVACMD`: The path to the `java` executable. This variable is automatically configured by execution script.
+* `JAVA_OPTIONS`: The `java` executable options that have to be passed. See `java -h` for more help on available options of your Java installation.
+* `TOROCONFIG`: The configuration file used by ToroDB Stampede. By default the value is `$TORO_HOME/conf/torodb-stampede.yml`

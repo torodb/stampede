@@ -24,4 +24,4 @@ There are corner cases but in general for dedicated servers with 64 bits Linux s
 
 This is the memory used by internal sort operations and sometimes it is configured to higher values, actually it should be between 2MB and 4MB. For example, if there are 30 concurrent users querying and the value is set to 50MB the total memory used will be 1.5 GB.
 
-If needed this value can be set from the client when the query is launched.
+If needed this value can be set from the client when the query is launched, using the command `SET work_mem = '32MB'`.

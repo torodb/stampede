@@ -29,36 +29,49 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.OptionalInt;
 
+import javax.annotation.Nullable;
+
 /**
  *
  */
 class CorrectReplSetHeartbeatReply implements ReplSetHeartbeatReply {
 
-  private final Optional<BsonTimestamp> electionTime;
-  private final Optional<Duration> time;
-  private final Optional<OpTime> appliedOptime;
-  private final Optional<OpTime> durableOptime;
-  private final Optional<Boolean> electable;
-  private final Optional<Boolean> hasData;
+  @Nullable
+  private final BsonTimestamp electionTime;
+  @Nullable
+  private final Duration time;
+  @Nullable
+  private final OpTime appliedOptime;
+  @Nullable
+  private final OpTime durableOptime;
+  @Nullable
+  private final Boolean electable;
+  @Nullable
+  private final Boolean hasData;
   private final boolean mismatch;
-  private final Optional<Boolean> isReplSet;
+  @Nullable
+  private final Boolean isReplSet;
   private final boolean stateDisagreement;
-  private final Optional<MemberState> state;
+  @Nullable
+  private final MemberState state;
   private final long configVersion;
-  private final Optional<String> setName;
+  @Nullable
+  private final String setName;
   private final String hbmsg;
-  private final Optional<HostAndPort> syncingTo;
-  private final Optional<ReplicaSetConfig> config;
+  @Nullable
+  private final HostAndPort syncingTo;
+  @Nullable
+  private final ReplicaSetConfig config;
   private final OptionalInt primaryId;
   private final long term;
 
-  public CorrectReplSetHeartbeatReply(Optional<BsonTimestamp> electionTime,
-      Optional<Duration> time, Optional<OpTime> appliedOptime,
-      Optional<OpTime> durableOptime, Optional<Boolean> electable,
-      Optional<Boolean> hasData, boolean mismatch, Optional<Boolean> isReplSet,
-      boolean stateDisagreement, Optional<MemberState> state,
-      long configVersion, Optional<String> setName, String hbmsg,
-      Optional<HostAndPort> syncingTo, Optional<ReplicaSetConfig> config,
+  public CorrectReplSetHeartbeatReply(BsonTimestamp electionTime,
+      Duration time, OpTime appliedOptime,
+      OpTime durableOptime, Boolean electable,
+      Boolean hasData, boolean mismatch, Boolean isReplSet,
+      boolean stateDisagreement, MemberState state,
+      long configVersion, String setName, String hbmsg,
+      HostAndPort syncingTo, ReplicaSetConfig config,
       OptionalInt primaryId, long term) {
     this.electionTime = electionTime;
     this.time = time;
@@ -91,32 +104,32 @@ class CorrectReplSetHeartbeatReply implements ReplSetHeartbeatReply {
 
   @Override
   public Optional<BsonTimestamp> getElectionTime() {
-    return electionTime;
+    return Optional.ofNullable(electionTime);
   }
 
   @Override
   public Optional<Duration> getTime() {
-    return time;
+    return Optional.ofNullable(time);
   }
 
   @Override
   public Optional<OpTime> getAppliedOpTime() {
-    return appliedOptime;
+    return Optional.ofNullable(appliedOptime);
   }
 
   @Override
   public Optional<OpTime> getDurableOptime() {
-    return durableOptime;
+    return Optional.ofNullable(durableOptime);
   }
 
   @Override
   public Optional<Boolean> getElectable() {
-    return electable;
+    return Optional.ofNullable(electable);
   }
 
   @Override
   public Optional<Boolean> getHasData() {
-    return hasData;
+    return Optional.ofNullable(hasData);
   }
 
   @Override
@@ -126,7 +139,7 @@ class CorrectReplSetHeartbeatReply implements ReplSetHeartbeatReply {
 
   @Override
   public Optional<Boolean> getIsReplSet() {
-    return isReplSet;
+    return Optional.ofNullable(isReplSet);
   }
 
   @Override
@@ -136,7 +149,7 @@ class CorrectReplSetHeartbeatReply implements ReplSetHeartbeatReply {
 
   @Override
   public Optional<MemberState> getState() {
-    return state;
+    return Optional.ofNullable(state);
   }
 
   @Override
@@ -146,7 +159,7 @@ class CorrectReplSetHeartbeatReply implements ReplSetHeartbeatReply {
 
   @Override
   public Optional<String> getSetName() {
-    return setName;
+    return Optional.ofNullable(setName);
   }
 
   @Override
@@ -156,12 +169,12 @@ class CorrectReplSetHeartbeatReply implements ReplSetHeartbeatReply {
 
   @Override
   public Optional<HostAndPort> getSyncingTo() {
-    return syncingTo;
+    return Optional.ofNullable(syncingTo);
   }
 
   @Override
   public Optional<ReplicaSetConfig> getConfig() {
-    return config;
+    return Optional.ofNullable(config);
   }
 
   @Override

@@ -33,22 +33,33 @@ import javax.annotation.Nullable;
 
 public class ReplSetHeartbeatReplyBuilder {
 
-  private Optional<BsonTimestamp> electionTime;
-  private Optional<Duration> time;
-  private Optional<OpTime> durableOpTime;
-  private Optional<OpTime> appliedOpTime;
-  private Optional<Boolean> electable;
-  private Optional<Boolean> hasData = Optional.empty();
+  @Nullable
+  private BsonTimestamp electionTime;
+  @Nullable
+  private Duration time;
+  @Nullable
+  private OpTime durableOpTime;
+  @Nullable
+  private OpTime appliedOpTime;
+  @Nullable
+  private Boolean electable;
+  @Nullable
+  private Boolean hasData = null;
   private boolean mismatch;
-  private Optional<Boolean> isReplSet;
+  @Nullable
+  private Boolean isReplSet;
   private boolean stateDisagreement;
-  private Optional<MemberState> state;
+  @Nullable
+  private MemberState state;
   private long configVersion;
-  private Optional<String> setName;
+  @Nullable
+  private String setName;
   @Nonnull
   private String hbmsg;
-  private Optional<HostAndPort> syncingTo;
-  private Optional<ReplicaSetConfig> config;
+  @Nullable
+  private HostAndPort syncingTo;
+  @Nullable
+  private ReplicaSetConfig config;
   private OptionalInt primaryId;
   private long term;
 
@@ -56,37 +67,41 @@ public class ReplSetHeartbeatReplyBuilder {
     this.hbmsg = "";
   }
 
-  public ReplSetHeartbeatReplyBuilder(ReplSetHeartbeatReply other) {
-    this.electionTime = other.getElectionTime();
-    this.time = other.getTime();
-    this.appliedOpTime = other.getAppliedOpTime();
-    this.electable = other.getElectable();
-    this.hasData = other.getHasData();
+  public ReplSetHeartbeatReplyBuilder(ReplSetHeartbeatReply other,
+      ReplSetHeartbeatReply lastResponse) {
+    this.electionTime = other.getElectionTime()
+        .orElseGet(() -> lastResponse.getElectionTime().orElse(null));
+    this.time = other.getTime().orElse(null);
+    this.appliedOpTime = other.getAppliedOpTime()
+        .orElseGet(() -> lastResponse.getAppliedOpTime().orElse(null));
+    this.electable = other.getElectable().orElse(null);
+    this.hasData = other.getHasData().orElse(null);
     this.mismatch = other.isMismatch();
-    this.isReplSet = other.getIsReplSet();
+    this.isReplSet = other.getIsReplSet().orElse(null);
     this.stateDisagreement = other.isStateDisagreement();
-    this.state = other.getState();
+    this.state = other.getState()
+        .orElseGet(() -> lastResponse.getState().orElse(null));
     this.configVersion = other.getConfigVersion();
-    this.setName = other.getSetName();
+    this.setName = other.getSetName().orElse(null);
     this.hbmsg = other.getHbmsg();
-    this.syncingTo = other.getSyncingTo();
-    this.config = other.getConfig();
+    this.syncingTo = other.getSyncingTo().orElse(null);
+    this.config = other.getConfig().orElse(null);
     this.primaryId = other.getPrimaryId();
     this.term = other.getTerm();
   }
 
   public ReplSetHeartbeatReplyBuilder setElectionTime(@Nullable BsonTimestamp electionTime) {
-    this.electionTime = Optional.ofNullable(electionTime);
-    return this;
-  }
-
-  public ReplSetHeartbeatReplyBuilder setElectionTime(Optional<BsonTimestamp> electionTime) {
     this.electionTime = electionTime;
     return this;
   }
 
+  public ReplSetHeartbeatReplyBuilder setElectionTime(Optional<BsonTimestamp> electionTime) {
+    this.electionTime = electionTime.orElse(null);
+    return this;
+  }
+
   public ReplSetHeartbeatReplyBuilder setTime(@Nullable Duration time) {
-    this.time = Optional.ofNullable(time);
+    this.time = time;
     return this;
   }
 
@@ -96,27 +111,27 @@ public class ReplSetHeartbeatReplyBuilder {
   }
 
   public ReplSetHeartbeatReplyBuilder setDurableOpTime(@Nullable OpTime durableOpTime) {
-    this.durableOpTime = Optional.ofNullable(durableOpTime);
+    this.durableOpTime = durableOpTime;
     return this;
   }
 
   public ReplSetHeartbeatReplyBuilder setAppliedOpTime(@Nullable OpTime appliedOpTime) {
-    this.appliedOpTime = Optional.ofNullable(appliedOpTime);
-    return this;
-  }
-
-  public ReplSetHeartbeatReplyBuilder setAppliedOpTime(Optional<OpTime> appliedOpTime) {
     this.appliedOpTime = appliedOpTime;
     return this;
   }
 
+  public ReplSetHeartbeatReplyBuilder setAppliedOpTime(Optional<OpTime> appliedOpTime) {
+    this.appliedOpTime = appliedOpTime.orElse(null);
+    return this;
+  }
+
   public ReplSetHeartbeatReplyBuilder setElectable(boolean electable) {
-    this.electable = Optional.of(electable);
+    this.electable = electable;
     return this;
   }
 
   public ReplSetHeartbeatReplyBuilder setHasData(@Nullable Boolean hasData) {
-    this.hasData = Optional.ofNullable(hasData);
+    this.hasData = hasData;
     return this;
   }
 
@@ -126,7 +141,7 @@ public class ReplSetHeartbeatReplyBuilder {
   }
 
   public ReplSetHeartbeatReplyBuilder setIsReplSet(boolean isReplSet) {
-    this.isReplSet = Optional.of(isReplSet);
+    this.isReplSet = isReplSet;
     return this;
   }
 
@@ -136,7 +151,7 @@ public class ReplSetHeartbeatReplyBuilder {
   }
 
   public ReplSetHeartbeatReplyBuilder setState(@Nullable MemberState state) {
-    this.state = Optional.ofNullable(state);
+    this.state = state;
     return this;
   }
 
@@ -146,12 +161,12 @@ public class ReplSetHeartbeatReplyBuilder {
   }
 
   public ReplSetHeartbeatReplyBuilder setSetName(@Nullable String setName) {
-    this.setName = Optional.ofNullable(setName);
+    this.setName = setName;
     return this;
   }
 
   public ReplSetHeartbeatReplyBuilder setSetName(Optional<String> setName) {
-    this.setName = setName;
+    this.setName = setName.orElse(null);
     return this;
   }
 
@@ -161,12 +176,12 @@ public class ReplSetHeartbeatReplyBuilder {
   }
 
   public ReplSetHeartbeatReplyBuilder setSyncingTo(@Nullable HostAndPort syncingTo) {
-    this.syncingTo = Optional.ofNullable(syncingTo);
+    this.syncingTo = syncingTo;
     return this;
   }
 
   public ReplSetHeartbeatReplyBuilder setConfig(@Nullable ReplicaSetConfig config) {
-    this.config = Optional.ofNullable(config);
+    this.config = config;
     return this;
   }
 
@@ -176,7 +191,7 @@ public class ReplSetHeartbeatReplyBuilder {
   }
 
   Optional<OpTime> getAppliedOpTime() {
-    return appliedOpTime;
+    return Optional.ofNullable(appliedOpTime);
   }
 
   public ReplSetHeartbeatReply build() {
