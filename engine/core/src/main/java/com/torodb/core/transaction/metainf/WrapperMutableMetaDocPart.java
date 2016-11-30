@@ -270,6 +270,7 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
     Optional<MutableMetaDocPartIndex> matchingMutableDocPartIndex = Seq.seq(
         getAddedMutableMetaDocPartIndexes())
         .filter(docPartIndex -> docPartIndex.getMetaDocPartIndexColumnByPosition(position) == null
+            && identifiers.size() >= docPartIndex.size()
             && missingIndex.isSubMatch(this, identifiers, docPartIndex)
             // We ensure we do not pick a doc part index that fit a isSubMatch for our index but
             // was the only chance for another combination. For example:

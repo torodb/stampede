@@ -122,7 +122,7 @@ In this case the only collection replicated is *title* from *film* database.
 
 ### Exclude a MongoDB index
 
-Some index created in MongoDB for OLTP operations can be unusefull for OLAP and analytics operations. MongoDB indexes can be excluded in ToroDB Stampede allowing you to save disk space. You just need to add the index name  in the exclude section.
+Some index created in MongoDB for OLTP operations can be useless for OLAP and analytics operations. MongoDB indexes can be excluded in ToroDB Stampede allowing you to save disk space. You just need to add the index name  in the exclude section.
 
 ```json
 replication:
@@ -146,7 +146,7 @@ replication:
         	- name: city
 ```
 
-Any unsuported index in ToroDB Stampede (text , 2dsphere, 2d, hashed, ...) is ignored and is not created in the relational database, and you don't need to exclude it.  
+Any unsupported index in ToroDB Stampede (text , 2dsphere, 2d, hashed, ...) is ignored and is not created in the relational database, and you don't need to exclude it.  
 
 !!! danger "Exclusion removal"
 	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will not create the previously excluded indexes. ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.

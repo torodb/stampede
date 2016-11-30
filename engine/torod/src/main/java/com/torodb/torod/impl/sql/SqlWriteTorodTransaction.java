@@ -23,6 +23,7 @@ import com.torodb.core.TableRef;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.DatabaseNotFoundException;
+import com.torodb.core.exceptions.user.UnsupportedCompoundIndexException;
 import com.torodb.core.exceptions.user.UnsupportedUniqueIndexException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
@@ -187,6 +188,10 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
   @Override
   public boolean createIndex(String dbName, String colName, String indexName,
       List<IndexFieldInfo> fields, boolean unique) throws UserException {
+    if (fields.size() > 1) {
+      throw new UnsupportedCompoundIndexException(dbName, colName, indexName);
+    }
+      
     MutableMetaDatabase metaDb = getOrCreateMetaDatabase(dbName);
     MutableMetaCollection metaColl = getOrCreateMetaCollection(metaDb, colName);
 
