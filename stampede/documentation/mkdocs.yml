@@ -20,3 +20,4 @@ extra_css:
   - css/8kdata.css
 markdown_extensions:
   - admonition:
+google_analytics: ['UA-44578894-3', 'www.torodb.com']

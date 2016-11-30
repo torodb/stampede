@@ -33,12 +33,12 @@ psql -U torodb torod
 
 ## How to execute ToroDB Stampede binary distribution?
 
-To execute ToroDB Stampede the binary distribution is necessary and it can be downloaded from  [here](https://www.torodb.com/download/stampede/torodb-stampede-1.0.0-beta1.tar.bz2). After download and when file is uncompressed then ToroDB Stampede can be launched using the PostgreSQL connection information.
+To execute ToroDB Stampede the binary distribution is necessary and it can be downloaded from  [here](https://www.torodb.com/download/torodb-stampede-1.0.0-beta1.tar.bz2). After download and when file is uncompressed then ToroDB Stampede can be launched using the PostgreSQL connection information.
 
 Following commands will allow ToroDB Stampede to be launched.
 
 ```no-highlight
-wget "https://www.torodb.com/download/stampede/torodb-stampede-1.0.0-beta1.tar.bz2"
+wget "https://www.torodb.com/download/torodb-stampede-1.0.0-beta1.tar.bz2"
 
 tar xjf torodb-stampede-1.0.0-beta1.tar.bz2
 
