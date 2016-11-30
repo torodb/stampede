@@ -4,7 +4,7 @@ To understand better how the JSON document to relational storage mapping algorit
 
 Given that ToroDB Stampede and all its requisites are met, the dataset will be imported into MongoDB to be replicated in PostgreSQL. This is done with next commands.
 
-```
+```no-highlight
 wget https://www.torodb.com/download/primer-dataset.json
 
 mongoimport -d stampede -c primer primer-dataset.json
@@ -54,7 +54,7 @@ As stated above, the root of the document is mapped to a table with the name use
 
 Each element of the root level is mapped to a different column of the table, either an scalar or subdocument. Next chapter contains the different datatypes that can be created in the relational schema. All of them are indicated as a postfix of the column name, for example `cuisine` key is created as `cuisine_s` because it contains string values.
 
-```
+```no-highlight
 did  | address_e | restaurant_id_s |                                               name_s                                               |                            cuisine_s                             |           _id_x            |   borough_s   | grades_e
 -----+-----------+-----------------+----------------------------------------------------------------------------------------------------+------------------------------------------------------------------+----------------------------+---------------+----------
    0 | f         | 40384115        | Phil & Sons Restaurant & Pizzeria                                                                  | Pizza/Italian                                                    | \x580f12efbe6e3fff2237caef | Queens        | t
@@ -69,7 +69,7 @@ did  | address_e | restaurant_id_s |                                            
 
 #### primer_address
 
-```
+```no-highlight
 did  |  rid  | seq | zipcode_s | coord_e |                street_s                | building_s
 -----+-------+-----+-----------+---------+----------------------------------------+------------
    0 |     0 |     | 11355     | t       | Main Street                            | 57-29
@@ -86,7 +86,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 
 The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metada](how-to-use.md#metadata).
 
-```
+```no-highlight
 did  |  rid  |  pid  | seq |     v_d      
 -----+-------+-------+-----+--------------
    0 |     0 |     0 |   0 |   -73.825679
@@ -109,7 +109,7 @@ did  |  rid  |  pid  | seq |     v_d
 
 #### primer_grades
 
-```
+```no-highlight
 did  |  rid  | seq |         date_t         | score_i |    grade_s     | score_n
 -----+-------+-----+------------------------+---------+----------------+---------
    0 |     0 |   0 | 2014-08-21 02:00:00+02 |       6 | A              |
@@ -190,7 +190,7 @@ Because the JSON documents nature, it can happen that the same path contains dif
 
 To solve this problem in ToroDB Stampede, each data type has a different column. For example, in the `primer_grades` table there are two different columns for the `score` key. One is `score_i` that represents the integer values and another one is `score_n` that represents when that value contains null in the original document (because it is mandatory to detect when null value was given and when the path was not given).
 
-```
+```no-highlight
 did   |  rid  | seq |         date_t         | score_i |    grade_s     | score_n
 ------+-------+-----+------------------------+---------+----------------+---------
     0 |     0 |   0 | 2014-08-21 02:00:00+02 |       6 | A              |
@@ -259,7 +259,7 @@ The metadata columns in the data tables are not enough to keep the data integrit
 
 Table `database` stores the name given by the user to the database in MongoDB, that is stored in a schema in PostgreSQL. Because PostgreSQL has limits on the database names it is dereferenced here, but usually the values are the same unless a very large name is used.
 
-```
+```no-highlight
 # select * from database;
 
    name   | identifier
@@ -271,7 +271,7 @@ Table `database` stores the name given by the user to the database in MongoDB, t
 
 Among the name of the database one, collection name was given in MongoDB layer, so it is stored in the table `collection` dereferencing it in the same way.
 
-```
+```no-highlight
 # select * from collection;
 
  database |       name        |        identifier        
@@ -285,7 +285,7 @@ As stated above, the name of the table for the root element is the same one used
 
 With larger paths, like `address.coord`, the table ref will be the composition of the path, so `{address,coord}`. And the table identifier will be the concatenation of the dereferenced names of collection and path identifiers `primer_address_coord`.
 
-```
+```no-highlight
 # select * from doc_part;
 
  database |    collection     |        table_ref        |               identifier                | last_rid
@@ -300,7 +300,7 @@ With larger paths, like `address.coord`, the table ref will be the composition o
 
 `field` table stores the data type of each column and its identifier. For a given combination of `database, collection, table_ref`, the used name of the column is stored and the data type associated. This data type can be either a scalar value, like `string` or `double`, or a `child` type (this means an associated table exists)
 
-```
+```no-highlight
 # select * from field;
 
  database |    collection     |        table_ref        |         name          |      type       |       identifier        
@@ -328,7 +328,7 @@ With larger paths, like `address.coord`, the table ref will be the composition o
 
 In the given example, the only row in `scalar` table is related to the path `address.coord` with type `double`. This means that column `v_d` in the table `stampede_address_coord` is a `double`.
 
-```
+```no-highlight
 # select * from scalar;
 
  database | collection |    table_ref    |  type  | identifier
@@ -342,7 +342,7 @@ The data in the relational storage can be queries like any other relational data
 
 For example, the name of all bakeries in the ZIP code 10462, could be:
 
-```
+```no-highlight
 select p.name_s from primer p, primer_address pa
 where
   p.cuisine_s = 'Bakery'
@@ -350,7 +350,7 @@ where
   and pa.zipcode_s = '10462'
 ```
 
-```
+```no-highlight
 # select p.name_s from primer p, primer_address pa where p.cuisine_s = 'Bakery' and p.did = pa.did and pa.zipcode_s = '10462';
 
                name_s                
@@ -366,7 +366,7 @@ where
 
 One of the advantages having the data in a relational format is the ability to execute complex queries in a fast and efficient way. For example, to the previous query, the average score of each bakery could be added with just a few lines.
 
-```
+```no-highlight
 select p.name_s, avg(pg.score_i)
 from primer p, primer_address pa, primer_grades pg
 where
@@ -377,7 +377,7 @@ where
 group by p.name_s
 ```
 
-```
+```no-highlight
 # select p.name_s, avg(pg.score_i) from primer p, primer_address pa, primer_grades pg where p.cuisine_s = 'Bakery' and p.did = pa.did and pa.zipcode_s = '10462' and pg.did = p.did group by p.name_s;
 
                name_s                |         avg         
@@ -393,7 +393,7 @@ group by p.name_s
 
 And one filter can be applied with a few lines more, keeping query very simple and the execution time responsive.
 
-```
+```no-highlight
 select p.name_s, avg(pg.score_i)
 from primer p, primer_address pa, primer_grades pg
 where
@@ -405,7 +405,7 @@ group by p.name_s
 having avg(pg.score_i) > 10
 ```
 
-```
+```no-highlight
 # select p.name_s, avg(pg.score_i) from primer p, primer_address pa, primer_grades pg where p.cuisine_s = 'Bakery' and p.did = pa.did and pa.zipcode_s = '10462' and pg.did = p.did group by p.name_s having avg(pg.score_i) > 10;
 
                name_s                |         avg         
