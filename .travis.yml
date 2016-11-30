@@ -1,5 +1,5 @@
 language: java
-script: mvn -Psafer -Passembler -Pcoverage -B -e -T 1C verify
+script: mvn -Psafer -Pintegration -Passembler -Pcoverage -B -e -T 1C verify
 jdk:
 - oraclejdk8
 
@@ -9,6 +9,6 @@ addons:
       - oracle-java8-installer
 
 sudo: false
-  
+
 after_success:
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"

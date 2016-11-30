@@ -11,11 +11,11 @@
     </prerequisites>
 
     <groupId>com.torodb</groupId>
-    <artifactId>torodb-parent</artifactId>
-    <version>0.41-SNAPSHOT</version>
+    <artifactId>torodb-pom</artifactId>
+    <version>0.50.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     
-    <name>ToroDB parent</name>
+    <name>ToroDB: Parent</name>
     <description>
         ToroDB is an open source project that turns your RDBMS into a
         MongoDB-compatible server, supporting the MongoDB query API and
@@ -33,7 +33,7 @@
     <inceptionYear>2014</inceptionYear>
 
     <organization>
-        <name>8Kdata</name>
+        <name>8Kdata Technology</name>
         <url>www.8kdata.com</url>
     </organization>
 
@@ -76,18 +76,23 @@
     </issueManagement>
 
     <properties>
+        <torodb.engine.version>0.50.1-SNAPSHOT</torodb.engine.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <torod.version>${project.version}</torod.version>
+        <log4j.version>2.6.1</log4j.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.41-SNAPSHOT</mongowp.version>
+        <mongowp.version>0.50.0</mongowp.version>
+        <jmh.version>1.12</jmh.version>
+        <metrics.version>3.1.2</metrics.version>
+        <torodb.buildtools.version>0.50.0</torodb.buildtools.version>
+        <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
+        <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
     </properties>
 
     <modules>
-        <module>kvdocument</module>
-        <module>torod</module>
-        <module>torodb</module>
-        <module>multiple-granularity-locking</module>
-        <module>common</module>
+        <module>engine</module>
+        <module>server</module>
+        <module>stampede</module>
+        <module>build-tools</module>
     </modules>
 
     <dependencyManagement>
@@ -118,11 +123,6 @@
                 <version>${mongowp.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.8kdata.mongowp.api.safe.library</groupId>
-                <artifactId>v3m0</artifactId>
-                <version>${mongowp.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.8kdata.mongowp.client</groupId>
                 <artifactId>core</artifactId>
                 <version>${mongowp.version}</version>
@@ -139,14 +139,26 @@
             </dependency>
 
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.7.13</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
             </dependency>
             <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>1.1.3</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <type>test-jar</type>
+                <version>${log4j.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -166,12 +178,12 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver</artifactId>
-                <version>3.0.4</version>
+                <version>3.2.2</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>bson</artifactId>
-                <version>3.0.4</version>
+                <version>3.2.2</version>
             </dependency>
             <dependency>
                 <groupId>javax.inject</groupId>
@@ -186,37 +198,43 @@
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
-                <version>9.4.1207.jre7</version>
+                <version>9.4.1211.jre7</version>
             </dependency>
-	        <dependency>
-	            <groupId>mysql</groupId>
-	            <artifactId>mysql-connector-java</artifactId>
-                <version>5.1.38</version>
-	        </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq</artifactId>
-                <version>3.6.4</version>
+                <version>3.8.1</version>
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
                 <artifactId>jooq-meta</artifactId>
-                <version>3.6.4</version>
+                <version>3.8.6</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jooq</groupId>
+                <artifactId>jool</artifactId>
+                <version>0.9.12</version>
             </dependency>
             <dependency>
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
-                <version>2.4.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.threeten</groupId>
-                <artifactId>threetenbp</artifactId>
-                <version>1.3.1</version>
+                <version>2.5.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.inject</groupId>
                 <artifactId>guice</artifactId>
-                <version>4.0</version>
+                <version>4.1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.inject.extensions</groupId>
+                <artifactId>guice-assistedinject</artifactId>
+                <version>4.1.0</version>
             </dependency>
             <dependency>
                 <groupId>com.beust</groupId>
@@ -267,13 +285,25 @@
             <dependency>
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-validator</artifactId>
-                <version>5.2.2.Final</version>
+                <version>5.2.4.Final</version>
             </dependency>
             <dependency>
                 <groupId>org.glassfish</groupId>
                 <artifactId>javax.el</artifactId>
                 <version>3.0.0</version>
             </dependency>
+            
+            <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derbyclient</artifactId>
+                <version>10.12.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.derby</groupId>
+                <artifactId>derby</artifactId>
+                <version>10.12.1.1</version>
+            </dependency>
+            
 
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -284,11 +314,41 @@
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
                 <artifactId>annotations</artifactId>
-                <version>3.0.1u2</version>
+                <version>3.0.1</version>
                 <scope>provided</scope>
                 <type>jar</type>
             </dependency>
-
+            <dependency>
+                <groupId>org.reactivestreams</groupId>
+                <artifactId>reactive-streams</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>2.11.8</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+                <version>1.3.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-stream_2.11</artifactId>
+                <version>2.4.12</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.scala-lang</groupId>
+                        <artifactId>scala-library</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.typesafe</groupId>
+                        <artifactId>config</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
             <dependency>
                 <groupId>junit</groupId>
@@ -297,19 +357,63 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
+                <groupId>com.google.truth</groupId>
+                <artifactId>truth</artifactId>
+                <version>0.30</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-core</artifactId>
+                <version>1.3</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>1.10.19</version>
+                <version>2.2.15</version>
                 <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
                 <exclusions>
                     <exclusion>
-                        <!-- version 1.10.19 depends on hamcrest-core:1.1, meanwhile junit 4.12 depends on hamcrest-core:1.3 -->
-                        <groupId>org.hamcrest</groupId>
-                        <artifactId>hamcrest-core</artifactId>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
-
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jvm</artifactId>
+                <version>${metrics.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.mpierce.metrics.reservoir</groupId>
+                <artifactId>hdrhistogram-metrics-reservoir</artifactId>
+                <version>1.1.0</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-core</artifactId>
+                <version>${jmh.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdk.jmh</groupId>
+                <artifactId>jmh-generator-annprocess</artifactId>
+                <version>${jmh.version}</version>
+                <scope>provided</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -318,10 +422,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.6.0</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <compilerArgument>-Xlint:all</compilerArgument>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings> 
@@ -330,7 +434,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
+                <version>3.0.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -392,39 +496,107 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <header>${license.header.file}</header>
+                    <failIfMissing>true</failIfMissing>
+                    <properties>
+                        <project.name>ToroDB</project.name>
+                        <project.inceptionYear>2014</project.inceptionYear>
+                        <owner>${project.organization.name}</owner>
+                        <email>${project.organization.url}</email>
+                    </properties>
+                    <includes>
+                        <include>src/**/*.java</include>
+                    </includes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                    <errorMessage>Some files do not have the expected license header. Run com.mycila:license-maven-plugin:format to update all file headers</errorMessage>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-license</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.torodb</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${torodb.buildtools.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <configuration>
+                            <!--<configLocation>google_checks.xml</configLocation>-->
+                            <consoleOutput>true</consoleOutput>
+                            <!--<failsOnError>true</failsOnError>-->
+                            <linkXRef>false</linkXRef>
+                            <violationSeverity>error</violationSeverity>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>            
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>7.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.torodb</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${torodb.buildtools.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.7.201606060606</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.18.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
-        <profile>
-            <id>coverage</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.7.7.201606060606</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>safer</id> <!-- Slower but safer profile used to look for errors before pushing to SCM -->
             <build>
@@ -432,7 +604,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>findbugs-maven-plugin</artifactId>
-                        <version>3.0.3</version>
+                        <version>3.0.4</version>
                         <configuration>
                             <effort>Max</effort>
                             <threshold>Low</threshold>
@@ -510,34 +682,6 @@
             </activation>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>net.wouterdanes</groupId>
-                        <artifactId>mustache-maven-plugin</artifactId>
-                        <version>1.1</version>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>run-mustache-template</id>
-                                <phase>validate</phase>
-                                <goals>
-                                    <goal>mustache</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <encoding>UTF-8</encoding>
-                            <context>
-                                ---
-                                latestVersion: "${project.version}"
-                            </context>
-                            <templates>
-                                <template>
-                                    <templateFile>${project.basedir}/file-templates/README.md.mustache</templateFile>
-                                    <outputPath>${project.basedir}/README.md</outputPath>
-                                </template>
-                            </templates>
-                        </configuration>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
