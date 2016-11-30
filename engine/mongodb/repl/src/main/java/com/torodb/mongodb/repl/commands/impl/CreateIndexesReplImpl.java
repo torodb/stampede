@@ -24,6 +24,7 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import com.torodb.core.exceptions.user.UnsupportedCompoundIndexException;
 import com.torodb.core.exceptions.user.UnsupportedUniqueIndexException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
@@ -150,6 +151,11 @@ public class CreateIndexesReplImpl
               fields, indexOptions.isUnique())) {
             indexesAfter++;
           }
+        } catch (UnsupportedCompoundIndexException ex) {
+          String note =
+              "Compound indexes are not supported. Skipping index.";
+          LOGGER.info(note);
+          continue;
         } catch (UnsupportedUniqueIndexException ex) {
           String note =
               "Unique index with keys on distinct subdocuments is not supported. Skipping index.";

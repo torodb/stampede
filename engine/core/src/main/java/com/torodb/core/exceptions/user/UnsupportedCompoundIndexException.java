@@ -18,19 +18,17 @@
 
 package com.torodb.core.exceptions.user;
 
-public interface UserExceptionVisitor<R, A> {
+public class UnsupportedCompoundIndexException extends IndexException {
 
-  public R visit(DatabaseNotFoundException userException, A arg);
+  private static final long serialVersionUID = 1L;
 
-  public R visit(CollectionNotFoundException userException, A arg);
+  public UnsupportedCompoundIndexException(String database, String collection, String index) {
+    super(database, collection, index);
+  }
 
-  public R visit(IndexNotFoundException userException, A arg);
+  @Override
+  public <R, A> R accept(UserExceptionVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 
-  public R visit(UnsupportedUniqueIndexException userException, A arg);
-
-  public R visit(UnsupportedCompoundIndexException userException, A arg);
-
-  public R visit(UpdateException userException, A arg);
-
-  public R visit(UniqueIndexViolationException userException, A arg);
 }

@@ -5,7 +5,7 @@
 ToroDB Stampede doesn't support all index types. Some indexes are supported or partialy supported, and other are skipped.
    
   * **Single field indexes**: Are fully supported.
-  * **Compound indexes**: ToroDB Stampede will create an index for each group of fields in the same subdocument. If two or more fields are in different parts of the document, the unique constraint is not created.
+  * **Compound indexes**: Are not supported and are not created.
   * **Multikey indexes**: The only multikey indexes created in ToroDB Stampede are those whose field(s) are in a embedded document. Multikey indexes over scalar values of an array are not created.
   * **Text indexes**: Are not supported and are not created.
   * **2dsphere indexes**: Are not supported and are not created.
