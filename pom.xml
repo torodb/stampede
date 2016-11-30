@@ -12,7 +12,7 @@
 
     <groupId>com.torodb</groupId>
     <artifactId>torodb-pom</artifactId>
-    <version>0.50.0-SNAPSHOT</version>
+    <version>0.50.0</version>
     <packaging>pom</packaging>
     
     <name>ToroDB: Parent</name>
@@ -76,13 +76,14 @@
     </issueManagement>
 
     <properties>
+        <torodb.engine.version>0.50.0</torodb.engine.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <log4j.version>2.6.1</log4j.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.50.0-SNAPSHOT</mongowp.version>
+        <mongowp.version>0.50.0</mongowp.version>
         <jmh.version>1.12</jmh.version>
         <metrics.version>3.1.2</metrics.version>
-        <torodb.buildtools.version>0.50.0-SNAPSHOT</torodb.buildtools.version>
+        <torodb.buildtools.version>0.50.0</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
         <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
     </properties>
