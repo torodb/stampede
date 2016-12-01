@@ -34,6 +34,7 @@ It is the maximum time between automatic WAL checkpoints. A value between 15 and
 
 Setting the value to 1/2 of total memory would be a normal conservative setting, and 3/4 of memory is a more aggressive but still reasonable amount.
 
+<!--
 ## Linux configuration
 
 If the underlying OS is Linux some aspects can be optimized to get better a better performance.
@@ -41,3 +42,4 @@ If the underlying OS is Linux some aspects can be optimized to get better a bett
 ### File system
 
 TBD
+-->
