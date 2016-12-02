@@ -80,7 +80,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <log4j.version>2.7</log4j.version>
         <jackson.version>2.6.3</jackson.version>
-        <mongowp.version>0.50.0</mongowp.version>
+        <mongowp.version>0.50.1-SNAPSHOT</mongowp.version>
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
         <torodb.buildtools.version>0.50.1-SNAPSHOT</torodb.buildtools.version>
