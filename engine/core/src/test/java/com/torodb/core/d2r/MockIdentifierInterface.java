@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.d2r;
+package com.torodb.core.d2r;
 
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.transaction.metainf.FieldType;
