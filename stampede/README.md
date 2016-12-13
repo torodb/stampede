@@ -51,7 +51,7 @@ ToroDB – [@nosqlonsql](https://twitter.com/nosqlonsql) – info@8kdata.com
 
 Distributed under the GNU AGPL v3 license. See ``LICENSE`` for more information.
 
-[1]: https://www.torodb.com/stampede/doc//quickstart
+[1]: https://www.torodb.com/stampede/docs/quickstart
 [2]: https://www.8kdata.com/blog/the-conundrum-of-bi-aggregate-queries-on-mongodb/
-[3]: https://www.torodb.com/stampede/doc/how-to-use
-[4]: https://www.torodb.com/stampede/doc/previous-requirements
+[3]: https://www.torodb.com/stampede/docs/how-to-use
+[4]: https://www.torodb.com/stampede/docs/installation/previous-requirements/

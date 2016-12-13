@@ -56,13 +56,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.Callable;
 
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  *
  */
-@Singleton
+@ThreadSafe
 public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodConnection> {
 
   private static final Logger LOGGER = LogManager.getLogger(TorodbSafeRequestProcessor.class);
