@@ -29,9 +29,9 @@ To work properly, the default installation of ToroDB Stampede requires a new use
 #### Linux
 
 ```no-highlight
-$ createuser -S -R -D -P --interactive torodb
+createuser -S -R -D -P --interactive torodb
 
-$ createdatabase -O torodb torod
+createdatabase -O torodb torod
 ```
 
 #### macOS/Windows
@@ -39,9 +39,9 @@ $ createdatabase -O torodb torod
 In macOS and Windows the user and database can be created using an administration connection with `psql` command.
 
 ```no-highlight
-> CREATE USER torodb WITH PASSWORD '<password>';
+CREATE USER torodb WITH PASSWORD '<password>';
 
-> CREATE DATABASE torod OWNER torodb;
+CREATE DATABASE torod OWNER torodb;
 ```
 
 ### Create .toropass file

@@ -18,6 +18,8 @@
 
 package com.torodb.core.impl;
 
+
+
 import com.torodb.core.TableRef;
 
 import java.util.Optional;
@@ -56,8 +58,12 @@ public class TableRefImpl extends TableRef {
       throw new IllegalArgumentException("array dimension should be greather than 1");
     } else {
       if (arrayDimension > 2 && parent.getArrayDimension() + 1 != arrayDimension) {
-        throw new IllegalArgumentException("array dimension should be " + (parent
-            .getArrayDimension() + 1));
+        if (parent.getArrayDimension() == 0) {
+          throw new IllegalArgumentException("array dimension should be 2");
+        } else {
+          throw new IllegalArgumentException("array dimension should be " + (parent
+                  .getArrayDimension() + 1));
+        }
       }
     }
 

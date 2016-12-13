@@ -11,6 +11,7 @@ pages:
     - 'Installation from source code': installation/source-code.md
     - 'Configuration': installation/configuration.md
     - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
+    - 'Java Virtual Machine configuration tips': installation/jvm-configuration-tips.md
   - 'How to use?': how-to-use.md
   - 'FAQ': faq.md
   - 'Glossary': glossary.md
@@ -19,3 +20,4 @@ extra_css:
   - css/8kdata.css
 markdown_extensions:
   - admonition:
+google_analytics: ['UA-44578894-3', 'www.torodb.com']
