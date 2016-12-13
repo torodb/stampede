@@ -94,6 +94,21 @@ public class TableRefImplTest {
     Assert.assertEquals(true, tableRef.getParent().isPresent());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void childOfAnArrayCannotHasDimensionhOne() throws Exception {
+      createTableRef("array", "1");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void childDimensionCannotBeDifferentFromParentDimensionPlusOne() throws Exception {
+      createTableRef("array", "2", "4");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void dimensionOfFirstChildArrayCannotBeDifferentThanTwo() throws Exception {
+      createTableRef("array", "3");
+  }
+
   private TableRef createTableRef(String... names) {
     TableRef tableRef = tableRefFactory.createRoot();
 
