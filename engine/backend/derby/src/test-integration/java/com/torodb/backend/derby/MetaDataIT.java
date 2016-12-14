@@ -18,58 +18,51 @@
 
 package com.torodb.backend.derby;
 
-import com.torodb.backend.*;
-import com.torodb.backend.derby.schema.DerbySchemaUpdater;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
-import com.torodb.backend.driver.derby.DerbyDriverProvider;
-import com.torodb.backend.driver.derby.OfficialDerbyDriver;
+import com.torodb.backend.DslContextFactory;
+import com.torodb.backend.SqlInterface;
+import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
+import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import org.jooq.DSLContext;
 import org.jooq.Result;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.Connection;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import static org.junit.Assert.assertEquals;
 
 public class MetaDataIT {
 
-    @Test
-    public void metadataDatabaseTableCanBeWritten() throws Exception {
-        DerbyDriverProvider driver = new OfficialDerbyDriver();
-        ThreadFactory threadFactory = Executors.defaultThreadFactory();
-        DerbyErrorHandler errorHandler = new DerbyErrorHandler();
+    private SqlInterface sqlInterface;
 
-        IdentifierConstraints constraints = new DerbyIdentifierConstraints();
+    private DslContextFactory dslContextFactory;
 
-        DerbyDataTypeProvider provider = new DerbyDataTypeProvider();
-        SqlHelper sqlHelper = new SqlHelper(provider, errorHandler);
-        DerbyDbBackendConfiguration configuration = new LocalTestDerbyDbBackendConfiguration();
-        DbBackendService dbBackendService = new DerbyDbBackend(threadFactory, configuration, driver, errorHandler);
-        dbBackendService.startAsync();
-        dbBackendService.awaitRunning();
-        DslContextFactory dslContextFactory = new DslContextFactoryImpl(provider);
+    @Before
+    public void setUp() throws Exception {
+        DatabaseTestContext dbTestContext = new DatabaseTestContext();
 
-        DerbyDbBackend dbBackend = new DerbyDbBackend(threadFactory, configuration, driver, errorHandler);
+        sqlInterface = dbTestContext.getSqlInterface();
+        dslContextFactory = dbTestContext.getDslContextFactory();
 
-        DerbyMetaDataReadInterface metaDataReadInterface = new DerbyMetaDataReadInterface(sqlHelper);
-        DerbyStructureInterface derbyStructureInterface = new DerbyStructureInterface(dbBackend, metaDataReadInterface, sqlHelper, constraints);
-
-        DerbyMetaDataWriteInterface metadataWriteInterface = new DerbyMetaDataWriteInterface(metaDataReadInterface, sqlHelper);
-
-        SqlInterface sqlInterface = new SqlInterfaceDelegate(metaDataReadInterface, metadataWriteInterface, provider, derbyStructureInterface, null, null, null, errorHandler, dslContextFactory, dbBackendService);
-        DerbySchemaUpdater schemaUpdater = new DerbySchemaUpdater(sqlInterface, sqlHelper);
-
+        SchemaUpdater schemaUpdater = dbTestContext.getSchemaUpdater();
         try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
             schemaUpdater.checkOrCreate(dslContextFactory.createDslContext(connection));
+            connection.commit();
+        }
+    }
 
-            DSLContext dslContext = dslContextFactory.createDslContext(connection);;
+    @Test
+    public void metadataDatabaseTableCanBeWritten() throws Exception {
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dslContext = dslContextFactory.createDslContext(connection);
+
             MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
             sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dslContext, metaDatabase);
 
@@ -82,9 +75,36 @@ public class MetaDataIT {
 
             assertEquals(1, records.size());
             assertEquals("database_name", records.get(0).getName());
+            assertEquals("database_identifier", records.get(0).getIdentifier());
 
             connection.commit();
         }
     }
+
+    @Test
+    public void metadataCollectionTableCanBeWritten() throws Exception {
+        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+            DSLContext dslContext = dslContextFactory.createDslContext(connection);
+
+            MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
+            MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
+            sqlInterface.getMetaDataWriteInterface().addMetaCollection(dslContext, metaDatabase, metaCollection);
+
+            MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = sqlInterface
+                    .getMetaDataReadInterface().getMetaCollectionTable();
+            Result<MetaCollectionRecord> records =
+                    dslContext.selectFrom(metaCollectionTable)
+                            .where(metaCollectionTable.IDENTIFIER.eq("collection_identifier"))
+                            .fetch();
+
+            assertEquals(1, records.size());
+            assertEquals("collection_name", records.get(0).getName());
+            assertEquals("collection_identifier", records.get(0).getIdentifier());
+            assertEquals("database_name", records.get(0).getDatabase());
+
+            connection.commit();
+        }
+    }
+
 
 }
