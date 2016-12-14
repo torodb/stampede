@@ -175,7 +175,8 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
         int maxWriteBatchSize,
         Instant localTime,
         int maxWireVersion,
-        int minWireVersion) {
+        int minWireVersion,
+        boolean standalone) {
       this.master = master;
       this.secondary = secondary;
 
@@ -202,9 +203,9 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
       this.maxWireVersion = maxWireVersion;
       this.minWireVersion = minWireVersion;
 
-      configSet = true;
+      this.configSet = true;
 
-      standalone = false;
+      this.standalone = standalone;
     }
 
     private IsMasterReply() {
@@ -507,7 +508,8 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
           BsonReaderTool.getInteger(bson, MAX_WRITE_BATCH_SIZE),
           BsonReaderTool.getInstant(bson, LOCAL_TIME),
           BsonReaderTool.getInteger(bson, MAX_WIRE_VERSION),
-          BsonReaderTool.getInteger(bson, MIN_WIRE_VERSION)
+          BsonReaderTool.getInteger(bson, MIN_WIRE_VERSION),
+          false
       );
     }
 
@@ -535,6 +537,7 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
       private Instant localTime;
       private int maxWireVersion;
       private int minWireVersion;
+      private boolean standalone;
 
       public Builder() {
       }
@@ -569,6 +572,7 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
           int maxWireVersion,
           int minWireVersion) {
         return new Builder()
+            .setStandalone(true)
             .setMyState(MemberState.RS_PRIMARY)
             .setMaxBsonObjectSize(maxBsonObjectSize)
             .setMaxMessageSizeBytes(maxMessageSizeBytes)
@@ -576,6 +580,11 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
             .setLocalTime(localTime)
             .setMaxWireVersion(maxWireVersion)
             .setMinWireVersion(minWireVersion);
+      }
+
+      public Builder setStandalone(boolean standalone) {
+        this.standalone = standalone;
+        return this;
       }
 
       public Builder setMyState(MemberState myState) {
@@ -729,7 +738,8 @@ public class IsMasterCommand extends AbstractNotAliasableCommand<Empty, IsMaster
             maxWriteBatchSize,
             localTime,
             maxWireVersion,
-            minWireVersion
+            minWireVersion,
+            standalone
         );
       }
 
