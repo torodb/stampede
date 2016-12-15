@@ -23,12 +23,14 @@ import com.torodb.backend.SqlInterface;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
+import com.torodb.backend.tables.MetaDocPartTable;
 import com.torodb.backend.tables.records.MetaCollectionRecord;
 import com.torodb.backend.tables.records.MetaDatabaseRecord;
-import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.core.transaction.metainf.MetaDatabase;
+import com.torodb.backend.tables.records.MetaDocPartRecord;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.*;
 import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.junit.After;
@@ -112,5 +114,35 @@ public class MetaDataIT {
     }
   }
 
+  @Test
+  public void metadataDocPartTableCanBeWritten() throws Exception {
+    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+      DSLContext dslContext = dslContextFactory.createDslContext(connection);
+
+      TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+      TableRef tableRef = tableRefFactory.createRoot();
+
+      MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
+      MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
+      MetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(tableRef, "docpart_identifier").build();
+
+      sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dslContext, metaDatabase, metaCollection, metaDocPart);
+
+      MetaDocPartTable<Object, MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDataReadInterface()
+          .getMetaDocPartTable();
+      Result<MetaDocPartRecord<Object>> records =
+          dslContext.selectFrom(metaDocPartTable)
+              .where(metaDocPartTable.IDENTIFIER.eq("docpart_identifier"))
+              .fetch();
+
+      assertEquals(1, records.size());
+      assertEquals("database_name", records.get(0).getDatabase());
+      assertEquals("collection_name", records.get(0).getCollection());
+      assertEquals(tableRef, records.get(0).getTableRefValue(tableRefFactory));
+      assertEquals("docpart_identifier", records.get(0).getIdentifier());
+
+      connection.commit();
+    }
+  }
 
 }
