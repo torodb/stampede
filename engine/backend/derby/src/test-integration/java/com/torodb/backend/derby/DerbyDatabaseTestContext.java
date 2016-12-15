@@ -20,6 +20,7 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.common.DatabaseTestContext;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.meta.SchemaUpdater;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +31,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class DerbyDatabaseTestContext implements DatabaseTextContext {
+public class DerbyDatabaseTestContext implements DatabaseTestContext {
 
   private static final Logger LOGGER = LogManager.getLogger(DerbyDatabaseTestContext.class);
 

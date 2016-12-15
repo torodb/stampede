@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.derby;
+package com.torodb.backend.common;
 
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
@@ -26,7 +26,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.function.Consumer;
 
-public interface DatabaseTextContext {
+public interface DatabaseTestContext {
 
   public void setupDatabase() throws SQLException;
 

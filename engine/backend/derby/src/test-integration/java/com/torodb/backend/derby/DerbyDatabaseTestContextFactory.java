@@ -19,6 +19,7 @@
 package com.torodb.backend.derby;
 
 import com.torodb.backend.*;
+import com.torodb.backend.common.DatabaseTestContext;
 import com.torodb.backend.derby.schema.DerbySchemaUpdater;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
@@ -29,9 +30,9 @@ import com.torodb.core.backend.IdentifierConstraints;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-public class DatabaseTestContextFactory {
+public class DerbyDatabaseTestContextFactory {
 
-  public DerbyDatabaseTestContext createDerbyInstance() {
+  public DatabaseTestContext createInstance() {
     DerbyErrorHandler errorHandler = new DerbyErrorHandler();
     DataTypeProvider provider = new DerbyDataTypeProvider();
     SqlHelper sqlHelper = new SqlHelper(provider, errorHandler);
