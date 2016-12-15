@@ -38,6 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.Connection;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -68,10 +69,9 @@ public class MetaDataIT {
 
   @Test
   public void metadataDatabaseTableCanBeWritten() throws Exception {
-    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-      DSLContext dslContext = dslContextFactory.createDslContext(connection);
-
+    executeOnDbConnectionWithDslContext(dslContext -> {
       MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
+
       sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dslContext, metaDatabase);
 
       MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface
@@ -84,18 +84,15 @@ public class MetaDataIT {
       assertEquals(1, records.size());
       assertEquals("database_name", records.get(0).getName());
       assertEquals("database_identifier", records.get(0).getIdentifier());
-
-      connection.commit();
-    }
+    });
   }
 
   @Test
   public void metadataCollectionTableCanBeWritten() throws Exception {
-    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-      DSLContext dslContext = dslContextFactory.createDslContext(connection);
-
+    executeOnDbConnectionWithDslContext(dslContext -> {
       MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
       MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
+
       sqlInterface.getMetaDataWriteInterface().addMetaCollection(dslContext, metaDatabase, metaCollection);
 
       MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = sqlInterface
@@ -109,22 +106,19 @@ public class MetaDataIT {
       assertEquals("collection_name", records.get(0).getName());
       assertEquals("collection_identifier", records.get(0).getIdentifier());
       assertEquals("database_name", records.get(0).getDatabase());
-
-      connection.commit();
-    }
+    });
   }
 
   @Test
   public void metadataDocPartTableCanBeWritten() throws Exception {
-    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-      DSLContext dslContext = dslContextFactory.createDslContext(connection);
-
+    executeOnDbConnectionWithDslContext(dslContext -> {
       TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-      TableRef tableRef = tableRefFactory.createRoot();
+      TableRef rootTableRef = tableRefFactory.createRoot();
+      TableRef childTableRef = tableRefFactory.createChild(rootTableRef, "child");
 
       MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
       MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
-      MetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(tableRef, "docpart_identifier").build();
+      MetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(childTableRef, "docpart_identifier").build();
 
       sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dslContext, metaDatabase, metaCollection, metaDocPart);
 
@@ -138,8 +132,16 @@ public class MetaDataIT {
       assertEquals(1, records.size());
       assertEquals("database_name", records.get(0).getDatabase());
       assertEquals("collection_name", records.get(0).getCollection());
-      assertEquals(tableRef, records.get(0).getTableRefValue(tableRefFactory));
+      assertEquals(childTableRef, records.get(0).getTableRefValue(tableRefFactory));
       assertEquals("docpart_identifier", records.get(0).getIdentifier());
+    });
+  }
+
+  private void executeOnDbConnectionWithDslContext(Consumer<DSLContext> consumer) throws Exception{
+    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+      DSLContext dslContext = dslContextFactory.createDslContext(connection);
+
+      consumer.accept(dslContext);
 
       connection.commit();
     }
