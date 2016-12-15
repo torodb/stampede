@@ -18,9 +18,7 @@
 
 package com.torodb.backend.derby;
 
-import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
-import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.tables.MetaCollectionTable;
 import com.torodb.backend.tables.MetaDatabaseTable;
 import com.torodb.backend.tables.MetaDocPartTable;
@@ -37,29 +35,19 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.util.function.Consumer;
-
 import static org.junit.Assert.assertEquals;
 
 public class MetaDataIT {
 
   private SqlInterface sqlInterface;
 
-  private DslContextFactory dslContextFactory;
-
-  private DatabaseTestContext dbTestContext = new DatabaseTestContext();
+  private DatabaseTextContext dbTestContext;
 
   @Before
   public void setUp() throws Exception {
+    dbTestContext = new DatabaseTestContextFactory().createDerbyInstance();
     sqlInterface = dbTestContext.getSqlInterface();
-    dslContextFactory = dbTestContext.getDslContextFactory();
-
-    SchemaUpdater schemaUpdater = dbTestContext.getSchemaUpdater();
-    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-      schemaUpdater.checkOrCreate(dslContextFactory.createDslContext(connection));
-      connection.commit();
-    }
+    dbTestContext.setupDatabase();
   }
 
   @After
@@ -69,49 +57,45 @@ public class MetaDataIT {
 
   @Test
   public void metadataDatabaseTableCanBeWritten() throws Exception {
-    executeOnDbConnectionWithDslContext(dslContext -> {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
       MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
 
       sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dslContext, metaDatabase);
 
-      MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface
-          .getMetaDataReadInterface().getMetaDatabaseTable();
-      Result<MetaDatabaseRecord> records =
-          dslContext.selectFrom(metaDatabaseTable)
-              .where(metaDatabaseTable.IDENTIFIER.eq("database_identifier"))
-              .fetch();
+      Result<MetaDatabaseRecord> records = getDatabaseMetaTableRecords(dslContext);
 
       assertEquals(1, records.size());
-      assertEquals("database_name", records.get(0).getName());
-      assertEquals("database_identifier", records.get(0).getIdentifier());
+
+      MetaDatabaseRecord firstRecord = records.get(0);
+
+      assertEquals("database_name", firstRecord.getName());
+      assertEquals("database_identifier", firstRecord.getIdentifier());
     });
   }
 
   @Test
   public void metadataCollectionTableCanBeWritten() throws Exception {
-    executeOnDbConnectionWithDslContext(dslContext -> {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
       MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
       MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
 
       sqlInterface.getMetaDataWriteInterface().addMetaCollection(dslContext, metaDatabase, metaCollection);
 
-      MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = sqlInterface
-          .getMetaDataReadInterface().getMetaCollectionTable();
-      Result<MetaCollectionRecord> records =
-          dslContext.selectFrom(metaCollectionTable)
-              .where(metaCollectionTable.IDENTIFIER.eq("collection_identifier"))
-              .fetch();
+      Result<MetaCollectionRecord> records = getCollectionMetaTableRecords(dslContext);
 
       assertEquals(1, records.size());
-      assertEquals("collection_name", records.get(0).getName());
-      assertEquals("collection_identifier", records.get(0).getIdentifier());
-      assertEquals("database_name", records.get(0).getDatabase());
+
+      MetaCollectionRecord firstRecord = records.get(0);
+
+      assertEquals("collection_name", firstRecord.getName());
+      assertEquals("collection_identifier", firstRecord.getIdentifier());
+      assertEquals("database_name", firstRecord.getDatabase());
     });
   }
 
   @Test
   public void metadataDocPartTableCanBeWritten() throws Exception {
-    executeOnDbConnectionWithDslContext(dslContext -> {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
       TableRefFactory tableRefFactory = new TableRefFactoryImpl();
       TableRef rootTableRef = tableRefFactory.createRoot();
       TableRef childTableRef = tableRefFactory.createChild(rootTableRef, "child");
@@ -122,29 +106,41 @@ public class MetaDataIT {
 
       sqlInterface.getMetaDataWriteInterface().addMetaDocPart(dslContext, metaDatabase, metaCollection, metaDocPart);
 
-      MetaDocPartTable<Object, MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDataReadInterface()
-          .getMetaDocPartTable();
-      Result<MetaDocPartRecord<Object>> records =
-          dslContext.selectFrom(metaDocPartTable)
-              .where(metaDocPartTable.IDENTIFIER.eq("docpart_identifier"))
-              .fetch();
+      Result<MetaDocPartRecord<Object>> records = getDocPartMetaTableRecords(dslContext);
 
       assertEquals(1, records.size());
-      assertEquals("database_name", records.get(0).getDatabase());
-      assertEquals("collection_name", records.get(0).getCollection());
-      assertEquals(childTableRef, records.get(0).getTableRefValue(tableRefFactory));
-      assertEquals("docpart_identifier", records.get(0).getIdentifier());
+
+      MetaDocPartRecord<Object> firstRecord = records.get(0);
+
+      assertEquals("database_name", firstRecord.getDatabase());
+      assertEquals("collection_name", firstRecord.getCollection());
+      assertEquals(childTableRef, firstRecord.getTableRefValue(tableRefFactory));
+      assertEquals("docpart_identifier", firstRecord.getIdentifier());
     });
   }
 
-  private void executeOnDbConnectionWithDslContext(Consumer<DSLContext> consumer) throws Exception{
-    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-      DSLContext dslContext = dslContextFactory.createDslContext(connection);
+  private Result<MetaDatabaseRecord> getDatabaseMetaTableRecords(DSLContext dslContext) {
+    MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface
+        .getMetaDataReadInterface().getMetaDatabaseTable();
+    return dslContext.selectFrom(metaDatabaseTable)
+        .where(metaDatabaseTable.IDENTIFIER.eq("database_identifier"))
+        .fetch();
+  }
 
-      consumer.accept(dslContext);
+  private Result<MetaCollectionRecord> getCollectionMetaTableRecords(DSLContext dslContext) {
+    MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = sqlInterface
+        .getMetaDataReadInterface().getMetaCollectionTable();
+    return dslContext.selectFrom(metaCollectionTable)
+        .where(metaCollectionTable.IDENTIFIER.eq("collection_identifier"))
+        .fetch();
+  }
 
-      connection.commit();
-    }
+  private Result<MetaDocPartRecord<Object>> getDocPartMetaTableRecords(DSLContext dslContext) {
+    MetaDocPartTable<Object, MetaDocPartRecord<Object>> metaDocPartTable = sqlInterface.getMetaDataReadInterface()
+        .getMetaDocPartTable();
+    return dslContext.selectFrom(metaDocPartTable)
+        .where(metaDocPartTable.IDENTIFIER.eq("docpart_identifier"))
+        .fetch();
   }
 
 }
