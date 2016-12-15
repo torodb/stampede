@@ -25,17 +25,25 @@ import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 public class DatabaseTestContext {
+
+  private static final Logger LOGGER = LogManager.getLogger(DatabaseTestContext.class);
 
   private SqlInterface sqlInterface;
 
   private DslContextFactory dslContextFactory;
 
   private SchemaUpdater schemaUpdater;
+
+  private DerbyDbBackendConfiguration configuration = new LocalTestDerbyDbBackendConfiguration();
 
   public DatabaseTestContext() {
     DerbyErrorHandler errorHandler = new DerbyErrorHandler();
@@ -47,14 +55,22 @@ public class DatabaseTestContext {
     schemaUpdater = buildSchemaUpdater(sqlInterface, sqlHelper);
   }
 
+  public void tearDownDatabase() {
+    try {
+      sqlInterface.getDbBackend().stopAsync();
+      sqlInterface.getDbBackend().awaitTerminated();
+
+      DriverManager.getConnection("jdbc:derby:memory:" + configuration.getDbName() + ";drop=true").close();
+    } catch (SQLException e) {
+      LOGGER.info("Database dropped");
+    }
+  }
+
   private SqlInterface buildSqlInterface(DataTypeProvider provider, SqlHelper sqlHelper, DerbyErrorHandler errorHandler) {
     DerbyDriverProvider driver = new OfficialDerbyDriver();
     ThreadFactory threadFactory = Executors.defaultThreadFactory();
 
     IdentifierConstraints constraints = new DerbyIdentifierConstraints();
-
-
-    DerbyDbBackendConfiguration configuration = new LocalTestDerbyDbBackendConfiguration();
 
     DerbyDbBackend dbBackend = new DerbyDbBackend(threadFactory, configuration, driver, errorHandler);
 
@@ -63,12 +79,11 @@ public class DatabaseTestContext {
 
     DerbyMetaDataWriteInterface metadataWriteInterface = new DerbyMetaDataWriteInterface(metaDataReadInterface, sqlHelper);
 
-    DbBackendService dbBackendService = new DerbyDbBackend(threadFactory, configuration, driver, errorHandler);
-    dbBackendService.startAsync();
-    dbBackendService.awaitRunning();
+    dbBackend.startAsync();
+    dbBackend.awaitRunning();
 
     return new SqlInterfaceDelegate(metaDataReadInterface, metadataWriteInterface, provider, derbyStructureInterface,
-        null, null, null, errorHandler, dslContextFactory, dbBackendService);
+        null, null, null, errorHandler, dslContextFactory, dbBackend);
   }
 
   private DslContextFactory buildDslContextFactory(DataTypeProvider provider) {

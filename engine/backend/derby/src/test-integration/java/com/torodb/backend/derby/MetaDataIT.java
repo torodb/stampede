@@ -31,6 +31,7 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import org.jooq.DSLContext;
 import org.jooq.Result;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,10 +45,10 @@ public class MetaDataIT {
 
   private DslContextFactory dslContextFactory;
 
+  private DatabaseTestContext dbTestContext = new DatabaseTestContext();
+
   @Before
   public void setUp() throws Exception {
-    DatabaseTestContext dbTestContext = new DatabaseTestContext();
-
     sqlInterface = dbTestContext.getSqlInterface();
     dslContextFactory = dbTestContext.getDslContextFactory();
 
@@ -56,6 +57,11 @@ public class MetaDataIT {
       schemaUpdater.checkOrCreate(dslContextFactory.createDslContext(connection));
       connection.commit();
     }
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    dbTestContext.tearDownDatabase();
   }
 
   @Test
