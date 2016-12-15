@@ -86,6 +86,13 @@
         <torodb.buildtools.version>0.50.0</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
         <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
+        
+        <!-- SonarQube properties -->
+        <sonar.projectName>ToroDB</sonar.projectName>
+        <sonar.links.homepage>https://github.com/torodb/torodb</sonar.links.homepage>
+        <sonar.links.ci>https://travis-ci.org/torodb/torodb</sonar.links.ci>
+        <sonar.links.scm>https://github.com/torodb/torodb</sonar.links.scm>
+        <sonar.links.issue>https://github.com/torodb/torodb/issues</sonar.links.issue>
     </properties>
 
     <modules>
