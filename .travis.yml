@@ -25,9 +25,6 @@ cache:
   directories:
     - '$HOME/.sonar/cache'
 
-install:
-- mvn dependency:go-offline
-
 after_success:
   - if [[ $TRAVIS_REPO_SLUG = torodb/torodb ]]; then bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports'; else echo 'Codecov not notified'; fi
   - if [[ $TRAVIS_REPO_SLUG = torodb/torodb ]]; then mvn sonar:sonar || echo 'Error while notifying SonarQube'; else echo 'SonarQube not notified'; fi
