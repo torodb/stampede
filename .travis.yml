@@ -1,5 +1,5 @@
 language: java
-script: mvn -Psafer -Pintegration -Passembler -Pcoverage -B -e -T 1C verify
+script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
 jdk:
 - oraclejdk8
 
