@@ -40,71 +40,71 @@ import static org.junit.Assert.assertEquals;
 
 public class MetaDataIT {
 
-    private SqlInterface sqlInterface;
+  private SqlInterface sqlInterface;
 
-    private DslContextFactory dslContextFactory;
+  private DslContextFactory dslContextFactory;
 
-    @Before
-    public void setUp() throws Exception {
-        DatabaseTestContext dbTestContext = new DatabaseTestContext();
+  @Before
+  public void setUp() throws Exception {
+    DatabaseTestContext dbTestContext = new DatabaseTestContext();
 
-        sqlInterface = dbTestContext.getSqlInterface();
-        dslContextFactory = dbTestContext.getDslContextFactory();
+    sqlInterface = dbTestContext.getSqlInterface();
+    dslContextFactory = dbTestContext.getDslContextFactory();
 
-        SchemaUpdater schemaUpdater = dbTestContext.getSchemaUpdater();
-        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-            schemaUpdater.checkOrCreate(dslContextFactory.createDslContext(connection));
-            connection.commit();
-        }
+    SchemaUpdater schemaUpdater = dbTestContext.getSchemaUpdater();
+    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+      schemaUpdater.checkOrCreate(dslContextFactory.createDslContext(connection));
+      connection.commit();
     }
+  }
 
-    @Test
-    public void metadataDatabaseTableCanBeWritten() throws Exception {
-        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-            DSLContext dslContext = dslContextFactory.createDslContext(connection);
+  @Test
+  public void metadataDatabaseTableCanBeWritten() throws Exception {
+    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+      DSLContext dslContext = dslContextFactory.createDslContext(connection);
 
-            MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
-            sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dslContext, metaDatabase);
+      MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
+      sqlInterface.getMetaDataWriteInterface().addMetaDatabase(dslContext, metaDatabase);
 
-            MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface
-                    .getMetaDataReadInterface().getMetaDatabaseTable();
-            Result<MetaDatabaseRecord> records =
-                    dslContext.selectFrom(metaDatabaseTable)
-                            .where(metaDatabaseTable.IDENTIFIER.eq("database_identifier"))
-                            .fetch();
+      MetaDatabaseTable<MetaDatabaseRecord> metaDatabaseTable = sqlInterface
+          .getMetaDataReadInterface().getMetaDatabaseTable();
+      Result<MetaDatabaseRecord> records =
+          dslContext.selectFrom(metaDatabaseTable)
+              .where(metaDatabaseTable.IDENTIFIER.eq("database_identifier"))
+              .fetch();
 
-            assertEquals(1, records.size());
-            assertEquals("database_name", records.get(0).getName());
-            assertEquals("database_identifier", records.get(0).getIdentifier());
+      assertEquals(1, records.size());
+      assertEquals("database_name", records.get(0).getName());
+      assertEquals("database_identifier", records.get(0).getIdentifier());
 
-            connection.commit();
-        }
+      connection.commit();
     }
+  }
 
-    @Test
-    public void metadataCollectionTableCanBeWritten() throws Exception {
-        try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
-            DSLContext dslContext = dslContextFactory.createDslContext(connection);
+  @Test
+  public void metadataCollectionTableCanBeWritten() throws Exception {
+    try (Connection connection = sqlInterface.getDbBackend().createWriteConnection()) {
+      DSLContext dslContext = dslContextFactory.createDslContext(connection);
 
-            MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
-            MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
-            sqlInterface.getMetaDataWriteInterface().addMetaCollection(dslContext, metaDatabase, metaCollection);
+      MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder("database_name", "database_identifier").build();
+      MetaCollection metaCollection = new ImmutableMetaCollection.Builder("collection_name", "collection_identifier").build();
+      sqlInterface.getMetaDataWriteInterface().addMetaCollection(dslContext, metaDatabase, metaCollection);
 
-            MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = sqlInterface
-                    .getMetaDataReadInterface().getMetaCollectionTable();
-            Result<MetaCollectionRecord> records =
-                    dslContext.selectFrom(metaCollectionTable)
-                            .where(metaCollectionTable.IDENTIFIER.eq("collection_identifier"))
-                            .fetch();
+      MetaCollectionTable<MetaCollectionRecord> metaCollectionTable = sqlInterface
+          .getMetaDataReadInterface().getMetaCollectionTable();
+      Result<MetaCollectionRecord> records =
+          dslContext.selectFrom(metaCollectionTable)
+              .where(metaCollectionTable.IDENTIFIER.eq("collection_identifier"))
+              .fetch();
 
-            assertEquals(1, records.size());
-            assertEquals("collection_name", records.get(0).getName());
-            assertEquals("collection_identifier", records.get(0).getIdentifier());
-            assertEquals("database_name", records.get(0).getDatabase());
+      assertEquals(1, records.size());
+      assertEquals("collection_name", records.get(0).getName());
+      assertEquals("collection_identifier", records.get(0).getIdentifier());
+      assertEquals("database_name", records.get(0).getDatabase());
 
-            connection.commit();
-        }
+      connection.commit();
     }
+  }
 
 
 }
