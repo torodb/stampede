@@ -16,6 +16,7 @@ sudo: false
 
 before_script:
   - cp config/database.yml.travis config/database.yml
+  - psql -c 'create database test;' -U test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
