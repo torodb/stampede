@@ -53,13 +53,13 @@ public class DerbyDatabaseTestContextFactory {
     DerbyDriverProvider driver = new OfficialDerbyDriver();
     ThreadFactory threadFactory = Executors.defaultThreadFactory();
 
-    IdentifierConstraints constraints = new DerbyIdentifierConstraints();
+    IdentifierConstraints identifierConstraints = new DerbyIdentifierConstraints();
 
     DerbyDbBackend dbBackend = new DerbyDbBackend(threadFactory, configuration, driver, errorHandler);
 
     DerbyMetaDataReadInterface metaDataReadInterface = new DerbyMetaDataReadInterface(sqlHelper);
     DerbyStructureInterface derbyStructureInterface =
-        new DerbyStructureInterface(dbBackend, metaDataReadInterface, sqlHelper, constraints);
+        new DerbyStructureInterface(dbBackend, metaDataReadInterface, sqlHelper, identifierConstraints);
 
     DerbyMetaDataWriteInterface metadataWriteInterface =
         new DerbyMetaDataWriteInterface(metaDataReadInterface, sqlHelper);
@@ -68,7 +68,7 @@ public class DerbyDatabaseTestContextFactory {
     dbBackend.awaitRunning();
 
     return new SqlInterfaceDelegate(metaDataReadInterface, metadataWriteInterface, provider,
-        derbyStructureInterface, null, null, null, errorHandler, dslContextFactory, dbBackend);
+        derbyStructureInterface, null, null, identifierConstraints, errorHandler, dslContextFactory, dbBackend);
   }
 
 }
