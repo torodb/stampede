@@ -21,7 +21,7 @@ package com.torodb.common.util;
 import java.util.concurrent.CompletionException;
 
 /**
- *
+ * CompletionException utility class.
  */
 public class CompletionExceptions {
 
@@ -33,21 +33,27 @@ public class CompletionExceptions {
    * deepest CompletionException if there are no exception different than CompletionException in the
    * stack.
    *
-   * @param ex
-   * @return
+   * @param ex the original exception.
+   * @return The first exception that is not CompletionException or the given exception.
    */
   public static Throwable getFirstNonCompletionException(Throwable ex) {
-    Throwable t = ex;
-    while (t instanceof CompletionException && t != t.getCause() && t.getCause() != null) {
-      Throwable cause = t.getCause();
+    Throwable throwableResult = ex;
+    while (isCompletionException(throwableResult)) {
+      Throwable cause = throwableResult.getCause();
       if (cause == null) {
-        return t;
+        return throwableResult;
       }
-      t = cause;
+      throwableResult = cause;
     }
-    assert t != null;
-    assert !(t instanceof CompletionException) || t.getCause() == null;
-    return t;
+    assert throwableResult != null;
+    assert !(throwableResult instanceof CompletionException) || throwableResult.getCause() == null;
+    return throwableResult;
+  }
+
+  private static boolean isCompletionException(Throwable throwableResult) {
+    return throwableResult instanceof CompletionException
+            && throwableResult != throwableResult.getCause()
+            && throwableResult.getCause() != null;
   }
 
 }
