@@ -69,7 +69,7 @@ public class PostgreSqlDatabaseTestContextFactory {
 
       @Override
       public String getDbHost() {
-        return "localhost";
+        return "127.0.0.1";
       }
 
       @Override
