@@ -13,7 +13,6 @@
     <description>ToroDB stampede main project. Contains executable class and CLI parsing.</description>
 
     <properties>
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZZ</maven.build.timestamp.format>
         <profiles.resources>src/main/profiles/dev</profiles.resources>
         <assembler.mainClass>com.torodb.stampede.Main</assembler.mainClass>
         <assembler.name>torodb-stampede</assembler.name>
