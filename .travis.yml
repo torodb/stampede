@@ -7,8 +7,15 @@ addons:
   apt:
     packages:
       - oracle-java8-installer
+  postgresql: "9.6"
+
+services:
+  - postgresql
 
 sudo: false
+
+before_script:
+  - cp config/database.yml.travis config/database.yml
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
