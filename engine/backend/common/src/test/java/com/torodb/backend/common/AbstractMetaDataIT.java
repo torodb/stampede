@@ -55,8 +55,6 @@ public abstract class AbstractMetaDataIT {
     dbTestContext.tearDownDatabase();
   }
 
-
-
   @Test
   public void metadataDatabaseTableCanBeWritten() throws Exception {
     dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
