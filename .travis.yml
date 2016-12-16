@@ -17,7 +17,6 @@ addons:
   apt:
     packages:
       - oracle-java8-installer
-      - maven
 
 before_script:
 - export GIT_BRANCH=$TRAVIS_BRANCH
