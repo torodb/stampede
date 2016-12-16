@@ -1,5 +1,7 @@
 # ToroDB
 
+[![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.torodb:torodb-pom)](https://sonarqube.com/dashboard/index/com.torodb:torodb-pom)
+
 ToroDB is a technology designed to fulfill the gap between document oriented
 and SQL databases. There are two products that use this technology: ToroDB
 Server and ToroDB Stampede. Both platforms are open source and any feedback,
@@ -27,8 +29,8 @@ More information about ToroDB Stampede can be found on
 [its own folder](/stampede) in this repository.
 
 ## Code QA
- * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb)
- * Devel branch build status :  [![Devel branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb)
+ * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.torodb:torodb-pom)](https://sonarqube.com/dashboard/index/com.torodb:torodb-pom)
+ * Devel branch build status :  [![Devel branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.torodb:torodb-pom:devel)](https://sonarqube.com/dashboard/index/com.torodb:torodb-pom:devel)
 
 ## Are you a developer? Want to contribute? Questions about the source code?
 
