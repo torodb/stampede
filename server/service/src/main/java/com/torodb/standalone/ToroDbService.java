@@ -28,6 +28,7 @@ import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.mongodb.wp.guice.MongoDbWpModule;
+import com.torodb.standalone.config.model.Config;
 import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -102,10 +103,14 @@ public class ToroDbService extends AbstractIdleService implements Supervisor {
   }
 
   protected Injector createFinalInjector(BackendBundle backendBundle) {
-    ToroDbRuntimeModule runtimeModule = new ToroDbRuntimeModule(
-        backendBundle, this);
+    int port = bootstrapInjector.getInstance(Config.class)
+        .getProtocol()
+        .getMongo()
+        .getNet()
+        .getPort();
+    ToroDbRuntimeModule runtimeModule = new ToroDbRuntimeModule(backendBundle, this);
     return bootstrapInjector.createChildInjector(runtimeModule,
-        new MongoDbWpModule(27018));
+        new MongoDbWpModule(port));
   }
 
   private TorodBundle createTorodBundle(Injector finalInjector) {

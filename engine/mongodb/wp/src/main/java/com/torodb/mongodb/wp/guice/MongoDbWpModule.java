@@ -88,8 +88,7 @@ public class MongoDbWpModule extends PrivateModule {
         .to(ToroErrorHandler.class)
         .in(Singleton.class);
 
-    bind(RequestMessageByteHandler.class)
-        .in(Singleton.class);
+    bind(RequestMessageByteHandler.class);
 
     bindMessageDecoder();
 
@@ -105,8 +104,7 @@ public class MongoDbWpModule extends PrivateModule {
 
     bind(RequestMessageObjectHandler.class)
         .in(Singleton.class);
-    bind(ReplyMessageObjectHandler.class)
-        .in(Singleton.class);
+    bind(ReplyMessageObjectHandler.class);
     bind(TorodbSafeRequestProcessor.class)
         .in(Singleton.class);
 
