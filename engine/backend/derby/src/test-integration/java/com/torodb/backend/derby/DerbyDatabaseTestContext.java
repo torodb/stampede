@@ -67,7 +67,7 @@ public class DerbyDatabaseTestContext implements DatabaseTestContext {
 
       DriverManager.getConnection("jdbc:derby:memory:" + configuration.getDbName() + ";drop=true").close();
     } catch (SQLException e) {
-      LOGGER.info("Database dropped", e);
+      LOGGER.info("Database dropped");
     }
   }
 

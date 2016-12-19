@@ -19,14 +19,18 @@
 package com.torodb.backend.common;
 
 import com.torodb.backend.SqlInterface;
+import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
+import com.torodb.core.impl.TableRefFactoryImpl;
+import org.jooq.Result;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractStructureIT {
 
@@ -39,6 +43,11 @@ public abstract class AbstractStructureIT {
     dbTestContext = getDatabaseTestContext();
     sqlInterface = dbTestContext.getSqlInterface();
     dbTestContext.setupDatabase();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    dbTestContext.tearDownDatabase();
   }
 
   protected abstract DatabaseTestContext getDatabaseTestContext();
@@ -57,6 +66,37 @@ public abstract class AbstractStructureIT {
         throw new RuntimeException("Wrong test invocation", e);
       }
     });
+  }
+
+  @Test
+  public void shouldCreateRootDocPartTable() throws Exception {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
+      sqlInterface.getStructureInterface().createSchema(dslContext, "schema_name");
+
+      TableRefFactory tableRefFactory = new TableRefFactoryImpl();
+      TableRef rootTableRef = tableRefFactory.createRoot();
+      sqlInterface.getStructureInterface().createRootDocPartTable(dslContext,
+          "schema_name", "table_name", rootTableRef);
+
+      Connection connection = dslContext.configuration().connectionProvider().acquire();
+      try (Statement foo = connection.createStatement()) {
+        ResultSet result = foo.executeQuery("select * from \"schema_name\".\"table_name\"");
+
+        assertTrue(result.getMetaData().getColumnCount() >= 1);
+        assertTrue(containsColumn("did", result.getMetaData()));
+      } catch (SQLException e) {
+        throw new RuntimeException("Wrong test invocation", e);
+      }
+    });
+  }
+
+  private boolean containsColumn(String columnName, ResultSetMetaData metaData) throws SQLException {
+    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+      if (columnName.equals(metaData.getColumnLabel(i)))
+        return true;
+    }
+
+    return false;
   }
 
 }
