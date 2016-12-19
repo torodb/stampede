@@ -22,7 +22,7 @@ import com.torodb.backend.SqlInterface;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import org.jooq.Result;
+import org.jooq.DSLContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,9 +34,13 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractStructureIT {
 
+  private static final String SCHEMA_NAME = "schema_name";
+
   private SqlInterface sqlInterface;
 
   private DatabaseTestContext dbTestContext;
+
+  private TableRefFactory tableRefFactory = new TableRefFactoryImpl();
 
   @Before
   public void setUp() throws Exception {
@@ -55,13 +59,15 @@ public abstract class AbstractStructureIT {
   @Test
   public void shouldCreateSchema() throws Exception {
     dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
-      sqlInterface.getStructureInterface().createSchema(dslContext, "schema_name");
+      /* When */
+      createSchema(dslContext);
 
+      /* Then */
       Connection connection = dslContext.configuration().connectionProvider().acquire();
-      try (ResultSet resultSet = connection.getMetaData().getSchemas("%", "schema_name")) {
+      try (ResultSet resultSet = connection.getMetaData().getSchemas("%", SCHEMA_NAME)) {
         resultSet.next();
 
-        assertEquals("schema_name", resultSet.getString("TABLE_SCHEM"));
+        assertEquals(SCHEMA_NAME, resultSet.getString("TABLE_SCHEM"));
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -71,23 +77,92 @@ public abstract class AbstractStructureIT {
   @Test
   public void shouldCreateRootDocPartTable() throws Exception {
     dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
-      sqlInterface.getStructureInterface().createSchema(dslContext, "schema_name");
+      /* Given */
+      createSchema(dslContext);
 
-      TableRefFactory tableRefFactory = new TableRefFactoryImpl();
-      TableRef rootTableRef = tableRefFactory.createRoot();
-      sqlInterface.getStructureInterface().createRootDocPartTable(dslContext,
-          "schema_name", "table_name", rootTableRef);
+      /* When */
+      createRootTable(dslContext, "root_table");
 
+      /* Then */
       Connection connection = dslContext.configuration().connectionProvider().acquire();
       try (Statement foo = connection.createStatement()) {
-        ResultSet result = foo.executeQuery("select * from \"schema_name\".\"table_name\"");
+        ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
-        assertTrue(result.getMetaData().getColumnCount() >= 1);
         assertTrue(containsColumn("did", result.getMetaData()));
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
     });
+  }
+
+  @Test
+  public void shouldCreateDocPartTable() throws Exception {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
+      /* Given */
+      createSchema(dslContext);
+      TableRef rootTableRef = createRootTable(dslContext, "root_table");
+
+      /* When */
+      createChildTable(dslContext, rootTableRef, "root_table", "child_table");
+
+      /* Then */
+      Connection connection = dslContext.configuration().connectionProvider().acquire();
+      try (Statement foo = connection.createStatement()) {
+        ResultSet result = foo.executeQuery("select * from \"schema_name\".\"child_table\"");
+
+        assertTrue(containsColumn("did", result.getMetaData()));
+        assertTrue(containsColumn("rid", result.getMetaData()));
+        assertTrue(containsColumn("seq", result.getMetaData()));
+      } catch (SQLException e) {
+        throw new RuntimeException("Wrong test invocation", e);
+      }
+    });
+  }
+
+  @Test
+  public void shouldCreateSecondLevelDocPartTableWithPid() throws Exception {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
+      /*Given */
+      createSchema(dslContext);
+      TableRef rootTableRef = createRootTable(dslContext, "root_table");
+      TableRef childTableRef = createChildTable(dslContext, rootTableRef, "root_table", "child_table");
+
+      /* When */
+      createChildTable(dslContext, childTableRef, "child_table", "second_child_table");
+
+      /* Then */
+      Connection connection = dslContext.configuration().connectionProvider().acquire();
+      try (Statement foo = connection.createStatement()) {
+        ResultSet result = foo.executeQuery("select * from \"schema_name\".\"second_child_table\"");
+
+        assertTrue(containsColumn("did", result.getMetaData()));
+        assertTrue(containsColumn("pid", result.getMetaData()));
+        assertTrue(containsColumn("rid", result.getMetaData()));
+        assertTrue(containsColumn("seq", result.getMetaData()));
+      } catch (SQLException e) {
+        throw new RuntimeException("Wrong test invocation", e);
+      }
+    });
+  }
+
+  private void createSchema(DSLContext dslContext) {
+    sqlInterface.getStructureInterface().createSchema(dslContext, SCHEMA_NAME);
+  }
+
+  private TableRef createRootTable(DSLContext dslContext, String rootName) {
+    TableRef rootTableRef = tableRefFactory.createRoot();
+    sqlInterface.getStructureInterface().createRootDocPartTable(dslContext,
+        SCHEMA_NAME, rootName, rootTableRef);
+
+    return rootTableRef;
+  }
+
+  private TableRef createChildTable(DSLContext dslContext, TableRef tableRef, String parentName, String childName) {
+    TableRef childTableRef = tableRefFactory.createChild(tableRef, childName);
+    sqlInterface.getStructureInterface().createDocPartTable(dslContext, SCHEMA_NAME,
+        childName, childTableRef, parentName);
+
+    return childTableRef;
   }
 
   private boolean containsColumn(String columnName, ResultSetMetaData metaData) throws SQLException {
