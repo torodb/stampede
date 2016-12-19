@@ -16,16 +16,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.derby;
+package com.torodb.backend.postgresql;
 
-import com.torodb.backend.common.AbstractMetaDataIT;
+import com.torodb.backend.common.AbstractStructureIT;
 import com.torodb.backend.common.DatabaseTestContext;
 
-public class DerbyMetaDataIT extends AbstractMetaDataIT {
+public class PostgreSqlStructureIT extends AbstractStructureIT {
 
   @Override
   protected DatabaseTestContext getDatabaseTestContext() {
-    return new DerbyDatabaseTestContextFactory().createInstance();
+    return new PostgreSqlDatabaseTestContextFactory().createInstance();
   }
 
 }
