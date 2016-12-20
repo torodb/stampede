@@ -12,6 +12,7 @@
     <packaging>jar</packaging>
 
     <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssXX</maven.build.timestamp.format>
         <build.timestamp>${maven.build.timestamp}</build.timestamp>
     </properties>
     

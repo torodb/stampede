@@ -177,14 +177,15 @@ public class BuildInfoCommand extends AbstractNotAliasableCommand<Empty, BuildIn
       BsonArray versionArray = DefaultBsonValues.EMPTY_ARRAY;
       String versionString = null;
       if (version != null) {
-        BsonArrayBuilder arrBuilder = new BsonArrayBuilder(3);
+        BsonArrayBuilder arrBuilder = new BsonArrayBuilder(4);
         arrBuilder.add(version.getMajor());
         arrBuilder.add(version.getMinor());
         arrBuilder.add(patchVersion);
+        arrBuilder.add(0);
 
         versionArray = arrBuilder.build();
 
-        versionString = version.toString();
+        versionString = version.getMajor() + "." + version.getMinor() + "." + patchVersion;
       }
 
       return new BsonDocumentBuilder()

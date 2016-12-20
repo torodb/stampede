@@ -144,8 +144,8 @@ public class CreateIndexesReplImpl
         }
 
         try {
-          LOGGER.info("Creating index {} on collection {}.{}", req.getDatabase(), arg
-              .getCollection(), indexOptions.getName());
+          LOGGER.info("Creating index {} on collection {}.{}", 
+              indexOptions.getName(), req.getDatabase(), arg.getCollection());
 
           if (trans.createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(),
               fields, indexOptions.isUnique())) {
