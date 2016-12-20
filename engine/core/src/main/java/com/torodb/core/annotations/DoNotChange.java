@@ -29,12 +29,12 @@ import java.lang.annotation.Target;
 /**
  * Elements annotated by this annotation cannot change.
  *
- * When it annotates a method, it means that the result must not be changed after the method
+ * <p>When it annotates a method, it means that the result must not be changed after the method
  * execution. When it annotates a parameter, it means that only objects that won't be changed will
  * be passed as argument.
  *
- * Usually, annotated objects should be immutable or be defensively copied, but sometimes it is not
- * possible for performance reasons.
+ * <p>Usually, annotated objects should be immutable or be defensively copied, but sometimes it is
+ * not possible for performance reasons.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({PARAMETER, METHOD})
