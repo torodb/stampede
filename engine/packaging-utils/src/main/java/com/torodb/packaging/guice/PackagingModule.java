@@ -22,9 +22,6 @@ import com.google.inject.AbstractModule;
 
 import java.time.Clock;
 
-/**
- *
- */
 public class PackagingModule extends AbstractModule {
 
   private final Clock clock;
