@@ -28,4 +28,9 @@ public class PostgreSqlStructureIT extends AbstractStructureIT {
     return new PostgreSqlDatabaseTestContextFactory().createInstance();
   }
 
+  @Override
+  protected String getTypeOfString() {
+    return "varchar";
+  }
+
 }

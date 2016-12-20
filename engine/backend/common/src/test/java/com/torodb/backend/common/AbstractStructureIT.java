@@ -19,9 +19,11 @@
 package com.torodb.backend.common;
 
 import com.torodb.backend.SqlInterface;
+import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.transaction.metainf.FieldType;
 import org.jooq.DSLContext;
 import org.junit.After;
 import org.junit.Before;
@@ -56,6 +58,8 @@ public abstract class AbstractStructureIT {
 
   protected abstract DatabaseTestContext getDatabaseTestContext();
 
+  protected abstract String getTypeOfString();
+
   @Test
   public void shouldCreateSchema() throws Exception {
     dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
@@ -88,7 +92,7 @@ public abstract class AbstractStructureIT {
       try (Statement foo = connection.createStatement()) {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
-        assertTrue(containsColumn("did", result.getMetaData()));
+        assertThatColumnExists(result.getMetaData(), "did");
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -110,9 +114,9 @@ public abstract class AbstractStructureIT {
       try (Statement foo = connection.createStatement()) {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"child_table\"");
 
-        assertTrue(containsColumn("did", result.getMetaData()));
-        assertTrue(containsColumn("rid", result.getMetaData()));
-        assertTrue(containsColumn("seq", result.getMetaData()));
+        assertThatColumnExists(result.getMetaData(), "did");
+        assertThatColumnExists(result.getMetaData(), "rid");
+        assertThatColumnExists(result.getMetaData(), "seq");
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -135,10 +139,33 @@ public abstract class AbstractStructureIT {
       try (Statement foo = connection.createStatement()) {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"second_child_table\"");
 
-        assertTrue(containsColumn("did", result.getMetaData()));
-        assertTrue(containsColumn("pid", result.getMetaData()));
-        assertTrue(containsColumn("rid", result.getMetaData()));
-        assertTrue(containsColumn("seq", result.getMetaData()));
+        assertThatColumnExists(result.getMetaData(), "did");
+        assertThatColumnExists(result.getMetaData(), "pid");
+        assertThatColumnExists(result.getMetaData(), "rid");
+        assertThatColumnExists(result.getMetaData(), "seq");
+      } catch (SQLException e) {
+        throw new RuntimeException("Wrong test invocation", e);
+      }
+    });
+  }
+
+  @Test
+  public void shouldAddColumnsToExistingDocPartTable() throws Exception {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
+      /* Given */
+      createSchema(dslContext);
+      createRootTable(dslContext, "root_table");
+
+      /* When */
+      DataTypeForKv<?> dataType = sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING);
+      sqlInterface.getStructureInterface().addColumnToDocPartTable(dslContext, SCHEMA_NAME, "root_table", "new_column", dataType);
+
+      /* Then */
+      Connection connection = dslContext.configuration().connectionProvider().acquire();
+      try (Statement foo = connection.createStatement()) {
+        ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
+
+        assertThatColumnIsGivenType(result.getMetaData(), "new_column", getTypeOfString());
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -165,13 +192,31 @@ public abstract class AbstractStructureIT {
     return childTableRef;
   }
 
-  private boolean containsColumn(String columnName, ResultSetMetaData metaData) throws SQLException {
-    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+  private void assertThatColumnExists(ResultSetMetaData metaData, String columnName) throws SQLException {
+    boolean findMatch = false;
+
+    for (int i = 1; i <= metaData.getColumnCount(); i++)
       if (columnName.equals(metaData.getColumnLabel(i)))
-        return true;
+        findMatch = true;
+
+    if (!findMatch)
+      assertTrue("Column " + columnName + " should exist", false);
+  }
+
+  private void assertThatColumnIsGivenType(ResultSetMetaData metaData, String columnName, String requiredType)
+      throws SQLException {
+
+    boolean findMatch = false;
+
+    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+      if (columnName.equals(metaData.getColumnLabel(i))) {
+        findMatch = true;
+        assertEquals(requiredType, metaData.getColumnTypeName(i));
+      }
     }
 
-    return false;
+    if (!findMatch)
+      assertTrue("Column " + columnName + " should exist", false);
   }
 
 }

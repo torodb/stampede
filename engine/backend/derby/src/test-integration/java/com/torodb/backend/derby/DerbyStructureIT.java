@@ -28,4 +28,9 @@ public class DerbyStructureIT extends AbstractStructureIT {
     return new DerbyDatabaseTestContextFactory().createInstance();
   }
 
+  @Override
+  protected String getTypeOfString() {
+    return "VARCHAR";
+  }
+
 }
