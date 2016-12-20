@@ -58,7 +58,7 @@ public abstract class AbstractStructureIT {
 
   protected abstract DatabaseTestContext getDatabaseTestContext();
 
-  protected abstract String getTypeOfString();
+  protected abstract String getTypeOf(FieldType fieldType);
 
   @Test
   public void shouldCreateSchema() throws Exception {
@@ -165,7 +165,7 @@ public abstract class AbstractStructureIT {
       try (Statement foo = connection.createStatement()) {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
-        assertThatColumnIsGivenType(result.getMetaData(), "new_column", getTypeOfString());
+        assertThatColumnIsGivenType(result.getMetaData(), "new_column", getTypeOf(FieldType.STRING));
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }

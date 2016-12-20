@@ -20,8 +20,18 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.common.AbstractStructureIT;
 import com.torodb.backend.common.DatabaseTestContext;
+import com.torodb.core.transaction.metainf.FieldType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DerbyStructureIT extends AbstractStructureIT {
+
+  private Map<FieldType, String> typesDictionary = new HashMap();
+
+  public DerbyStructureIT() {
+    typesDictionary.put(FieldType.STRING, "VARCHAR");
+  }
 
   @Override
   protected DatabaseTestContext getDatabaseTestContext() {
@@ -29,8 +39,12 @@ public class DerbyStructureIT extends AbstractStructureIT {
   }
 
   @Override
-  protected String getTypeOfString() {
-    return "VARCHAR";
+  protected String getTypeOf(FieldType fieldType) {
+    if (!typesDictionary.containsKey(fieldType))
+      throw new RuntimeException("Unsupported type " + fieldType.name());
+
+    return typesDictionary.get(fieldType);
   }
+
 
 }

@@ -20,8 +20,18 @@ package com.torodb.backend.postgresql;
 
 import com.torodb.backend.common.AbstractStructureIT;
 import com.torodb.backend.common.DatabaseTestContext;
+import com.torodb.core.transaction.metainf.FieldType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PostgreSqlStructureIT extends AbstractStructureIT {
+
+  private Map<FieldType, String> typesDictionary = new HashMap();
+
+  public PostgreSqlStructureIT() {
+    typesDictionary.put(FieldType.STRING, "varchar");
+  }
 
   @Override
   protected DatabaseTestContext getDatabaseTestContext() {
@@ -29,8 +39,11 @@ public class PostgreSqlStructureIT extends AbstractStructureIT {
   }
 
   @Override
-  protected String getTypeOfString() {
-    return "varchar";
+  protected String getTypeOf(FieldType fieldType) {
+    if (!typesDictionary.containsKey(fieldType))
+      throw new RuntimeException("Unsupported type " + fieldType.name());
+
+    return typesDictionary.get(fieldType);
   }
 
 }
