@@ -18,20 +18,26 @@
 
 package com.torodb.backend.common;
 
+import com.torodb.backend.DbBackendService;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKv;
+import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
+import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.*;
 import org.jooq.DSLContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractStructureIT {
@@ -194,6 +200,33 @@ public abstract class AbstractStructureIT {
         } catch (SQLException e) {
           throw new RuntimeException("Wrong test invocation", e);
         }
+      }
+    });
+  }
+
+  @Test
+  public void databaseShouldBeDeleted() throws Exception {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
+      /* Given */
+      String collection = "root_table";
+
+      createSchema(dslContext);
+      createRootTable(dslContext, collection);
+
+      ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(),"root_table").build();
+      ImmutableMetaCollection metaCollection = new ImmutableMetaCollection.Builder(collection, collection).put(metaDocPart).build();
+      MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder(SCHEMA_NAME, SCHEMA_NAME)
+          .put(metaCollection).build();
+
+      /* When */
+      sqlInterface.getStructureInterface().dropDatabase(dslContext, metaDatabase);
+
+      /* Then */
+      Connection connection = dslContext.configuration().connectionProvider().acquire();
+      try (ResultSet resultSet = connection.getMetaData().getSchemas("%", SCHEMA_NAME)) {
+        assertFalse("Schema shouldn't exist", resultSet.next());
+      } catch (SQLException e) {
+        throw new RuntimeException("Wrong test invocation", e);
       }
     });
   }
