@@ -58,7 +58,7 @@ public abstract class AbstractStructureIT {
 
   protected abstract DatabaseTestContext getDatabaseTestContext();
 
-  protected abstract String getTypeOf(FieldType fieldType);
+  protected abstract String getSqlTypeOf(FieldType fieldType);
 
   @Test
   public void shouldCreateSchema() throws Exception {
@@ -165,9 +165,35 @@ public abstract class AbstractStructureIT {
       try (Statement foo = connection.createStatement()) {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
-        assertThatColumnIsGivenType(result.getMetaData(), "new_column", getTypeOf(FieldType.STRING));
+        assertThatColumnIsGivenType(result.getMetaData(), "new_column", getSqlTypeOf(FieldType.STRING));
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
+      }
+    });
+  }
+
+  @Test
+  public void newColumnShouldSupportAnyGivenSupportedFieldType() throws Exception {
+    dbTestContext.executeOnDbConnectionWithDslContext(dslContext -> {
+      createSchema(dslContext);
+      createRootTable(dslContext, "root_table");
+
+      Connection connection = dslContext.configuration().connectionProvider().acquire();
+
+      for (FieldType fieldType : FieldType.values()) {
+        DataTypeForKv<?> dataType = sqlInterface.getDataTypeProvider().getDataType(fieldType);
+        String columnName = "new_column_" + fieldType.name();
+
+        sqlInterface.getStructureInterface().addColumnToDocPartTable(dslContext, SCHEMA_NAME, "root_table",
+            columnName, dataType);
+
+        try (Statement foo = connection.createStatement()) {
+          ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
+
+          assertThatColumnIsGivenType(result.getMetaData(), columnName, getSqlTypeOf(fieldType));
+        } catch (SQLException e) {
+          throw new RuntimeException("Wrong test invocation", e);
+        }
       }
     });
   }

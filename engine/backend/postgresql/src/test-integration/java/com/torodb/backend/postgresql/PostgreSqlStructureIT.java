@@ -31,6 +31,18 @@ public class PostgreSqlStructureIT extends AbstractStructureIT {
 
   public PostgreSqlStructureIT() {
     typesDictionary.put(FieldType.STRING, "varchar");
+    typesDictionary.put(FieldType.BINARY, "bytea");
+    typesDictionary.put(FieldType.BOOLEAN, "bool");
+    typesDictionary.put(FieldType.DATE, "date");
+    typesDictionary.put(FieldType.DOUBLE, "float8");
+    typesDictionary.put(FieldType.INSTANT, "timestamptz");
+    typesDictionary.put(FieldType.INTEGER, "int4");
+    typesDictionary.put(FieldType.LONG, "int8");
+    typesDictionary.put(FieldType.MONGO_OBJECT_ID, "bytea");
+    typesDictionary.put(FieldType.MONGO_TIME_STAMP, "\"torodb\".\"mongo_timestamp\"");
+    typesDictionary.put(FieldType.NULL, "bool");
+    typesDictionary.put(FieldType.TIME, "time");
+    typesDictionary.put(FieldType.CHILD, "bool");
   }
 
   @Override
@@ -39,7 +51,7 @@ public class PostgreSqlStructureIT extends AbstractStructureIT {
   }
 
   @Override
-  protected String getTypeOf(FieldType fieldType) {
+  protected String getSqlTypeOf(FieldType fieldType) {
     if (!typesDictionary.containsKey(fieldType))
       throw new RuntimeException("Unsupported type " + fieldType.name());
 

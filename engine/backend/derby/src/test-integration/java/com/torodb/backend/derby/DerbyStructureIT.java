@@ -31,6 +31,18 @@ public class DerbyStructureIT extends AbstractStructureIT {
 
   public DerbyStructureIT() {
     typesDictionary.put(FieldType.STRING, "VARCHAR");
+    typesDictionary.put(FieldType.BINARY, "VARCHAR () FOR BIT DATA");
+    typesDictionary.put(FieldType.BOOLEAN, "BOOLEAN");
+    typesDictionary.put(FieldType.DATE, "DATE");
+    typesDictionary.put(FieldType.DOUBLE, "DOUBLE");
+    typesDictionary.put(FieldType.INSTANT, "TIMESTAMP");
+    typesDictionary.put(FieldType.INTEGER, "INTEGER");
+    typesDictionary.put(FieldType.LONG, "BIGINT");
+    typesDictionary.put(FieldType.MONGO_OBJECT_ID, "VARCHAR () FOR BIT DATA");
+    typesDictionary.put(FieldType.MONGO_TIME_STAMP, "VARCHAR");
+    typesDictionary.put(FieldType.NULL, "BOOLEAN");
+    typesDictionary.put(FieldType.TIME, "TIME");
+    typesDictionary.put(FieldType.CHILD, "BOOLEAN");
   }
 
   @Override
@@ -39,7 +51,7 @@ public class DerbyStructureIT extends AbstractStructureIT {
   }
 
   @Override
-  protected String getTypeOf(FieldType fieldType) {
+  protected String getSqlTypeOf(FieldType fieldType) {
     if (!typesDictionary.containsKey(fieldType))
       throw new RuntimeException("Unsupported type " + fieldType.name());
 
