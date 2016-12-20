@@ -1,6 +1,6 @@
 /*
  * ToroDB
- * Copyright © 2014 8Kdata Technology (www.8kdata.com)
+ * Copyright © 2016 8Kdata Technology (www.8kdata.com).
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,23 +13,26 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.stampede.config.jackson;
+package com.torodb.mongodb.repl.impl;
 
-import com.google.common.collect.ImmutableMap;
-import com.torodb.packaging.config.jackson.AbstractBackendSerializer;
-import com.torodb.stampede.config.model.backend.Backend;
+import com.torodb.core.retrier.RetrierGiveUpException;
+import com.torodb.mongodb.repl.ConsistencyHandler;
 
-public class BackendSerializer extends AbstractBackendSerializer<Backend> {
+/**
+ * A {@link ConsistencyHandler} that behaves as the handled resource is always consistent.
+ */
+public class AlwaysConsistentConsistencyHandler implements ConsistencyHandler {
 
-  public BackendSerializer() {
-    super(
-        ImmutableMap.of(
-            "pool", (backend) -> backend.getPool()
-        )
-    );
+  @Override
+  public boolean isConsistent() {
+    return true;
+  }
+
+  @Override
+  public void setConsistent(boolean newConsistency) throws RetrierGiveUpException {
   }
 
 }

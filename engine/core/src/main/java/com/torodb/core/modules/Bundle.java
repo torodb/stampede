@@ -23,9 +23,6 @@ import com.torodb.core.supervision.SupervisedService;
 
 import java.util.Collection;
 
-/**
- *
- */
 public interface Bundle extends TorodbService, SupervisedService {
 
   public Collection<Bundle> getDependencies();

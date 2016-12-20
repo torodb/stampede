@@ -24,9 +24,6 @@ import com.torodb.core.supervision.Supervisor;
 
 import java.util.concurrent.ThreadFactory;
 
-/**
- *
- */
 public abstract class AbstractBundle extends IdleTorodbService implements Bundle {
 
   private final Supervisor supervisor;

@@ -54,9 +54,6 @@ import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.ToroErrorHandler;
 import com.torodb.mongodb.wp.TorodbSafeRequestProcessor;
 
-/**
- *
- */
 public class MongoDbWpModule extends PrivateModule {
 
   private final int port;

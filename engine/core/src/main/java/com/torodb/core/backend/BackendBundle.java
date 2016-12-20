@@ -23,9 +23,6 @@ import com.torodb.core.modules.Bundle;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- *
- */
 public interface BackendBundle extends Bundle {
 
   @Override

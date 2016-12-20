@@ -19,60 +19,51 @@
 package com.torodb.stampede;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
-import com.torodb.packaging.config.model.backend.CursorConfig;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.guice.BackendDerbyImplementationModule;
-import com.torodb.packaging.guice.BackendMultiImplementationModule;
-import com.torodb.stampede.config.model.Config;
-import com.torodb.stampede.config.model.replication.Replication;
+import com.torodb.packaging.guice.BackendImplementationModule;
+import com.torodb.stampede.config.model.StampedeConfig;
+import com.torodb.stampede.config.model.mongo.replication.Replication;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.time.Clock;
+import java.util.Collections;
 
-/**
- *
- * @author gortiz
- */
 public class StampedeBootstrapTest {
 
-  private Config config;
+  private StampedeConfig stampedeConfig;
 
+  @SuppressWarnings("checkstyle:JavadocMethod")
   @Before
   public void setUp() {
-    config = new Config();
+    stampedeConfig = new StampedeConfig();
 
     Replication replication = new Replication();
     replication.setRole(Role.HIDDEN_SLAVE);
     replication.setReplSetName("replSetName");
     replication.setSyncSource("localhost:27020");
 
-    config.setReplication(
-        replication
-    );
-    config.getBackend().setBackendImplementation(new Derby());
-    config.getBackend().as(Derby.class).setPassword("torodb");
-    config.getLogging().setLevel(LogLevel.TRACE);
+    stampedeConfig.setReplication(Collections.singletonList(replication));
+    stampedeConfig.getBackend().setBackendImplementation(new Derby());
+    stampedeConfig.getBackend().as(Derby.class).setPassword("torodb");
+    stampedeConfig.getLogging().setLevel(LogLevel.TRACE);
 
-    ConfigUtils.validateBean(config);
+    ConfigUtils.validateBean(stampedeConfig);
   }
 
   @Test
   public void testCreateStampedeService() {
-    StampedeBootstrap.createStampedeService(
-        new TestBootstrapModule(config, Clock.systemUTC()));
+    Service stampedeService = new StampedeService(stampedeConfig, Clock.systemUTC());
   }
 
   @Test
   @Ignore
   public void testCreateStampedeService_run() {
-    Service stampedeService = StampedeBootstrap.createStampedeService(
-        new TestBootstrapModule(config, Clock.systemUTC()));
+    Service stampedeService = new StampedeService(stampedeConfig, Clock.systemUTC());
     stampedeService.startAsync();
     stampedeService.awaitRunning();
 
@@ -82,20 +73,13 @@ public class StampedeBootstrapTest {
 
   private static class TestBootstrapModule extends BootstrapModule {
 
-    public TestBootstrapModule(Config config, Clock clock) {
+    public TestBootstrapModule(StampedeConfig config, Clock clock) {
       super(config, clock);
     }
 
     @Override
-    protected BackendMultiImplementationModule getBackendMultiImplementationModule(
-        CursorConfig cursorConfig,
-        ConnectionPoolConfig connectionPoolConfig, BackendImplementation backendImplementation) {
-      return new BackendMultiImplementationModule(
-          cursorConfig,
-          connectionPoolConfig,
-          backendImplementation,
-          new BackendDerbyImplementationModule()
-      );
+    protected BackendImplementationModule getBackendImplementationModule() {
+      return new BackendDerbyImplementationModule();
     }
   }
 

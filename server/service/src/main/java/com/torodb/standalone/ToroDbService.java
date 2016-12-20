@@ -36,9 +36,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
-/**
- *
- */
 public class ToroDbService extends AbstractIdleService implements Supervisor {
 
   private static final Logger LOGGER =

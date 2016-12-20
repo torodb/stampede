@@ -21,6 +21,7 @@ package com.torodb.stampede;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.backend.BackendBundle;
@@ -39,28 +40,35 @@ import com.torodb.mongodb.repl.guice.MongodbReplConfig;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.util.MongoClientConfigurationFactory;
 import com.torodb.packaging.util.ReplicationFiltersFactory;
-import com.torodb.stampede.config.model.Config;
 import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.Clock;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-/**
- *
- */
 public class StampedeService extends AbstractIdleService implements Supervisor {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(StampedeService.class);
+  private static final Logger LOGGER = LogManager.getLogger(StampedeService.class);
   private final ThreadFactory threadFactory;
   private final Injector bootstrapInjector;
+  private final StampedeConfig stampedeConfig;
   private Shutdowner shutdowner;
 
-  public StampedeService(ThreadFactory threadFactory, Injector bootstrapInjector) {
-    this.threadFactory = threadFactory;
-    this.bootstrapInjector = bootstrapInjector;
+  /**
+   * Constructor that uses the given arguments.
+   */
+  public StampedeService(StampedeConfig stampedeConfig, Clock clock) {
+    this.stampedeConfig = stampedeConfig;
+
+    BootstrapModule bootstrapModule = new BootstrapModule(stampedeConfig, clock);
+    this.bootstrapInjector = Guice.createInjector(bootstrapModule);
+    this.threadFactory = bootstrapInjector.getInstance(
+        ThreadFactory.class);
   }
 
   @Override
@@ -97,17 +105,17 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
       dropDatabase(backendService);
     }
 
-    Injector finalInjector = createFinalInjector(
-        backendBundle, consistencyHandler);
+    Injector finalInjector = createFinalInjector(backendBundle, consistencyHandler);
 
-    AbstractReplication replication = getReplication();
-    reportReplication(replication);
+    List<Replication> replications = getReplications();
+    reportReplications(replications);
     TorodBundle torodBundle = createTorodBundle(finalInjector);
     startBundle(torodBundle);
 
-    MongodbReplConfig replConfig = getReplConfig(replication);
-
-    startBundle(createMongodbReplBundle(finalInjector, torodBundle, replConfig));
+    replications.stream()
+        .map(DefaultMongodbReplConfig::new)
+        .map(replConfig -> createMongodbReplBundle(finalInjector, torodBundle, replConfig))
+        .forEach(this::startBundle);
 
     LOGGER.info("ToroDB Stampede is now running");
   }
@@ -163,17 +171,15 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     shutdowner.addStopShutdownListener(service);
   }
 
-  private AbstractReplication getReplication() {
-    Config config = bootstrapInjector.getInstance(Config.class);
-    return config.getReplication();
+  private List<Replication> getReplications() {
+    return stampedeConfig.getReplication();
   }
 
-  private void reportReplication(AbstractReplication replication) {
-    LOGGER.info("Replicating from seeds: {}", replication.getSyncSource());
-  }
-
-  private MongodbReplConfig getReplConfig(AbstractReplication replication) {
-    return new DefaultMongodbReplConfig(replication);
+  private void reportReplications(List<Replication> replications) {
+    Supplier<String> strSupplier = () -> replications.stream()
+        .map(repl -> "replSetName: " + repl.getReplSetName() + ", seed: " + repl.getSyncSource())
+        .collect(Collectors.joining(",", "[", "]"));
+    LOGGER.info("Replicating from seeds: {}", strSupplier);
   }
 
   private static class DefaultMongodbReplConfig implements MongodbReplConfig {

@@ -20,9 +20,6 @@ package com.torodb.core.backend;
 
 import com.torodb.core.supervision.Supervisor;
 
-/**
- *
- */
 public interface BackendBundleFactory {
 
   public BackendBundle createBundle(Supervisor supervisor);

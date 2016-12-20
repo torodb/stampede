@@ -28,26 +28,23 @@ import com.torodb.metainfo.guice.MetainfModule;
 import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.packaging.DefaultBuildProperties;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
-import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
-import com.torodb.packaging.config.model.backend.CursorConfig;
-import com.torodb.packaging.guice.BackendMultiImplementationModule;
+import com.torodb.packaging.guice.BackendImplementationModule;
 import com.torodb.packaging.guice.BackendPostgresImplementationModule;
 import com.torodb.packaging.guice.ExecutorServicesModule;
 import com.torodb.packaging.guice.PackagingModule;
-import com.torodb.stampede.config.model.Config;
 
 import java.time.Clock;
 
 /**
- *
+ * A module that binds all classes needed at bootstrap time.
  */
 class BootstrapModule extends AbstractModule {
 
-  private final Config config;
+  private final StampedeConfig stampedeConfig;
   private final Clock clock;
 
-  public BootstrapModule(Config config, Clock clock) {
-    this.config = config;
+  public BootstrapModule(StampedeConfig config, Clock clock) {
+    this.stampedeConfig = config;
     this.clock = clock;
   }
 
@@ -59,16 +56,9 @@ class BootstrapModule extends AbstractModule {
     install(new ExecutorServicesModule());
     install(new ConcurrentModule());
     install(new MetainfModule());
-    install(new MetricsModule(config));
+    install(new MetricsModule(stampedeConfig.getMetricsConfig()));
 
-    install(getBackendMultiImplementationModule(
-        config.getReplication(),
-        config.getBackend().getPool(),
-        config.getBackend().getBackendImplementation()
-    ));
-
-    bind(Config.class)
-        .toInstance(config);
+    configureBackendImplementation(stampedeConfig.getBackend().getBackendImplementation());
     bind(MongodServerConfig.class)
         .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)));
     bind(BuildProperties.class)
@@ -76,16 +66,22 @@ class BootstrapModule extends AbstractModule {
         .asEagerSingleton();
   }
 
-  protected BackendMultiImplementationModule getBackendMultiImplementationModule(
-      CursorConfig cursorConfig,
-      ConnectionPoolConfig connectionPoolConfig,
-      BackendImplementation backendImplementation) {
-    return new BackendMultiImplementationModule(
-        cursorConfig,
-        connectionPoolConfig,
-        backendImplementation,
-        new BackendPostgresImplementationModule()
-    );
+  /**
+   * Returns the {@link BackendImplementationModule} that will be used.
+   *
+   * <p>Can be overrided by subclasses to use a different backend (for example on testing).
+   */
+  protected BackendImplementationModule getBackendImplementationModule() {
+    return new BackendPostgresImplementationModule();
+  }
+
+  protected void configureBackendImplementation(BackendImplementation backendImplementation) {
+    BackendImplementationModule backendPostgresImplModule = getBackendImplementationModule();
+    assert backendPostgresImplModule.isForConfiguration(backendImplementation);
+
+    backendPostgresImplModule.setConfiguration(backendImplementation);
+    
+    install(backendPostgresImplModule);
   }
 
 }

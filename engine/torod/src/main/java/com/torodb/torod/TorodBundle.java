@@ -37,9 +37,6 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class TorodBundle extends AbstractBundle {
 
   private static final Logger LOGGER = LogManager.getLogger(TorodBundle.class);

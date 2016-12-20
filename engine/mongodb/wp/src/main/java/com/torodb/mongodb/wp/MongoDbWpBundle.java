@@ -34,9 +34,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ThreadFactory;
 
-/**
- *
- */
 public class MongoDbWpBundle extends AbstractBundle {
   private static final Logger LOGGER = LogManager.getLogger(MongoDbWpBundle.class);
 

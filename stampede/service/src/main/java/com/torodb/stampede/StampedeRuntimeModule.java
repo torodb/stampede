@@ -31,9 +31,6 @@ import com.torodb.torod.guice.SqlTorodModule;
 
 import javax.inject.Singleton;
 
-/**
- *
- */
 public class StampedeRuntimeModule extends PrivateModule {
 
   private final BackendBundle backend;

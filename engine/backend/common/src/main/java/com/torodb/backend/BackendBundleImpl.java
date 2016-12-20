@@ -30,9 +30,6 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class BackendBundleImpl extends AbstractBundle implements BackendBundle {
 
   private final DbBackendService lowLevelService;

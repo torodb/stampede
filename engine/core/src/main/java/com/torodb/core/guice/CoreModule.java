@@ -33,7 +33,8 @@ import com.torodb.core.transaction.InternalTransactionManager;
 import java.util.concurrent.ThreadFactory;
 
 /**
- *
+ * A module that binds core classes (like {@link Retrier} or {@link InternalTransactionManager} to
+ * their default values.
  */
 public class CoreModule extends AbstractModule {
 
