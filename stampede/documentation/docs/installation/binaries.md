@@ -4,7 +4,7 @@ One of the recommended ways to use ToroDB Stampede is through the binary distrib
 
 ## Linux/macOS
 
-Given that [previous requirements](previous-requirements.md) are met and default configuration is used, to launch ToroDB Stampede download distribution from the next [link](https://www.torodb.com/download/torodb-stampede-1.0.0-beta1.tar.bz2), extract and execute it.
+Given that the [prerequisites](prerequisites.md) are met and default configuration is used, to launch ToroDB Stampede download distribution from the next [link](https://www.torodb.com/download/torodb-stampede-1.0.0-beta1.tar.bz2), extract and execute it.
 
 ```no-highlight
 wget https://www.torodb.com/download/torodb-stampede-1.0.0-beta1.tar.bz2
@@ -65,7 +65,7 @@ journalctl --no-tail --no-pager -u torodb-stampede
 
 ## Windows
 
-Given that [previous requirements](previous-requirements.md#create-toropass-file) are met, the only step needed to launch ToroDB Stampede is:
+Given that the [prerequisites](prerequisites.md#create-toropass-file) are met, the only step needed to launch ToroDB Stampede is:
 
 * Download distribution from the next [link](https://www.torodb.com/download/torodb-stampede-1.0.0-beta1.zip).
 * Uncompress the downloaded Zip file in the final ToroDB Stampede directory (`%TOROHOME%`).

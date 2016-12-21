@@ -20,7 +20,7 @@ cd torodb
 mvn clean package -P assembler,prod
 ```
 
-As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory with the next content.
+As explained in [prerequisites](prerequisites.md#create-toropass-file) section, create `.toropass` file at current user home directory with the next content.
 
 ```no-highlight
 echo "localhost:5432:torod:torodb:<password>" > ~/.toropass
@@ -52,7 +52,7 @@ C:\tmp\>cd torodb
 C:\tmp\torodb>mvn clean package -P assembler,prod
 ```
 
-As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory `%HOME%\.toropass` with the next content.
+As explained in [prerequisites](prerequisites.md#create-toropass-file) section, create `.toropass` file at current user home directory `%HOME%\.toropass` with the next content.
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>

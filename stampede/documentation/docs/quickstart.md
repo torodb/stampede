@@ -1,6 +1,6 @@
 <h1>Quickstart</h1>
 
-## Previous requirements
+## Prerequisites 
 
 To work properly, ToroDB Stampede has a few requirement:
 
@@ -81,4 +81,4 @@ torod=# \d
 (4 rows)
 ```
 
-For more detailed explanation about JSON document mapping to tables in a relational database, read [how to use](how-to-use.md) documentation chapter.
+For more detailed explanation about JSON document mapping to tables in a relational database, read [The Relational Schema](relational-schema.md) documentation chapter.

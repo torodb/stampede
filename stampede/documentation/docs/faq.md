@@ -12,7 +12,7 @@ ToroDB Stampede doesn't support all index types. Some indexes are supported or p
   * **2d indexes**: Are not supported and are not created.
   * **Hashed indexes**: Are not supported and are not created.
   
-Any created index can be explicitly [excluded in the configuration](installation/configuration.md#exclude-a-mongodb-index)     
+Any created index can be explicitly [excluded in the configuration](configuration/replication-exclusion.md#exclude-a-mongodb-index)     
     
 
 ## The command wget is not found in macOS
