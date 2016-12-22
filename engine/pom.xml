@@ -4,12 +4,10 @@
     <parent>
         <groupId>com.torodb</groupId>
         <artifactId>torodb-pom</artifactId>
-        <version>0.50.0</version>
+        <version>0.50.1-SNAPSHOT</version>
     </parent>
     <groupId>com.torodb.engine</groupId>
     <artifactId>engine-pom</artifactId>
-    
-    <version>0.50.0</version>
     
     <name>ToroDB: Engine</name>
     <packaging>pom</packaging>

@@ -26,6 +26,8 @@ import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.backend.BackendBundleFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
+import com.torodb.mongodb.wp.MongoDbWpBundle;
+import com.torodb.mongodb.wp.guice.MongoDbWpModule;
 import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,9 +67,10 @@ public class ToroDbService extends AbstractIdleService implements Supervisor {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.info("Starting up ToroDB Standalone");
+    LOGGER.info("Starting up ToroDB Server");
 
     shutdowner = bootstrapInjector.getInstance(Shutdowner.class);
+    shutdowner.awaitRunning();
 
     BackendBundle backendBundle = createBackendBundle();
     startBundle(backendBundle);
@@ -77,7 +80,10 @@ public class ToroDbService extends AbstractIdleService implements Supervisor {
     TorodBundle torodBundle = createTorodBundle(finalInjector);
     startBundle(torodBundle);
 
-    LOGGER.info("ToroDB Stampede is now running");
+    MongoDbWpBundle mongodbWpBundle = createMongodbWpBundle(torodBundle, finalInjector);
+    startBundle(mongodbWpBundle);
+
+    LOGGER.info("ToroDB Server is now running");
   }
 
   @Override
@@ -98,11 +104,16 @@ public class ToroDbService extends AbstractIdleService implements Supervisor {
   protected Injector createFinalInjector(BackendBundle backendBundle) {
     ToroDbRuntimeModule runtimeModule = new ToroDbRuntimeModule(
         backendBundle, this);
-    return bootstrapInjector.createChildInjector(runtimeModule);
+    return bootstrapInjector.createChildInjector(runtimeModule,
+        new MongoDbWpModule(27018));
   }
 
   private TorodBundle createTorodBundle(Injector finalInjector) {
     return finalInjector.getInstance(TorodBundle.class);
+  }
+
+  private MongoDbWpBundle createMongodbWpBundle(TorodBundle torodBundle, Injector finalInjector) {
+    return new MongoDbWpBundle(torodBundle, this, finalInjector);
   }
 
   private void startBundle(Service service) {

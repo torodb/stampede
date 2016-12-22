@@ -6,36 +6,34 @@ The installation from the source code is quite similar to the binary installatio
 
 Download source code.
 
-[ToDo]: <> (Update the repository address)
-
 ```no-highlight
-$ git clone https://github.com/torodb/torodb.git
+cd /tmp
+
+git clone https://github.com/torodb/torodb.git
 ```
 
 Compile source code.
 
 ```no-highlight
-$ cd torodb
+cd torodb
 
-$ mvn clean package -P assembler,prod
+mvn clean package -P assembler,prod
 ```
 
 As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory with the next content.
 
 ```no-highlight
-localhost:5432:torod:torodb:<password>
+echo "localhost:5432:torod:torodb:<password>" > ~/.toropass
 ```
 
-Launch ToroDB Stampede.
+Extract and launch ToroDB Stampede (replace `$TOROHOME` with final ToroDB Stampede directory).
 
 ```no-highlight
-$ cp packaging/stampede/main/target/dist/torodb-stampede-<version>.tar.bz2 $TOROHOME/torodb-stampede-<version>.tar.bz2
+cd "$TOROHOME"
 
-$ cd $TOROHOME
+tar xjf "$TOROHOME/stampede/main/target/dist/torodb-stampede-1.0.0-beta1.tar.bz2"
 
-$ tar xjf torodb-stampede-<version>.tar.bz2
-
-$ torodb-stampede-<version>/bin/torodb-stampede
+torodb-stampede-1.0.0-beta1/bin/torodb-stampede
 ```
 
 ## Windows
@@ -54,13 +52,13 @@ C:\tmp\>cd torodb
 C:\tmp\torodb>mvn clean package -P assembler,prod
 ```
 
-As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory `C:\Users\<YOUR USER NAME>\.toropass` with the next content.
+As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory `%HOME%\.toropass` with the next content.
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>
 ```
 
-Uncompress the Zip file located in `C:\tmp\torodb\packaging\stampede\main\target\dist\torodb-stampede-<version>-SNAPSHOT.zip` in the final ToroDB Stampede directory, and then execute the command:
+Uncompress the Zip file located in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-1.0.0-beta1.zip` in the final ToroDB Stampede directory (replace `%TOROHOME%` with final ToroDB Stampede directory), and then execute the command:
 
 ```no-highlight
 C:\>%TOROHOME%\bin\torodb-stampede

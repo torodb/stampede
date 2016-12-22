@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.torodb.engine.mongodb</groupId>
         <artifactId>mongodb-pom</artifactId>
-        <version>0.50.0</version>
+        <version>0.50.1-SNAPSHOT</version>
     </parent>
     <artifactId>mongodb-core</artifactId>
     
@@ -58,7 +58,7 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream_2.11</artifactId>
+            <artifactId>akka-stream_2.12</artifactId>
         </dependency>
     </dependencies>
 </project>

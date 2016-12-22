@@ -18,9 +18,32 @@
 
 package com.torodb.common.util;
 
-/**
- *
- */
-public class OctetUtils {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.concurrent.Callable;
+
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class RetryHelperTest {
+
+    @Mock
+    private Callable<String> job;
+
+    @Test
+    public void shouldRetryTheGivenRetries() throws Exception {
+        RetryHelper.ExceptionHandler<String, RuntimeException> exceptionHandler = RetryHelper.retryUntilHandler(3, "output");
+
+        when(job.call()).thenThrow(NullPointerException.class);
+
+        RetryHelper.retry(exceptionHandler, job);
+
+        verify(job, times(3)).call();
+    }
 
 }
