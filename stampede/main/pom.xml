@@ -19,6 +19,8 @@
         <assembler.name>torodb-stampede</assembler.name>
         <assembler.fullName>ToroDB Stampede</assembler.fullName>
         <assembler.url>https://www.torodb.com/stampede</assembler.url>
+        <snap.grade>devel</snap.grade>
+        <snap.confinement>devmode</snap.confinement>
     </properties>
 
     <dependencies>
@@ -134,6 +136,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+                                    <useUniqueVersions>false</useUniqueVersions>
                                     <classpathPrefix>./</classpathPrefix>
                                     <mainClass>${mainClass}</mainClass>
                                 </manifest>
@@ -211,6 +214,7 @@
                                         <delimiter>@{*}</delimiter>
                                     </delimiters>
                                     <useDefaultDelimiters>false</useDefaultDelimiters>
+                                    <escapeString>@</escapeString>
                                 </configuration>
                             </execution>
                         </executions>
@@ -225,6 +229,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+                                    <useUniqueVersions>false</useUniqueVersions>
                                     <classpathPrefix>./</classpathPrefix>
                                     <mainClass>${mainClass}</mainClass>
                                 </manifest>
@@ -280,6 +285,130 @@
                         </executions>
                     </plugin>
                 </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>snap</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-dependencies</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
+                                    <overWriteReleases>false</overWriteReleases>
+                                    <overWriteSnapshots>false</overWriteSnapshots>
+                                    <overWriteIfNewer>true</overWriteIfNewer>
+                                    <useRepositoryLayout>true</useRepositoryLayout>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-resources</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${basedir}/target/dist/</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/dist</directory>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                    <overwrite>true</overwrite>
+                                    <delimiters>
+                                        <delimiter>@{*}</delimiter>
+                                    </delimiters>
+                                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                                    <escapeString>~</escapeString>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
+                            <finalName>${assembler.name}-${project.version}</finalName>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+                                    <useUniqueVersions>false</useUniqueVersions>
+                                    <classpathPrefix>./</classpathPrefix>
+                                    <mainClass>${mainClass}</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/snap/assembly.xml</descriptor>
+                            </descriptors>
+                            <finalName>assembler</finalName>
+                            <outputDirectory>${project.build.directory}/dist/snap</outputDirectory>
+                            <tarLongFileMode>gnu</tarLongFileMode>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>exec-maven-plugin</artifactId>
+                            <version>1.5.0</version>
+                            <executions>
+                                <execution>
+                                    <id>snapcraft-clean</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>exec</goal>
+                                    </goals>
+                                    <configuration>
+                                        <workingDirectory>${project.build.directory}/dist/snap</workingDirectory>
+                                        <executable>snapcraft</executable>
+                                        <arguments>
+                                            <argument>clean</argument>
+                                        </arguments>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>snapcraft-build</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>exec</goal>
+                                    </goals>
+                                    <configuration>
+                                        <workingDirectory>${project.build.directory}/dist/snap</workingDirectory>
+                                        <executable>snapcraft</executable>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
             </build>
         </profile>
         
@@ -351,6 +480,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+                                    <useUniqueVersions>false</useUniqueVersions>
                                     <classpathPrefix>./</classpathPrefix>
                                     <mainClass>${mainClass}</mainClass>
                                 </manifest>
@@ -506,6 +636,8 @@
             <id>prod</id>
             <properties>
                 <profiles.resources>src/main/profiles/prod</profiles.resources>
+                <snap.grade>stable</snap.grade>
+                <snap.confinement>strict</snap.confinement>
             </properties>
         </profile>
 

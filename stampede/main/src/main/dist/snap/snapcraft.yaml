@@ -1,0 +1,75 @@
+name: "@{assembler.name}"
+version: "@{project.version}"
+summary: "@{project.name}"
+description: "@{project.description}"
+grade: @{snap.grade}
+confinement: @{snap.confinement}
+apps:
+  daemon:
+    command: bin/@{assembler.name}.wrapper
+    daemon: simple
+    restart-condition: always
+    plugs:
+      - home
+      - network
+      - network-bind
+  run:
+    command: bin/@{assembler.name}.wrapper
+    plugs:
+      - home
+      - network
+      - network-bind
+  setup:
+    command: bin/@{assembler.name}-setup.wrapper
+    plugs:
+      - home
+      - network
+parts:
+  @{assembler.name}:
+    plugin: dump
+    source: .
+    stage-packages:
+      - locales
+      - libc-bin
+      - coreutils
+      - postgresql-client-9.6
+      - openjdk-8-jre-headless
+    organize:
+      assembler/assembler/bin: bin
+      assembler/assembler/doc: doc
+      assembler/assembler/conf: conf
+      assembler/assembler/lib: lib
+    stage:
+      - bin
+      - doc
+      - conf
+      - lib
+      - bin/chmod
+      - bin/chown
+      - usr/bin/whoami
+      - usr/bin/base64
+      - usr/bin/localedef
+      - usr/share/i18n
+      - usr/lib/jvm/java-8-openjdk-*/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - etc/java-*
+      - usr/lib/postgresql/9.6/bin/psql
+      - usr/lib/x86_64-linux-gnu/libpq.so.5*
+    snap:
+      - bin
+      - doc
+      - conf
+      - lib
+      - bin/chmod
+      - bin/chown
+      - usr/bin/whoami
+      - usr/bin/base64
+      - usr/bin/localedef
+      - usr/share/i18n
+      - usr/lib/jvm/java-8-openjdk-*/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - etc/java-*
+      - usr/lib/postgresql/9.6/bin/psql
+      - usr/lib/x86_64-linux-gnu/libpq.so.5*
