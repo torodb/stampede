@@ -1,0 +1,51 @@
+Dependencies used on this code and their licenses:
+
+MongoWP                         AGPL3 or Commercial License
+Log4j                           Apache-2.0
+Guava                           Apache-2.0
+javax.json                      CDDL+GPLv2 with classpath exception
+mongodb-driver (by MongoDB)     Apache-2.0
+bson (by MongoDB)               Apache-2.0
+javax.inject                    Apache-2.0
+commons-configuration           Apache-2.0
+postgresql (JDBC driver)        The PostgreSQL License
+jOOQ                            Apache-2.0
+jOOL                            Apache-2.0
+HikariCP                        Apache-2.0
+Guice                           Apache-2.0
+jCommander                      Apache-2.0
+Jackson                         Apache-2.0
+woodstox-core-asl               Apache-2.0
+json-schema-validator           Apache-2.0
+validation-api                  Apache-2.0
+hibernate-validator             Apache-2.0
+javax.el                        CDDL+GPLv2 with classpath exception
+derbyclient                     Apache-2.0
+derby                           Apache-2.0
+jsr305                          Apache-2.0
+FindBugs Annotations            LGPL-3.0
+reactive-streams                CC0
+scala-library                   BSD-3-Clause
+config                          Apache-2.0
+akka-stream_2.11                Apache-2.0
+junit                           EPL-1.0
+truth                           Apache-2.0
+hamcrest-core                   BSD-3-Clause
+mockito-core                    MIT
+Dropwizard Metrics              Apache-2.0
+HDRhistogram                    Apache-2.0
+checkstyle                      LGPL-2.1
+maven-compiler-plugin           Apache-2.0
+maven-resources-plugin          Apache-2.0
+maven-surefire-plugin           Apache-2.0
+maven-enforcer-plugin           Apache-2.0
+license-maven-plugin            Apache-2.0
+maven-checkstyle-plugin         Apache-2.0
+jacoco-maven-plugin             EPL-1.0
+docker-maven-plugin             Apache-2.0
+maven-jar-plugin                Apache-2.0
+maven-assembly-plugin           Apache-2.0
+findbugs-maven-plugin           Apache-2.0
+maven-gpg-plugin                Apache-2.0
+maven-surefire-plugin           Apache-2.0
+maven-enforcer-plugin           Apache-2.0 
