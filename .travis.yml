@@ -1,4 +1,11 @@
 language: java
+
+before_install:
+  - wget https://archive.apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  - tar xf apache-maven-3.2.2-bin.tar.gz
+  - export M2_HOME=$PWD/apache-maven-3.2.2
+  - export PATH=$M2_HOME/bin:$PATH
+
 sudo: false
 dist: trusty
 script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
