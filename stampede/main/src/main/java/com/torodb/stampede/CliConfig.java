@@ -45,8 +45,9 @@ public class CliConfig {
   private boolean printXmlConfig = false;
   @Parameter(names = {"-hp", "--help-param"}, descriptionKey = "cli.help-param")
   private boolean helpParam = false;
-  @Parameter(names = {"-lp", "--print-param"}, descriptionKey = "cli.print-param")
-  private String printParam;
+  @Parameter(names = {"-lp", "--print-param"}, descriptionKey = "cli.print-param",
+      splitter = NoParameterSplitter.class)
+  private List<String> printParams;
   @Parameter(names = {"-c", "--conf"}, descriptionKey = "cli.conf")
   private String confFile;
   @Parameter(names = {"-x", "--xml-conf"}, descriptionKey = "cli.xml-conf")
@@ -141,12 +142,13 @@ public class CliConfig {
     return printXmlConfig;
   }
 
-  public boolean isPrintParam() {
-    return printParam != null;
+  public boolean hasPrintParams() {
+    return printParams != null 
+        && !printParams.isEmpty();
   }
 
-  public String getPrintParamPath() {
-    return printParam;
+  public List<String> getPrintParamPaths() {
+    return printParams;
   }
 
   public String getConfFile() {

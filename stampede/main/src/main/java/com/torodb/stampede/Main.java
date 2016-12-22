@@ -98,12 +98,23 @@ public class Main {
         System.exit(0);
       }
 
-      if (cliConfig.isPrintParam()) {
-        JsonNode jsonNode = ConfigUtils.getParam(config, cliConfig.getPrintParamPath());
+      if (cliConfig.hasPrintParams()) {
+        StringBuilder printParamsBuilder = new StringBuilder();
+        
+        int index = 0;
+        for (String printParamPath : cliConfig.getPrintParamPaths()) {
+          JsonNode jsonNode = ConfigUtils.getParam(config, printParamPath);
 
-        if (jsonNode != null) {
-          console.print(jsonNode.asText());
+          if (index++ > 0) {
+            printParamsBuilder.append(",");
+          }
+          
+          if (jsonNode != null) {
+            printParamsBuilder.append(jsonNode.asText());
+          }
         }
+        
+        console.print(printParamsBuilder.toString());
 
         System.exit(0);
       }
@@ -234,7 +245,8 @@ public class Main {
     } catch (Throwable ex) {
       LOGGER.debug("Fatal error on initialization", ex);
       Throwable rootCause = Throwables.getRootCause(ex);
-      String causeMessage = rootCause.getMessage();
+      String causeMessage = rootCause.getMessage() != null ? rootCause.getMessage() : 
+          "internal error";
       LogManager.shutdown();
       JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
       System.exit(1);
@@ -244,6 +256,10 @@ public class Main {
   private static void configureLogger(CliConfig cliConfig, Config config) {
     // If not specified in configuration then the log4j2.xml is used
     // instead (by default)
+    if (config.getLogging().getLog4j2File() != null) {
+      Log4jUtils.reconfigure(config.getLogging().getLog4j2File());
+    }
+
     if (config.getLogging().getLevel() != null) {
       Log4jUtils.setRootLevel(config.getLogging().getLevel());
     }
