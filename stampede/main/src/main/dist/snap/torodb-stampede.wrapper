@@ -1,0 +1,5 @@
+#!/bin/sh
+
+. "$(dirname "$0")/environment.wrapper"
+
+exec "$SNAP/bin/@{assembler.name}" --toropass-file "$TOROPASSFILE" --mongopass-file "$MONGOPASSFILE" "$@"
