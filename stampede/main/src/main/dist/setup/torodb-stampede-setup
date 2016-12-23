@@ -48,9 +48,9 @@ then
     POSTGRES_ADMIN_DATABASE=template1
 fi
 
-if [ "$(whoami)" != "root" ]
+if [ "$(whoami)" != "root" ] && [ "$(whoami)" != "$ADMIN_USER" ]
 then
-    echo "You must run this command as root" >&2
+    echo "You must run this command as root or as $ADMIN_USER" >&2
     exit 1
 fi
 
@@ -104,17 +104,17 @@ then
     TOROCMD="$PRGDIR/@{assembler.name}"
 fi
 
-TOROPARAMS="$("$TOROCMD" "$@" \
+TORO_PARAMS="$("$TOROCMD" "$@" \
     -lp /backend/postgres/host \
     -lp /backend/postgres/port \
     -lp /backend/postgres/database \
     -lp /backend/postgres/user \
     -lp /backend/postgres/toropassFile)"
-POSTGRES_HOST="$(echo "$TOROPARAMS"|cut -d ',' -f 1)"
-POSTGRES_PORT="$(echo "$TOROPARAMS"|cut -d ',' -f 2)"
-POSTGRES_DATABASE="$(echo "$TOROPARAMS"|cut -d ',' -f 3)"
-POSTGRES_USER="$(echo "$TOROPARAMS"|cut -d ',' -f 4)"
-TOROPASSFILE="$(echo "$TOROPARAMS"|cut -d ',' -f 5)"
+POSTGRES_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 1)"
+POSTGRES_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 2)"
+POSTGRES_DATABASE="$(echo "$TORO_PARAMS"|cut -d ',' -f 3)"
+POSTGRES_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 4)"
+TOROPASSFILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 5)"
 PGPASSFILE="$([ -z "$PGPASSFILE" ] && echo "$HOME/.pgpass" || echo "$PGPASSFILE")"
 
 if $INTERACTIVE
@@ -181,10 +181,10 @@ then
 fi
 
 PSQL_OPTIONS=()
-if "$psql_command" --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1
+if "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1
 then
     PSQL_OPTIONS+=("'-U'")
-    PSQL_OPTIONS+=("'$ADMIN_USER'")
+    PSQL_OPTIONS+=("'$POSTGRES_ADMIN_USER'")
     PSQL_OPTIONS+=("'-h'")
     PSQL_OPTIONS+=("'$POSTGRES_HOST'")
     PSQL_OPTIONS+=("'-p'")

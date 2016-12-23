@@ -7,7 +7,16 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>target/dist/snap</directory>
+            <directory>target/dist/snap/common</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>target/dist/snap/torodb-stampede-postgres</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.wrapper</include>

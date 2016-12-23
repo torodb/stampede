@@ -32,6 +32,7 @@ parts:
       - locales
       - libc-bin
       - coreutils
+      - iputils-ping
       - postgresql-client-9.6
       - openjdk-8-jre-headless
     organize:
@@ -46,6 +47,7 @@ parts:
       - lib
       - bin/chmod
       - bin/chown
+      - bin/ping
       - usr/bin/whoami
       - usr/bin/base64
       - usr/bin/localedef
@@ -63,6 +65,7 @@ parts:
       - lib
       - bin/chmod
       - bin/chown
+      - bin/ping
       - usr/bin/whoami
       - usr/bin/base64
       - usr/bin/localedef
