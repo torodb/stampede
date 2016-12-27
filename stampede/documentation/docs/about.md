@@ -1,32 +1,43 @@
 <h1>What is ToroDB Stampede?</h1>
 
-Connected to a MongoDB replica set, ToroDB Stampede is able to replicate the NoSQL data into a relational backend (right now the only available backend is PostgreSQL) using the oplog.
+ToroDB Stampede is a replication and mapping technology to maintain a live mirror of a MongoDB database (or [sub-set](configuration/replication-exclusion.md)) in a SQL database. ToroDB Stampede uses [MongoDB's replica set oplog](https://docs.mongodb.com/manual/core/replica-set-oplog/) to keep track of the modifications in MongoDB.
+
 
 ![ToroDB Stampede Structure](images/toro_stampede_structure.jpg)
 
-There are other solutions that are able to store the JSON document in a relational table using PostgreSQL JSON support, but it doesn't solve the real problem of 'how to really use that data'. ToroDB Stampede replicates the document structure in different relational tables and stores the document data in different tuples using those tables.
+During replication ToroDB Stempede transforms MongoDB's JSON documents into a [relational schema](relational-schema) that allows certain queries (such as aggregates) to complete faster as running against JSON documents.
 
 ![Mapping example](images/toro_stampede_mapping.jpg)
 
-With the relational structure, some given problems from NoSQL solutions are easier to solve, such as aggregated query execution in an admissible time.
 
-## ToroDB Stampede limitations
+## Current Limitations
 
-Not everything could be perfect and there are some known limitations from ToroDB Stampede.
+### SQL Target
 
-* The only current MongoDB version supported is 3.2.
-* [Capped collections](https://docs.mongodb.com/manual/core/capped-collections/) usage is not supported.
-* If character `\0` is used in a string it will be escaped because PostgreSQL doesn't support it.
-* Command `applyOps` reception will stop the replication server.
-* Command `collMod` reception will be ignored.
-* MongoDB sharding environment are not supported currently.
+Currently, ToroDB Stampede only supports the free open-source database [PostgreSQL](https://www.postgresql.org/) as target.
 
-In addition to the previous limitations, just some kind of indexes are supported:
+### MongoDB
 
-* Index of type ascending and descending (those that ends in 1 and -1 when declared in mongo)
-* Simple indexes of one key
-* All keys path with the exception to the paths resolving in scalar value (eg: `db.test.createIndex({"a": 1})` will not index value of key `a` for the document `{"a": [1,2,3]}`)
+ToroDB Stampede requires MongoDB 3.2 or later.
+
+The following MongoDB features are not yet supported:
+
+* [Capped collections](https://docs.mongodb.com/manual/core/capped-collections/)
+* [Sharding](https://docs.mongodb.com/manual/sharding/)
+* The [collMod](https://docs.mongodb.com/manual/reference/command/collMod/) command
+* The [applyOps](https://docs.mongodb.com/manual/reference/command/applyOps/) command (will stop the replication server)
+* The character `\0` is escaped in strings because PostgreSQL doesn't support it.
+
+The automatic creation of indexes in the target database is currently limited as follows:
+
+* Only simple one-key indexes (ascending and descending - those that ends in 1 and -1 when declared in MongoDB)
 * Index properties `sparse` and `background` are ignored
+* All keys path with the exception to the paths resolving in scalar value (e.g.: `db.test.createIndex({"a": 1})` will not index value of key `a` for the document `{"a": [1,2,3]}`)
+
+
+[TODO]: <> ('All keys path with the exception to the paths resolving in scalar value' might be wrong (given the example that relsolved to an array). Might mean "resolving in non-scalar values"?)
+
+[TODO]: <> (Which PostreSQL version is required?)
 
 [TODO]: <> (not supported types, we need a list)
 
