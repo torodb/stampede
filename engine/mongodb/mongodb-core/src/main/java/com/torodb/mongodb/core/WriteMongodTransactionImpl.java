@@ -20,11 +20,11 @@ package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.torod.SharedWriteTorodTransaction;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 
 /**
  *
@@ -32,7 +32,7 @@ import com.torodb.torod.SharedWriteTorodTransaction;
 class WriteMongodTransactionImpl extends MongodTransactionImpl implements WriteMongodTransaction {
 
   private final SharedWriteTorodTransaction torodTransaction;
-  private final CommandsExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
+  private final CommandExecutor<? super WriteMongodTransactionImpl> commandsExecutor;
 
   public WriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
     super(connection);

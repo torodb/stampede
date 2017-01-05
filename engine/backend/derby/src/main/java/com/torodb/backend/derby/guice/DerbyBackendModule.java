@@ -19,6 +19,7 @@
 package com.torodb.backend.derby.guice;
 
 import com.google.inject.PrivateModule;
+import com.torodb.backend.BackendConfig;
 import com.torodb.backend.DataTypeProvider;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.ErrorHandler;
@@ -37,17 +38,42 @@ import com.torodb.backend.derby.DerbyReadInterface;
 import com.torodb.backend.derby.DerbyStructureInterface;
 import com.torodb.backend.derby.DerbyWriteInterface;
 import com.torodb.backend.derby.schema.DerbySchemaUpdater;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
+import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.backend.SnapshotUpdater;
+import com.torodb.core.d2r.DefaultIdentifierFactory;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.ReservedIdGenerator;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 
 import javax.inject.Singleton;
 
 public class DerbyBackendModule extends PrivateModule {
 
+  private final DerbyDbBackendConfig config;
+
+  public DerbyBackendModule(DerbyDbBackendConfig config) {
+    this.config = config;
+  }
+
   @Override
   protected void configure() {
+    install(new BackendModule());
+    expose(BackendService.class);
+    expose(ReservedIdGenerator.class);
+    expose(SnapshotUpdater.class);
+    expose(BackendTransactionJobFactory.class);
+
+    bind(BackendConfig.class)
+        .toInstance(config);
+    bind(DerbyDbBackendConfig.class)
+        .toInstance(config);
+
     bind(OfficialDerbyDriver.class)
         .in(Singleton.class);
     bind(DerbyDriverProvider.class)
@@ -112,6 +138,13 @@ public class DerbyBackendModule extends PrivateModule {
     bind(IdentifierConstraints.class)
         .to(DerbyIdentifierConstraints.class);
     expose(IdentifierConstraints.class);
+
+    bind(DefaultIdentifierFactory.class)
+        .in(Singleton.class);
+
+    bind(IdentifierFactory.class)
+        .to(DefaultIdentifierFactory.class);
+    expose(IdentifierFactory.class);
   }
 
 }

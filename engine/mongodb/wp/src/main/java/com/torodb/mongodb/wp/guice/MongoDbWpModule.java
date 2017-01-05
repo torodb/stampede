@@ -53,12 +53,13 @@ import com.google.inject.Singleton;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.ToroErrorHandler;
 import com.torodb.mongodb.wp.TorodbSafeRequestProcessor;
+import com.torodb.torod.TorodBundle;
 
 public class MongoDbWpModule extends PrivateModule {
 
   private final int port;
 
-  public MongoDbWpModule(int port) {
+  public MongoDbWpModule(TorodBundle torodBundle, int port) {
     this.port = port;
   }
 

@@ -18,88 +18,80 @@
 
 package com.torodb.torod;
 
-import com.google.inject.assistedinject.Assisted;
-import com.torodb.core.annotations.TorodbIdleService;
-import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.backend.SnapshotUpdater;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.modules.AbstractBundle;
-import com.torodb.core.modules.Bundle;
-import com.torodb.core.supervision.Supervisor;
-import com.torodb.core.transaction.metainf.MetainfoRepository;
+import com.torodb.core.modules.BundleConfig;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.ThreadFactory;
 
-import javax.inject.Inject;
 
-public class TorodBundle extends AbstractBundle {
+public abstract class TorodBundle extends AbstractBundle<TorodExtInt> {
 
   private static final Logger LOGGER = LogManager.getLogger(TorodBundle.class);
-  private final TorodServer torodServer;
-  private final BackendBundle backendBundle;
-  private final MetainfoRepository metainfoRepository;
-  private final SnapshotUpdater snapshotUpdater;
-  private final ReservedIdGenerator reservedIdGenerator;
-  private final InsertPipelineFactory insertPipelineFactory;
-
-  @Inject
-  public TorodBundle(@TorodbIdleService ThreadFactory threadFactory,
-      @Assisted Supervisor supervisor, TorodServer torodServer,
-      @Assisted BackendBundle backendBundle, SnapshotUpdater snapshotUpdater,
-      MetainfoRepository metainfoRepository,
-      ReservedIdGenerator reservedIdGenerator,
-      InsertPipelineFactory insertPipelineFactory) {
-    super(threadFactory, supervisor);
-    this.torodServer = torodServer;
-    this.backendBundle = backendBundle;
-    this.snapshotUpdater = snapshotUpdater;
-    this.metainfoRepository = metainfoRepository;
-    this.reservedIdGenerator = reservedIdGenerator;
-    this.insertPipelineFactory = insertPipelineFactory;
+  
+  protected TorodBundle(BundleConfig config) {
+    super(config);
   }
+
+  /**
+   * Returns the {@linkplain TorodServer} this bundle will use.
+   *
+   * <p>It must always return the same instance (or at least instances that share the service state)
+   */
+  protected abstract TorodServer getTorodServer();
+  
+  /**
+   * Returns the {@linkplain ReservedIdGenerator} this bundle will use.
+   * 
+   * <p>It must always return the same instance (or at least instances that share the service state)
+   */
+  protected abstract ReservedIdGenerator getReservedIdGenerator();
+
+  /**
+   * Returns the {@linkplain InsertPipelineFactory} this bundle will use.
+   *
+   * <p>It must always return the same instance (or at least instances that share the service state)
+   */
+  protected abstract InsertPipelineFactory getInsertPipelineFactory();
 
   @Override
   protected void postDependenciesStartUp() throws Exception {
-    LOGGER.trace("Loading backend metadata...");
-    snapshotUpdater.updateSnapshot(metainfoRepository);
-
-    LOGGER.trace("Reading last used rids...");
+    ReservedIdGenerator reservedIdGenerator = getReservedIdGenerator();
+    LOGGER.debug("Reading last used rids...");
     reservedIdGenerator.startAsync();
     reservedIdGenerator.awaitRunning();
 
     LOGGER.trace("Starting insert pipeline factories");
+    InsertPipelineFactory insertPipelineFactory = getInsertPipelineFactory();
     insertPipelineFactory.startAsync();
     insertPipelineFactory.awaitRunning();
 
-    LOGGER.trace("Starting Torod Sevice");
+    LOGGER.debug("Starting Torod sevice");
+    TorodServer torodServer = getTorodServer();
     torodServer.startAsync();
     torodServer.awaitRunning();
+    LOGGER.debug("Torod sevice started");
   }
 
   @Override
   protected void preDependenciesShutDown() throws Exception {
+    TorodServer torodServer = getTorodServer();
     torodServer.stopAsync();
     torodServer.awaitTerminated();
 
+    InsertPipelineFactory insertPipelineFactory = getInsertPipelineFactory();
     insertPipelineFactory.stopAsync();
     insertPipelineFactory.awaitTerminated();
 
+    ReservedIdGenerator reservedIdGenerator = getReservedIdGenerator();
     reservedIdGenerator.stopAsync();
     reservedIdGenerator.awaitTerminated();
   }
 
   @Override
-  public Collection<Bundle> getDependencies() {
-    return Collections.singleton(backendBundle);
+  public TorodExtInt getExternalInterface() {
+    return () -> getTorodServer();
   }
-
-  public TorodServer getTorodServer() {
-    return torodServer;
-  }
-
 }

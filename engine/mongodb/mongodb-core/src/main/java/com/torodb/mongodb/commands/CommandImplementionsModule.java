@@ -20,6 +20,10 @@ package com.torodb.mongodb.commands;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import com.torodb.mongodb.commands.impl.ConnectionCmdImpl;
+import com.torodb.mongodb.commands.impl.ExclusiveWriteTransactionCmdsImpl;
+import com.torodb.mongodb.commands.impl.GeneralTransactionCmdImpl;
+import com.torodb.mongodb.commands.impl.WriteTransactionCmdImpl;
 
 /**
  *
@@ -28,19 +32,19 @@ public class CommandImplementionsModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(CommandsExecutorClassifier.class)
+    bind(CommandClassifier.class)
         .in(Singleton.class);
 
-    bind(ConnectionCommandsExecutor.class)
+    bind(ConnectionCmdImpl.class)
         .in(Singleton.class);
 
-    bind(GeneralTransactionImplementations.class)
+    bind(GeneralTransactionCmdImpl.class)
         .in(Singleton.class);
 
-    bind(ExclusiveWriteTransactionImplementations.class)
+    bind(ExclusiveWriteTransactionCmdsImpl.class)
         .in(Singleton.class);
 
-    bind(WriteTransactionImplementations.class)
+    bind(WriteTransactionCmdImpl.class)
         .in(Singleton.class);
   }
 

@@ -19,6 +19,7 @@
 package com.torodb.backend.postgresql.guice;
 
 import com.google.inject.PrivateModule;
+import com.torodb.backend.BackendConfig;
 import com.torodb.backend.DataTypeProvider;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.ErrorHandler;
@@ -29,6 +30,7 @@ import com.torodb.backend.StructureInterface;
 import com.torodb.backend.WriteInterface;
 import com.torodb.backend.driver.postgresql.OfficialPostgreSqlDriver;
 import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
+import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.PostgreSqlDataTypeProvider;
 import com.torodb.backend.postgresql.PostgreSqlDbBackend;
@@ -41,14 +43,34 @@ import com.torodb.backend.postgresql.PostgreSqlReadInterface;
 import com.torodb.backend.postgresql.PostgreSqlStructureInterface;
 import com.torodb.backend.postgresql.PostgreSqlWriteInterface;
 import com.torodb.backend.postgresql.meta.PostgreSqlSchemaUpdater;
+import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.backend.SnapshotUpdater;
+import com.torodb.core.d2r.DefaultIdentifierFactory;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.ReservedIdGenerator;
+import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 
 import javax.inject.Singleton;
 
 public class PostgreSqlBackendModule extends PrivateModule {
 
+  private final BackendConfig backendConfig;
+
+  public PostgreSqlBackendModule(BackendConfig backendConfig) {
+    this.backendConfig = backendConfig;
+  }
+
   @Override
   protected void configure() {
+    install(new BackendModule());
+    expose(BackendService.class);
+    expose(ReservedIdGenerator.class);
+    expose(SnapshotUpdater.class);
+    expose(BackendTransactionJobFactory.class);
+
+    bind(BackendConfig.class)
+        .toInstance(backendConfig);
     bind(OfficialPostgreSqlDriver.class)
         .in(Singleton.class);
     bind(PostgreSqlDriverProvider.class)
@@ -116,6 +138,13 @@ public class PostgreSqlBackendModule extends PrivateModule {
 
     bind(PostgreSqlMetrics.class)
         .in(Singleton.class);
+
+    bind(DefaultIdentifierFactory.class)
+        .in(Singleton.class);
+
+    bind(IdentifierFactory.class)
+        .to(DefaultIdentifierFactory.class);
+    expose(IdentifierFactory.class);
   }
 
 }

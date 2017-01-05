@@ -22,15 +22,14 @@ import com.google.common.base.Preconditions;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.Supervisor;
 
-import java.util.concurrent.ThreadFactory;
 
-public abstract class AbstractBundle extends IdleTorodbService implements Bundle {
+public abstract class AbstractBundle<E> extends IdleTorodbService implements Bundle<E> {
 
   private final Supervisor supervisor;
 
-  public AbstractBundle(ThreadFactory threadFactory, Supervisor supervisor) {
-    super(threadFactory);
-    this.supervisor = supervisor;
+  public AbstractBundle(BundleConfig bundleConfig) {
+    super(bundleConfig.getThreadFactory());
+    this.supervisor = bundleConfig.getSupervisor();
   }
 
   protected abstract void postDependenciesStartUp() throws Exception;

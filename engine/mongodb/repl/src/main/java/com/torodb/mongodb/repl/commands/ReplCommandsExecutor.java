@@ -20,9 +20,8 @@ package com.torodb.mongodb.repl.commands;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Request;
-import com.eightkdata.mongowp.server.api.impl.MapBasedCommandsExecutor;
+import com.eightkdata.mongowp.server.api.impl.MapBasedCommandExecutor;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand;
 import com.torodb.mongodb.commands.signatures.admin.DropCollectionCommand;
@@ -41,13 +40,15 @@ import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 import javax.inject.Inject;
 
-public final class ReplCommandsExecutor
-    implements CommandsExecutor<ExclusiveWriteTorodTransaction> {
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 
-  private final MapBasedCommandsExecutor<ExclusiveWriteTorodTransaction> delegate;
+public final class ReplCommandsExecutor
+    implements CommandExecutor<ExclusiveWriteTorodTransaction> {
+
+  private final MapBasedCommandExecutor<ExclusiveWriteTorodTransaction> delegate;
 
   @Inject
-  public ReplCommandsExecutor(ReplCommandsLibrary library,
+  public ReplCommandsExecutor(ReplCommandLibrary library,
       LogAndStopReplImpl logAndStopReplImpl,
       LogAndIgnoreReplImpl logAndIgnoreReplImpl,
       CreateCollectionReplImpl createCollectionReplImpl,
@@ -56,7 +57,7 @@ public final class ReplCommandsExecutor
       DropDatabaseReplImpl dropDatabaseReplImpl,
       DropIndexesReplImpl dropIndexesReplImpl,
       RenameCollectionReplImpl renameCollectionReplImpl) {
-    delegate = MapBasedCommandsExecutor
+    delegate = MapBasedCommandExecutor
         .<ExclusiveWriteTorodTransaction>fromLibraryBuilder(library)
         .addImplementation(LogAndStopCommand.INSTANCE, logAndStopReplImpl)
         .addImplementation(LogAndIgnoreCommand.INSTANCE, logAndIgnoreReplImpl)

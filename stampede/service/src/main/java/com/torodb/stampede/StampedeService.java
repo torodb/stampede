@@ -18,57 +18,57 @@
 
 package com.torodb.stampede;
 
-import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.Service;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.backend.BackendBundleFactory;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.modules.Bundle;
+import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.modules.BundleConfigImpl;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
+import com.torodb.mongodb.core.MongoDbCoreConfig;
+import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
-import com.torodb.mongodb.repl.MongodbReplBundle;
-import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.mongodb.repl.guice.MongodbReplConfig;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
-import com.torodb.packaging.util.MongoClientConfigurationFactory;
-import com.torodb.packaging.util.ReplicationFiltersFactory;
+import com.torodb.mongodb.repl.MongoDbReplBundle;
+import com.torodb.torod.SqlTorodBundle;
+import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.time.Clock;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
+/**
+ * This service is used to start and stop ToroDB Stampede.
+ *
+ * <p>It takes a {@link StampedeConfig} and uses it to create and start the required
+ * {@link Bundle bundles}.
+ */
 public class StampedeService extends AbstractIdleService implements Supervisor {
 
   private static final Logger LOGGER = LogManager.getLogger(StampedeService.class);
   private final ThreadFactory threadFactory;
-  private final Injector bootstrapInjector;
   private final StampedeConfig stampedeConfig;
-  private Shutdowner shutdowner;
+  private final Injector essentialInjector;
+  private final BundleConfig generalBundleConfig;
+  private final Shutdowner shutdowner;
 
-  /**
-   * Constructor that uses the given arguments.
-   */
-  public StampedeService(StampedeConfig stampedeConfig, Clock clock) {
+  public StampedeService(StampedeConfig stampedeConfig) {
     this.stampedeConfig = stampedeConfig;
 
-    BootstrapModule bootstrapModule = new BootstrapModule(stampedeConfig, clock);
-    this.bootstrapInjector = Guice.createInjector(bootstrapModule);
-    this.threadFactory = bootstrapInjector.getInstance(
-        ThreadFactory.class);
+    this.essentialInjector = stampedeConfig.getEssentialInjector();
+    this.threadFactory = essentialInjector.getInstance(ThreadFactory.class);
+    this.generalBundleConfig = new BundleConfigImpl(essentialInjector, this);
+    this.shutdowner = essentialInjector.getInstance(Shutdowner.class);
   }
 
   @Override
@@ -90,33 +90,27 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
   protected void startUp() throws Exception {
     LOGGER.info("Starting up ToroDB Stampede");
 
-    shutdowner = bootstrapInjector.getInstance(Shutdowner.class);
+    shutdowner.startAsync();
     shutdowner.awaitRunning();
-
-    BackendBundle backendBundle = createBackendBundle();
+    
+    BackendBundle backendBundle = stampedeConfig.getBackendBundleGenerator()
+        .apply(generalBundleConfig);
     startBundle(backendBundle);
-
-    BackendService backendService = backendBundle.getBackendService();
-
-    ConsistencyHandler consistencyHandler = createConsistencyHandler(
-        backendService);
+    
+    ConsistencyHandler consistencyHandler = createConsistencyHandler(backendBundle);
     if (!consistencyHandler.isConsistent()) {
-      LOGGER.info("Database is not consistent. Cleaning it up");
-      dropDatabase(backendService);
+      dropDatabase(backendBundle);
     }
 
-    Injector finalInjector = createFinalInjector(backendBundle, consistencyHandler);
-
-    List<Replication> replications = getReplications();
-    reportReplications(replications);
-    TorodBundle torodBundle = createTorodBundle(finalInjector);
+    TorodBundle torodBundle = createTorodBundle(backendBundle);
     startBundle(torodBundle);
 
-    replications.stream()
-        .map(DefaultMongodbReplConfig::new)
-        .map(replConfig -> createMongodbReplBundle(finalInjector, torodBundle, replConfig))
-        .forEach(this::startBundle);
+    MongoDbCoreBundle mongoCoreBundle = createMongoDbCoreBundle(torodBundle);
+    startBundle(mongoCoreBundle);
 
+    MongoDbReplBundle replBundle = createMongoDbReplBundle(mongoCoreBundle, consistencyHandler);
+    startBundle(replBundle);
+    
     LOGGER.info("ToroDB Stampede is now running");
   }
 
@@ -130,17 +124,51 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     LOGGER.info("ToroDB Stampede has been shutted down");
   }
 
-  private BackendBundle createBackendBundle() {
-    return bootstrapInjector.getInstance(BackendBundleFactory.class)
-        .createBundle(this);
+  private ConsistencyHandler createConsistencyHandler(BackendBundle backendBundle) {
+    Retrier retrier = essentialInjector.getInstance(Retrier.class);
+    return new DefaultConsistencyHandler(
+        backendBundle.getExternalInterface().getBackendService(),
+        retrier
+    );
   }
 
-  private ConsistencyHandler createConsistencyHandler(BackendService backendService) {
-    Retrier retrier = bootstrapInjector.getInstance(Retrier.class);
-    return new DefaultConsistencyHandler(backendService, retrier);
+  private TorodBundle createTorodBundle(BackendBundle backendBundle) {
+    return new SqlTorodBundle(new SqlTorodConfig(
+        backendBundle,
+        essentialInjector,
+        this
+    ));
   }
 
-  private void dropDatabase(BackendService backendService) throws UserException {
+  private MongoDbCoreBundle createMongoDbCoreBundle(TorodBundle torodBundle) {
+    /*
+     * The following config file is used by command implementations like isMaster to return
+     * information about the server. That has no sense on Stampede and, in fact, that command is
+     * never executed. Ideally, implementations like that one should be implemented on the ToroDB
+     * Server layer, but right now almost all commands must be implemented on the mongodb core
+     * layer, which means we need to provide a value even if it is not used.
+     */
+    MongodServerConfig mongodServerConfig = new MongodServerConfig(
+        HostAndPort.fromParts("localhost", 27017)
+    );
+    return new MongoDbCoreBundle(
+        MongoDbCoreConfig.simpleConfig(torodBundle, mongodServerConfig, generalBundleConfig)
+    );
+  }
+
+  private MongoDbReplBundle createMongoDbReplBundle(MongoDbCoreBundle coreBundle,
+      ConsistencyHandler consistencyHandler) {
+    return new MongoDbReplBundle(
+        stampedeConfig.getReplBundleConfigBuilderGenerator()
+            .apply(generalBundleConfig)
+            .setConsistencyHandler(consistencyHandler)
+            .setCoreBundle(coreBundle)
+            .build()
+    );
+  }
+
+  private void dropDatabase(BackendBundle backendBundle) throws UserException {
+    BackendService backendService = backendBundle.getExternalInterface().getBackendService();
     try (BackendConnection conn = backendService.openConnection();
         ExclusiveWriteBackendTransaction trans = conn.openExclusiveWriteTransaction()) {
       trans.dropUserData();
@@ -148,67 +176,10 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     }
   }
 
-  private Injector createFinalInjector(BackendBundle backendBundle,
-      ConsistencyHandler consistencyHandler) {
-    StampedeRuntimeModule runtimeModule = new StampedeRuntimeModule(
-        backendBundle, this, consistencyHandler);
-    return bootstrapInjector.createChildInjector(runtimeModule);
+  private void startBundle(Bundle<?> bundle) {
+    bundle.startAsync();
+    bundle.awaitRunning();
+
+    shutdowner.addStopShutdownListener(bundle);
   }
-
-  private MongodbReplBundle createMongodbReplBundle(Injector finalInjector,
-      TorodBundle torodBundle, MongodbReplConfig replConfig) {
-    return new MongodbReplBundle(torodBundle, this, replConfig, finalInjector);
-  }
-
-  private TorodBundle createTorodBundle(Injector finalInjector) {
-    return finalInjector.getInstance(TorodBundle.class);
-  }
-
-  private void startBundle(Service service) {
-    service.startAsync();
-    service.awaitRunning();
-
-    shutdowner.addStopShutdownListener(service);
-  }
-
-  private List<Replication> getReplications() {
-    return stampedeConfig.getReplication();
-  }
-
-  private void reportReplications(List<Replication> replications) {
-    Supplier<String> strSupplier = () -> replications.stream()
-        .map(repl -> "replSetName: " + repl.getReplSetName() + ", seed: " + repl.getSyncSource())
-        .collect(Collectors.joining(",", "[", "]"));
-    LOGGER.info("Replicating from seeds: {}", strSupplier);
-  }
-
-  private static class DefaultMongodbReplConfig implements MongodbReplConfig {
-
-    private final MongoClientConfiguration mongoClientConf;
-    private final ReplicationFilters replFilters;
-    private final String replSetName;
-
-    public DefaultMongodbReplConfig(AbstractReplication replication) {
-      this.mongoClientConf = MongoClientConfigurationFactory
-          .getMongoClientConfiguration(replication);
-      this.replFilters = ReplicationFiltersFactory.getReplicationFilters(replication);
-      replSetName = replication.getReplSetName();
-    }
-
-    @Override
-    public MongoClientConfiguration getMongoClientConfiguration() {
-      return mongoClientConf;
-    }
-
-    @Override
-    public ReplicationFilters getReplicationFilters() {
-      return replFilters;
-    }
-
-    @Override
-    public String getReplSetName() {
-      return replSetName;
-    }
-  }
-
 }

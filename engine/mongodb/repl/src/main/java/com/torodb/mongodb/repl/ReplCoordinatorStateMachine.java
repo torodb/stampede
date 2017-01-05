@@ -25,7 +25,6 @@ import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.commands.pojos.MemberState;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.fi.util.function.CheckedFunction;

@@ -72,8 +72,8 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
   private final SchemaUpdater schemaUpdater;
 
   /**
-   * @param threadFactory          the thread factory that will be used to create the startup and
-   *                               shutdown threads
+   * @param threadFactory the thread factory that will be used to create the startup and shutdown
+   *                      threads
    */
   @Inject
   public BackendServiceImpl(@TorodbIdleService ThreadFactory threadFactory,

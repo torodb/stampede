@@ -20,9 +20,9 @@ package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.torod.ReadOnlyTorodTransaction;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 
 /**
  *
@@ -31,7 +31,7 @@ class ReadOnlyMongodTransactionImpl extends MongodTransactionImpl implements
     ReadOnlyMongodTransaction {
 
   private final ReadOnlyTorodTransaction torodTransaction;
-  private final CommandsExecutor<? super ReadOnlyMongodTransactionImpl> commandsExecutor;
+  private final CommandExecutor<? super ReadOnlyMongodTransactionImpl> commandsExecutor;
 
   public ReadOnlyMongodTransactionImpl(MongodConnection connection) {
     super(connection);
