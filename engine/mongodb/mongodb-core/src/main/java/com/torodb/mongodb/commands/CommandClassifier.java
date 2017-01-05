@@ -19,6 +19,7 @@
 package com.torodb.mongodb.commands;
 
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
@@ -27,8 +28,6 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 import java.util.stream.Stream;
 
 import javax.annotation.concurrent.ThreadSafe;
-
-import com.eightkdata.mongowp.server.api.CommandExecutor;
 
 /**
  * An object that classifies a given command by the context it requires to execute and provides

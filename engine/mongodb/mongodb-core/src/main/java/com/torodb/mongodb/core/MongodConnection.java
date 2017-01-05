@@ -18,6 +18,7 @@
 
 package com.torodb.mongodb.core;
 
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.Connection;
 import com.google.common.base.Preconditions;
 import com.torodb.torod.TorodConnection;
@@ -26,8 +27,6 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
-
-import com.eightkdata.mongowp.server.api.CommandExecutor;
 
 @NotThreadSafe
 public class MongodConnection implements Connection, AutoCloseable {

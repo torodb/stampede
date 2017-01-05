@@ -20,6 +20,7 @@ package com.torodb.mongodb.repl.commands;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandLibrary;
 import com.eightkdata.mongowp.server.api.impl.NameBasedCommandLibrary;
 import com.torodb.mongodb.commands.signatures.admin.CollModCommand;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand;
@@ -32,8 +33,6 @@ import com.torodb.mongodb.commands.signatures.repl.ApplyOpsCommand;
 
 import java.util.Map;
 import java.util.Optional;
-
-import com.eightkdata.mongowp.server.api.CommandLibrary;
 
 public class ReplCommandLibrary implements CommandLibrary {
 

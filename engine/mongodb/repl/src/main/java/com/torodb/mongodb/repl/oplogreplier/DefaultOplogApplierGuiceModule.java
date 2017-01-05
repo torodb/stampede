@@ -23,7 +23,7 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
+import com.torodb.mongodb.repl.commands.ReplCommandExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
@@ -85,7 +85,7 @@ public class DefaultOplogApplierGuiceModule extends PrivateModule {
   private void bindConfig() {
     bind(ReplCommandLibrary.class)
         .toInstance(config.getReplCommandsLibrary());
-    bind(ReplCommandsExecutor.class)
+    bind(ReplCommandExecutor.class)
         .toInstance(config.getReplCommandsExecutor());
     bind(OplogManager.class)
         .toInstance(config.getReplCoreBundle().getExternalInterface().getOplogManager());

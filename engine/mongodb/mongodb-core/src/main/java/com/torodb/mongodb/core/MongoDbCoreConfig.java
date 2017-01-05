@@ -18,6 +18,7 @@
 
 package com.torodb.mongodb.core;
 
+import com.eightkdata.mongowp.server.api.CommandLibrary;
 import com.google.inject.Injector;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.modules.BundleConfig;
@@ -31,8 +32,6 @@ import com.torodb.torod.TorodBundle;
 import java.time.Clock;
 
 import javax.inject.Inject;
-
-import com.eightkdata.mongowp.server.api.CommandLibrary;
 
 /**
  * The configuration used by {@link MongoDbCoreBundle}.

@@ -50,7 +50,7 @@ import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateResult
 import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateStatement;
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
+import com.torodb.mongodb.repl.commands.ReplCommandExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
@@ -70,10 +70,10 @@ public class OplogOperationApplier {
   private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);
   private final Visitor visitor = new Visitor();
   private final ReplCommandLibrary library;
-  private final ReplCommandsExecutor executor;
+  private final ReplCommandExecutor executor;
 
   @Inject
-  public OplogOperationApplier(ReplCommandLibrary library, ReplCommandsExecutor executor) {
+  public OplogOperationApplier(ReplCommandLibrary library, ReplCommandExecutor executor) {
     this.library = library;
     this.executor = executor;
   }

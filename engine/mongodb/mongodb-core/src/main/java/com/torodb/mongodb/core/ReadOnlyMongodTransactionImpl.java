@@ -20,13 +20,10 @@ package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.torod.ReadOnlyTorodTransaction;
-import com.eightkdata.mongowp.server.api.CommandExecutor;
 
-/**
- *
- */
 class ReadOnlyMongodTransactionImpl extends MongodTransactionImpl implements
     ReadOnlyMongodTransaction {
 

@@ -19,6 +19,7 @@
 package com.torodb.mongodb.commands.impl;
 
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.impl.MapBasedCommandExecutor;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.commands.CommandClassifier;
@@ -30,11 +31,6 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 
 import java.util.stream.Stream;
 
-import com.eightkdata.mongowp.server.api.CommandExecutor;
-
-/**
- *
- */
 public class EmptyCommandClassifier implements CommandClassifier {
 
   @SuppressWarnings("checkstyle:LineLength")

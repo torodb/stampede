@@ -19,6 +19,7 @@
 package com.torodb.mongodb.commands.impl;
 
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.impl.MapBasedCommandExecutor;
 import com.google.common.collect.ImmutableMap;
@@ -41,8 +42,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.annotation.concurrent.ThreadSafe;
-
-import com.eightkdata.mongowp.server.api.CommandExecutor;
 
 /**
  * An object that provides {@link CommandExecutor} classified by their usage.

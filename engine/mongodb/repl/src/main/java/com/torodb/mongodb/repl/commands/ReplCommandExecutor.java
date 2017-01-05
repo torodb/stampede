@@ -20,6 +20,7 @@ package com.torodb.mongodb.repl.commands;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.MapBasedCommandExecutor;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand;
@@ -40,15 +41,13 @@ import com.torodb.torod.ExclusiveWriteTorodTransaction;
 
 import javax.inject.Inject;
 
-import com.eightkdata.mongowp.server.api.CommandExecutor;
-
-public final class ReplCommandsExecutor
+public final class ReplCommandExecutor
     implements CommandExecutor<ExclusiveWriteTorodTransaction> {
 
   private final MapBasedCommandExecutor<ExclusiveWriteTorodTransaction> delegate;
 
   @Inject
-  public ReplCommandsExecutor(ReplCommandLibrary library,
+  public ReplCommandExecutor(ReplCommandLibrary library,
       LogAndStopReplImpl logAndStopReplImpl,
       LogAndIgnoreReplImpl logAndIgnoreReplImpl,
       CreateCollectionReplImpl createCollectionReplImpl,

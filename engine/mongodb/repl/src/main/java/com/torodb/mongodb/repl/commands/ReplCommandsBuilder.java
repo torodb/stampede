@@ -23,19 +23,15 @@ import com.google.inject.Injector;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
-import com.torodb.mongodb.repl.commands.ReplCommandsGuiceModule;
-import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 
 /**
- * A utility class used to generate {@link ReplCommandsExecutor} and {@link ReplCommandLibrary}.
+ * A utility class used to generate {@link ReplCommandExecutor} and {@link ReplCommandLibrary}.
  */
 public class ReplCommandsBuilder {
 
   private final ReplCommandLibrary replCommandsLibrary;
-  private final ReplCommandsExecutor replCommandsExecutor;
+  private final ReplCommandExecutor replCommandsExecutor;
 
   public ReplCommandsBuilder(BundleConfig generalConfig) {
     Injector replCommandsInjector = generalConfig.getEssentialInjector()
@@ -45,14 +41,14 @@ public class ReplCommandsBuilder {
         );
 
     replCommandsLibrary = replCommandsInjector.getInstance(ReplCommandLibrary.class);
-    replCommandsExecutor = replCommandsInjector.getInstance(ReplCommandsExecutor.class);
+    replCommandsExecutor = replCommandsInjector.getInstance(ReplCommandExecutor.class);
   }
 
   public ReplCommandLibrary getReplCommandsLibrary() {
     return replCommandsLibrary;
   }
 
-  public ReplCommandsExecutor getReplCommandsExecutor() {
+  public ReplCommandExecutor getReplCommandsExecutor() {
     return replCommandsExecutor;
   }
 

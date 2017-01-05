@@ -23,7 +23,7 @@ import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
+import com.torodb.mongodb.repl.commands.ReplCommandExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 
 public class DefaultOplogApplierBundleConfig implements BundleConfig {
@@ -31,12 +31,12 @@ public class DefaultOplogApplierBundleConfig implements BundleConfig {
   private final ReplCoreBundle replCoreBundle;
   private final MongoDbCoreBundle mongoDbCorebundle;
   private final ReplCommandLibrary replCommandsLibrary;
-  private final ReplCommandsExecutor replCommandsExecutor;
+  private final ReplCommandExecutor replCommandsExecutor;
   private final BundleConfig delegate;
 
   public DefaultOplogApplierBundleConfig(ReplCoreBundle replCoreBundle,
       MongoDbCoreBundle mongoDbCorebundle, ReplCommandLibrary replCommandsLibrary,
-      ReplCommandsExecutor replCommandsExecutor, BundleConfig delegate) {
+      ReplCommandExecutor replCommandsExecutor, BundleConfig delegate) {
     this.replCoreBundle = replCoreBundle;
     this.mongoDbCorebundle = mongoDbCorebundle;
     this.replCommandsLibrary = replCommandsLibrary;
@@ -56,7 +56,7 @@ public class DefaultOplogApplierBundleConfig implements BundleConfig {
     return replCommandsLibrary;
   }
 
-  public ReplCommandsExecutor getReplCommandsExecutor() {
+  public ReplCommandExecutor getReplCommandsExecutor() {
     return replCommandsExecutor;
   }
 

@@ -41,12 +41,12 @@ public class ReplCommandsGuiceModule extends PrivateModule {
     requireBinding(ReplicationFilters.class);
 
     expose(ReplCommandLibrary.class);
-    expose(ReplCommandsExecutor.class);
+    expose(ReplCommandExecutor.class);
 
     bind(ReplCommandLibrary.class)
         .in(Singleton.class);
 
-    bind(ReplCommandsExecutor.class)
+    bind(ReplCommandExecutor.class)
         .in(Singleton.class);
 
     bindImplementations();
