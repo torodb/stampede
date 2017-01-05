@@ -25,10 +25,9 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
-import com.google.inject.Injector;
 import com.torodb.mongodb.commands.AbstractCommandMapFactory;
-import com.torodb.mongodb.commands.WriteTransactionImplementations;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
+import com.torodb.mongodb.commands.impl.WriteTransactionCmdImpl;
 import com.torodb.mongodb.commands.impl.general.DeleteImplementation;
 import com.torodb.mongodb.commands.impl.general.InsertImplementation;
 import com.torodb.mongodb.commands.impl.general.UpdateImplementation;
@@ -89,9 +88,7 @@ import com.torodb.mongodb.commands.signatures.repl.ReplSetGetStatusCommand.ReplS
 import com.torodb.mongodb.commands.signatures.repl.ReplSetReconfigCommand.ReplSetReconfigArgument;
 import com.torodb.mongodb.commands.signatures.repl.ReplSetStepDownCommand.ReplSetStepDownArgument;
 import com.torodb.mongodb.commands.signatures.repl.ReplSetSyncFromCommand.ReplSetSyncFromReply;
-import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
 import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
@@ -103,27 +100,24 @@ import com.torodb.mongodb.repl.commands.impl.ReplCommandImpl;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- *
- */
 @Singleton
 @SuppressWarnings("checkstyle:LineLength")
-public class ReplWriteTransactionImplementations extends WriteTransactionImplementations {
+public class ReplWriteTransactionImplementations extends WriteTransactionCmdImpl {
 
   @Inject
-  protected ReplWriteTransactionImplementations(Injector injector) {
-    super(new MapFactory(injector));
+  protected ReplWriteTransactionImplementations(ReplicationFilters replicationFilters) {
+    super(new MapFactory(replicationFilters));
   }
 
   static class MapFactory extends AbstractCommandMapFactory<WriteMongodTransaction> {
 
     @Inject
-    MapFactory(Injector injector) {
-      super(new MyAdminCommandsImplementationBuilder(injector),
+    MapFactory(ReplicationFilters replicationFilters) {
+      super(new MyAdminCommandsImplementationBuilder(replicationFilters),
           new MyAggregationCommandsImplementationBuilder(),
           new MyAuthenticationCommandsImplementationsBuilder(),
           new MyDiagnosticCommandsImplementationBuilder(),
-          new MyGeneralCommandsImplementationBuilder(injector),
+          new MyGeneralCommandsImplementationBuilder(),
           new MyInternalCommandsImplementationsBuilder(),
           new MyReplCommandsImplementationsBuilder());
     }
@@ -134,8 +128,8 @@ public class ReplWriteTransactionImplementations extends WriteTransactionImpleme
 
     private final ReplicationFilters replicationFilters;
 
-    public MyAdminCommandsImplementationBuilder(Injector injector) {
-      replicationFilters = injector.getInstance(ReplicationFilters.class);
+    public MyAdminCommandsImplementationBuilder(ReplicationFilters replicationFilters) {
+      this.replicationFilters = replicationFilters;
     }
 
     @Override
@@ -239,14 +233,6 @@ public class ReplWriteTransactionImplementations extends WriteTransactionImpleme
 
   static class MyGeneralCommandsImplementationBuilder extends GeneralCommandsImplementationsBuilder<WriteMongodTransaction> {
 
-    private final MongodMetrics mongodMetrics;
-    private final ObjectIdFactory objectIdFactory;
-
-    public MyGeneralCommandsImplementationBuilder(Injector injector) {
-      this.mongodMetrics = injector.getInstance(MongodMetrics.class);
-      this.objectIdFactory = injector.getInstance(ObjectIdFactory.class);
-    }
-
     @Override
     public CommandImplementation<GetLastErrorArgument, GetLastErrorReply, WriteMongodTransaction> getGetLastErrrorImplementation() {
       return NotImplementedCommandImplementation.build();
@@ -254,7 +240,7 @@ public class ReplWriteTransactionImplementations extends WriteTransactionImpleme
 
     @Override
     public CommandImplementation<InsertArgument, InsertResult, WriteMongodTransaction> getInsertImplementation() {
-      return new InsertImplementation(mongodMetrics);
+      return new InsertImplementation();
     }
 
     @Override
@@ -264,12 +250,12 @@ public class ReplWriteTransactionImplementations extends WriteTransactionImpleme
 
     @Override
     public CommandImplementation<DeleteArgument, Long, WriteMongodTransaction> getDeleteImplementation() {
-      return new DeleteImplementation(mongodMetrics);
+      return new DeleteImplementation();
     }
 
     @Override
     public CommandImplementation<UpdateArgument, UpdateResult, WriteMongodTransaction> getUpdateImplementation() {
-      return new UpdateImplementation(objectIdFactory, mongodMetrics);
+      return new UpdateImplementation();
     }
 
   }

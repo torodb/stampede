@@ -66,9 +66,10 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
 
   @Override
   protected void doStart() {
-    super.doStart();
     streamExecutor.startAsync();
     streamExecutor.awaitRunning();
+
+    super.doStart();
   }
 
   @Override
@@ -81,6 +82,7 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
 
   @Override
   public void execute(CudAnalyzedOplogBatch cudBatch, ApplierContext context) throws UserException {
+    assert isRunning() : "The service is on state " + state() + " instead of RUNNING";
     List<NamespaceJob> namespaceJobList = cudBatch.streamNamespaceJobs().flatMap(this::split)
         .collect(Collectors.toList());
     concurrentMetrics.getSubBatchSizeMeter().mark(namespaceJobList.size());
@@ -107,6 +109,7 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
 
   private void execute(NamespaceJob job, ApplierContext applierContext)
       throws OplogManagerPersistException, UserException, NamespaceJobExecutionException {
+    assert isRunning() : "The service is not running";
     try (MongodConnection connection = getServer().openConnection()) {
       execute(job, applierContext, connection);
     }

@@ -20,7 +20,7 @@ package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
@@ -30,7 +30,7 @@ class ExclusiveWriteMongodTransactionImpl extends MongodTransactionImpl implemen
     ExclusiveWriteMongodTransaction {
 
   private final ExclusiveWriteTorodTransaction torodTransaction;
-  private final CommandsExecutor<? super ExclusiveWriteMongodTransactionImpl> commandsExecutor;
+  private final CommandExecutor<? super ExclusiveWriteMongodTransactionImpl> commandsExecutor;
 
   public ExclusiveWriteMongodTransactionImpl(MongodConnection connection, boolean concurrent) {
     super(connection);

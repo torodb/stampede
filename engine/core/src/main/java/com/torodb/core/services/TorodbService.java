@@ -22,19 +22,16 @@ import com.google.common.util.concurrent.Service;
 
 import java.util.concurrent.CompletableFuture;
 
-/**
- *
- */
 public interface TorodbService extends Service {
 
   public default CompletableFuture<?> stop() {
     this.stopAsync();
-    return CompletableFuture.runAsync(this::awaitRunning);
+    return CompletableFuture.runAsync(this::awaitTerminated);
   }
 
   public default CompletableFuture<?> start() {
     this.startAsync();
-    return CompletableFuture.runAsync(this::awaitTerminated);
+    return CompletableFuture.runAsync(this::awaitRunning);
   }
 
 }

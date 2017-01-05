@@ -37,9 +37,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
-/**
- *
- */
 public class MvccMetainfoRepository implements MetainfoRepository {
 
   private static final Logger LOGGER = LogManager.getLogger(MvccMetainfoRepository.class);

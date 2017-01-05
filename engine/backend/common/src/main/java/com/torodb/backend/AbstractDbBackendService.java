@@ -35,10 +35,7 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 
-/**
- *
- */
-public abstract class AbstractDbBackendService<ConfigurationT extends BackendConfiguration>
+public abstract class AbstractDbBackendService<ConfigurationT extends BackendConfig>
     extends IdleTorodbService implements DbBackendService {
 
   private static final Logger LOGGER = LogManager.getLogger(AbstractDbBackendService.class);
@@ -63,13 +60,13 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   private volatile boolean dataImportMode;
 
   /**
-   * Configure the backend. The contract specifies that any subclass must call initialize() method
+   * Configure the backend.
+   *
+   * <p>The contract specifies that any subclass must call initialize() method
    * after properly constructing the object.
    *
    * @param threadFactory the thread factory that will be used to create the startup and shutdown
    *                      threads
-   * @param configuration
-   * @param errorHandler
    */
   public AbstractDbBackendService(@TorodbIdleService ThreadFactory threadFactory,
       ConfigurationT configuration, ErrorHandler errorHandler) {
@@ -203,11 +200,6 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     if (!isRunning()) {
       throw new IllegalStateException("The " + serviceName() + " is not running");
     }
-  }
-
-  @Override
-  public long getDefaultCursorTimeout() {
-    return configuration.getCursorTimeout();
   }
 
   @Override

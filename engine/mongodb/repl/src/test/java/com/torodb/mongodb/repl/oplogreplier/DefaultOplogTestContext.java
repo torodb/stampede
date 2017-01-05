@@ -27,16 +27,12 @@ import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class DefaultOplogTestContext implements OplogTestContext {
 
   private final MongodServer mongodServer;
   private final OplogApplier oplogApplier;
 
-  public DefaultOplogTestContext(MongodServer mongodServer,
-      OplogApplier oplogApplier) {
+  public DefaultOplogTestContext(MongodServer mongodServer, OplogApplier oplogApplier) {
     this.mongodServer = mongodServer;
     this.oplogApplier = oplogApplier;
   }

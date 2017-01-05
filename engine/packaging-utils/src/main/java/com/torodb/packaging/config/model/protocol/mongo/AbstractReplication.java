@@ -27,7 +27,8 @@ import org.hibernate.validator.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder({"replSetName", "syncSource", "role", "ssl", "auth", "include", "exclude"})
-public abstract class AbstractReplication {
+//TODO(gortiz): Change the class name to something better like... just replication!
+public class AbstractReplication {
 
   private String replSetName;
   private Role role = Role.HIDDEN_SLAVE;

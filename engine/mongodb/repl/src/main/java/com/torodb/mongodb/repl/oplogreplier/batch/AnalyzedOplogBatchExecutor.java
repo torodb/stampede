@@ -40,12 +40,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
-/**
- *
- */
 @ThreadSafe
-public interface AnalyzedOplogBatchExecutor extends
-    Service,
+public interface AnalyzedOplogBatchExecutor extends Service,
     AnalyzedOplogBatchVisitor<OplogOperation, ApplierContext, RetrierGiveUpException> {
 
   public void execute(OplogOperation op, ApplierContext context)

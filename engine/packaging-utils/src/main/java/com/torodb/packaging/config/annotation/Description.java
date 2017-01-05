@@ -22,6 +22,8 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 
+import com.torodb.packaging.config.util.DescriptionFactoryWrapper;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -29,13 +31,17 @@ import java.lang.annotation.Target;
 import javax.inject.Qualifier;
 
 /**
- *
+ * This is used by {@link DescriptionFactoryWrapper} to generate the description of the annotated
+ * element.
  */
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)
 @Target({TYPE, FIELD, METHOD})
 public @interface Description {
 
+  /**
+   * The key that identifies the internationalized description on the associated property file.
+   */
   String value();
 
 }

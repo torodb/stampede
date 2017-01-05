@@ -25,22 +25,12 @@ import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
 import javax.annotation.Nonnull;
 
-/**
- *
- */
 public interface OplogReaderProvider {
 
   /**
    * Returns new oplog reader.
    *
-   * The created reader uses the given host and port as sync source
-   *
-   * @param syncSource
-   * @param mongoClientOptions
-   * @param mongoCredential
-   * @return
-   * @throws NoSyncSourceFoundException
-   * @throws UnreachableMongoServerException
+   * <p/>The created reader uses the given host and port as sync source
    */
   @Nonnull
   public OplogReader newReader(@Nonnull HostAndPort syncSource)
