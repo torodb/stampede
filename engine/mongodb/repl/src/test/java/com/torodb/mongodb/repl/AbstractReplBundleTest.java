@@ -93,7 +93,7 @@ public abstract class AbstractReplBundleTest<B extends Bundle> {
     }
   }
 
-  @Test(timeout = 5_000L)
+  @Test(timeout = 20_000L)
   public void testStartAndStop() {
     startDependencies();
 
