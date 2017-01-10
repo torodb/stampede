@@ -58,9 +58,6 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class BackendServiceImpl extends IdleTorodbService implements BackendService {
 
   private static final Logger LOGGER = LogManager.getLogger(BackendServiceImpl.class);
@@ -75,16 +72,8 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
   private final SchemaUpdater schemaUpdater;
 
   /**
-   * @param threadFactory          the thread factory that will be used to create the startup and
-   *                               shutdown threads
-   * @param dbBackendService
-   * @param sqlInterface
-   * @param schemaUpdater
-   * @param metainfoHandler
-   * @param identifierFactory
-   * @param ridGenerator
-   * @param retrier
-   * @param concurrentToolsFactory
+   * @param threadFactory the thread factory that will be used to create the startup and shutdown
+   *                      threads
    */
   @Inject
   public BackendServiceImpl(@TorodbIdleService ThreadFactory threadFactory,

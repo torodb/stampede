@@ -23,9 +23,6 @@ import com.torodb.mongodb.core.MongodServer;
 
 import java.util.stream.Stream;
 
-/**
- *
- */
 public interface OplogTestContext {
 
   public abstract MongodServer getMongodServer();

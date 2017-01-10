@@ -20,7 +20,7 @@ package com.torodb.packaging.config.model.backend.postgres;
 
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
+import com.torodb.packaging.config.util.BackendImplementationVisitor;
 
 public abstract class AbstractPostgres implements BackendImplementation, BackendPasswordConfig {
 
@@ -115,7 +115,7 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
   }
 
   @Override
-  public void accept(BackendImplementationVisitor visitor) {
-    visitor.visit(this);
+  public <R, A> R accept(BackendImplementationVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
   }
 }

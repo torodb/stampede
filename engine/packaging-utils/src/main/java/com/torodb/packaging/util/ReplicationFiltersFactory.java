@@ -32,9 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- *
- */
 public class ReplicationFiltersFactory {
 
   private static final Pattern ANY = SimpleRegExpDecoder.decode("*");

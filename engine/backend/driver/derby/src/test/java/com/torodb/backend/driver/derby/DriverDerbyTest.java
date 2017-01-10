@@ -18,6 +18,9 @@
 
 package com.torodb.backend.driver.derby;
 
+import com.google.inject.Guice;
+import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.supervision.SupervisorDecision;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,67 +38,21 @@ public class DriverDerbyTest {
   @Before
   public void setUp() throws Exception {
     OfficialDerbyDriver derbyDriver = new OfficialDerbyDriver();
-    dataSource = derbyDriver.getConfiguredDataSource(new DerbyDbBackendConfiguration() {
-      @Override
-      public String getUsername() {
-        return null;
-      }
-
-      @Override
-      public int getReservedReadPoolSize() {
-        return 0;
-      }
-
-      @Override
-      public String getPassword() {
-        return null;
-      }
-
-      @Override
-      public int getDbPort() {
-        return 0;
-      }
-
-      @Override
-      public String getDbName() {
-        return "torodb";
-      }
-
-      @Override
-      public String getDbHost() {
-        return null;
-      }
-
-      @Override
-      public long getCursorTimeout() {
-        return 0;
-      }
-
-      @Override
-      public long getConnectionPoolTimeout() {
-        return 0;
-      }
-
-      @Override
-      public int getConnectionPoolSize() {
-        return 0;
-      }
-
-      @Override
-      public boolean inMemory() {
-        return true;
-      }
-
-      @Override
-      public boolean embedded() {
-        return true;
-      }
-
-      @Override
-      public boolean includeForeignKeys() {
-        return true;
-      }
-    }, "torod");
+    BundleConfigImpl genericConfig = new BundleConfigImpl(
+        Guice.createInjector(),
+        (supervised, error) -> SupervisorDecision.IGNORE
+    );
+    dataSource = derbyDriver.getConfiguredDataSource(
+        new DerbyDbBackendConfigBuilder(genericConfig)
+            .setReservedReadPoolSize(0)
+            .setDbPort(0)
+            .setDbName("torodb")
+            .setConnectionPoolSize(0)
+            .setConnectionPoolTimeout(0)
+            .setInMemory(true)
+            .setEmbedded(true)
+            .build(),
+        "torod");
   }
 
   @Test
