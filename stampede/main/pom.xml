@@ -18,6 +18,9 @@
         <assembler.name>torodb-stampede</assembler.name>
         <assembler.fullName>ToroDB Stampede</assembler.fullName>
         <assembler.url>https://www.torodb.com/stampede</assembler.url>
+        <assembler.revision>1</assembler.revision>
+        <assembler.licenses>AGPLv3</assembler.licenses>
+        <assembler.changelog></assembler.changelog>
         <snap.grade>devel</snap.grade>
         <snap.confinement>devmode</snap.confinement>
     </properties>
@@ -283,7 +286,7 @@
                         </configuration>
                         <executions>
                             <execution>
-                                <id>build</id>
+                                <id>docker-build</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build</goal>
@@ -464,6 +467,117 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>rpm</id>
+            <properties>
+                <rpmbuilder.image>fedora:25</rpmbuilder.image>
+                <assembler.libdir>share/${assembler.name}/lib</assembler.libdir>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-rpm</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/rpm/${assembler.name}/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>assembler</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/rpm/${assembler.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <alias>rpmbuilder</alias>
+                                    <name>rpmbuilder</name>
+                                    <build>
+                                        <cleanup>remove</cleanup>
+                                        <optimise>true</optimise>
+                                        <from>${rpmbuilder.image}</from>
+                                        <runCmds>
+                                            <run>dnf -y install rpmdevtools rpmlint copr-cli help2man java-1.8.0-openjdk-headless postgresql</run>
+                                            <run>rpmdev-setuptree</run>
+                                        </runCmds>
+                                    </build>
+                                    <run>
+                                        <volumes>
+                                            <bind>
+                                                <volume>${basedir}/target/dist/rpm/torodb-stampede:/rpm</volume>
+                                            </bind>
+                                        </volumes>
+                                        <env>
+                                            <SPEC_FILE>/rpm/torodb-stampede.spec</SPEC_FILE>
+                                        </env>
+                                        <wait>
+                                            <time>600000</time>
+                                            <log>rpmbuilder finished</log>
+                                        </wait>
+                                        <cmd>
+                                            <arg>/bin/sh</arg>
+                                            <arg>-c</arg>
+                                            <arg>
+                                            set -x -v -e;
+                                            cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
+                                            rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
+                                            sed -i '/^Version:/s/-/_/g' "$SPEC_FILE"
+                                            spectool -g -R "$SPEC_FILE";
+                                            dnf -y builddep "$SPEC_FILE";
+                                            rpmbuild -ba "$SPEC_FILE";
+                                            cp -a "$HOME/rpmbuild" "/rpm/.";
+                                            chmod a+w /rpm -R;
+                                            echo "rpmbuilder finished";
+                                            </arg>
+                                        </cmd>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

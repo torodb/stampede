@@ -24,6 +24,7 @@ set -e
 
 # resolve links - $0 may be a softlink
 PRG="$0"
+PRG=`which $PRG`
 
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`
@@ -83,7 +84,7 @@ exec_user_command=(su -p "$TORO_USER" -c)
 
 if echo ' '"$@"' ' | grep -q -- "\s-h\s\|\s--help\s"
 then
-    echo "Usage: $PRG [<@{assembler.fullName}'s parameter>, ...]"
+    echo "Usage: $0 [<@{assembler.fullName}'s parameter>, ...]"
     echo
     echo "To get available parameters: @{assembler.name} -h"
     exit
@@ -130,11 +131,11 @@ then
         POSTGRES_DATABASE=${VALUE:-$POSTGRES_DATABASE}
         
         if ! "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1 \
-            && ! (ping -c 1 "$POSTGRES_HOST"|head -n 1|grep -q "(127.0.[01].1)" 2>/dev/null \
+            && ! (ping -c 1 "$POSTGRES_HOST" 2>/dev/null|head -n 1|grep -q "(127.0.[01].1)" 2>/dev/null \
                 && "${exec_admin_command[@]}" "$psql_command --no-readline -w -c 'SELECT 1'")
         then
             echo
-            echo "Can not connect to PostgreSQL with user $POSTGRES_ADMIN_USER:"
+            echo "Can not connect to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT with user $POSTGRES_ADMIN_USER:"
             "$psql_command" --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" || true
             echo
             echo "Configure PostgreSQL's administrator user to setup database for @{assembler.fullName}:"
@@ -142,7 +143,7 @@ then
             POSTGRES_ADMIN_USER=${VALUE:-$POSTGRES_ADMIN_USER}
             read -s -p "Type password for PostgreSQL's administrator user $POSTGRES_ADMIN_USER:" VALUE
             POSTGRES_ADMIN_PASSWORD=$VALUE
-            TMPPGPASSFILE="$(tempfile)"
+            TMPPGPASSFILE="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
             (
                 echo "$POSTGRES_HOST:$POSTGRES_PORT:*:$POSTGRES_ADMIN_USER:$POSTGRES_ADMIN_PASSWORD"
                 if [ -f "$PGPASSFILE" ]
@@ -249,7 +250,7 @@ then
     if [ ! -f "$TOROPASSFILE" ] || ! grep -q "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):\(\*\|$POSTGRES_DATABASE\):\(\*\|$POSTGRES_USER\):$TORODB_BACKEND_PASSWORD" "$TOROPASSFILE"
     then
         echo "Creating entry for user $POSTGRES_USER in $TOROPASSFILE"
-        TMPTOROPASSFILE="$(tempfile)"
+        TMPTOROPASSFILE="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
         (
             echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DATABASE:$POSTGRES_USER:$TORODB_BACKEND_PASSWORD"
             if [ -f "$TOROPASSFILE" ]
@@ -294,7 +295,7 @@ then
     fi
 else
     echo >&2
-    echo "Connection to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT database $POSTGRES_DATABASE with user $POSTGRES_USER has failed!" >&2
+    echo "Connection to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT database $POSTGRES_DATABASE with user $POSTGRES_ADMIN_USER has failed!" >&2
     echo >&2
     echo "Please, check PostgreSQL is running and, if connecting with TCP, the password for user $POSTGRES_ADMIN_USER is correctly configured in $PGPASSFILE" >&2
     echo "Remember to set file permission correctly to 0600:" >&2 
@@ -317,7 +318,7 @@ then
     echo "chmod 0600 $TOROPASSFILE" >&2
     echo >&2
     echo "To specify a user different than $POSTGRES_USER to connect @{assembler.fullName} to PostgreSQL specify it with --backend-user parameter:" >&2
-    echo "$PRG --backend-user <PostgreSQL's user name>" >&2 
+    echo "$0 --backend-user <PostgreSQL's user name>" >&2 
     exit 1
 fi
 
@@ -336,7 +337,7 @@ then
             fi
         done
     done
-    TMPTOROCONFIG=$(tempfile)
+    TMPTOROCONFIG="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
     "$TOROCMD" "${TORO_OPTIONS[@]}" \
         --backend-host "$POSTGRES_HOST" \
         --backend-port "$POSTGRES_PORT" \

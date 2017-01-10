@@ -7,7 +7,7 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>target/dist/snap/common</directory>
+            <directory>${project.build.directory}/dist/snap/common</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.wrapper</include>
@@ -16,7 +16,7 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/snap/torodb-stampede</directory>
+            <directory>${project.build.directory}/dist/snap/torodb-stampede</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.wrapper</include>
@@ -25,7 +25,7 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/run</directory>
+            <directory>${project.build.directory}/dist/run</directory>
             <outputDirectory>bin</outputDirectory>
             <excludes>
                 <exclude>*.bat</exclude>
@@ -34,7 +34,7 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/setup</directory>
+            <directory>${project.build.directory}/dist/setup</directory>
             <outputDirectory>bin</outputDirectory>
             <excludes>
                 <exclude>*.bat</exclude>
@@ -43,13 +43,13 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/conf</directory>
+            <directory>${project.build.directory}/dist/conf</directory>
             <outputDirectory>conf</outputDirectory>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/doc/</directory>
+            <directory>${project.build.directory}/dist/doc/</directory>
             <outputDirectory>doc</outputDirectory>
             <includes>
                 <include>README.md</include>
@@ -59,7 +59,7 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/lib</directory>
+            <directory>${project.build.directory}/dist/lib</directory>
             <outputDirectory>lib</outputDirectory>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
