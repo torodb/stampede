@@ -18,15 +18,15 @@
 
 package com.torodb.backend.postgresql;
 
-import com.google.inject.Injector;
 import com.torodb.backend.*;
 import com.torodb.backend.common.DatabaseTestContext;
+import com.torodb.backend.common.IntegrationTestBundleConfig;
 import com.torodb.backend.driver.postgresql.OfficialPostgreSqlDriver;
 import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.meta.PostgreSqlSchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.supervision.Supervisor;
+import com.torodb.core.modules.BundleConfig;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -37,62 +37,16 @@ public class PostgreSqlDatabaseTestContextFactory {
     DataTypeProvider provider = new PostgreSqlDataTypeProvider();
     PostgreSqlErrorHandler errorHandler = new PostgreSqlErrorHandler();
     SqlHelper sqlHelper = new SqlHelper(provider, errorHandler);
-    BackendConfig backendConfig = new BackendConfig() {
-      @Override
-      public long getConnectionPoolTimeout() {
-        return 10_000;
-      }
 
-      @Override
-      public int getConnectionPoolSize() {
-        return 30;
-      }
-
-      @Override
-      public int getReservedReadPoolSize() {
-        return 10;
-      }
-
-      @Override
-      public String getUsername() {
-        return "test";
-      }
-
-      @Override
-      public String getPassword() {
-        return "test";
-      }
-
-      @Override
-      public String getDbHost() {
-        return "localhost";
-      }
-
-      @Override
-      public String getDbName() {
-        return "test";
-      }
-
-      @Override
-      public int getDbPort() {
-        return 5432;
-      }
-
-      @Override
-      public boolean includeForeignKeys() {
-        return false;
-      }
-
-      @Override
-      public Injector getEssentialInjector() {
-        return null;
-      }
-
-      @Override
-      public Supervisor getSupervisor() {
-        return null;
-      }
-    };
+    BundleConfig bundleConfig = new IntegrationTestBundleConfig();
+    BackendConfig backendConfig = new BackendConfigImplBuilder(bundleConfig)
+        .setUsername("test")
+        .setPassword("test")
+        .setDbHost("localhost")
+        .setDbName("test")
+        .setDbPort(5432)
+        .setIncludeForeignKeys(false)
+        .build();
 
     DslContextFactory dslContextFactory = new DslContextFactoryImpl(provider);
     SqlInterface sqlInterface =

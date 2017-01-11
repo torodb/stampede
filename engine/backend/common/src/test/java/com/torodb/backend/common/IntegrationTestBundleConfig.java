@@ -16,67 +16,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.derby;
+package com.torodb.backend.common;
 
+import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.backend.BackendConfig;
+import com.google.inject.Stage;
+import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
+import com.torodb.core.supervision.SupervisorDecision;
 
-public class LocalTestDerbyDbBackendConfiguration implements BackendConfig {
+public class IntegrationTestBundleConfig implements BundleConfig {
 
-  @Override
-  public long getConnectionPoolTimeout() {
-    return 10_000;
-  }
+  private final Supervisor supervisor = new Supervisor() {
+    @Override
+    public SupervisorDecision onError(Object supervised, Throwable error) {
+      throw new AssertionError("Error on " + supervised, error);
+    }
+  };
 
-  @Override
-  public int getConnectionPoolSize() {
-    return 30;
-  }
-
-  @Override
-  public int getReservedReadPoolSize() {
-    return 10;
-  }
-
-  @Override
-  public String getUsername() {
-    return "torodb";
-  }
-
-  @Override
-  public String getPassword() {
-    return null;
-  }
-
-  @Override
-  public String getDbHost() {
-    return "localhost";
-  }
-
-  @Override
-  public String getDbName() {
-    return "torod";
-  }
-
-  @Override
-  public int getDbPort() {
-    return 1527;
-  }
-
-  @Override
-  public boolean includeForeignKeys() {
-    return false;
-  }
+  private final Injector essentialInjector = Guice.createInjector(Stage.PRODUCTION);
 
   @Override
   public Injector getEssentialInjector() {
-    return null;
+    return essentialInjector;
   }
 
   @Override
   public Supervisor getSupervisor() {
-    return null;
+    return supervisor;
   }
 
 }

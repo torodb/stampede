@@ -20,12 +20,15 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.*;
 import com.torodb.backend.common.DatabaseTestContext;
+import com.torodb.backend.common.IntegrationTestBundleConfig;
 import com.torodb.backend.derby.schema.DerbySchemaUpdater;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.modules.BundleConfig;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -33,10 +36,15 @@ import java.util.concurrent.ThreadFactory;
 public class DerbyDatabaseTestContextFactory {
 
   public DatabaseTestContext createInstance() {
+    BundleConfig bundleConfig = new IntegrationTestBundleConfig();
+    DerbyDbBackendConfig configuration = new DerbyDbBackendConfigBuilder(bundleConfig)
+        .setDbName("torod")
+        .setIncludeForeignKeys(false)
+        .build();
+
     DerbyErrorHandler errorHandler = new DerbyErrorHandler();
     DataTypeProvider provider = new DerbyDataTypeProvider();
     SqlHelper sqlHelper = new SqlHelper(provider, errorHandler);
-    DerbyDbBackendConfig configuration = new DerbyDbBackendConfig(true, true, new LocalTestDerbyDbBackendConfiguration());
 
     DslContextFactory dslContextFactory = new DslContextFactoryImpl(provider);
     SqlInterface sqlInterface =
