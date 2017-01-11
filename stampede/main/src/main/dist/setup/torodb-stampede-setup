@@ -78,8 +78,8 @@ then
 fi
 
 psql_command="$(which psql)"
-exec_admin_command=(su -p "$ADMIN_USER" -c)
-exec_user_command=(su -p "$TORO_USER" -c)
+exec_admin_command=(su -p -s /bin/bash "$ADMIN_USER" -c)
+exec_user_command=(su -p -s /bin/bash "$TORO_USER" -c)
 
 
 if echo ' '"$@"' ' | grep -q -- "\s-h\s\|\s--help\s"
@@ -118,6 +118,10 @@ POSTGRES_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 4)"
 TOROPASSFILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 5)"
 PGPASSFILE="$([ -z "$PGPASSFILE" ] && echo "$HOME/.pgpass" || echo "$PGPASSFILE")"
 
+function random_string {
+    base64 < /dev/urandom 2>/dev/null | tr -dc A-Za-z0-9_ 2>/dev/null | head -c 10 2>/dev/null
+}
+
 if $INTERACTIVE
 then
     while true
@@ -143,7 +147,7 @@ then
             POSTGRES_ADMIN_USER=${VALUE:-$POSTGRES_ADMIN_USER}
             read -s -p "Type password for PostgreSQL's administrator user $POSTGRES_ADMIN_USER:" VALUE
             POSTGRES_ADMIN_PASSWORD=$VALUE
-            TMPPGPASSFILE="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
+            TMPPGPASSFILE="/tmp/$(random_string)"
             (
                 echo "$POSTGRES_HOST:$POSTGRES_PORT:*:$POSTGRES_ADMIN_USER:$POSTGRES_ADMIN_PASSWORD"
                 if [ -f "$PGPASSFILE" ]
@@ -237,7 +241,12 @@ then
                 break
             fi
         done
-    fi 
+    fi
+else
+    if [ -f "$TOROPASSFILE" ] && grep -q "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):[^:]\+:\(\*\|$POSTGRES_USER\):" "$TOROPASSFILE"
+    then
+        TORODB_BACKEND_PASSWORD="$(grep "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):[^:]\+:\(\*\|$POSTGRES_USER\):" "$TOROPASSFILE"|head -n 1|cut -d ':' -f 5)"
+    fi
 fi
 
 if "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1'" > /dev/null 2>&1
@@ -245,12 +254,12 @@ then
     if [ -z "$TORODB_BACKEND_PASSWORD" ]
     then
         echo "Generating password for user $POSTGRES_USER"
-        TORODB_BACKEND_PASSWORD=$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)
+        TORODB_BACKEND_PASSWORD=$(random_string)
     fi
     if [ ! -f "$TOROPASSFILE" ] || ! grep -q "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):\(\*\|$POSTGRES_DATABASE\):\(\*\|$POSTGRES_USER\):$TORODB_BACKEND_PASSWORD" "$TOROPASSFILE"
     then
         echo "Creating entry for user $POSTGRES_USER in $TOROPASSFILE"
-        TMPTOROPASSFILE="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
+        TMPTOROPASSFILE="/tmp/$(random_string)"
         (
             echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DATABASE:$POSTGRES_USER:$TORODB_BACKEND_PASSWORD"
             if [ -f "$TOROPASSFILE" ]
@@ -313,7 +322,7 @@ then
     echo >&2
     echo "Please, check PostgreSQL's connection parameters and security restrictions (see pg_hba.conf file in your PostgreSQL installation)." >&2
     echo >&2
-    echo "Password for user $POSTGRES_ADMIN_USER must be configured in $TOROPASSFILE" >&2
+    echo "Password for user $POSTGRES_USER must be configured in $TOROPASSFILE" >&2
     echo "Remember to set file permission correctly to 0600:" >&2 
     echo "chmod 0600 $TOROPASSFILE" >&2
     echo >&2
@@ -337,7 +346,7 @@ then
             fi
         done
     done
-    TMPTOROCONFIG="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
+    TMPTOROCONFIG="/tmp/$(random_string)"
     "$TOROCMD" "${TORO_OPTIONS[@]}" \
         --backend-host "$POSTGRES_HOST" \
         --backend-port "$POSTGRES_PORT" \

@@ -1,4 +1,4 @@
-Name:           @{assembler.name}
+Name:           @{assembler.name}-postgres
 Version:        @{assembler.version}
 Release:        @{assembler.revision}
 Summary:        @{project.name}
@@ -10,6 +10,8 @@ BuildRequires: java-1.8.0-openjdk-headless
 BuildRequires: help2man
 Requires: java-1.8.0-openjdk-headless
 Requires: postgresql
+Requires: postgresql-server
+Conflicts: @{assembler.name}
 
 %description
 @{project.description}
@@ -27,7 +29,7 @@ install -p -D -m755 %{_builddir}/assembler/bin/@{assembler.name}.wrapper %{build
 install -p -D -m755 %{_builddir}/assembler/bin/@{assembler.name}-setup.wrapper %{buildroot}%{_bindir}/@{assembler.name}-setup
 install -p -D -m755 %{_builddir}/assembler/bin/@{assembler.name} %{buildroot}%{_datadir}/@{assembler.name}/bin/@{assembler.name}
 install -p -D -m755 %{_builddir}/assembler/bin/@{assembler.name}-setup %{buildroot}%{_datadir}/@{assembler.name}/bin/@{assembler.name}-setup
-install -p -D -m 644 %{_builddir}/assembler/systemd/@{assembler.name}.service %{buildroot}%{_unitdir}/@{assembler.name}.service
+install -p -D -m 644 %{_builddir}/assembler/systemd/@{assembler.name}-postgres.service %{buildroot}%{_unitdir}/@{assembler.name}.service
 install -p -D -m 644 %{_builddir}/assembler/logrotate/@{assembler.name} %{buildroot}%{_sysconfdir}/logrotate.d/@{assembler.name}
 install -p -D -m 644 %{_builddir}/assembler/conf/@{assembler.name}.yml %{buildroot}%{_sysconfdir}/@{assembler.name}/@{assembler.name}.yml
 install -p -D -m 644 %{_builddir}/assembler/sysconfig/@{assembler.name}.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/@{assembler.name}

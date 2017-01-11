@@ -63,5 +63,11 @@
             <destName>${assembler.name}.service.sample</destName>
             <fileMode>0644</fileMode>
         </file>
+        <file>
+            <source>${project.build.directory}/dist/systemd/${assembler.name}-postgres.service</source>
+            <outputDirectory>conf</outputDirectory>
+            <destName>${assembler.name}-postgres.service.sample</destName>
+            <fileMode>0644</fileMode>
+        </file>
     </files>
 </assembly>

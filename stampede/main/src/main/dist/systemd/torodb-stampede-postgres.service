@@ -1,7 +1,8 @@
 [Unit]
 Description=@{assembler.fullName}
+Requires=postgresql.service
 Wants=network.service
-After=network.service
+After=network.service postgresql.service
 
 [Service]
 Type=simple

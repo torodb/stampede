@@ -3,11 +3,20 @@
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
     <!--<id>bin</id>-->
     <formats>
-        <format>tar</format>
+        <format>dir</format>
     </formats>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/dist/rpm/common</directory>
+            <directory>${project.build.directory}/dist/snap/common</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/snap/${package.name}</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.wrapper</include>
@@ -36,27 +45,6 @@
         <fileSet>
             <directory>${project.build.directory}/dist/conf</directory>
             <outputDirectory>conf</outputDirectory>
-            <directoryMode>0755</directoryMode>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/dist/systemd</directory>
-            <outputDirectory>systemd</outputDirectory>
-            <directoryMode>0755</directoryMode>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/dist/logrotate</directory>
-            <outputDirectory>logrotate</outputDirectory>
-            <directoryMode>0755</directoryMode>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}/dist/rpm/common</directory>
-            <outputDirectory>sysconfig</outputDirectory>
-            <includes>
-                <include>*.sysconfig</include>
-            </includes>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>

@@ -300,6 +300,9 @@
         
         <profile>
             <id>snap</id>
+            <properties>
+                <package.name>${assembler.name}</package.name>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -340,10 +343,10 @@
                                 </goals>
                                 <configuration>
                                     <descriptors>
-                                        <descriptor>src/main/snap/${assembler.name}/assembly.xml</descriptor>
+                                        <descriptor>src/main/snap/assembly.xml</descriptor>
                                     </descriptors>
                                     <finalName>assembler</finalName>
-                                    <outputDirectory>${project.build.directory}/dist/snap/${assembler.name}</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/dist/snap/${package.name}</outputDirectory>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
                             </execution>
@@ -361,7 +364,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}</workingDirectory>
+                                    <workingDirectory>${project.build.directory}/dist/snap/${package.name}</workingDirectory>
                                     <executable>snapcraft</executable>
                                     <arguments>
                                         <argument>clean</argument>
@@ -375,94 +378,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}</workingDirectory>
-                                    <executable>snapcraft</executable>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        
-        <profile>
-            <id>snap-postgres</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-dependencies</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-resources</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-main-jar</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>assembler-snap-postgres</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>src/main/snap/${assembler.name}-postgres/assembly.xml</descriptor>
-                                    </descriptors>
-                                    <finalName>assembler</finalName>
-                                    <outputDirectory>${project.build.directory}/dist/snap/${assembler.name}-postgres</outputDirectory>
-                                    <tarLongFileMode>gnu</tarLongFileMode>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.5.0</version>
-                        <executions>
-                            <execution>
-                                <id>snapcraft-clean-postgres</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}-postgres</workingDirectory>
-                                    <executable>snapcraft</executable>
-                                    <arguments>
-                                        <argument>clean</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>snapcraft-build-postgres</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}-postgres</workingDirectory>
+                                    <workingDirectory>${project.build.directory}/dist/snap/${package.name}</workingDirectory>
                                     <executable>snapcraft</executable>
                                 </configuration>
                             </execution>
@@ -475,11 +391,30 @@
         <profile>
             <id>rpm</id>
             <properties>
+                <package.name>${assembler.name}</package.name>
                 <rpmbuilder.image>fedora:25</rpmbuilder.image>
-                <assembler.libdir>share/${assembler.name}/lib</assembler.libdir>
             </properties>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <id>assembler-version-property</id>
+                                <goals>
+                                    <goal>regex-property</goal>
+                                </goals>
+                                <configuration>
+                                    <name>assembler.version</name>
+                                    <value>${project.version}</value>
+                                    <regex>-</regex>
+                                    <replacement>_</replacement>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
@@ -518,10 +453,10 @@
                                 </goals>
                                 <configuration>
                                     <descriptors>
-                                        <descriptor>src/main/rpm/${assembler.name}/assembly.xml</descriptor>
+                                        <descriptor>src/main/rpm/assembly.xml</descriptor>
                                     </descriptors>
                                     <finalName>assembler</finalName>
-                                    <outputDirectory>${project.build.directory}/dist/rpm/${assembler.name}</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/dist/rpm/${package.name}</outputDirectory>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
                             </execution>
@@ -548,11 +483,11 @@
                                     <run>
                                         <volumes>
                                             <bind>
-                                                <volume>${basedir}/target/dist/rpm/torodb-stampede:/rpm</volume>
+                                                <volume>${basedir}/target/dist/rpm/${package.name}:/rpm</volume>
                                             </bind>
                                         </volumes>
                                         <env>
-                                            <SPEC_FILE>/rpm/torodb-stampede.spec</SPEC_FILE>
+                                            <SPEC_FILE>/rpm/${package.name}.spec</SPEC_FILE>
                                         </env>
                                         <wait>
                                             <time>600000</time>
@@ -565,7 +500,6 @@
                                             set -x -v -e;
                                             cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
                                             rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
-                                            sed -i '/^Version:/s/-/_/g' "$SPEC_FILE"
                                             spectool -g -R "$SPEC_FILE";
                                             dnf -y builddep "$SPEC_FILE";
                                             rpmbuild -ba "$SPEC_FILE";
