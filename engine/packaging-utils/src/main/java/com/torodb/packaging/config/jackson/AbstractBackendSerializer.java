@@ -40,7 +40,7 @@ import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
+import com.torodb.packaging.config.util.BackendImplementationVisitor;
 
 import java.io.IOException;
 import java.util.Map;
@@ -69,7 +69,8 @@ public abstract class AbstractBackendSerializer<T extends AbstractBackend>
     }
 
     value.getBackendImplementation().accept(
-        new BackendImplementationSerializerVisitor(value, jgen));
+        new BackendImplementationSerializerVisitor(value, jgen),
+        null);
 
     jgen.writeEndObject();
   }
@@ -128,7 +129,7 @@ public abstract class AbstractBackendSerializer<T extends AbstractBackend>
   }
 
   private static class BackendImplementationSerializerVisitor implements
-      BackendImplementationVisitor {
+      BackendImplementationVisitor<Void, Void> {
 
     private final AbstractBackend backend;
     private final JsonGenerator jgen;
@@ -139,13 +140,15 @@ public abstract class AbstractBackendSerializer<T extends AbstractBackend>
     }
 
     @Override
-    public void visit(AbstractPostgres value) {
+    public Void visit(AbstractPostgres value, Void arg) {
       defaultVisit(value);
+      return null;
     }
 
     @Override
-    public void visit(AbstractDerby value) {
+    public Void visit(AbstractDerby value, Void arg) {
       defaultVisit(value);
+      return null;
     }
 
     private void defaultVisit(BackendImplementation value) {

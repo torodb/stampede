@@ -18,74 +18,24 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.*;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.torodb.backend.BackendServiceImpl;
-import com.torodb.core.backend.BackendService;
-import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
-import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
-import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
-import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer.BatchAnalyzerFactory;
-import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
-import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
-import com.torodb.torod.TorodBundle;
-import com.torodb.torod.TorodServer;
+import com.torodb.core.modules.Bundle;
+import com.torodb.core.modules.BundleConfig;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
+import com.torodb.mongodb.repl.ReplCoreBundle;
+import com.torodb.mongodb.repl.oplogreplier.OplogTestContextResourceRule.OplogApplierBundleFactory;
 
-/**
- *
- * @author gortiz
- */
 public abstract class DefaultOplogApplierTest extends AbstractOplogApplierTest {
 
   @Override
-  public Module getMongodSpecificTestModule() {
-    return new DefaultMongodModule();
+  public OplogApplierBundleFactory getApplierBundleFactory() {
+    return DefaultOplogApplierTest::createOplogApplierBundle;
   }
 
-  private static class DefaultMongodModule extends PrivateModule {
+  private static Bundle<OplogApplier> createOplogApplierBundle(BundleConfig generalConfig,
+      ReplCoreBundle replCoreBundle, MongoDbCoreBundle mongoDbCoreBundle) {
 
-    @Override
-    protected void configure() {
-      bind(ConcurrentOplogBatchExecutor.class)
-          .in(Singleton.class);
-
-      bind(AnalyzedOplogBatchExecutor.class)
-          .to(ConcurrentOplogBatchExecutor.class)
-          .in(Singleton.class);
-      expose(AnalyzedOplogBatchExecutor.class);
-
-      bind(ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics.class)
-          .in(Singleton.class);
-      bind(AnalyzedOplogBatchExecutor.AnalyzedOplogBatchExecutorMetrics.class)
-          .to(ConcurrentOplogBatchExecutorMetrics.class);
-
-      bind(ConcurrentOplogBatchExecutor.SubBatchHeuristic.class)
-          .toInstance((ConcurrentOplogBatchExecutorMetrics metrics) -> 100);
-
-      install(new FactoryModuleBuilder()
-          .implement(BatchAnalyzer.class, BatchAnalyzer.class)
-          .build(BatchAnalyzer.BatchAnalyzerFactory.class)
-      );
-      expose(BatchAnalyzerFactory.class);
-
-      bind(AnalyzedOpReducer.class)
-          .toInstance(new AnalyzedOpReducer(true));
-
-      bind(ReplicationFilters.class)
-          .toInstance(new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of()));
-      expose(ReplicationFilters.class);
-
-      bind(BackendService.class)
-          .to(BackendServiceImpl.class)
-          .asEagerSingleton();
-    }
-
-    @Provides
-    TorodServer getMongodServer(TorodBundle bundle) {
-      return bundle.getTorodServer();
-    }
+    return DefaultOplogApplierBundleTest.createBundle(generalConfig, replCoreBundle,
+        mongoDbCoreBundle).map(DefaultOplogApplierBundleExtInt::getOplogApplier);
   }
 
 }

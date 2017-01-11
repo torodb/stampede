@@ -8,6 +8,7 @@ target/
 .project
 .classpath
 .settings/
+.checkstyle
 hs_err*.log
 /documentation/static
 /documentation/site

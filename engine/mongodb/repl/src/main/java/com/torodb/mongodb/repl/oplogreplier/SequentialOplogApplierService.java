@@ -28,6 +28,7 @@ import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.repl.OplogApplierService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;

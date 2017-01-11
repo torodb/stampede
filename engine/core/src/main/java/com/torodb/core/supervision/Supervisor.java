@@ -18,9 +18,6 @@
 
 package com.torodb.core.supervision;
 
-/**
- *
- */
 public interface Supervisor {
 
   public SupervisorDecision onError(Object supervised, Throwable error);

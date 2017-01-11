@@ -27,7 +27,7 @@ import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.exceptions.CommandNotFoundException;
 import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsLibrary.LibraryEntry;
+import com.eightkdata.mongowp.server.api.CommandLibrary.LibraryEntry;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
@@ -50,8 +50,8 @@ import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateResult
 import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateStatement;
 import com.torodb.mongodb.core.ExclusiveWriteMongodTransaction;
 import com.torodb.mongodb.repl.OplogManager;
-import com.torodb.mongodb.repl.commands.ReplCommandsExecutor;
-import com.torodb.mongodb.repl.commands.ReplCommandsLibrary;
+import com.torodb.mongodb.repl.commands.ReplCommandExecutor;
+import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
@@ -69,11 +69,11 @@ public class OplogOperationApplier {
 
   private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);
   private final Visitor visitor = new Visitor();
-  private final ReplCommandsLibrary library;
-  private final ReplCommandsExecutor executor;
+  private final ReplCommandLibrary library;
+  private final ReplCommandExecutor executor;
 
   @Inject
-  public OplogOperationApplier(ReplCommandsLibrary library, ReplCommandsExecutor executor) {
+  public OplogOperationApplier(ReplCommandLibrary library, ReplCommandExecutor executor) {
     this.library = library;
     this.executor = executor;
   }

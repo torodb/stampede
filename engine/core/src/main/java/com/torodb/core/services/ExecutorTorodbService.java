@@ -18,6 +18,7 @@
 
 package com.torodb.core.services;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.time.Duration;
@@ -36,22 +37,12 @@ public class ExecutorTorodbService<ExecutorServiceT extends ExecutorService>
   private ExecutorServiceT executorService;
   private final Function<ThreadFactory, ExecutorServiceT> executorServiceProvider;
 
-  /**
-   *
-   * @param threadFactory
-   * @param executorServiceProvider
-   */
   public ExecutorTorodbService(ThreadFactory threadFactory,
       Function<ThreadFactory, ExecutorServiceT> executorServiceProvider) {
     this.threadFactory = threadFactory;
     this.executorServiceProvider = executorServiceProvider;
   }
 
-  /**
-   *
-   * @param threadFactory
-   * @param executorServiceSupplier
-   */
   public ExecutorTorodbService(ThreadFactory threadFactory,
       Supplier<ExecutorServiceT> executorServiceSupplier) {
     this.threadFactory = threadFactory;
@@ -98,16 +89,22 @@ public class ExecutorTorodbService<ExecutorServiceT extends ExecutorService>
     return executorService;
   }
 
-  protected CompletableFuture<Void> execute(Runnable runnable) {
+  public CompletableFuture<Void> execute(Runnable runnable) {
+    Preconditions.checkState(isRunning(), "The executor is not running");
+    assert executorService != null;
     return CompletableFuture.runAsync(runnable, executorService);
   }
 
-  protected <O> CompletableFuture<O> execute(Supplier<O> supplier) {
+  public <O> CompletableFuture<O> execute(Supplier<O> supplier) {
+    Preconditions.checkState(isRunning(), "The executor is not running");
+    assert executorService != null;
     return CompletableFuture.supplyAsync(supplier, executorService);
   }
 
-  protected <I, O> CompletableFuture<O> thenApply(
+  public <I, O> CompletableFuture<O> thenApply(
       CompletableFuture<I> previous, Function<I, O> fun) {
+    Preconditions.checkState(isRunning(), "The executor is not running");
+    assert executorService != null;
     return previous.thenApplyAsync(fun, executorService);
   }
 

@@ -21,14 +21,12 @@ package com.torodb.torod.guice;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.dsl.backend.impl.BackendConnectionJobFactoryImpl;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.torod.TorodBundle;
-import com.torodb.torod.TorodBundleFactory;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.impl.memory.MemoryTorodServer;
 import com.torodb.torod.pipeline.InsertPipeline;
@@ -37,9 +35,6 @@ import com.torodb.torod.pipeline.impl.SameThreadInsertPipeline;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class MemoryTorodModule extends PrivateModule {
 
   @Override
@@ -49,16 +44,15 @@ public class MemoryTorodModule extends PrivateModule {
 
     bind(TorodServer.class)
         .to(MemoryTorodServer.class);
-
-    install(new FactoryModuleBuilder()
-        .implement(TorodBundle.class, TorodBundle.class)
-        .build(TorodBundleFactory.class)
-    );
-    expose(TorodBundleFactory.class);
+    expose(TorodServer.class);
 
     bind(InsertPipelineFactory.class)
         .to(MemoryInsertPipelineFactory.class)
         .in(Singleton.class);
+    expose(InsertPipelineFactory.class);
+
+    bind(BackendTransactionJobFactory.class)
+        .to(BackendConnectionJobFactoryImpl.class);
   }
 
   private static class MemoryInsertPipelineFactory extends AbstractService

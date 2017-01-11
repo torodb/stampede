@@ -32,15 +32,15 @@ import com.eightkdata.mongowp.messages.request.UpdateMessage;
 import com.eightkdata.mongowp.messages.response.ReplyMessage;
 import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
 import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandsLibrary;
+import com.eightkdata.mongowp.server.api.CommandLibrary;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.SafeRequestProcessor;
 import com.eightkdata.mongowp.server.api.pojos.QueryRequest;
 import com.google.common.collect.Lists;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.RetrierGiveUpException;
-import com.torodb.mongodb.commands.TorodbCommandsLibrary;
-import com.torodb.mongodb.commands.TorodbCommandsLibrary.RequiredTransaction;
+import com.torodb.mongodb.commands.CommandClassifier;
+import com.torodb.mongodb.commands.RequiredTransaction;
 import com.torodb.mongodb.commands.signatures.general.FindCommand;
 import com.torodb.mongodb.commands.signatures.general.FindCommand.FindArgument;
 import com.torodb.mongodb.commands.signatures.general.FindCommand.FindResult;
@@ -56,13 +56,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.Callable;
 
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-/**
- *
- */
-@Singleton
+@ThreadSafe
 public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodConnection> {
 
   private static final Logger LOGGER = LogManager.getLogger(TorodbSafeRequestProcessor.class);
@@ -70,15 +67,18 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
   public static final AttributeKey<MongodConnection> MONGOD_CONNECTION_KEY = AttributeKey
       .newInstance("mongod.connection");
   private final Retrier retrier;
-  private final TorodbCommandsLibrary commandsLibrary;
+  private final CommandLibrary commandLibrary;
+  private final CommandClassifier commandClassifier;
   private final MongodMetrics mongodMetrics;
 
   @Inject
   public TorodbSafeRequestProcessor(MongodServer server, Retrier retrier,
-      TorodbCommandsLibrary commandsLibrary, MongodMetrics mongodMetrics) {
+      CommandLibrary commandLibrary, CommandClassifier commandClassifier,
+      MongodMetrics mongodMetrics) {
     this.server = server;
     this.retrier = retrier;
-    this.commandsLibrary = commandsLibrary;
+    this.commandLibrary = commandLibrary;
+    this.commandClassifier = commandClassifier;
     this.mongodMetrics = mongodMetrics;
   }
 
@@ -98,7 +98,7 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
     Timer timer = mongodMetrics.getTimer(command);
     try (Timer.Context ctx = timer.time()) {
       Callable<Status<R>> callable;
-      RequiredTransaction commandType = commandsLibrary.getCommandType(command);
+      RequiredTransaction commandType = commandClassifier.classify(command);
       switch (commandType) {
         case NO_TRANSACTION:
           callable = () -> {
@@ -151,8 +151,8 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
   }
 
   @Override
-  public CommandsLibrary getCommandsLibrary() {
-    return commandsLibrary;
+  public CommandLibrary getCommandsLibrary() {
+    return commandLibrary;
   }
 
   @Override

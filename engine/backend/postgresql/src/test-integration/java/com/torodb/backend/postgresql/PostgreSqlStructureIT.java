@@ -43,6 +43,7 @@ public class PostgreSqlStructureIT extends AbstractStructureIT {
     typesDictionary.put(FieldType.NULL, "bool");
     typesDictionary.put(FieldType.TIME, "time");
     typesDictionary.put(FieldType.CHILD, "bool");
+    typesDictionary.put(FieldType.DECIMAL128, "numeric");
   }
 
   @Override

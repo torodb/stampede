@@ -63,7 +63,6 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -72,20 +71,13 @@ import javax.inject.Singleton;
 @Singleton
 public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgument, UpdateResult> {
 
-  private final ObjectIdFactory objectIdFactory;
-
-  private MongodMetrics mongodMetrics;
-
-  @Inject
-  public UpdateImplementation(ObjectIdFactory objectIdFactory, MongodMetrics mongodMetrics) {
-    this.mongodMetrics = mongodMetrics;
-    this.objectIdFactory = objectIdFactory;
-  }
-
   @Override
   public Status<UpdateResult> apply(Request req,
       Command<? super UpdateArgument, ? super UpdateResult> command, UpdateArgument arg,
       WriteMongodTransaction context) {
+    MongodMetrics mongodMetrics = context.getConnection().getServer().getMetrics();
+    ObjectIdFactory objectIdFactory = context.getConnection().getServer().getObjectIdFactory();
+
     UpdateStatus updateStatus = new UpdateStatus();
 
     try {

@@ -27,7 +27,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
 import com.torodb.mongodb.commands.AbstractCommandMapFactory;
-import com.torodb.mongodb.commands.ExclusiveWriteTransactionImplementations;
+import com.torodb.mongodb.commands.impl.ExclusiveWriteTransactionCmdsImpl;
 import com.torodb.mongodb.commands.impl.NotImplementedCommandImplementation;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.commands.signatures.admin.AdminCommands.AdminCommandsImplementationsBuilder;
@@ -94,12 +94,9 @@ import com.torodb.mongodb.repl.commands.impl.RenameCollectionReplImpl;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- *
- */
 @Singleton
 @SuppressWarnings("checkstyle:LineLength")
-public class ReplExclusiveWriteTransactionImplementations extends ExclusiveWriteTransactionImplementations {
+public class ReplExclusiveWriteTransactionImplementations extends ExclusiveWriteTransactionCmdsImpl {
 
   @Inject
   protected ReplExclusiveWriteTransactionImplementations(Injector injector) {

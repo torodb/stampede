@@ -23,6 +23,7 @@ import com.torodb.kvdocument.values.KvArray;
 import com.torodb.kvdocument.values.KvBinary;
 import com.torodb.kvdocument.values.KvBoolean;
 import com.torodb.kvdocument.values.KvDate;
+import com.torodb.kvdocument.values.KvDecimal128;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvDouble;
 import com.torodb.kvdocument.values.KvInstant;
@@ -106,6 +107,11 @@ public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
 
   @Override
   public Void visit(KvMongoTimestamp value, DocConsumer arg) {
+    return null;
+  }
+
+  @Override
+  public Void visit(KvDecimal128 value, DocConsumer arg) {
     return null;
   }
 

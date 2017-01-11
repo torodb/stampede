@@ -18,6 +18,8 @@
 
 package com.torodb.d2r;
 
+import com.torodb.core.d2r.MemoryRidGenerator;
+
 import static org.junit.Assert.*;
 
 import com.torodb.common.util.HexUtils;
@@ -470,7 +472,7 @@ public class Document2RelStackTest {
   }
 
   private CollectionData parseDocument(String... docNames) {
-    MockRidGenerator ridGenerator = new MockRidGenerator();
+    MemoryRidGenerator ridGenerator = new MemoryRidGenerator();
     IdentifierFactory identifierFactory =
         new DefaultIdentifierFactory(new MockIdentifierInterface());
     MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);

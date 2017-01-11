@@ -325,7 +325,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
   private void logCollectionCloning(String toDb, String toCol, int insertedDocs,
       int requestedDocs) {
     if (insertedDocs != requestedDocs) {
-      throw new AssertionError("Detected aninconsistency between inserted documents ( "
+      throw new AssertionError("Detected an inconsistency between inserted documents ( "
           + insertedDocs + ") andrequested documents to insert (" + requestedDocs + ")");
     }
     LOGGER.info("{} documents have been cloned to {}.{}", insertedDocs, toDb, toCol);

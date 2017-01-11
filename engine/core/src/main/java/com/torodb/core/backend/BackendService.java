@@ -22,9 +22,6 @@ import com.google.common.util.concurrent.Service;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
 
-/**
- *
- */
 public interface BackendService extends Service {
 
   public BackendConnection openConnection();
@@ -32,25 +29,23 @@ public interface BackendService extends Service {
   /**
    * Disables the data import mode, setting the normal one.
    *
-   * This method can be quite slow, as it is usual to execute quite expensive low level task like
+   * <p>This method can be quite slow, as it is usual to execute quite expensive low level task like
    * recreate indexes.
    *
    * @param snapshot the meta data snapshot.
-   * @throws RollbackException
    */
   public void disableDataImportMode(MetaSnapshot snapshot) throws RollbackException;
 
   /**
    * Sets the backend on a state where inserts are faster.
    *
-   * During this state, only metadata operations and inserts are supported (but it is not mandatory
-   * to throw an exception if other operations are recived). It is expected that each call to this
-   * method is follow by a call to
-     * {@link #enableDataImportMode(com.torodb.core.transaction.metainf.MetaSnapshot) }, which will
+   * <p>During this state, only metadata operations and inserts are supported (but it is not
+   * mandatory to throw an exception if other operations are recived). It is expected that each
+   * call to this method is follow by a call to
+   * {@link #enableDataImportMode(com.torodb.core.transaction.metainf.MetaSnapshot) }, which will
    * enable the default mode.
    *
    * @param snapshot the meta data snapshot.
-   * @throws RollbackException
    */
   public void enableDataImportMode(MetaSnapshot snapshot) throws RollbackException;
 }

@@ -29,6 +29,7 @@ import com.google.common.collect.Lists;
 import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.Decimal128Type;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.types.DoubleType;
 import com.torodb.kvdocument.types.GenericType;
@@ -78,6 +79,8 @@ public class MongoWpConverter {
         return IntegerType.INSTANCE;
       case INT64:
         return LongType.INSTANCE;
+      case DECIMAL128:
+        return Decimal128Type.INSTANCE;
       case NULL:
         return NullType.INSTANCE;
       case OBJECT_ID:

@@ -18,7 +18,7 @@
 
 package com.torodb.mongodb.core;
 
-import com.eightkdata.mongowp.server.api.CommandsExecutor;
+import com.eightkdata.mongowp.server.api.CommandExecutor;
 import com.eightkdata.mongowp.server.api.Connection;
 import com.google.common.base.Preconditions;
 import com.torodb.torod.TorodConnection;
@@ -36,7 +36,7 @@ public class MongodConnection implements Connection, AutoCloseable {
   private final MongodServer server;
   private final TorodConnection torodConnection;
   private final LastErrorManager lastErrorManager;
-  private final CommandsExecutor<? super MongodConnection> commandsExecutor;
+  private final CommandExecutor<? super MongodConnection> commandsExecutor;
   private MongodTransaction currentTransaction;
   private boolean closed = false;
   private final StackTraceElement[] stack;
@@ -107,7 +107,7 @@ public class MongodConnection implements Connection, AutoCloseable {
     return torodConnection.getConnectionId();
   }
 
-  public CommandsExecutor<? super MongodConnection> getCommandsExecutor() {
+  public CommandExecutor<? super MongodConnection> getCommandsExecutor() {
     return commandsExecutor;
   }
 

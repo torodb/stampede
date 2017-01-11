@@ -43,6 +43,7 @@ public class DerbyStructureIT extends AbstractStructureIT {
     typesDictionary.put(FieldType.NULL, "BOOLEAN");
     typesDictionary.put(FieldType.TIME, "TIME");
     typesDictionary.put(FieldType.CHILD, "BOOLEAN");
+    typesDictionary.put(FieldType.DECIMAL128, "NUMERIC");
   }
 
   @Override

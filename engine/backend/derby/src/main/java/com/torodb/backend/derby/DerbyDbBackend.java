@@ -20,7 +20,7 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.TransactionIsolationLevel;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.core.annotations.TorodbIdleService;
 import org.apache.logging.log4j.LogManager;
@@ -35,10 +35,9 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 /**
- *
- * Derby-based backend
+ * Derby-based backend.
  */
-public class DerbyDbBackend extends AbstractDbBackendService<DerbyDbBackendConfiguration> {
+public class DerbyDbBackend extends AbstractDbBackendService<DerbyDbBackendConfig> {
 
   private static final Logger LOGGER = LogManager.getLogger(DerbyDbBackend.class);
 
@@ -46,7 +45,7 @@ public class DerbyDbBackend extends AbstractDbBackendService<DerbyDbBackendConfi
 
   @Inject
   public DerbyDbBackend(@TorodbIdleService ThreadFactory threadFactory,
-      DerbyDbBackendConfiguration configuration,
+      DerbyDbBackendConfig configuration,
       DerbyDriverProvider driverProvider, DerbyErrorHandler errorHandler) {
     super(threadFactory, configuration, errorHandler);
 
@@ -57,7 +56,7 @@ public class DerbyDbBackend extends AbstractDbBackendService<DerbyDbBackendConfi
   }
 
   @Override
-  protected DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration,
+  protected DataSource getConfiguredDataSource(DerbyDbBackendConfig configuration,
       String poolName) {
     return driverProvider.getConfiguredDataSource(configuration, poolName);
   }

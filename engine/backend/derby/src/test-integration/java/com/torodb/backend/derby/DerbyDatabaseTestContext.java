@@ -21,7 +21,7 @@ package com.torodb.backend.derby;
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.common.DatabaseTestContext;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
+import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
 import com.torodb.backend.meta.SchemaUpdater;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,10 +41,10 @@ public class DerbyDatabaseTestContext implements DatabaseTestContext {
 
   private SchemaUpdater schemaUpdater;
 
-  private DerbyDbBackendConfiguration configuration;
+  private DerbyDbBackendConfig configuration;
 
   public DerbyDatabaseTestContext(SqlInterface sqlInterface, DslContextFactory dslContextFactory,
-                                  SchemaUpdater schemaUpdater, DerbyDbBackendConfiguration configuration) {
+                                  SchemaUpdater schemaUpdater, DerbyDbBackendConfig configuration) {
     this.sqlInterface = sqlInterface;
     this.dslContextFactory = dslContextFactory;
     this.schemaUpdater = schemaUpdater;

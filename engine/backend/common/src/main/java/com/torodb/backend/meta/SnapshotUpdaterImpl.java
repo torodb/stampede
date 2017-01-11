@@ -72,9 +72,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class SnapshotUpdaterImpl implements SnapshotUpdater {
 
   private static final Logger LOGGER = LogManager.getLogger(SnapshotUpdaterImpl.class);

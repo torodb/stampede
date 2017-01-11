@@ -18,24 +18,11 @@
 
 package com.torodb.backend.derby;
 
-import com.torodb.backend.driver.derby.DerbyDbBackendConfiguration;
+import com.google.inject.Injector;
+import com.torodb.backend.BackendConfig;
+import com.torodb.core.supervision.Supervisor;
 
-public class LocalTestDerbyDbBackendConfiguration implements DerbyDbBackendConfiguration {
-
-  @Override
-  public boolean inMemory() {
-    return true;
-  }
-
-  @Override
-  public boolean embedded() {
-    return true;
-  }
-
-  @Override
-  public long getCursorTimeout() {
-    return 10L * 60 * 1000;
-  }
+public class LocalTestDerbyDbBackendConfiguration implements BackendConfig {
 
   @Override
   public long getConnectionPoolTimeout() {
@@ -80,6 +67,16 @@ public class LocalTestDerbyDbBackendConfiguration implements DerbyDbBackendConfi
   @Override
   public boolean includeForeignKeys() {
     return false;
+  }
+
+  @Override
+  public Injector getEssentialInjector() {
+    return null;
+  }
+
+  @Override
+  public Supervisor getSupervisor() {
+    return null;
   }
 
 }

@@ -314,6 +314,16 @@ public abstract class AbstractStructureInterface implements StructureInterface {
     }
 
     if (!dbBackend.isOnDataInsertMode()) {
+      String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName,
+          metaDataReadInterface.getReadInternalFields(tableRef));
+      result.add((dsl) -> {
+        sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
+        return metaDataReadInterface.getReadInternalFields(tableRef).stream()
+            .map(f -> f.getName()).collect(Collectors.joining("_")) + "_idx";
+      });
+    }
+
+    if (!dbBackend.isOnDataInsertMode()) {
       if (dbBackend.includeForeignKeys()) {
         String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName,
             metaDataReadInterface.getReferenceInternalFields(tableRef),
@@ -324,24 +334,17 @@ public abstract class AbstractStructureInterface implements StructureInterface {
               .getName()).collect(Collectors.joining("_")) + "_fkey";
         });
       } else {
-        String foreignKeyIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName,
-            metaDataReadInterface.getReferenceInternalFields(tableRef));
-        result.add((dsl) -> {
-          sqlHelper.executeStatement(dsl, foreignKeyIndexStatement, Context.CREATE_INDEX);
-          return metaDataReadInterface.getReferenceInternalFields(tableRef).stream().map(f -> f
-              .getName()).collect(Collectors.joining("_")) + "_idx";
-        });
+        if (!tableRef.isRoot() && !tableRef.getParent().get().isRoot()) {
+          String foreignKeyIndexStatement = getCreateDocPartTableIndexStatement(
+              schemaName, tableName,
+              metaDataReadInterface.getReferenceInternalFields(tableRef));
+          result.add((dsl) -> {
+            sqlHelper.executeStatement(dsl, foreignKeyIndexStatement, Context.CREATE_INDEX);
+            return metaDataReadInterface.getReferenceInternalFields(tableRef).stream().map(f -> f
+                .getName()).collect(Collectors.joining("_")) + "_idx";
+          });
+        }
       }
-    }
-
-    if (!dbBackend.isOnDataInsertMode()) {
-      String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName,
-          metaDataReadInterface.getReadInternalFields(tableRef));
-      result.add((dsl) -> {
-        sqlHelper.executeStatement(dsl, readIndexStatement, Context.CREATE_INDEX);
-        return metaDataReadInterface.getReadInternalFields(tableRef).stream()
-            .map(f -> f.getName()).collect(Collectors.joining("_")) + "_idx";
-      });
     }
 
     return result.stream();

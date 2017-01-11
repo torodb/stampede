@@ -46,7 +46,8 @@ public class BuildInfoImplementation extends ConnectionTorodbCommandImpl<Empty, 
       Command<? super Empty, ? super BuildInfoResult> command,
       Empty arg, MongodConnection context) {
     return Status.<BuildInfoResult>ok(new BuildInfoResult(
-        MongoVersion.V3_0, 0,
+        MongoVersion.V3_2,
+        7,
         buildProperties.getGitCommitId(),
         buildProperties.getOsName() + " " + buildProperties.getOsVersion() + " " + buildProperties
         .getOsArch(),

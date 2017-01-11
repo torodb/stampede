@@ -48,4 +48,6 @@ public interface KvValueVisitor<R, A> {
 
   public R visit(KvMongoTimestamp value, A arg);
 
+  public R visit(KvDecimal128 value, A arg);
+
 }

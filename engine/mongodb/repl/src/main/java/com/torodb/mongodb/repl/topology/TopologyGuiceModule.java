@@ -18,6 +18,8 @@
 
 package com.torodb.mongodb.repl.topology;
 
+import com.eightkdata.mongowp.client.core.MongoClientFactory;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
@@ -25,6 +27,7 @@ import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
+import com.torodb.mongodb.repl.guice.ReplSetName;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -32,13 +35,20 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.inject.Singleton;
 
-/**
- *
- */
 public class TopologyGuiceModule extends PrivateModule {
+
+  private final TopologyBundleConfig config;
+
+  public TopologyGuiceModule(TopologyBundleConfig config) {
+    this.config = config;
+  }
 
   @Override
   protected void configure() {
+    expose(SyncSourceProvider.class);
+    expose(TopologyService.class);
+
+    bindConfig();
 
     bind(HeartbeatNetworkHandler.class)
         .to(MongoClientHeartbeatNetworkHandler.class)
@@ -47,7 +57,6 @@ public class TopologyGuiceModule extends PrivateModule {
     bind(SyncSourceProvider.class)
         .to(RetrierTopologySyncSourceProvider.class)
         .in(Singleton.class);
-    expose(SyncSourceProvider.class);
 
     bind(TopologyErrorHandler.class)
         .to(DefaultTopologyErrorHandler.class)
@@ -85,5 +94,22 @@ public class TopologyGuiceModule extends PrivateModule {
     //TODO: Being able to configure max sync source lag and replication delay
     return new TopologyExecutor(concurrentToolsFactory, Duration.ofMinutes(1),
         Duration.ZERO);
+  }
+
+  private void bindConfig() {
+    bind(HostAndPort.class)
+        .annotatedWith(RemoteSeed.class)
+        .toInstance(config.getSeed());
+
+    bind(String.class)
+        .annotatedWith(ReplSetName.class)
+        .toInstance(config.getReplSetName());
+
+    bind(MongoClientFactory.class)
+        .toInstance(config.getClientFactory());
+
+    bind(Supervisor.class)
+        .annotatedWith(MongoDbRepl.class)
+        .toInstance(config.getSupervisor());
   }
 }

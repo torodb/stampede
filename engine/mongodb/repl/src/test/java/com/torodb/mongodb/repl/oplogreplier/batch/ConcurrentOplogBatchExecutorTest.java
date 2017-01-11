@@ -51,10 +51,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-/**
- *
- * @author gortiz
- */
 public class ConcurrentOplogBatchExecutorTest {
 
   @Mock
@@ -87,9 +83,15 @@ public class ConcurrentOplogBatchExecutorTest {
     when(concurrentToolsFactory.getDefaultMaxThreads()).thenReturn(4);
     when(concurrentToolsFactory.createStreamExecutor(any(String.class), any(Boolean.class)))
         .thenReturn(streamExecutor);
-    executor = spy(
-        new ConcurrentOplogBatchExecutor(applier, server, retrier, concurrentToolsFactory,
-            namespaceJobExecutor, metrics, subBatchHeuristic));
+
+    doNothing().when(streamExecutor).awaitRunning();
+
+    ConcurrentOplogBatchExecutor realExecutor = new ConcurrentOplogBatchExecutor(applier, server,
+        retrier, concurrentToolsFactory, namespaceJobExecutor, metrics, subBatchHeuristic);
+    realExecutor.startAsync();
+    realExecutor.awaitRunning();
+
+    executor = spy(realExecutor);
   }
 
   @Test

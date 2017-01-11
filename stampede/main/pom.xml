@@ -13,7 +13,6 @@
     <description>ToroDB stampede main project. Contains executable class and CLI parsing.</description>
 
     <properties>
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZZ</maven.build.timestamp.format>
         <profiles.resources>src/main/profiles/dev</profiles.resources>
         <assembler.mainClass>com.torodb.stampede.Main</assembler.mainClass>
         <assembler.name>torodb-stampede</assembler.name>
@@ -23,6 +22,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>packaging-utils</artifactId>
+            <version>${torodb.engine.version}</version>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>stampede-service</artifactId>
             <version>${project.version}</version>
@@ -31,7 +35,12 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>essential</artifactId>
+            <version>${torodb.engine.version}</version>
+        </dependency>
+        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

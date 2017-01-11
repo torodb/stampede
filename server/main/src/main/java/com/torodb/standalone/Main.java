@@ -25,16 +25,25 @@ import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
+import com.google.inject.Guice;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.metrics.MetricsConfig;
+import com.torodb.core.modules.BundleConfig;
+import com.torodb.engine.essential.EssentialModule;
+import com.torodb.mongodb.wp.MongoDbWpBundle;
+import com.torodb.mongodb.wp.MongoDbWpConfig;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
+import com.torodb.packaging.config.util.BackendImplementationVisitor;
+import com.torodb.packaging.config.util.BundleFactory;
 import com.torodb.packaging.config.util.ConfigUtils;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.standalone.config.model.Config;
+import com.torodb.standalone.config.model.backend.Backend;
+import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,17 +54,21 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
- * ToroDB's entry point
+ * ToroDB Server entry point.
  */
 public class Main {
 
   private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
+  /**
+   * The main method that runs ToroDB Server.
+   */
   public static void main(String[] args) throws Exception {
     Console console = JCommander.getConsole();
 
     ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
     final CliConfig cliConfig = new CliConfig();
+    @SuppressWarnings("checkstyle:LocalVariableName")
     JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
     jCommander.setColumnSize(Integer.MAX_VALUE);
 
@@ -87,25 +100,8 @@ public class Main {
 
     configureLogger(cliConfig, config);
 
-    config.getBackend().getBackendImplementation().accept(new BackendImplementationVisitor() {
-      @Override
-      public void visit(AbstractDerby value) {
-        parseToropassFile(value);
-      }
-
-      @Override
-      public void visit(AbstractPostgres value) {
-        parseToropassFile(value);
-      }
-
-      public void parseToropassFile(BackendPasswordConfig value) {
-        try {
-          ConfigUtils.parseToropassFile(value);
-        } catch (Exception ex) {
-          throw new SystemException(ex);
-        }
-      }
-    });
+    parseToropassFile(config);
+    
     if (config.getProtocol().getMongo().getReplication() != null) {
       for (AbstractReplication replication : config.getProtocol().getMongo().getReplication()) {
         if (replication.getAuth().getUser() != null) {
@@ -140,7 +136,7 @@ public class Main {
 
             @Override
             public String getHost() {
-              return syncSource.getHostText();
+              return syncSource.getHost();
             }
 
             @Override
@@ -173,7 +169,7 @@ public class Main {
       Service server;
       if (config.getProtocol().getMongo().getReplication() == null || config.getProtocol()
           .getMongo().getReplication().isEmpty()) {
-        Service toroDbServer = ToroDbBootstrap.createStandaloneService(config, clock);
+        Service toroDbServer = new ServerService(createServerConfig(config));
 
         toroDbServer.startAsync();
         toroDbServer.awaitRunning();
@@ -203,6 +199,30 @@ public class Main {
       JCommander.getConsole().println("Fatal error while ToroDB was starting: " + causeMessage);
       System.exit(1);
     }
+  }
+
+  private static ServerConfig createServerConfig(Config config) {
+    Clock clock = Clock.systemDefaultZone();
+
+    MetricsConfig metricsConfig = () -> true;
+
+    Backend backendConfig = config.getBackend();
+    backendConfig.setConnectionPoolConfig(config.getGeneric());
+
+    return new ServerConfig(
+        Guice.createInjector(new EssentialModule(metricsConfig, clock)),
+        generalConfig -> BundleFactory.createBackendBundle(
+            backendConfig,
+            generalConfig
+        ),
+        (generalConfig, torodBundle) -> createMongoDbWpBundle(config, torodBundle, generalConfig)
+    );
+  }
+
+  private static MongoDbWpBundle createMongoDbWpBundle(
+      Config config, TorodBundle torodBundle, BundleConfig generalConfig) {
+    int port = config.getProtocol().getMongo().getNet().getPort();
+    return new MongoDbWpBundle(new MongoDbWpConfig(torodBundle, port, generalConfig));
   }
 
   private static void configureLogger(CliConfig cliConfig, Config config) {
@@ -241,5 +261,31 @@ public class Main {
     } else { // Outside Eclipse IDE
       return new String(c.readPassword(false));
     }
+  }
+
+  private static void parseToropassFile(Config config) {
+    BackendImplementationVisitor<?, ?> visitor = new BackendImplementationVisitor<Void, Void>() {
+      @Override
+      public Void visit(AbstractDerby value, Void arg) {
+        parseToropassFile(value);
+        return null;
+      }
+
+      @Override
+      public Void visit(AbstractPostgres value, Void arg) {
+        parseToropassFile(value);
+        return null;
+      }
+
+      public void parseToropassFile(BackendPasswordConfig value) {
+        try {
+          ConfigUtils.parseToropassFile(value);
+        } catch (Exception ex) {
+          throw new SystemException(ex);
+        }
+      }
+    };
+
+    config.getBackend().getBackendImplementation().accept(visitor, null);
   }
 }

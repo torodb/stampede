@@ -13,11 +13,19 @@
     <description>ToroDB Server main project. Contains executable class and CLI parsing.</description>
 
     <properties>
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZZ</maven.build.timestamp.format>
         <profiles.resources>src/main/profiles/dev</profiles.resources>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>packaging-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>essential</artifactId>
+            <version>${torodb.engine.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.torodb.engine.backend</groupId>
             <artifactId>backend-postgresql</artifactId>
@@ -140,6 +148,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.2-beta-5</version>
                         <configuration>
                             <descriptors>
                                 <descriptor>src/main/assembly/assembly.xml</descriptor>

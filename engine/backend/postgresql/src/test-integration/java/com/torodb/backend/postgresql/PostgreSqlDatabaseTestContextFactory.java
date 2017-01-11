@@ -18,14 +18,15 @@
 
 package com.torodb.backend.postgresql;
 
+import com.google.inject.Injector;
 import com.torodb.backend.*;
 import com.torodb.backend.common.DatabaseTestContext;
 import com.torodb.backend.driver.postgresql.OfficialPostgreSqlDriver;
-import com.torodb.backend.driver.postgresql.PostgreSqlBackendConfiguration;
 import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.meta.PostgreSqlSchemaUpdater;
 import com.torodb.core.backend.IdentifierConstraints;
+import com.torodb.core.supervision.Supervisor;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -33,15 +34,10 @@ import java.util.concurrent.ThreadFactory;
 public class PostgreSqlDatabaseTestContextFactory {
 
   public DatabaseTestContext createInstance() {
-    PostgreSqlErrorHandler errorHandler = new PostgreSqlErrorHandler();
     DataTypeProvider provider = new PostgreSqlDataTypeProvider();
+    PostgreSqlErrorHandler errorHandler = new PostgreSqlErrorHandler();
     SqlHelper sqlHelper = new SqlHelper(provider, errorHandler);
-    PostgreSqlBackendConfiguration configuration = new PostgreSqlBackendConfiguration() {
-      @Override
-      public long getCursorTimeout() {
-        return 10_000;
-      }
-
+    BackendConfig backendConfig = new BackendConfig() {
       @Override
       public long getConnectionPoolTimeout() {
         return 10_000;
@@ -86,11 +82,23 @@ public class PostgreSqlDatabaseTestContextFactory {
       public boolean includeForeignKeys() {
         return false;
       }
+
+      @Override
+      public Injector getEssentialInjector() {
+        return null;
+      }
+
+      @Override
+      public Supervisor getSupervisor() {
+        return null;
+      }
     };
 
     DslContextFactory dslContextFactory = new DslContextFactoryImpl(provider);
     SqlInterface sqlInterface =
-        buildSqlInterface(provider, sqlHelper, errorHandler, configuration, dslContextFactory);
+        buildSqlInterface(provider, sqlHelper, errorHandler, backendConfig, dslContextFactory);
+
+
     SchemaUpdater schemaUpdater = new PostgreSqlSchemaUpdater(sqlInterface, sqlHelper);
 
     return new PostgreSqlDatabaseTestContext(sqlInterface, dslContextFactory, schemaUpdater);
@@ -98,14 +106,14 @@ public class PostgreSqlDatabaseTestContextFactory {
 
   private SqlInterface buildSqlInterface(DataTypeProvider provider, SqlHelper sqlHelper,
                                          PostgreSqlErrorHandler errorHandler,
-                                         PostgreSqlBackendConfiguration configuration,
+                                         BackendConfig backendConfig,
                                          DslContextFactory dslContextFactory) {
     PostgreSqlDriverProvider driver = new OfficialPostgreSqlDriver();
     ThreadFactory threadFactory = Executors.defaultThreadFactory();
 
     IdentifierConstraints identifierConstraints = new PostgreSqlIdentifierConstraints();
 
-    PostgreSqlDbBackend dbBackend = new PostgreSqlDbBackend(threadFactory, configuration, driver, errorHandler);
+    PostgreSqlDbBackend dbBackend = new PostgreSqlDbBackend(threadFactory, backendConfig, driver, errorHandler);
 
     PostgreSqlMetaDataReadInterface metaDataReadInterface = new PostgreSqlMetaDataReadInterface(sqlHelper);
     PostgreSqlStructureInterface structureInterface =

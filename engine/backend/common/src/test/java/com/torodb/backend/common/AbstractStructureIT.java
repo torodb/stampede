@@ -18,13 +18,10 @@
 
 package com.torodb.backend.common;
 
-import com.torodb.backend.DbBackendService;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKv;
-import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
-import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.*;
 import org.jooq.DSLContext;
@@ -33,12 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public abstract class AbstractStructureIT {
 

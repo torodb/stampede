@@ -18,20 +18,16 @@
 
 package com.torodb.core.backend;
 
+import com.google.common.util.concurrent.Service;
 import com.torodb.core.modules.Bundle;
 
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- *
- */
-public interface BackendBundle extends Bundle {
+public interface BackendBundle extends Bundle<BackendExtInt> {
 
   @Override
-  public default Collection<Bundle> getDependencies() {
+  public default Collection<Service> getDependencies() {
     return Collections.emptyList();
   }
-
-  public BackendService getBackendService();
 }

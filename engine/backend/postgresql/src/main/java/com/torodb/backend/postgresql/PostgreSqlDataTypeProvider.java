@@ -24,6 +24,7 @@ import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.postgresql.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.BooleanValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.DateValueConverter;
+import com.torodb.backend.postgresql.converters.jooq.Decimal128ValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.DoubleValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.InstantValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.IntegerValueConverter;
@@ -34,6 +35,7 @@ import com.torodb.backend.postgresql.converters.jooq.NullValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.StringValueConverter;
 import com.torodb.backend.postgresql.converters.jooq.TimeValueConverter;
 import com.torodb.core.transaction.metainf.FieldType;
+
 import org.jooq.SQLDialect;
 
 import javax.inject.Singleton;
@@ -48,6 +50,7 @@ public class PostgreSqlDataTypeProvider extends AbstractDataTypeProvider {
             .put(FieldType.DOUBLE, DoubleValueConverter.TYPE)
             .put(FieldType.INTEGER, IntegerValueConverter.TYPE)
             .put(FieldType.LONG, LongValueConverter.TYPE)
+            .put(FieldType.DECIMAL128, Decimal128ValueConverter.TYPE)
             .put(FieldType.NULL, NullValueConverter.TYPE)
             .put(FieldType.STRING, StringValueConverter.TYPE)
             .put(FieldType.DATE, DateValueConverter.TYPE)
