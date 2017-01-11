@@ -16,38 +16,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.kvdocument.values;
+package com.torodb.kvdocument.types;
 
-public interface KvValueVisitor<R, A> {
+/**
+ *
+ */
+public class Decimal128Type implements KvType {
 
-  public R visit(KvBoolean value, A arg);
+  private static final long serialVersionUID = -2675533762531725361L;
 
-  public R visit(KvNull value, A arg);
+  public static final Decimal128Type INSTANCE = new Decimal128Type();
 
-  public R visit(KvArray value, A arg);
+  private Decimal128Type() {
+  }
 
-  public R visit(KvInteger value, A arg);
+  @Override
+  public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
 
-  public R visit(KvLong value, A arg);
+  @Override
+  public int hashCode() {
+    int hash = 19;
+    return hash;
+  }
 
-  public R visit(KvDouble value, A arg);
-
-  public R visit(KvString value, A arg);
-
-  public R visit(KvDocument value, A arg);
-
-  public R visit(KvMongoObjectId value, A arg);
-
-  public R visit(KvInstant value, A arg);
-
-  public R visit(KvDate value, A arg);
-
-  public R visit(KvTime value, A arg);
-
-  public R visit(KvBinary value, A arg);
-
-  public R visit(KvMongoTimestamp value, A arg);
-
-  public R visit(KvDecimal128 value, A arg);
-
+  @Override
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 }

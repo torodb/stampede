@@ -52,4 +52,6 @@ public interface KvTypeVisitor<R, A> {
 
   public R visit(MongoTimestampType type, A arg);
 
+  public R visit(Decimal128Type type, A arg);
+
 }

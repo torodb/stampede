@@ -24,6 +24,7 @@ import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.derby.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.derby.converters.jooq.BooleanValueConverter;
 import com.torodb.backend.derby.converters.jooq.DateValueConverter;
+import com.torodb.backend.derby.converters.jooq.Decimal128ValueConverter;
 import com.torodb.backend.derby.converters.jooq.DoubleValueConverter;
 import com.torodb.backend.derby.converters.jooq.InstantValueConverter;
 import com.torodb.backend.derby.converters.jooq.IntegerValueConverter;
@@ -47,6 +48,7 @@ public class DerbyDataTypeProvider extends AbstractDataTypeProvider {
             .put(FieldType.BOOLEAN, BooleanValueConverter.TYPE)
             .put(FieldType.DOUBLE, DoubleValueConverter.TYPE)
             .put(FieldType.INTEGER, IntegerValueConverter.TYPE)
+            .put(FieldType.DECIMAL128, Decimal128ValueConverter.TYPE)
             .put(FieldType.LONG, LongValueConverter.TYPE)
             .put(FieldType.NULL, NullValueConverter.TYPE)
             .put(FieldType.STRING, StringValueConverter.TYPE)

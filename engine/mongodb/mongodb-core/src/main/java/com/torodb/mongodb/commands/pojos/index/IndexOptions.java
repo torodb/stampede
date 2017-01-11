@@ -331,7 +331,7 @@ public class IndexOptions {
     V2;
 
     private static IndexVersion fromInt(int i) {
-      return IndexVersion.values()[i];
+      return IndexVersion.values()[i - 1];
     }
 
     public int toInt() {

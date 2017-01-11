@@ -22,6 +22,7 @@ import com.torodb.kvdocument.types.ArrayType;
 import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.Decimal128Type;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.types.DoubleType;
 import com.torodb.kvdocument.types.GenericType;
@@ -53,7 +54,8 @@ public enum FieldType {
   NULL,
   STRING,
   TIME,
-  CHILD;
+  CHILD, 
+  DECIMAL128;
 
   private static final FromKvTypeVisitor FROM_KVTYPE_VISITOR = new FromKvTypeVisitor();
 
@@ -143,6 +145,11 @@ public enum FieldType {
     @Override
     public FieldType visit(MongoTimestampType type, Void arg) {
       return MONGO_TIME_STAMP;
+    }
+
+    @Override
+    public FieldType visit(Decimal128Type type, Void arg) {
+      return DECIMAL128;
     }
 
   }
