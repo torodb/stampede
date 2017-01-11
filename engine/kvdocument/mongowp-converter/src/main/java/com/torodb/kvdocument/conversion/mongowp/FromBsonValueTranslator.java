@@ -18,19 +18,12 @@
 
 package com.torodb.kvdocument.conversion.mongowp;
 
-import static com.eightkdata.mongowp.bson.BinarySubtype.FUNCTION;
-import static com.eightkdata.mongowp.bson.BinarySubtype.GENERIC;
-import static com.eightkdata.mongowp.bson.BinarySubtype.MD5;
-import static com.eightkdata.mongowp.bson.BinarySubtype.OLD_BINARY;
-import static com.eightkdata.mongowp.bson.BinarySubtype.OLD_UUID;
-import static com.eightkdata.mongowp.bson.BinarySubtype.USER_DEFINED;
-import static com.eightkdata.mongowp.bson.BinarySubtype.UUID;
-
 import com.eightkdata.mongowp.bson.BsonArray;
 import com.eightkdata.mongowp.bson.BsonBinary;
 import com.eightkdata.mongowp.bson.BsonBoolean;
 import com.eightkdata.mongowp.bson.BsonDateTime;
 import com.eightkdata.mongowp.bson.BsonDbPointer;
+import com.eightkdata.mongowp.bson.BsonDecimal128;
 import com.eightkdata.mongowp.bson.BsonDeprecated;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.bson.BsonDouble;
@@ -52,6 +45,7 @@ import com.eightkdata.mongowp.bson.impl.InstantBsonDateTime;
 import com.torodb.kvdocument.conversion.mongowp.values.BsonKvString;
 import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
 import com.torodb.kvdocument.values.KvBoolean;
+import com.torodb.kvdocument.values.KvDecimal128;
 import com.torodb.kvdocument.values.KvDouble;
 import com.torodb.kvdocument.values.KvInteger;
 import com.torodb.kvdocument.values.KvLong;
@@ -217,8 +211,12 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
     throw new UnsupportedBsonTypeException(value.getType());
   }
 
-  private static class FromBsonValueTranslatorHolder {
+  @Override
+  public KvValue<?> visit(BsonDecimal128 value, Void arg) {
+    return KvDecimal128.of(value.getHigh(), value.getLow());
+  }
 
+  private static class FromBsonValueTranslatorHolder {
     private static final FromBsonValueTranslator INSTANCE = new FromBsonValueTranslator();
   }
 
@@ -226,4 +224,5 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
   private Object readResolve() {
     return FromBsonValueTranslator.getInstance();
   }
+
 }

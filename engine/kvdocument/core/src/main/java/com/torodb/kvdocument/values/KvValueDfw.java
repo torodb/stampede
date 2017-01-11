@@ -283,5 +283,22 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
 
     return null;
   }
+  
+  protected void preDecimal128(KvDecimal128 value, A arg) {
+  }
+
+  protected void postDecimal128(KvDecimal128 value, A arg) {
+  }
+  
+  @Override
+  public Void visit(KvDecimal128 value, A arg) {
+    preKvValue(value, arg);
+    preDecimal128(value, arg);
+
+    postDecimal128(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
 
 }
