@@ -24,6 +24,9 @@ import com.torodb.core.metrics.DisabledMetricRegistry;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.core.metrics.ToroMetricRegistry;
 
+/**
+ * A module that binds metrics related stuff (specially {@link ToroMetricRegistry}).
+ */
 public class MetricsModule extends PrivateModule {
 
   private MetricsConfig config;

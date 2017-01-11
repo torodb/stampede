@@ -24,7 +24,7 @@ import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
 
 /**
- *
+ * A module that binds {@link MetainfoRepository} and other metainf related stuff.
  */
 public class MetainfModule extends PrivateModule {
 

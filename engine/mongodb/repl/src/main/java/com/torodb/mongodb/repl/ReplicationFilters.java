@@ -79,6 +79,10 @@ public class ReplicationFilters {
     this.blacklist = blacklist;
   }
 
+  public static ReplicationFilters allowAll() {
+    return new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of());
+  }
+
   public Predicate<String> getDatabasePredicate() {
     return databasePredicate;
   }

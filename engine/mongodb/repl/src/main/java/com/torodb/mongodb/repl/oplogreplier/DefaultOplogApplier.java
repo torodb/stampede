@@ -67,9 +67,6 @@ import java.util.function.ToIntFunction;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class DefaultOplogApplier implements OplogApplier {
 
   private static final Logger LOGGER = LogManager.getLogger(DefaultOplogApplier.class);

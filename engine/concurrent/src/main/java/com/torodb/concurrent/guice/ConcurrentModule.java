@@ -25,7 +25,8 @@ import com.torodb.concurrent.ExecutorServiceShutdownHelper;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 
 /**
- *
+ * A module that binds concurrent utility classes (like {@link ConcurrentToolsFactory} and
+ * {@link ExecutorServiceShutdownHelper}).
  */
 public class ConcurrentModule extends PrivateModule {
 

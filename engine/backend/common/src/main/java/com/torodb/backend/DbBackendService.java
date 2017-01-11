@@ -36,8 +36,6 @@ public interface DbBackendService extends TorodbService {
 
   public void enableDataInsertMode();
 
-  public long getDefaultCursorTimeout();
-
   public boolean isOnDataInsertMode();
 
   public boolean includeForeignKeys();

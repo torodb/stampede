@@ -22,10 +22,14 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.torodb.core.backend.BackendExtInt;
+import com.torodb.core.backend.BackendService;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.d2r.IdentifierFactory;
+import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
-import com.torodb.torod.TorodBundle;
-import com.torodb.torod.TorodBundleFactory;
+import com.torodb.d2r.guice.D2RModule;
+import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.impl.sql.SqlTorodServer;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
@@ -35,13 +39,20 @@ import com.torodb.torod.pipeline.impl.SameThreadInsertPipeline;
 
 import java.util.concurrent.ThreadFactory;
 
-/**
- *
- */
 public class SqlTorodModule extends PrivateModule {
+
+  private final SqlTorodConfig config;
+
+  public SqlTorodModule(SqlTorodConfig config) {
+    this.config = config;
+  }
 
   @Override
   protected void configure() {
+    bindConfig();
+
+    install(new D2RModule());
+
     install(new FactoryModuleBuilder()
         .implement(SameThreadInsertPipeline.class, SameThreadInsertPipeline.class)
         .build(SameThreadInsertPipeline.Factory.class)
@@ -50,15 +61,25 @@ public class SqlTorodModule extends PrivateModule {
         .to(DefaultInsertPipelineFactory.class)
         .in(Singleton.class);
 
-    install(new FactoryModuleBuilder()
-        .implement(TorodBundle.class, TorodBundle.class)
-        .build(TorodBundleFactory.class)
-    );
-    expose(TorodBundleFactory.class);
-
     bind(TorodServer.class)
         .to(SqlTorodServer.class)
         .in(Singleton.class);
+    expose(TorodServer.class);
+
+    expose(InsertPipelineFactory.class);
+  }
+
+  private void bindConfig() {
+    BackendExtInt backendExtInt = config.getBackendBundle().getExternalInterface();
+
+    bind(BackendService.class)
+        .toInstance(backendExtInt.getBackendService());
+    bind(IdentifierFactory.class)
+        .toInstance(backendExtInt.getIdentifierFactory());
+    bind(BackendTransactionJobFactory.class)
+        .toInstance(backendExtInt.getBackendTransactionJobFactory());
+    bind(ReservedIdGenerator.class)
+        .toInstance(backendExtInt.getReservedIdGenerator());
   }
 
   @Provides

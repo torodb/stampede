@@ -49,9 +49,6 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class AkkaStreamExecutor extends ActorSystemTorodbService
     implements StreamExecutor {
 

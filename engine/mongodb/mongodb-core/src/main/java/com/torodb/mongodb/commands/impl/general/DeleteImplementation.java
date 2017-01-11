@@ -39,7 +39,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -50,17 +49,11 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
 
   private static final Logger LOGGER = LogManager.getLogger(DeleteImplementation.class);
 
-  private MongodMetrics mongodMetrics;
-
-  @Inject
-  public DeleteImplementation(MongodMetrics mongodMetrics) {
-    this.mongodMetrics = mongodMetrics;
-  }
-
   @Override
   public Status<Long> apply(Request req, Command<? super DeleteArgument, ? super Long> command,
       DeleteArgument arg,
       WriteMongodTransaction context) {
+    MongodMetrics mongodMetrics = context.getConnection().getServer().getMetrics();
     Long deleted = 0L;
 
     for (DeleteStatement deleteStatement : arg.getStatements()) {

@@ -18,8 +18,11 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import com.google.inject.Key;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
+import com.torodb.core.supervision.Supervisor;
+import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
 import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
 import com.torodb.mongodb.repl.commands.impl.DropCollectionReplImpl;
@@ -28,21 +31,23 @@ import com.torodb.mongodb.repl.commands.impl.DropIndexesReplImpl;
 import com.torodb.mongodb.repl.commands.impl.LogAndIgnoreReplImpl;
 import com.torodb.mongodb.repl.commands.impl.LogAndStopReplImpl;
 import com.torodb.mongodb.repl.commands.impl.RenameCollectionReplImpl;
+import com.torodb.mongodb.repl.guice.MongoDbRepl;
 
-/**
- *
- */
 public class ReplCommandsGuiceModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(ReplCommandsLibrary.class)
-        .in(Singleton.class);
-    expose(ReplCommandsLibrary.class);
+    requireBinding(Key.get(Supervisor.class, MongoDbRepl.class));
+    requireBinding(ReplicationFilters.class);
 
-    bind(ReplCommandsExecutor.class)
+    expose(ReplCommandLibrary.class);
+    expose(ReplCommandExecutor.class);
+
+    bind(ReplCommandLibrary.class)
         .in(Singleton.class);
-    expose(ReplCommandsExecutor.class);
+
+    bind(ReplCommandExecutor.class)
+        .in(Singleton.class);
 
     bindImplementations();
   }

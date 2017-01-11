@@ -18,6 +18,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>packaging-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>essential</artifactId>
+            <version>${torodb.engine.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.torodb.engine.backend</groupId>
             <artifactId>backend-postgresql</artifactId>
         </dependency>
