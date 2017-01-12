@@ -47,7 +47,7 @@ public class MvccMetainfoRepositoryTest {
   private final String colName = "colName";
   private final String colId = "colId";
 
-  private static final long MILLIS_TO_WAIT = 1_000;
+  private static final long MILLIS_TO_WAIT = 10_000;
 
   public MvccMetainfoRepositoryTest() {
   }
