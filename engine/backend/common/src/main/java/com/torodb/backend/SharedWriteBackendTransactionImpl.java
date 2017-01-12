@@ -21,6 +21,7 @@ package com.torodb.backend;
 import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.TableRef;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.MetaInfoKey;
 import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.d2r.DocPartData;
@@ -56,14 +57,17 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
   @SuppressWarnings("checkstyle:LineLength")
   private static final Logger LOGGER = LogManager.getLogger(SharedWriteBackendTransactionImpl.class);
 
+  private final TableRefFactory tableRefFactory;
   private final IdentifierFactory identifierFactory;
 
   public SharedWriteBackendTransactionImpl(SqlInterface sqlInterface,
       BackendConnectionImpl backendConnection,
+      TableRefFactory tableRefFactory,
       IdentifierFactory identifierFactory) {
     super(sqlInterface.getDbBackend().createWriteConnection(), sqlInterface, backendConnection);
 
     this.identifierFactory = identifierFactory;
+    this.tableRefFactory = tableRefFactory;
   }
 
   IdentifierFactory getIdentifierFactory() {
@@ -83,6 +87,17 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     Preconditions.checkState(!isClosed(), "This transaction is closed");
 
     getSqlInterface().getMetaDataWriteInterface().addMetaCollection(getDsl(), db, newCol);
+    TableRef rootTableRef = tableRefFactory.createRoot();
+    MetaDocPart newRootDocPart = newCol.getMetaDocPartByTableRef(rootTableRef);
+    if (newRootDocPart != null) {
+      getSqlInterface().getMetaDataWriteInterface().addMetaDocPart(getDsl(), db, newCol, 
+          newRootDocPart);
+      getSqlInterface().getStructureInterface().createRootDocPartTable(getDsl(), 
+          db.getIdentifier(), newRootDocPart.getIdentifier(), rootTableRef);
+      getSqlInterface().getStructureInterface().streamRootDocPartTableIndexesCreation(
+          db.getIdentifier(), newRootDocPart.getIdentifier(), rootTableRef)
+        .forEach(statement -> statement.apply(getDsl()));
+    }
   }
 
   @Override
