@@ -19,6 +19,7 @@
 package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
@@ -51,9 +52,10 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
 
   public ExclusiveWriteBackendTransactionImpl(SqlInterface sqlInterface,
       BackendConnectionImpl backendConnection,
+      TableRefFactory tableRefFactory,
       IdentifierFactory identifierFactory,
       ReservedIdGenerator ridGenerator) {
-    super(sqlInterface, backendConnection, identifierFactory);
+    super(sqlInterface, backendConnection, tableRefFactory, identifierFactory);
 
     this.ridGenerator = ridGenerator;
   }
