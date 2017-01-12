@@ -305,6 +305,10 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
         getConnection().getServer().getIdentifierFactory().toCollectionIdentifier(
             getInternalTransaction().getMetaSnapshot(), metaDb.getName(), colName)
     );
+    TableRef rootTableRef = getConnection().getServer().getTableRefFactory().createRoot();
+    String rootIdentifier = getConnection().getServer().getIdentifierFactory()
+        .toDocPartIdentifier(metaDb, colName, rootTableRef);
+    metaCol.addMetaDocPart(rootTableRef, rootIdentifier);
     getInternalTransaction().getBackendTransaction().addCollection(metaDb, metaCol);
     return metaCol;
   }
