@@ -18,43 +18,37 @@
 
 package com.torodb.mongodb.wp;
 
-import com.eightkdata.mongowp.server.MongoServerConfig;
 import com.eightkdata.mongowp.server.wp.NettyMongoServer;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.modules.AbstractBundle;
-import com.torodb.core.modules.Bundle;
-import com.torodb.core.supervision.Supervisor;
+import com.torodb.mongodb.wp.guice.MongoDbWpModule;
 import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.ThreadFactory;
 
-/**
- *
- */
-public class MongoDbWpBundle extends AbstractBundle {
+public class MongoDbWpBundle extends AbstractBundle<MongoDbWpExtInt> {
   private static final Logger LOGGER = LogManager.getLogger(MongoDbWpBundle.class);
 
   private final TorodBundle torodBundle;
   private final NettyMongoServer nettyMongoServer;
-  private final int port;
 
-  public MongoDbWpBundle(TorodBundle torodBundle, Supervisor supervisor, Injector injector) {
-    super(
-        injector.getInstance(
-            Key.get(ThreadFactory.class, TorodbIdleService.class)),
-        supervisor);
+  public MongoDbWpBundle(MongoDbWpConfig config) {
+    super(config);
 
+    Injector injector = Guice.createInjector(
+        new MongoDbWpModule(
+            config.getTorodBundle(),
+            config.getPort()
+        ));
     this.nettyMongoServer = injector.getInstance(NettyMongoServer.class);
-    this.port = injector.getInstance(MongoServerConfig.class).getPort();
-    this.torodBundle = torodBundle;
+    this.torodBundle = config.getTorodBundle();
   }
-  
+
   @Override
   protected void postDependenciesStartUp() throws Exception {
     nettyMongoServer.startAsync();
@@ -68,8 +62,12 @@ public class MongoDbWpBundle extends AbstractBundle {
   }
 
   @Override
-  public Collection<Bundle> getDependencies() {
+  public Collection<Service> getDependencies() {
     return Collections.singleton(torodBundle);
   }
 
+  @Override
+  public MongoDbWpExtInt getExternalInterface() {
+    return new MongoDbWpExtInt();
+  }
 }

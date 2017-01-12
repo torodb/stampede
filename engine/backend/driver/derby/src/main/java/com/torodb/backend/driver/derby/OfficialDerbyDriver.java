@@ -79,13 +79,13 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
   }
 
   @Override
-  public DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration,
+  public DataSource getConfiguredDataSource(DerbyDbBackendConfig configuration,
       String poolName) {
     DataSource dataSource;
-    if (configuration.embedded()) {
+    if (configuration.isEmbedded()) {
       EmbeddedDataSource embeddedDataSource = new EmbeddedDataSource();
       embeddedDataSource.setCreateDatabase("create");
-      if (configuration.inMemory()) {
+      if (configuration.isInMemory()) {
         embeddedDataSource.setDatabaseName("memory:" + configuration.getDbName());
       } else {
         embeddedDataSource.setDatabaseName(configuration.getDbName());
@@ -104,7 +104,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
       clientDataSource.setPortNumber(configuration.getDbPort());
       clientDataSource.setUser(configuration.getUsername());
       clientDataSource.setPassword(configuration.getPassword());
-      if (configuration.inMemory()) {
+      if (configuration.isInMemory()) {
         clientDataSource.setDatabaseName("memory:" + configuration.getDbName());
       } else {
         clientDataSource.setDatabaseName(configuration.getDbName());

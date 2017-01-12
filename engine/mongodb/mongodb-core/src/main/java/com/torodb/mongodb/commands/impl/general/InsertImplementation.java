@@ -41,7 +41,6 @@ import com.torodb.torod.IndexFieldInfo;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -50,17 +49,12 @@ import javax.inject.Singleton;
 @Singleton
 public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgument, InsertResult> {
 
-  private MongodMetrics mongodMetrics;
-
-  @Inject
-  public InsertImplementation(MongodMetrics mongodMetrics) {
-    this.mongodMetrics = mongodMetrics;
-  }
-
   @Override
   public Status<InsertResult> apply(Request req,
       Command<? super InsertArgument, ? super InsertResult> command, InsertArgument arg,
       WriteMongodTransaction context) {
+    MongodMetrics mongodMetrics = context.getConnection().getServer().getMetrics();
+
     mongodMetrics.getInserts().mark(arg.getDocuments().size());
     Stream<KvDocument> docsToInsert = arg.getDocuments().stream().map(FromBsonValueTranslator
         .getInstance())

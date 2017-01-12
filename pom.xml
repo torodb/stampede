@@ -81,6 +81,7 @@
         <log4j.version>2.7</log4j.version>
         <jackson.version>2.6.3</jackson.version>
         <mongowp.version>0.50.1-SNAPSHOT</mongowp.version>
+        <mongodriver.version>3.4.1</mongodriver.version>
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
         <maven.version>3.2.2</maven.version>
@@ -186,12 +187,12 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver</artifactId>
-                <version>3.2.2</version>
+                <version>${mongodriver.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>bson</artifactId>
-                <version>3.2.2</version>
+                <version>${mongodriver.version}</version>
             </dependency>
             <dependency>
                 <groupId>javax.inject</groupId>

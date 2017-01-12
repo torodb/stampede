@@ -18,7 +18,7 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.google.inject.Module;
+import com.torodb.mongodb.repl.oplogreplier.OplogTestContextResourceRule.OplogApplierBundleFactory;
 import org.jooq.lambda.Unchecked;
 import org.jooq.lambda.tuple.Tuple;
 import org.jooq.lambda.tuple.Tuple2;
@@ -32,9 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-/**
- *
- */
 @RunWith(Parameterized.class)
 public abstract class AbstractOplogApplierTest {
 
@@ -44,9 +41,9 @@ public abstract class AbstractOplogApplierTest {
   public OplogTest oplogTest;
   @Rule
   public OplogTestContextResourceRule testContextResource =
-      new OplogTestContextResourceRule(this::getMongodSpecificTestModule);
+      new OplogTestContextResourceRule(getApplierBundleFactory());
 
-  public abstract Module getMongodSpecificTestModule();
+  public abstract OplogApplierBundleFactory getApplierBundleFactory();
 
   protected static Collection<Object[]> loadData(ArrayList<String> filesList) {
     return filesList.stream()

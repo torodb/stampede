@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.torodb.core.services.ExecutorTorodbService;
+import com.torodb.core.services.IdleTorodbService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,14 +38,12 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
-/**
- *
- */
 @ThreadSafe
-public class Shutdowner extends ExecutorTorodbService<ExecutorService> {
+public class Shutdowner extends IdleTorodbService {
 
   private static final Logger LOGGER = LogManager.getLogger(Shutdowner.class);
   private boolean shuttingDown;
+  private final ExecutorTorodbService<ExecutorService> executor;
 
   @SuppressWarnings("rawtypes")
   private final List<ShutdownCallback> closeCallbacks = new ArrayList<>();
@@ -52,16 +51,19 @@ public class Shutdowner extends ExecutorTorodbService<ExecutorService> {
   @Inject
   @SuppressWarnings("checkstyle:Indentation")
   public Shutdowner(ThreadFactory threadFactory) {
-    super(
-        threadFactory,
-        (ThreadFactory tf) -> {
-      return Executors.newSingleThreadExecutor(
-          new ThreadFactoryBuilder()
-              .setThreadFactory(tf)
-              .setNameFormat("torodb-shutdowner-%d")
-              .build()
-      );
-    });
+    super(threadFactory);
+    executor = new ExecutorTorodbService<>(threadFactory, Shutdowner::createExecutorService);
+    executor.startAsync();
+    executor.awaitRunning();
+  }
+
+  private static ExecutorService createExecutorService(ThreadFactory threadFactory) {
+    return Executors.newSingleThreadExecutor(
+        new ThreadFactoryBuilder()
+            .setThreadFactory(threadFactory)
+            .setNameFormat("torodb-shutdowner-%d")
+            .build()
+    );
   }
 
   public CompletableFuture<Boolean> addCloseShutdownListener(
@@ -87,7 +89,7 @@ public class Shutdowner extends ExecutorTorodbService<ExecutorService> {
 
   private <R> CompletableFuture<Boolean> addShutdownCallback(
       ShutdownCallback<R> callback) {
-    return execute(() -> addShutdownCallbackPrivate(callback))
+    return executor.execute(() -> addShutdownCallbackPrivate(callback))
         .handle((result, throwable) -> {
           if (throwable != null) {
             return result;
@@ -116,9 +118,15 @@ public class Shutdowner extends ExecutorTorodbService<ExecutorService> {
   }
 
   @Override
+  protected void startUp() throws Exception {
+    assert executor.isRunning();
+  }
+
+  @Override
   protected void shutDown() throws Exception {
-    execute(this::closePrivate).join();
-    super.shutDown();
+    executor.execute(this::closePrivate).join();
+    executor.stopAsync();
+    executor.awaitTerminated();
   }
 
   @SuppressWarnings("rawtypes")

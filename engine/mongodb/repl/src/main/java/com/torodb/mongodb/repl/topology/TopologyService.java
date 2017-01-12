@@ -36,11 +36,8 @@ import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- *
- */
 @Singleton
-public class TopologyService extends IdleTorodbService {
+class TopologyService extends IdleTorodbService {
 
   private static final Logger LOGGER = LogManager.getLogger(TopologyService.class);
 

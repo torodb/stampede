@@ -20,18 +20,12 @@ package com.torodb.kvdocument.conversion.mongowp;
 
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newArray;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newBoolean;
+import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDecimal128;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDocument;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newDouble;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newInt;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newLong;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newString;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_FUNCTION;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_GENERIC;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_MD5;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_OLD_BINARY;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_OLD_UUID;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_USER_DEFINED;
-import static com.torodb.kvdocument.values.KvBinary.KvBinarySubtype.MONGO_UUID;
 
 import com.eightkdata.mongowp.bson.BinarySubtype;
 import com.eightkdata.mongowp.bson.BsonBinary;
@@ -48,6 +42,7 @@ import com.torodb.kvdocument.values.KvArray;
 import com.torodb.kvdocument.values.KvBinary;
 import com.torodb.kvdocument.values.KvBoolean;
 import com.torodb.kvdocument.values.KvDate;
+import com.torodb.kvdocument.values.KvDecimal128;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvDocument.DocEntry;
 import com.torodb.kvdocument.values.KvDouble;
@@ -210,6 +205,11 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
     return new DefaultBsonTimestamp(value.getSecondsSinceEpoch(), value.getOrdinal());
   }
 
+  @Override
+  public BsonValue<?> visit(KvDecimal128 value, Void arg) {
+    return newDecimal128(value.getHigh(), value.getLow());
+  }
+
   private static class ToBsonValueTranslatorHolder {
 
     private static final ToBsonValueTranslator INSTANCE = new ToBsonValueTranslator();
@@ -219,4 +219,5 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
   private Object readResolve() {
     return ToBsonValueTranslator.getInstance();
   }
+
 }

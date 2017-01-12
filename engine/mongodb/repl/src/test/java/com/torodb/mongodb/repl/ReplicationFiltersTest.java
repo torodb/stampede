@@ -21,20 +21,15 @@ package com.torodb.mongodb.repl;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.junit.Test;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
 import com.torodb.mongodb.repl.ReplicationFilters.IndexFieldPattern;
 import com.torodb.mongodb.repl.ReplicationFilters.IndexPattern;
-import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ReplicationFiltersTest {
@@ -594,4 +589,24 @@ public class ReplicationFiltersTest {
         assertTrue(filterProvider.getIndexPredicate().test("test1", "one", "index", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
         assertTrue(filterProvider.getIndexPredicate().test("test", "one", "index1", false, ImmutableList.of(new IndexOptions.Key(ImmutableList.of("subdoc", "value"), KnownType.asc.getIndexType()))));
     }
+
+  @Test
+  public void testGetDatabasePredicate() {
+  }
+
+  @Test
+  public void testGetCollectionPredicate() {
+  }
+
+  @Test
+  public void testGetIndexPredicate() {
+  }
+
+  @Test
+  public void testGetOperationPredicate() {
+  }
+
+  @Test
+  public void testFilterOplogFetcher() {
+  }
 }

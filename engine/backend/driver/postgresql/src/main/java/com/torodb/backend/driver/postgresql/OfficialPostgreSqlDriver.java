@@ -18,6 +18,7 @@
 
 package com.torodb.backend.driver.postgresql;
 
+import com.torodb.backend.BackendConfig;
 import com.torodb.core.exceptions.SystemException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,8 +37,7 @@ import java.sql.Statement;
 import javax.sql.DataSource;
 
 /**
- *
- * A provider for the PostgreSQL driver based on the "official" PostgreSQL driver
+ * A provider for the PostgreSQL driver based on the "official" PostgreSQL driver.
  *
  * @see <a href="http://jdbc.postgresql.org/">PostgreSQL JDBC Driver</a>
  */
@@ -55,8 +55,7 @@ public class OfficialPostgreSqlDriver implements PostgreSqlDriverProvider {
   }
 
   @Override
-  public DataSource getConfiguredDataSource(PostgreSqlBackendConfiguration configuration,
-      String poolName) {
+  public DataSource getConfiguredDataSource(BackendConfig configuration, String poolName) {
     PGSimpleDataSource dataSource = new PGSimpleDataSource();
 
     dataSource.setUser(configuration.getUsername());

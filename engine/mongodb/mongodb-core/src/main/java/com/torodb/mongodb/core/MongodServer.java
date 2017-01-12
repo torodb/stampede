@@ -23,7 +23,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.services.IdleTorodbService;
-import com.torodb.mongodb.commands.CommandsExecutorClassifier;
+import com.torodb.mongodb.commands.CommandClassifier;
+import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.torod.TorodServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,21 +34,22 @@ import java.util.concurrent.ThreadFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- *
- */
 @Singleton
 public class MongodServer extends IdleTorodbService {
 
   private static final Logger LOGGER = LogManager.getLogger(MongodServer.class);
   private final TorodServer torodServer;
   private final Cache<Integer, MongodConnection> openConnections;
-  private final CommandsExecutorClassifier commandsExecutorClassifier;
+  private final CommandClassifier commandsExecutorClassifier;
+  private final MongodMetrics metrics;
+  private final ObjectIdFactory objectIdFactory;
 
   @Inject
   public MongodServer(@TorodbIdleService ThreadFactory threadFactory,
       TorodServer torodServer,
-      CommandsExecutorClassifier commandsExecutorClassifier) {
+      CommandClassifier commandsExecutorClassifier,
+      MongodMetrics metrics,
+      ObjectIdFactory objectIdFactory) {
     super(threadFactory);
     this.torodServer = torodServer;
     openConnections = CacheBuilder.newBuilder()
@@ -55,6 +57,8 @@ public class MongodServer extends IdleTorodbService {
         .removalListener(this::onConnectionInvalidated)
         .build();
     this.commandsExecutorClassifier = commandsExecutorClassifier;
+    this.metrics = metrics;
+    this.objectIdFactory = objectIdFactory;
   }
 
   public TorodServer getTorodServer() {
@@ -66,6 +70,14 @@ public class MongodServer extends IdleTorodbService {
     openConnections.put(connection.getConnectionId(), connection);
 
     return connection;
+  }
+
+  public MongodMetrics getMetrics() {
+    return metrics;
+  }
+
+  public ObjectIdFactory getObjectIdFactory() {
+    return objectIdFactory;
   }
 
   @Override
@@ -80,7 +92,7 @@ public class MongodServer extends IdleTorodbService {
     openConnections.invalidateAll();
   }
 
-  public CommandsExecutorClassifier getCommandsExecutorClassifier() {
+  public CommandClassifier getCommandsExecutorClassifier() {
     return commandsExecutorClassifier;
   }
 

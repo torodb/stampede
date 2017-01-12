@@ -24,5 +24,6 @@
         <module>common</module>
         <module>backend</module>
         <module>packaging-utils</module>
+        <module>essential</module>
     </modules>
 </project>

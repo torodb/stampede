@@ -97,4 +97,9 @@ public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
     return defaultCase(value, arg);
   }
 
+  @Override
+  public R visit(KvDecimal128 value, A arg) {
+    return defaultCase(value, arg);
+  }
+
 }

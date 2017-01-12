@@ -26,5 +26,5 @@ import javax.sql.DataSource;
  */
 public interface DerbyDriverProvider {
 
-  DataSource getConfiguredDataSource(DerbyDbBackendConfiguration configuration, String poolName);
+  DataSource getConfiguredDataSource(DerbyDbBackendConfig configuration, String poolName);
 }

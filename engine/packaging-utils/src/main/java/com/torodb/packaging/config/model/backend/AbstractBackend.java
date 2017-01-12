@@ -38,6 +38,8 @@ public abstract class AbstractBackend {
     this.backendImplementation = backendImplementation;
   }
 
+  public abstract ConnectionPoolConfig getConnectionPoolConfig();
+
   public boolean hasBackendImplementation(String name) {
     return backendClasses.containsKey(name);
   }
