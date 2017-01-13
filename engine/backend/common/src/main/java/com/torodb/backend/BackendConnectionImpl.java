@@ -20,6 +20,7 @@ package com.torodb.backend;
 
 import com.google.common.base.Preconditions;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendTransaction;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
@@ -39,15 +40,17 @@ public class BackendConnectionImpl implements BackendConnection {
   private final BackendServiceImpl backend;
   private final SqlInterface sqlInterface;
   private boolean closed = false;
+  private final TableRefFactory tableRefFactory;
   private final IdentifierFactory identifierFactory;
   private final ReservedIdGenerator ridGenerator;
   private BackendTransaction currentTransaction;
 
   public BackendConnectionImpl(BackendServiceImpl backend,
       SqlInterface sqlInterface, ReservedIdGenerator ridGenerator,
-      IdentifierFactory identifierFactory) {
+      TableRefFactory tableRefFactory, IdentifierFactory identifierFactory) {
     this.backend = backend;
     this.sqlInterface = sqlInterface;
+    this.tableRefFactory = tableRefFactory;
     this.identifierFactory = identifierFactory;
     this.ridGenerator = ridGenerator;
   }
@@ -72,7 +75,7 @@ public class BackendConnectionImpl implements BackendConnection {
         "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
     SharedWriteBackendTransactionImpl transaction = new SharedWriteBackendTransactionImpl(
-        sqlInterface, this, identifierFactory);
+        sqlInterface, this, tableRefFactory, identifierFactory);
     currentTransaction = transaction;
 
     return transaction;
@@ -85,7 +88,7 @@ public class BackendConnectionImpl implements BackendConnection {
         "Another transaction is currently under execution. Transaction is " + currentTransaction);
 
     ExclusiveWriteBackendTransactionImpl transaction = new ExclusiveWriteBackendTransactionImpl(
-        sqlInterface, this, identifierFactory, ridGenerator);
+        sqlInterface, this, tableRefFactory, identifierFactory, ridGenerator);
     currentTransaction = transaction;
 
     return transaction;

@@ -20,6 +20,7 @@ package com.torodb.backend;
 
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.core.TableRefFactory;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendService;
@@ -68,6 +69,7 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
   private final Retrier retrier;
   private final StreamExecutor streamExecutor;
   private final KvMetainfoHandler metainfoHandler;
+  private final TableRefFactory tableRefFactory;
   private final IdentifierFactory identifierFactory;
   private final SchemaUpdater schemaUpdater;
 
@@ -78,8 +80,8 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
   @Inject
   public BackendServiceImpl(@TorodbIdleService ThreadFactory threadFactory,
       ReservedIdGenerator ridGenerator, DbBackendService dbBackendService,
-      SqlInterface sqlInterface, IdentifierFactory identifierFactory,
-      Retrier retrier,
+      SqlInterface sqlInterface, TableRefFactory tableRefFactory,
+      IdentifierFactory identifierFactory, Retrier retrier,
       ConcurrentToolsFactory concurrentToolsFactory,
       KvMetainfoHandler metainfoHandler, SchemaUpdater schemaUpdater) {
     super(threadFactory);
@@ -90,13 +92,15 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
     this.retrier = retrier;
     this.streamExecutor = concurrentToolsFactory.createStreamExecutor("backend-inner-jobs", true);
     this.metainfoHandler = metainfoHandler;
+    this.tableRefFactory = tableRefFactory;
     this.identifierFactory = identifierFactory;
     this.schemaUpdater = schemaUpdater;
   }
 
   @Override
   public BackendConnection openConnection() {
-    return new BackendConnectionImpl(this, sqlInterface, ridGenerator, identifierFactory);
+    return new BackendConnectionImpl(this, sqlInterface, ridGenerator, 
+        tableRefFactory, identifierFactory);
   }
 
   @Override
