@@ -1,0 +1,5 @@
+torodb-stampede (@{version}) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Adrián Escoms <adescoms@8kdata.com>  Mon, 09 Jan 2017 11:31:43 +0100

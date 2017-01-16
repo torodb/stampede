@@ -1,0 +1,64 @@
+#!/usr/bin/make -f
+
+BUILD_DIR=$(HOME)/data
+
+# Debian rules
+
+build: build-arch build-indep
+
+build-arch: build-stamp
+      
+build-indep: build-stamp
+
+build-stamp:
+	dh_testdir
+
+clean:
+	
+install:
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	
+	install -d $(CURDIR)/debian/@{assembler.name}/etc/@{assembler.name}
+	install -d $(CURDIR)/debian/@{assembler.name}/var/log/@{assembler.name}
+	install -d $(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
+	install -d $(CURDIR)/debian/@{assembler.name}/usr/share/man/man1/
+	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}.wrapper          $(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
+	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}-setup.wrapper	$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}/@{assembler.name}-setup
+	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}                  $(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}/bin/@{assembler.name}
+	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}-setup            $(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}/bin/@{assembler.name}-setup
+	install -p -D -m 644 $(BUILD_DIR)/systemd/@{assembler.name}.service 	$(CURDIR)/debian/@{assembler.name}/usr/systemd/system/@{assembler.name}.service
+	install -p -D -m 644 $(BUILD_DIR)/logrotate/@{assembler.name} 			$(CURDIR)/debian/@{assembler.name}/etc/logrotate.d/@{assembler.name}
+	install -p -D -m 644 $(BUILD_DIR)/conf/@{assembler.name}.yml 			$(CURDIR)/debian/@{assembler.name}/etc/@{assembler.name}/@{assembler.name}.yml
+	install -p -D -m 644 $(BUILD_DIR)/default/@{assembler.name}.default 	$(CURDIR)/debian/@{assembler.name}/etc/default/@{assembler.name}
+	install -p -D -m 644 $(BUILD_DIR)/doc/LICENSE-GNU_AGPLv3.txt 			$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
+	install -p -D -m 644 $(BUILD_DIR)/doc/README.md 						$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
+	cp -a $(BUILD_DIR)/lib 													$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
+	help2man $(BUILD_DIR)/bin/@{assembler.name} -N > 						$(CURDIR)/debian/@{assembler.name}/usr/share/man/man1/@{assembler.name}.1
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+		dh_testdir
+		dh_testroot
+		dh_installchangelogs 
+		dh_installdocs
+		dh_installexamples
+		dh_installman
+		dh_link
+		dh_compress
+		dh_fixperms
+		dh_installdeb
+		dh_gencontrol
+		dh_md5sums
+		dh_builddeb
+
+# Build architecture-dependent files here.
+binary-arch: 
+# We have nothing to do here.
+
+binary: binary-indep binary-arch
+
+.PHONY: build clean binary install configure

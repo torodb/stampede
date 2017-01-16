@@ -518,6 +518,137 @@
         </profile>
         
         <profile>
+            <id>deb</id>
+            <properties>
+                <package.name>${assembler.name}</package.name>
+                <debbuilder.image>debian:8</debbuilder.image>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <id>assembler-version-property</id>
+                                <goals>
+                                    <goal>regex-property</goal>
+                                </goals>
+                                <configuration>
+                                    <name>assembler.version</name>
+                                    <value>${project.version}</value>
+                                    <regex>-</regex>
+                                    <replacement>_</replacement>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-deb</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/deb/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>build.orig</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/deb/${package.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <alias>debbuilder</alias>
+                                    <name>debbuilder</name>
+                                    <build>
+                                        <cleanup>none</cleanup>
+                                        <optimise>false</optimise>
+                                        <from>${debbuilder.image}</from>
+                                        <runCmds>
+                                            <run>echo "deb http://ftp.de.debian.org/debian jessie-backports main" &gt;&gt; /etc/apt/sources.list</run>
+                                            <run>apt update</run>
+                                            <run>apt -y install devscripts build-essential lintian help2man openjdk-8-jdk-headless postgresql-client</run>
+                                        </runCmds>
+                                    </build>
+                                    <run>
+                                        <volumes>
+                                            <bind>
+                                                <volume>${basedir}/target/dist/deb/${package.name}:/deb</volume>
+                                            </bind>
+                                        </volumes>
+                                        <wait>
+                                            <time>600000</time>
+                                            <log>debbuilder finished</log>
+                                        </wait>
+                                        <cmd>
+                                            <arg>/bin/sh</arg>
+                                            <arg>-c</arg>
+                                            <arg>
+                                            set -x -v -e;
+                                            mkdir "$HOME/debbuild";
+                                            cp -a /deb/* "$HOME/debbuild";
+                                            rm -Rf "$HOME/debbuild/debbuild";
+                                            find . -name "*.DS_Store" -type f -delete
+                                            mkdir "$HOME/data";
+                                            cp -a $HOME/debbuild/build.orig/build.orig/* "$HOME/data";
+                                            cd "$HOME/debbuild/build";
+                                            debuild -us -uc;
+                                            cp -a "$HOME/debbuild" "/deb/.";
+                                            chmod a+w /deb -R;
+                                            echo "debbuilder finished";
+                                            </arg>
+                                        </cmd>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        
+        <profile>
             <id>docker-stampede</id>
             <properties>
                 <docker.postgres.host></docker.postgres.host>
