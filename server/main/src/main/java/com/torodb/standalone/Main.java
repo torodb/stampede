@@ -30,6 +30,7 @@ import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.engine.essential.EssentialModule;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.mongodb.wp.MongoDbWpConfig;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
@@ -37,13 +38,13 @@ import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
+import com.torodb.packaging.config.model.protocol.mongo.Net;
 import com.torodb.packaging.config.util.BackendImplementationVisitor;
 import com.torodb.packaging.config.util.BundleFactory;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.standalone.config.model.backend.Backend;
-import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -215,14 +216,20 @@ public class Main {
             backendConfig,
             generalConfig
         ),
-        (generalConfig, torodBundle) -> createMongoDbWpBundle(config, torodBundle, generalConfig)
+        getSelfHostAndPort(config),
+        (generalConfig, coreBundle) -> createMongoDbWpBundle(config, coreBundle, generalConfig)
     );
   }
 
+  private static HostAndPort getSelfHostAndPort(Config config) {
+    Net net = config.getProtocol().getMongo().getNet();
+    return HostAndPort.fromParts(net.getBindIp(), net.getPort());
+  }
+
   private static MongoDbWpBundle createMongoDbWpBundle(
-      Config config, TorodBundle torodBundle, BundleConfig generalConfig) {
+      Config config, MongoDbCoreBundle coreBundle, BundleConfig generalConfig) {
     int port = config.getProtocol().getMongo().getNet().getPort();
-    return new MongoDbWpBundle(new MongoDbWpConfig(torodBundle, port, generalConfig));
+    return new MongoDbWpBundle(new MongoDbWpConfig(coreBundle, port, generalConfig));
   }
 
   private static void configureLogger(CliConfig cliConfig, Config config) {

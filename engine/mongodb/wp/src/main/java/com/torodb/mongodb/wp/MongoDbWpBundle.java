@@ -20,11 +20,10 @@ package com.torodb.mongodb.wp;
 
 import com.eightkdata.mongowp.server.wp.NettyMongoServer;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.core.modules.AbstractBundle;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.guice.MongoDbWpModule;
-import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,19 +33,19 @@ import java.util.Collections;
 public class MongoDbWpBundle extends AbstractBundle<MongoDbWpExtInt> {
   private static final Logger LOGGER = LogManager.getLogger(MongoDbWpBundle.class);
 
-  private final TorodBundle torodBundle;
+  private final MongoDbCoreBundle coreBundle;
   private final NettyMongoServer nettyMongoServer;
 
   public MongoDbWpBundle(MongoDbWpConfig config) {
     super(config);
 
-    Injector injector = Guice.createInjector(
+    Injector injector = config.getEssentialInjector().createChildInjector(
         new MongoDbWpModule(
-            config.getTorodBundle(),
+            config.getCoreBundle(),
             config.getPort()
         ));
     this.nettyMongoServer = injector.getInstance(NettyMongoServer.class);
-    this.torodBundle = config.getTorodBundle();
+    this.coreBundle = config.getCoreBundle();
   }
 
   @Override
@@ -63,7 +62,7 @@ public class MongoDbWpBundle extends AbstractBundle<MongoDbWpExtInt> {
 
   @Override
   public Collection<Service> getDependencies() {
-    return Collections.singleton(torodBundle);
+    return Collections.singleton(coreBundle);
   }
 
   @Override
