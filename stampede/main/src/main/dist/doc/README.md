@@ -17,13 +17,13 @@ ToroDB Stampede need a user and a database to be created in PostgreSQL to connec
 
 ### Linux
 
-Create PosgreSQL user torodb:
+Create PostgreSQL user `torodb`:
 
     createuser -S -R -D -P --interactive torodb
 
-Create PostgreSQL database torod with owner torodb:
+Create PostgreSQL database `torod` with owner `torodb`:
 
-    createdatabase -O torodb torod
+    createdb -O torodb torod
 
 ### Mac OS X/Windows
 
@@ -52,17 +52,14 @@ Create a file that will contain the PostgreSQL user torodb's password:
 
 ## Linux/Mac
 
-Given that previous prerequisites are met, the only step needed to launch ToroDB Stampede is the download of the binary distribution from the next [link](http://todo).
+Given that previous prerequisites are met, the only step needed to launch ToroDB Stampede is the download 
+of the binary distribution from the next [link](https://www.torodb.com/download/torodb-stampede-@{project.version}.tar.bz2).
 
-    $ wget http://todo
+    $ wget https://www.torodb.com/download/torodb-stampede-@{project.version}.tar.bz2
     
-    $ tar xjvf <stampede-binary>.tar.bz2
+    $ tar xjvf torodb-stampede-@{project.version}.tar.bz2
     
-    $ torodb-stampede-<version>/bin/torodb-stampede
-
-The main problems at this step is that MongoDB or PostgreSQL has a different user/password than expected, to avoid that problem configuration files can be provided.
-
-    $ torodb-stampede-<version>/bin/torodb-stampede --toropass-file <postgres-credentials-file> --mongopass-file <mongo-credentials-file>
+    $ torodb-stampede-@{project.version}/bin/torodb-stampede
 
 ## As a Linux systemd service
 
@@ -76,9 +73,9 @@ You have to create the system user `torodb`:
 
     useradd -M -d "$(dirname "$(dirname "`pwd`/bin/torodb-stampede")")" torodb
 
-Now copy the file `systemd/torodb-stampede.service.sample` to `/lib/systed/system` folder:
+Now copy the file `systemd/torodb-stampede.service.sample` to `/lib/systemd/system` folder:
 
-    cp systemd/torodb-stampede.service.sample /lib/systed/system/.
+    cp systemd/torodb-stampede.service.sample /lib/systemd/system/.
 
 Enable and start the newly created ToroDB Stampede service:
 
