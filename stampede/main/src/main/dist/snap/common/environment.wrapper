@@ -19,10 +19,10 @@ if [ ! -e $SNAP_DATA/$LOC ]; then
     $SNAP/usr/bin/localedef --prefix=$SNAP_DATA -f $ENC -i $LANG1 $SNAP_DATA/$LOC
 fi
 
-export PATH="$PATH:$SNAP/usr/lib/postgresql/9.6/bin"
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$SNAP/usr/lib/x86_64-linux-gnu"
+export PATH="$PATH:$(ls -1 -d "$SNAP"/usr/lib/postgresql/*/bin|head -n 1)"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(ls -1 -d "$SNAP"/usr/lib/*-linux-gnu|head -n 1)"
 export TMPDIR="$SNAP_COMMON"
-export JAVA_HOME="$SNAP/usr/lib/jvm/java-8-openjdk-amd64/"
+export JAVA_HOME="$(ls -1 -d "$SNAP"/usr/lib/jvm/java-8-openjdk-*|head -n 1)"
 export TOROCMD="$SNAP/bin/@{assembler.name}.wrapper"
 export TOROCONFIG="$SNAP_COMMON/@{assembler.name}.yml"
 export PGPASSFILE="$SNAP_COMMON/.pgpass"

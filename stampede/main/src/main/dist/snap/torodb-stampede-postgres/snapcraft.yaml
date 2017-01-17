@@ -33,8 +33,8 @@ parts:
       - libc-bin
       - coreutils
       - iputils-ping
-      - postgresql-client-9.6
-      - postgresql-9.6
+      - postgresql-client
+      - postgresql
       - openjdk-8-jre-headless
     organize:
       assembler/assembler/bin: bin
@@ -56,14 +56,16 @@ parts:
       - usr/lib/jvm/java-8-openjdk-*/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - -usr/lib/jvm/java-8-openjdk-*/jre/lib/security/cacerts
       - etc/java-*
+      - etc/ssl/certs/java
       - etc/postgresql
       - usr/lib/postgresql
       - usr/share/postgresql
-      - usr/lib/x86_64-linux-gnu/libpq.so*
-      - usr/lib/x86_64-linux-gnu/libxml2.so*
-      - usr/lib/x86_64-linux-gnu/libicuuc.so*
-      - usr/lib/x86_64-linux-gnu/libicudata.so*
+      - usr/lib/*-linux-gnu/libpq.so*
+      - usr/lib/*-linux-gnu/libxml2.so*
+      - usr/lib/*-linux-gnu/libicuuc.so*
+      - usr/lib/*-linux-gnu/libicudata.so*
     snap:
       - bin
       - doc
@@ -79,11 +81,13 @@ parts:
       - usr/lib/jvm/java-8-openjdk-*/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - -usr/lib/jvm/java-8-openjdk-*/jre/lib/security/cacerts
       - etc/java-*
+      - etc/ssl/certs/java
       - etc/postgresql
       - usr/lib/postgresql
       - usr/share/postgresql
-      - usr/lib/x86_64-linux-gnu/libpq.so*
-      - usr/lib/x86_64-linux-gnu/libxml2.so*
-      - usr/lib/x86_64-linux-gnu/libicuuc.so*
-      - usr/lib/x86_64-linux-gnu/libicudata.so*
+      - usr/lib/*-linux-gnu/libpq.so*
+      - usr/lib/*-linux-gnu/libxml2.so*
+      - usr/lib/*-linux-gnu/libicuuc.so*
+      - usr/lib/*-linux-gnu/libicudata.so*

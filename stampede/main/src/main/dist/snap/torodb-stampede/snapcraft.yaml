@@ -33,7 +33,7 @@ parts:
       - libc-bin
       - coreutils
       - iputils-ping
-      - postgresql-client-9.6
+      - postgresql-client
       - openjdk-8-jre-headless
     organize:
       assembler/assembler/bin: bin
@@ -55,9 +55,11 @@ parts:
       - usr/lib/jvm/java-8-openjdk-*/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - -usr/lib/jvm/java-8-openjdk-*/jre/lib/security/cacerts
       - etc/java-*
-      - usr/lib/postgresql/9.6/bin/psql
-      - usr/lib/x86_64-linux-gnu/libpq.so.5*
+      - etc/ssl/certs/java
+      - usr/lib/postgresql/*/bin/psql
+      - usr/lib/*-linux-gnu/libpq.so*
     snap:
       - bin
       - doc
@@ -73,6 +75,8 @@ parts:
       - usr/lib/jvm/java-8-openjdk-*/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/bin
       - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - -usr/lib/jvm/java-8-openjdk-*/jre/lib/security/cacerts
       - etc/java-*
-      - usr/lib/postgresql/9.6/bin/psql
-      - usr/lib/x86_64-linux-gnu/libpq.so.5*
+      - etc/ssl/certs/java
+      - usr/lib/postgresql/*/bin/psql
+      - usr/lib/*-linux-gnu/libpq*

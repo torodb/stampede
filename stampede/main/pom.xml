@@ -23,6 +23,9 @@
         <assembler.changelog></assembler.changelog>
         <snap.grade>devel</snap.grade>
         <snap.confinement>devmode</snap.confinement>
+        <snap.channel>edge</snap.channel>
+        <launchpad.user>8kdata</launchpad.user>
+        <launchpad.host>git.launchpad.net</launchpad.host>
     </properties>
 
     <dependencies>
@@ -302,9 +305,29 @@
             <id>snap</id>
             <properties>
                 <package.name>${assembler.name}</package.name>
+                <launchpad.push>false</launchpad.push>
             </properties>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>generate-launchpad-dontpush</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>bsh-property</goal>
+                                </goals>
+                                <configuration>
+                                    <source>launchpadDontpush = !${launchpad.push};</source>
+                                    <properties>
+                                        <property>launchpadDontpush</property>
+                                    </properties>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
@@ -353,33 +376,66 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.5.0</version>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
                         <executions>
                             <execution>
-                                <id>snapcraft-clean</id>
+                                <id>snap-setup-launchpad</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>exec</goal>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
                                 </goals>
                                 <configuration>
-                                    <workingDirectory>${project.build.directory}/dist/snap/${package.name}</workingDirectory>
-                                    <executable>snapcraft</executable>
-                                    <arguments>
-                                        <argument>clean</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>snapcraft-build</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <workingDirectory>${project.build.directory}/dist/snap/${package.name}</workingDirectory>
-                                    <executable>snapcraft</executable>
+                                    <images>
+                                        <image>
+                                            <name>snap-setup-launchpad</name>
+                                            <build>
+                                                <skip>${launchpadDontpush}</skip>
+                                                <cleanup>remove</cleanup>
+                                                <optimise>true</optimise>
+                                                <from>ubuntu:16.04</from>
+                                                <runCmds>
+                                                    <run>apt update</run>
+                                                    <run>apt -y install snapcraft git</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <skip>${launchpadDontpush}</skip>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${basedir}/target/dist/snap:/snap</volume>
+                                                        <volume>${user.home}/.gitconfig:/config/.gitconfig:ro</volume>
+                                                        <volume>${user.home}/.ssh:/config/.ssh:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <env>
+                                                    <SNAP_CHANNEL>${snap.channel}</SNAP_CHANNEL>
+                                                    <LAUNCHPAD_USER>${launchpad.user}</LAUNCHPAD_USER>
+                                                    <LAUNCHPAD_HOST>${launchpad.host}</LAUNCHPAD_HOST>
+                                                    <ASSEMBLER_NAME>${assembler.name}</ASSEMBLER_NAME>
+                                                </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>setup launchpad finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /snap -R" ERR EXIT;
+                                                    cp -a /config/.ssh /config/.gitconfig /root/.;
+                                                    chown root:root /root/.ssh /root/.gitconfig -R;
+                                                    cd /snap/${package.name};
+                                                    bash -x ../update-launchpad.sh;
+                                                    echo "'setup launchpad finished'";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
                                 </configuration>
                             </execution>
                         </executions>
@@ -399,7 +455,6 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>1.7</version>
                         <executions>
                             <execution>
                                 <id>assembler-version-property</id>
@@ -726,6 +781,7 @@
                 <profiles.resources>src/main/profiles/prod</profiles.resources>
                 <snap.grade>stable</snap.grade>
                 <snap.confinement>strict</snap.confinement>
+                <snap.channel>candidate</snap.channel>
             </properties>
         </profile>
 
