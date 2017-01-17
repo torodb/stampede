@@ -18,6 +18,7 @@
 
 package com.torodb.mongodb.core;
 
+import com.eightkdata.mongowp.server.api.CommandLibrary;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import com.torodb.core.modules.AbstractBundle;
@@ -31,11 +32,13 @@ public class MongoDbCoreBundle extends AbstractBundle<MongoDbCoreExtInt> {
 
   private final TorodBundle torodBundle;
   private final MongodServer mongodServer;
+  private final CommandLibrary commandLibrary;
 
   public MongoDbCoreBundle(MongoDbCoreConfig bundleConfig) {
     super(bundleConfig);
 
     this.torodBundle = bundleConfig.getTorodBundle();
+    this.commandLibrary = bundleConfig.getCommandsLibrary();
 
     Injector injector = bundleConfig.getEssentialInjector().createChildInjector(
         new MongodCoreModule(bundleConfig)
@@ -63,7 +66,7 @@ public class MongoDbCoreBundle extends AbstractBundle<MongoDbCoreExtInt> {
 
   @Override
   public MongoDbCoreExtInt getExternalInterface() {
-    return new MongoDbCoreExtInt(mongodServer);
+    return new MongoDbCoreExtInt(mongodServer, commandLibrary);
   }
 
   

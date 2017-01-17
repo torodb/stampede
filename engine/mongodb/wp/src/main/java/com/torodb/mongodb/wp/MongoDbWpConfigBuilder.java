@@ -19,12 +19,12 @@
 package com.torodb.mongodb.wp;
 
 import com.torodb.core.modules.BundleConfig;
-import com.torodb.torod.TorodBundle;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
 
 
 public class MongoDbWpConfigBuilder {
 
-  private TorodBundle torodBundle;
+  private MongoDbCoreBundle coreBundle;
   private int port;
   private final BundleConfig genericBundle;
 
@@ -32,8 +32,8 @@ public class MongoDbWpConfigBuilder {
     this.genericBundle = genericBundle;
   }
 
-  public MongoDbWpConfigBuilder setTorodBundle(TorodBundle torodBundle) {
-    this.torodBundle = torodBundle;
+  public MongoDbWpConfigBuilder setCoreBundle(MongoDbCoreBundle coreBundle) {
+    this.coreBundle = coreBundle;
     return this;
   }
 
@@ -43,7 +43,7 @@ public class MongoDbWpConfigBuilder {
   }
 
   public MongoDbWpConfig build() {
-    return new MongoDbWpConfig(torodBundle, port, genericBundle);
+    return new MongoDbWpConfig(coreBundle, port, genericBundle);
   }
 
 }

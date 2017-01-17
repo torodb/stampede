@@ -18,11 +18,12 @@
 
 package com.torodb.standalone;
 
+import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.modules.BundleConfig;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
-import com.torodb.torod.TorodBundle;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -31,16 +32,19 @@ public class ServerConfig {
 
   private final Injector essentialInjector;
   private final Function<BundleConfig, BackendBundle> backendBundleGenerator;
-  private final BiFunction<BundleConfig, TorodBundle, MongoDbWpBundle> mongoDbWpBundleGenerator;
+  private final HostAndPort selfHostAndPort;
+  @SuppressWarnings("checkstyle:LineLength")
+  private final BiFunction<BundleConfig, MongoDbCoreBundle, MongoDbWpBundle> mongoDbWpBundleGenerator;
 
   public ServerConfig(Injector essentialInjector,
-      Function<BundleConfig, BackendBundle> backendBundleGenerator,
-      BiFunction<BundleConfig, TorodBundle, MongoDbWpBundle> wpBundleGenerator) {
+      Function<BundleConfig, BackendBundle> backendBundleGenerator, HostAndPort selfHostAndPort,
+      BiFunction<BundleConfig, MongoDbCoreBundle, MongoDbWpBundle> mongoDbWpBundleGenerator) {
     this.essentialInjector = essentialInjector;
     this.backendBundleGenerator = backendBundleGenerator;
-    this.mongoDbWpBundleGenerator = wpBundleGenerator;
+    this.selfHostAndPort = selfHostAndPort;
+    this.mongoDbWpBundleGenerator = mongoDbWpBundleGenerator;
   }
-
+ 
   public Injector getEssentialInjector() {
     return essentialInjector;
   }
@@ -49,7 +53,12 @@ public class ServerConfig {
     return backendBundleGenerator;
   }
 
-  public BiFunction<BundleConfig, TorodBundle, MongoDbWpBundle> getMongoDbWpBundleGenerator() {
+  public HostAndPort getSelfHostAndPort() {
+    return selfHostAndPort;
+  }
+
+  @SuppressWarnings("checkstyle:LineLength")
+  public BiFunction<BundleConfig, MongoDbCoreBundle, MongoDbWpBundle> getMongoDbWpBundleGenerator() {
     return mongoDbWpBundleGenerator;
   }
 
