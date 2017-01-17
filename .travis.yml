@@ -18,9 +18,6 @@ addons:
     packages:
       - oracle-java8-installer
 
-install:
-- mvn dependency:go-offline -q
-
 before_script:
 - export GIT_BRANCH=$TRAVIS_BRANCH
 
