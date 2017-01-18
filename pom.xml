@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <prerequisites>
-        <maven>3.2.2</maven>
+        <maven>${maven.version}</maven>
     </prerequisites>
 
     <groupId>com.torodb</groupId>
@@ -84,6 +84,7 @@
         <mongodriver.version>3.4.1</mongodriver.version>
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
+        <maven.version>3.2.2</maven.version>
         <torodb.buildtools.version>0.50.1-SNAPSHOT</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
         
@@ -472,6 +473,19 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>1.4.1</version>
                 <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>${maven.version}</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>enforce-dependencies</id>
                         <goals>
