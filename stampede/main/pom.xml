@@ -393,7 +393,7 @@
                                             <name>snap-setup-launchpad</name>
                                             <build>
                                                 <skip>${launchpadDontpush}</skip>
-                                                <cleanup>remove</cleanup>
+                                                <cleanup>try</cleanup>
                                                 <optimise>true</optimise>
                                                 <from>ubuntu:16.04</from>
                                                 <runCmds>
@@ -449,6 +449,7 @@
             <properties>
                 <package.name>${assembler.name}</package.name>
                 <rpmbuilder.image>fedora:25</rpmbuilder.image>
+                <copr.push>false</copr.push>
             </properties>
             <build>
                 <plugins>
@@ -466,6 +467,19 @@
                                     <value>${project.version}</value>
                                     <regex>-</regex>
                                     <replacement>_</replacement>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>generate-copr-dontpush</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>bsh-property</goal>
+                                </goals>
+                                <configuration>
+                                    <source>coprDontpush = !${copr.push};</source>
+                                    <properties>
+                                        <property>coprDontpush</property>
+                                    </properties>
                                 </configuration>
                             </execution>
                         </executions>
@@ -521,52 +535,70 @@
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <extensions>true</extensions>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <alias>rpmbuilder</alias>
-                                    <name>rpmbuilder</name>
-                                    <build>
-                                        <cleanup>remove</cleanup>
-                                        <optimise>true</optimise>
-                                        <from>${rpmbuilder.image}</from>
-                                        <runCmds>
-                                            <run>dnf -y install rpmdevtools rpmlint copr-cli help2man java-1.8.0-openjdk-headless postgresql</run>
-                                            <run>rpmdev-setuptree</run>
-                                        </runCmds>
-                                    </build>
-                                    <run>
-                                        <volumes>
-                                            <bind>
-                                                <volume>${basedir}/target/dist/rpm/${package.name}:/rpm</volume>
-                                            </bind>
-                                        </volumes>
-                                        <env>
-                                            <SPEC_FILE>/rpm/${package.name}.spec</SPEC_FILE>
-                                        </env>
-                                        <wait>
-                                            <time>600000</time>
-                                            <log>rpmbuilder finished</log>
-                                        </wait>
-                                        <cmd>
-                                            <arg>/bin/sh</arg>
-                                            <arg>-c</arg>
-                                            <arg>
-                                            set -x -v -e;
-                                            cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
-                                            rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
-                                            spectool -g -R "$SPEC_FILE";
-                                            dnf -y builddep "$SPEC_FILE";
-                                            rpmbuild -ba "$SPEC_FILE";
-                                            cp -a "$HOME/rpmbuild" "/rpm/.";
-                                            chmod a+w /rpm -R;
-                                            echo "rpmbuilder finished";
-                                            </arg>
-                                        </cmd>
-                                    </run>
-                                </image>
-                            </images>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>rpm-setup-copr</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <alias>rpmbuilder</alias>
+                                            <name>rpmbuilder</name>
+                                            <build>
+                                                <skip>${coprDontpush}</skip>
+                                                <cleanup>try</cleanup>
+                                                <optimise>true</optimise>
+                                                <from>${rpmbuilder.image}</from>
+                                                <runCmds>
+                                                    <run>dnf -y install rpmdevtools rpmlint copr-cli help2man java-1.8.0-openjdk-headless postgresql</run>
+                                                    <run>rpmdev-setuptree</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <skip>${coprDontpush}</skip>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${basedir}/target/dist/rpm/${package.name}:/rpm</volume>
+                                                        <volume>${user.home}/.config/copr:/root/.config/copr:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <env>
+                                                    <SPEC_FILE>/rpm/${package.name}.spec</SPEC_FILE>
+                                                </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>rpmbuilder finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /rpm -R" ERR EXIT;
+                                                    cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
+                                                    rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
+                                                    spectool -g -R "$SPEC_FILE";
+                                                    dnf -y builddep "$SPEC_FILE";
+                                                    rpmbuild -bs "$SPEC_FILE";
+                                                    cp -a "$HOME/rpmbuild" "/rpm/.";
+                                                    if ! copr-cli list-packages ${package.name}&gt;/dev/null 2&gt;&amp;1;
+                                                    then
+                                                        copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
+                                                    fi;
+                                                    copr-cli build ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
+                                                    echo "rpmbuilder finished";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

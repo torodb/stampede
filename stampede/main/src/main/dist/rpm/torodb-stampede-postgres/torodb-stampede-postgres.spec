@@ -6,6 +6,7 @@ License:        @{assembler.licenses}
 URL:            @{assembler.url}
 Source0: assembler.tar
 BuildArch:  noarch
+BuildRequires: systemd
 BuildRequires: java-1.8.0-openjdk-headless
 BuildRequires: help2man
 Requires: java-1.8.0-openjdk-headless
