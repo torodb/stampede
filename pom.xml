@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <prerequisites>
-        <maven>3.2.2</maven>
+        <maven>${maven.version}</maven>
     </prerequisites>
 
     <groupId>com.torodb</groupId>
@@ -84,9 +84,9 @@
         <mongodriver.version>3.4.1</mongodriver.version>
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
+        <maven.version>3.2.2</maven.version>
         <torodb.buildtools.version>0.50.1-SNAPSHOT</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
-        <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
         
         <!-- SonarQube properties -->
         <sonar.projectName>ToroDB</sonar.projectName>
@@ -94,6 +94,10 @@
         <sonar.links.ci>https://travis-ci.org/torodb/torodb</sonar.links.ci>
         <sonar.links.scm>https://github.com/torodb/torodb</sonar.links.scm>
         <sonar.links.issue>https://github.com/torodb/torodb/issues</sonar.links.issue>
+        
+        <!-- Checkstyle properties-->
+        <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
+        <checkstyle.consoleOutput>false</checkstyle.consoleOutput>
     </properties>
 
     <modules>
@@ -470,6 +474,19 @@
                 <version>1.4.1</version>
                 <executions>
                     <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>${maven.version}</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>enforce-dependencies</id>
                         <goals>
                             <goal>enforce</goal>
@@ -549,9 +566,6 @@
                     <execution>
                         <id>validate</id>
                         <configuration>
-                            <!--<configLocation>google_checks.xml</configLocation>-->
-                            <consoleOutput>true</consoleOutput>
-                            <!--<failsOnError>true</failsOnError>-->
                             <linkXRef>false</linkXRef>
                             <violationSeverity>error</violationSeverity>
                         </configuration>
