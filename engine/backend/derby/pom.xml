@@ -83,6 +83,12 @@
             <artifactId>javax.json</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.torodb.engine.backend</groupId>
+            <artifactId>test-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <build>

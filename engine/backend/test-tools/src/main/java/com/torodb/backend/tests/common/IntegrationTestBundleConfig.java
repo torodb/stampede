@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.common;
+package com.torodb.backend.tests.common;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;

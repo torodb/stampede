@@ -16,24 +16,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.common;
+package com.torodb.backend.tests.common;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
-import com.torodb.core.transaction.metainf.*;
+import com.torodb.core.transaction.metainf.FieldType;
+import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
+import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
+import com.torodb.core.transaction.metainf.MetaDatabase;
 import org.jooq.DSLContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 
-import static org.junit.Assert.*;
-
-public abstract class AbstractStructureIT {
+public abstract class AbstractStructureIntegrationSuite {
 
   private static final String SCHEMA_NAME = "schema_name";
 
@@ -128,7 +138,8 @@ public abstract class AbstractStructureIT {
       /*Given */
       createSchema(dslContext);
       TableRef rootTableRef = createRootTable(dslContext, "root_table");
-      TableRef childTableRef = createChildTable(dslContext, rootTableRef, "root_table", "child_table");
+      TableRef childTableRef =
+          createChildTable(dslContext, rootTableRef, "root_table", "child_table");
 
       /* When */
       createChildTable(dslContext, childTableRef, "child_table", "second_child_table");
@@ -157,14 +168,16 @@ public abstract class AbstractStructureIT {
 
       /* When */
       DataTypeForKv<?> dataType = sqlInterface.getDataTypeProvider().getDataType(FieldType.STRING);
-      sqlInterface.getStructureInterface().addColumnToDocPartTable(dslContext, SCHEMA_NAME, "root_table", "new_column", dataType);
+      sqlInterface.getStructureInterface()
+          .addColumnToDocPartTable(dslContext, SCHEMA_NAME, "root_table", "new_column", dataType);
 
       /* Then */
       Connection connection = dslContext.configuration().connectionProvider().acquire();
       try (Statement foo = connection.createStatement()) {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
-        assertThatColumnIsGivenType(result.getMetaData(), "new_column", getSqlTypeOf(FieldType.STRING));
+        assertThatColumnIsGivenType(result.getMetaData(), "new_column",
+            getSqlTypeOf(FieldType.STRING));
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -183,8 +196,8 @@ public abstract class AbstractStructureIT {
         DataTypeForKv<?> dataType = sqlInterface.getDataTypeProvider().getDataType(fieldType);
         String columnName = "new_column_" + fieldType.name();
 
-        sqlInterface.getStructureInterface().addColumnToDocPartTable(dslContext, SCHEMA_NAME, "root_table",
-            columnName, dataType);
+        sqlInterface.getStructureInterface()
+            .addColumnToDocPartTable(dslContext, SCHEMA_NAME, "root_table", columnName, dataType);
 
         try (Statement foo = connection.createStatement()) {
           ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
@@ -206,8 +219,10 @@ public abstract class AbstractStructureIT {
       createSchema(dslContext);
       createRootTable(dslContext, collection);
 
-      ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart.Builder(tableRefFactory.createRoot(),"root_table").build();
-      ImmutableMetaCollection metaCollection = new ImmutableMetaCollection.Builder(collection, collection).put(metaDocPart).build();
+      ImmutableMetaDocPart metaDocPart = new ImmutableMetaDocPart
+          .Builder(tableRefFactory.createRoot(),"root_table").build();
+      ImmutableMetaCollection metaCollection = new ImmutableMetaCollection
+          .Builder(collection, collection).put(metaDocPart).build();
       MetaDatabase metaDatabase = new ImmutableMetaDatabase.Builder(SCHEMA_NAME, SCHEMA_NAME)
           .put(metaCollection).build();
 
@@ -236,7 +251,9 @@ public abstract class AbstractStructureIT {
     return rootTableRef;
   }
 
-  private TableRef createChildTable(DSLContext dslContext, TableRef tableRef, String parentName, String childName) {
+  private TableRef createChildTable(DSLContext dslContext, TableRef tableRef, String parentName,
+                                    String childName) {
+
     TableRef childTableRef = tableRefFactory.createChild(tableRef, childName);
     sqlInterface.getStructureInterface().createDocPartTable(dslContext, SCHEMA_NAME,
         childName, childTableRef, parentName);
@@ -244,19 +261,24 @@ public abstract class AbstractStructureIT {
     return childTableRef;
   }
 
-  private void assertThatColumnExists(ResultSetMetaData metaData, String columnName) throws SQLException {
+  private void assertThatColumnExists(ResultSetMetaData metaData, String columnName)
+      throws SQLException {
+
     boolean findMatch = false;
 
-    for (int i = 1; i <= metaData.getColumnCount(); i++)
-      if (columnName.equals(metaData.getColumnLabel(i)))
+    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+      if (columnName.equals(metaData.getColumnLabel(i))) {
         findMatch = true;
+      }
+    }
 
-    if (!findMatch)
+    if (!findMatch) {
       assertTrue("Column " + columnName + " should exist", false);
+    }
   }
 
-  private void assertThatColumnIsGivenType(ResultSetMetaData metaData, String columnName, String requiredType)
-      throws SQLException {
+  private void assertThatColumnIsGivenType(ResultSetMetaData metaData, String columnName,
+                                           String requiredType) throws SQLException {
 
     boolean findMatch = false;
 
@@ -267,8 +289,9 @@ public abstract class AbstractStructureIT {
       }
     }
 
-    if (!findMatch)
+    if (!findMatch) {
       assertTrue("Column " + columnName + " should exist", false);
+    }
   }
 
 }
