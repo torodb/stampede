@@ -8,7 +8,7 @@ before_install:
 
 sudo: false
 dist: trusty
-script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
+script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
 jdk: oraclejdk8
 
 env:

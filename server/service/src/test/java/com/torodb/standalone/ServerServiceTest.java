@@ -18,6 +18,7 @@
 
 package com.torodb.standalone;
 
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -28,9 +29,8 @@ import com.torodb.core.modules.BundleConfig;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.mongodb.wp.MongoDbWpConfig;
 import com.torodb.engine.essential.EssentialModule;
-import com.torodb.torod.TorodBundle;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.time.Clock;
@@ -38,6 +38,7 @@ import java.time.Clock;
 public class ServerServiceTest {
 
   private ServerConfig config;
+  private final HostAndPort selfHostAndPort = HostAndPort.fromParts("localhost", 27020);
 
   @SuppressWarnings("checkstyle:JavadocMethod")
   @Before
@@ -45,6 +46,7 @@ public class ServerServiceTest {
     config = new ServerConfig(
         createEssentialInjector(),
         this::createBackendBundle,
+        selfHostAndPort,
         this::createConfigBuilder);
   }
 
@@ -58,19 +60,19 @@ public class ServerServiceTest {
     );
   }
 
-  private MongoDbWpBundle createConfigBuilder(BundleConfig bundleConfig, TorodBundle torodBundle) {
+  private MongoDbWpBundle createConfigBuilder(BundleConfig bundleConfig,
+      MongoDbCoreBundle mongoDbCoreBundle) {
     return new MongoDbWpBundle(
-        new MongoDbWpConfig(torodBundle, 27020, bundleConfig)
+        new MongoDbWpConfig(mongoDbCoreBundle, selfHostAndPort.getPort(), bundleConfig)
     );
   }
   
-  @Test
+  @Test(timeout = 60_000)
   public void testCreateStampedeService() {
     new ServerService(config);
   }
 
-  @Test
-  @Ignore(value = "The test is not working properly")
+  @Test(timeout = 60_000)
   public void testCreateStampedeService_run() {
     Service stampedeService = new ServerService(config);
     stampedeService.startAsync();

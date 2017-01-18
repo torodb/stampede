@@ -27,6 +27,9 @@ import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.modules.BundleConfigImpl;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
+import com.torodb.mongodb.core.MongoDbCoreConfig;
+import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.torod.SqlTorodBundle;
 import com.torodb.torod.SqlTorodConfig;
@@ -87,8 +90,11 @@ public class ServerService extends AbstractIdleService implements Supervisor {
     TorodBundle torodBundle = createTorodBundle(backendBundle);
     startBundle(torodBundle);
 
+    MongoDbCoreBundle mongoDbCoreBundle = createMongoDbCoreBundle(torodBundle);
+    startBundle(mongoDbCoreBundle);
+
     MongoDbWpBundle mongodbWpBundle = config.getMongoDbWpBundleGenerator()
-        .apply(generalBundleConfig, torodBundle);
+        .apply(generalBundleConfig, mongoDbCoreBundle);
     startBundle(mongodbWpBundle);
 
     LOGGER.info("ToroDB Server is now running");
@@ -102,6 +108,13 @@ public class ServerService extends AbstractIdleService implements Supervisor {
       shutdowner.awaitTerminated();
     }
     LOGGER.info("ToroDB Stampede has been shutted down");
+  }
+
+  private MongoDbCoreBundle createMongoDbCoreBundle(TorodBundle torodBundle) {
+    MongodServerConfig mongodServerConfig = new MongodServerConfig(config.getSelfHostAndPort());
+    return new MongoDbCoreBundle(
+        MongoDbCoreConfig.simpleConfig(torodBundle, mongodServerConfig, generalBundleConfig)
+    );
   }
 
   private TorodBundle createTorodBundle(BackendBundle backendBundle) {

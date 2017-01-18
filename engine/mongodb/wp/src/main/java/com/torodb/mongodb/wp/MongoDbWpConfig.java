@@ -21,7 +21,7 @@ package com.torodb.mongodb.wp;
 import com.google.inject.Injector;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
-import com.torodb.torod.TorodBundle;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
 
 import java.util.concurrent.ThreadFactory;
 
@@ -29,19 +29,19 @@ import java.util.concurrent.ThreadFactory;
  * The configuration used by {@link MongoDbWpBundle}.
  */
 public class MongoDbWpConfig implements BundleConfig {
-  private final TorodBundle torodBundle;
+  private final MongoDbCoreBundle coreBundle;
   private final int port;
   private final BundleConfig delegate;
 
   @SuppressWarnings("checkstyle:JavadocMethod")
-  public MongoDbWpConfig(TorodBundle torodBundle, int port, BundleConfig delegate) {
-    this.torodBundle = torodBundle;
+  public MongoDbWpConfig(MongoDbCoreBundle coreBundle, int port, BundleConfig delegate) {
+    this.coreBundle = coreBundle;
     this.port = port;
     this.delegate = delegate;
   }
 
-  public TorodBundle getTorodBundle() {
-    return torodBundle;
+  public MongoDbCoreBundle getCoreBundle() {
+    return coreBundle;
   }
 
   public int getPort() {
