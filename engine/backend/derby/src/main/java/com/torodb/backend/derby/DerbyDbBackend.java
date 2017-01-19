@@ -26,6 +26,8 @@ import com.torodb.core.annotations.TorodbIdleService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.Nonnull;
