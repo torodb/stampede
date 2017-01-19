@@ -21,6 +21,7 @@
         <assembler.revision>1</assembler.revision>
         <assembler.licenses>AGPLv3</assembler.licenses>
         <assembler.changelog></assembler.changelog>
+        <assembler.libdir></assembler.libdir>
         <snap.grade>devel</snap.grade>
         <snap.confinement>devmode</snap.confinement>
         <snap.channel>edge</snap.channel>
@@ -607,6 +608,7 @@
         <profile>
             <id>deb</id>
             <properties>
+                <assembler.libdir>../../share/${assembler.name}/lib</assembler.libdir>
                 <package.name>${assembler.name}</package.name>
                 <debbuilder.image>debian:8</debbuilder.image>
                 <launchpad.push>false</launchpad.push>
@@ -738,10 +740,11 @@
                                                     <log>debbuilder finished</log>
                                                 </wait>
                                                 <cmd>
-                                                    <arg>/bin/sh</arg>
+                                                    <arg>/bin/bash</arg>
                                                     <arg>-c</arg>
                                                     <arg>
                                                     set -x -v -e;
+                                                    trap "chmod a+w /deb -R" ERR EXIT;
                                                     mkdir "$HOME/debbuild";
                                                     cp -a /deb/* "$HOME/debbuild";
                                                     rm -Rf "$HOME/debbuild/debbuild";
@@ -751,7 +754,6 @@
                                                     cd "$HOME/debbuild/build";
                                                     debuild -us -uc;
                                                     cp -a "$HOME/debbuild" "/deb/.";
-                                                    chmod a+w /deb -R;
                                                     echo "debbuilder finished";
                                                     </arg>
                                                 </cmd>
