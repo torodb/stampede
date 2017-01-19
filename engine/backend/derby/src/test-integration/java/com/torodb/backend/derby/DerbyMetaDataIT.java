@@ -18,10 +18,10 @@
 
 package com.torodb.backend.derby;
 
-import com.torodb.backend.common.AbstractMetaDataIT;
-import com.torodb.backend.common.DatabaseTestContext;
+import com.torodb.backend.tests.common.AbstractMetaDataIntegrationSuite;
+import com.torodb.backend.tests.common.DatabaseTestContext;
 
-public class DerbyMetaDataIT extends AbstractMetaDataIT {
+public class DerbyMetaDataIT extends AbstractMetaDataIntegrationSuite {
 
   @Override
   protected DatabaseTestContext getDatabaseTestContext() {

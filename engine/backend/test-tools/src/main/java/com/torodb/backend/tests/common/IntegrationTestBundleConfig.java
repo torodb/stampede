@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.common;
+package com.torodb.backend.tests.common;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -27,12 +27,7 @@ import com.torodb.core.supervision.SupervisorDecision;
 
 public class IntegrationTestBundleConfig implements BundleConfig {
 
-  private final Supervisor supervisor = new Supervisor() {
-    @Override
-    public SupervisorDecision onError(Object supervised, Throwable error) {
-      throw new AssertionError("Error on " + supervised, error);
-    }
-  };
+  private final Supervisor supervisor = new TestSupervisor();
 
   private final Injector essentialInjector = Guice.createInjector(Stage.PRODUCTION);
 
@@ -44,6 +39,15 @@ public class IntegrationTestBundleConfig implements BundleConfig {
   @Override
   public Supervisor getSupervisor() {
     return supervisor;
+  }
+
+  private static class TestSupervisor implements Supervisor {
+
+    @Override
+    public SupervisorDecision onError(Object supervised, Throwable error) {
+      throw new AssertionError("Error on " + supervised, error);
+    }
+
   }
 
 }

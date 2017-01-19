@@ -18,10 +18,6 @@
 
 package com.torodb.d2r;
 
-import com.torodb.core.d2r.MemoryRidGenerator;
-
-import static org.junit.Assert.*;
-
 import com.torodb.common.util.HexUtils;
 import com.torodb.core.TableRef;
 import com.torodb.core.TableRefFactory;
@@ -43,6 +39,8 @@ import org.junit.Test;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class Document2RelStackTest {
 

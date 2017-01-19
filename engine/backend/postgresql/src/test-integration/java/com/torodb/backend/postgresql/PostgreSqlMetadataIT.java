@@ -18,10 +18,11 @@
 
 package com.torodb.backend.postgresql;
 
-import com.torodb.backend.common.AbstractMetaDataIT;
-import com.torodb.backend.common.DatabaseTestContext;
 
-public class PostgreSqlMetadataIT extends AbstractMetaDataIT {
+import com.torodb.backend.tests.common.AbstractMetaDataIntegrationSuite;
+import com.torodb.backend.tests.common.DatabaseTestContext;
+
+public class PostgreSqlMetadataIT extends AbstractMetaDataIntegrationSuite {
 
   @Override
   protected DatabaseTestContext getDatabaseTestContext() {

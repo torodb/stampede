@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.common;
+package com.torodb.backend.tests.common;
 
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
@@ -36,7 +36,9 @@ public interface DatabaseTestContext {
 
   public DslContextFactory getDslContextFactory();
 
-  public default void executeOnDbConnectionWithDslContext(Consumer<DSLContext> consumer) throws SQLException {
+  public default void executeOnDbConnectionWithDslContext(Consumer<DSLContext> consumer)
+      throws SQLException {
+
     try (Connection connection = getSqlInterface().getDbBackend().createWriteConnection()) {
       DSLContext dslContext = getDslContextFactory().createDslContext(connection);
 
@@ -47,3 +49,4 @@ public interface DatabaseTestContext {
   }
 
 }
+

@@ -21,9 +21,9 @@ package com.torodb.backend.postgresql;
 import com.torodb.backend.DbBackendService;
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
-import com.torodb.backend.common.DatabaseTestContext;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.meta.TorodbSchema;
+import com.torodb.backend.tests.common.DatabaseTestContext;
 import com.torodb.core.backend.IdentifierConstraints;
 import org.jooq.DSLContext;
 

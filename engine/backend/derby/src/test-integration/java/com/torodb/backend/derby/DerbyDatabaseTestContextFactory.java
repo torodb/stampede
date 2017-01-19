@@ -19,14 +19,14 @@
 package com.torodb.backend.derby;
 
 import com.torodb.backend.*;
-import com.torodb.backend.common.DatabaseTestContext;
-import com.torodb.backend.common.IntegrationTestBundleConfig;
 import com.torodb.backend.derby.schema.DerbySchemaUpdater;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.backend.driver.derby.DerbyDriverProvider;
 import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.backend.tests.common.DatabaseTestContext;
+import com.torodb.backend.tests.common.IntegrationTestBundleConfig;
 import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.modules.BundleConfig;
 

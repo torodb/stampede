@@ -20,9 +20,9 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.SqlInterface;
-import com.torodb.backend.common.DatabaseTestContext;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.backend.tests.common.DatabaseTestContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;

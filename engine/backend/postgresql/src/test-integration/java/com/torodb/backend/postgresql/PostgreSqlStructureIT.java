@@ -18,14 +18,14 @@
 
 package com.torodb.backend.postgresql;
 
-import com.torodb.backend.common.AbstractStructureIT;
-import com.torodb.backend.common.DatabaseTestContext;
+import com.torodb.backend.tests.common.AbstractStructureIntegrationSuite;
+import com.torodb.backend.tests.common.DatabaseTestContext;
 import com.torodb.core.transaction.metainf.FieldType;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PostgreSqlStructureIT extends AbstractStructureIT {
+public class PostgreSqlStructureIT extends AbstractStructureIntegrationSuite {
 
   private Map<FieldType, String> typesDictionary = new HashMap();
 

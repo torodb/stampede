@@ -84,10 +84,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>backend-common</artifactId>
+            <groupId>com.torodb.engine.backend</groupId>
+            <artifactId>test-tools</artifactId>
             <version>${project.version}</version>
-            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
     </dependencies>
