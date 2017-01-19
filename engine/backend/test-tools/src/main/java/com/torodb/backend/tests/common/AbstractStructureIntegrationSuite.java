@@ -102,6 +102,8 @@ public abstract class AbstractStructureIntegrationSuite {
         ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
         assertThatColumnExists(result.getMetaData(), "did");
+
+        result.close();
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -126,6 +128,8 @@ public abstract class AbstractStructureIntegrationSuite {
         assertThatColumnExists(result.getMetaData(), "did");
         assertThatColumnExists(result.getMetaData(), "rid");
         assertThatColumnExists(result.getMetaData(), "seq");
+
+        result.close();
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -153,6 +157,8 @@ public abstract class AbstractStructureIntegrationSuite {
         assertThatColumnExists(result.getMetaData(), "pid");
         assertThatColumnExists(result.getMetaData(), "rid");
         assertThatColumnExists(result.getMetaData(), "seq");
+
+        result.close();
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -178,6 +184,8 @@ public abstract class AbstractStructureIntegrationSuite {
 
         assertThatColumnIsGivenType(result.getMetaData(), "new_column",
             getSqlTypeOf(FieldType.STRING));
+
+        result.close();
       } catch (SQLException e) {
         throw new RuntimeException("Wrong test invocation", e);
       }
@@ -203,6 +211,8 @@ public abstract class AbstractStructureIntegrationSuite {
           ResultSet result = foo.executeQuery("select * from \"schema_name\".\"root_table\"");
 
           assertThatColumnIsGivenType(result.getMetaData(), columnName, getSqlTypeOf(fieldType));
+
+          result.close();
         } catch (SQLException e) {
           throw new RuntimeException("Wrong test invocation", e);
         }

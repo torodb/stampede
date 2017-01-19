@@ -27,12 +27,7 @@ import com.torodb.core.supervision.SupervisorDecision;
 
 public class IntegrationTestBundleConfig implements BundleConfig {
 
-  private final Supervisor supervisor = new Supervisor() {
-    @Override
-    public SupervisorDecision onError(Object supervised, Throwable error) {
-      throw new AssertionError("Error on " + supervised, error);
-    }
-  };
+  private final Supervisor supervisor = new TestSupervisor();
 
   private final Injector essentialInjector = Guice.createInjector(Stage.PRODUCTION);
 
@@ -44,6 +39,15 @@ public class IntegrationTestBundleConfig implements BundleConfig {
   @Override
   public Supervisor getSupervisor() {
     return supervisor;
+  }
+
+  private static class TestSupervisor implements Supervisor {
+
+    @Override
+    public SupervisorDecision onError(Object supervised, Throwable error) {
+      throw new AssertionError("Error on " + supervised, error);
+    }
+
   }
 
 }
