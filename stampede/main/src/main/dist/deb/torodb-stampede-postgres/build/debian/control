@@ -9,7 +9,7 @@ Homepage: https://www.torodb.com/
 
 Package: @{assembler.name}
 Architecture: all
-Depends: openjdk-8-jdk-headless, postgresql-client (>=9.4), ${misc:Depends}
+Depends: openjdk-8-jdk-headless, postgresql (>=9.4) | postgresql-9.4, ${misc:Depends}
 Description: ToroDB Stampede by 8kdata
  .
  Toro Stampede permits you replicate NoSQL DB to SQL

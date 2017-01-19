@@ -21,6 +21,7 @@
         <assembler.revision>1</assembler.revision>
         <assembler.licenses>AGPLv3</assembler.licenses>
         <assembler.changelog></assembler.changelog>
+        <assembler.libdir></assembler.libdir>
         <snap.grade>devel</snap.grade>
         <snap.confinement>devmode</snap.confinement>
     </properties>
@@ -522,6 +523,7 @@
             <properties>
                 <package.name>${assembler.name}</package.name>
                 <debbuilder.image>debian:8</debbuilder.image>
+                <assembler.libdir>../../share/${assembler.name}/lib</assembler.libdir>
             </properties>
             <build>
                 <plugins>
