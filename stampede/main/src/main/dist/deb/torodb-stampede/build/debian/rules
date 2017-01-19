@@ -27,18 +27,18 @@ install:
 	install -d $(CURDIR)/debian/@{assembler.name}/var/log/@{assembler.name}
 	install -d $(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
 	install -d $(CURDIR)/debian/@{assembler.name}/usr/share/man/man1/
-	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}.wrapper		$(CURDIR)/debian/@{assembler.name}/usr/bin/@{assembler.name}
+	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}.wrapper			$(CURDIR)/debian/@{assembler.name}/usr/bin/@{assembler.name}
 	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}-setup.wrapper	$(CURDIR)/debian/@{assembler.name}/usr/bin/@{assembler.name}-setup
-	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}				$(CURDIR)/debian/@{assembler.name}/usr/lib/@{assembler.name}/bin/@{assembler.name}
+	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}					$(CURDIR)/debian/@{assembler.name}/usr/lib/@{assembler.name}/bin/@{assembler.name}
 	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}-setup			$(CURDIR)/debian/@{assembler.name}/usr/lib/@{assembler.name}/bin/@{assembler.name}-setup
-	cp -a $(BUILD_DIR)/lib												$(CURDIR)/debian/@{assembler.name}/usr/lib/@{assembler.name}
+	cp -a $(BUILD_DIR)/lib													$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
 	install -p -D -m 644 $(BUILD_DIR)/systemd/@{assembler.name}.service 	$(CURDIR)/debian/@{assembler.name}/usr/lib/systemd/system/@{assembler.name}.service
 	install -p -D -m 644 $(BUILD_DIR)/logrotate/@{assembler.name} 			$(CURDIR)/debian/@{assembler.name}/etc/logrotate.d/@{assembler.name}
 	install -p -D -m 644 $(BUILD_DIR)/conf/@{assembler.name}.yml 			$(CURDIR)/debian/@{assembler.name}/etc/@{assembler.name}/@{assembler.name}.yml
 	install -p -D -m 644 $(BUILD_DIR)/default/@{assembler.name}.default 	$(CURDIR)/debian/@{assembler.name}/etc/default/@{assembler.name}
 	install -p -D -m 644 $(BUILD_DIR)/doc/LICENSE-GNU_AGPLv3.txt 			$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
 	install -p -D -m 644 $(BUILD_DIR)/doc/README.md 						$(CURDIR)/debian/@{assembler.name}/usr/share/@{assembler.name}
-	help2man $(BUILD_DIR)/bin/@{assembler.name} -N > 						$(CURDIR)/debian/@{assembler.name}/usr/share/man/man1/@{assembler.name}.1
+	EXTLIBDIR=../../share/@{assembler.name}/lib help2man $(CURDIR)/debian/@{assembler.name}/usr/lib/@{assembler.name}/bin/@{assembler.name} -N > $(CURDIR)/debian/@{assembler.name}/usr/share/man/man1/@{assembler.name}.1
 
 
 # Build architecture-independent files here.

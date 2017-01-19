@@ -1,4 +1,4 @@
-Source: torodb-stampede
+Source: @{assembler.name}
 Section: database
 Priority: optional
 Maintainer: Adrián Escoms <adescoms@8kdata.com>
@@ -7,9 +7,9 @@ Standards-Version: 3.9.6
 Vcs-browser: https://github.com/torodb/torodb
 Homepage: https://www.torodb.com/
 
-Package: torodb-stampede
+Package: @{assembler.name}
 Architecture: all
-Depends: openjdk-8-jdk-headless, postgresql-client, ${misc:Depends}
+Depends: openjdk-8-jdk-headless, postgresql-client (>=9.4), ${misc:Depends}
 Description: ToroDB Stampede by 8kdata
  .
  Toro Stampede permits you replicate NoSQL DB to SQL
