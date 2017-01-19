@@ -13,7 +13,7 @@ then
 fi
 git init
 git checkout -b $SNAP_CHANNEL
-git remote add origin git+ssh://$LAUNCHPAD_USER@$LAUNCHPAD_HOST/~$LAUNCHPAD_USER/+git/$ASSEMBLER_NAME-snap
+git remote add origin git+ssh://$LAUNCHPAD_USER@$LAUNCHPAD_HOST/~$LAUNCHPAD_USER/+git/$PACKAGE_NAME-snap
 if ! git ls-remote|grep -q refs/heads/$SNAP_CHANNEL
 then
     git commit --allow-empty -m "init"

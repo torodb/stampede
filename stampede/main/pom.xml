@@ -414,7 +414,7 @@
                                                     <SNAP_CHANNEL>${snap.channel}</SNAP_CHANNEL>
                                                     <LAUNCHPAD_USER>${launchpad.user}</LAUNCHPAD_USER>
                                                     <LAUNCHPAD_HOST>${launchpad.host}</LAUNCHPAD_HOST>
-                                                    <ASSEMBLER_NAME>${assembler.name}</ASSEMBLER_NAME>
+                                                    <PACKAGE_NAME>${package.name}</PACKAGE_NAME>
                                                 </env>
                                                 <wait>
                                                     <time>600000</time>
@@ -609,9 +609,29 @@
             <properties>
                 <package.name>${assembler.name}</package.name>
                 <debbuilder.image>debian:8</debbuilder.image>
+                <launchpad.push>false</launchpad.push>
             </properties>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>generate-launchpad-dontpush</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>bsh-property</goal>
+                                </goals>
+                                <configuration>
+                                    <source>launchpadDontpush = !${launchpad.push};</source>
+                                    <properties>
+                                        <property>launchpadDontpush</property>
+                                    </properties>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
@@ -682,53 +702,65 @@
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <extensions>true</extensions>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <alias>debbuilder</alias>
-                                    <name>debbuilder</name>
-                                    <build>
-                                        <cleanup>none</cleanup>
-                                        <optimise>false</optimise>
-                                        <from>${debbuilder.image}</from>
-                                        <runCmds>
-                                            <run>echo "deb http://ftp.de.debian.org/debian jessie-backports main" &gt;&gt; /etc/apt/sources.list</run>
-                                            <run>apt update</run>
-                                            <run>apt -y install devscripts build-essential lintian help2man openjdk-8-jdk-headless postgresql-client</run>
-                                        </runCmds>
-                                    </build>
-                                    <run>
-                                        <volumes>
-                                            <bind>
-                                                <volume>${basedir}/target/dist/deb/${package.name}:/deb</volume>
-                                            </bind>
-                                        </volumes>
-                                        <wait>
-                                            <time>600000</time>
-                                            <log>debbuilder finished</log>
-                                        </wait>
-                                        <cmd>
-                                            <arg>/bin/sh</arg>
-                                            <arg>-c</arg>
-                                            <arg>
-                                            set -x -v -e;
-                                            mkdir "$HOME/debbuild";
-                                            cp -a /deb/* "$HOME/debbuild";
-                                            rm -Rf "$HOME/debbuild/debbuild";
-                                            find . -name "*.DS_Store" -type f -delete
-                                            mkdir "$HOME/data";
-                                            cp -a $HOME/debbuild/build.orig/build.orig/* "$HOME/data";
-                                            cd "$HOME/debbuild/build";
-                                            debuild -us -uc;
-                                            cp -a "$HOME/debbuild" "/deb/.";
-                                            chmod a+w /deb -R;
-                                            echo "debbuilder finished";
-                                            </arg>
-                                        </cmd>
-                                    </run>
-                                </image>
-                            </images>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>dep-setup-launchpad</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <alias>debbuilder</alias>
+                                            <name>debbuilder</name>
+                                            <build>
+                                                <skip>${launchpadDontpush}</skip>
+                                                <cleanup>try</cleanup>
+                                                <optimise>false</optimise>
+                                                <from>${debbuilder.image}</from>
+                                                <runCmds>
+                                                    <run>echo "deb http://ftp.de.debian.org/debian jessie-backports main" &gt;&gt; /etc/apt/sources.list</run>
+                                                    <run>apt update</run>
+                                                    <run>apt -y install devscripts build-essential lintian help2man openjdk-8-jdk-headless postgresql-client</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <skip>${launchpadDontpush}</skip>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${basedir}/target/dist/deb/${package.name}:/deb</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>debbuilder finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/sh</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    mkdir "$HOME/debbuild";
+                                                    cp -a /deb/* "$HOME/debbuild";
+                                                    rm -Rf "$HOME/debbuild/debbuild";
+                                                    find . -name "*.DS_Store" -type f -delete
+                                                    mkdir "$HOME/data";
+                                                    cp -a $HOME/debbuild/build.orig/build.orig/* "$HOME/data";
+                                                    cd "$HOME/debbuild/build";
+                                                    debuild -us -uc;
+                                                    cp -a "$HOME/debbuild" "/deb/.";
+                                                    chmod a+w /deb -R;
+                                                    echo "debbuilder finished";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
