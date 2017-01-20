@@ -1,4 +1,4 @@
-Name:           @{assembler.name}
+Name:           @{package.name}
 Version:        @{assembler.version}
 Release:        @{assembler.revision}
 Summary:        @{project.name}
