@@ -18,15 +18,18 @@
         <assembler.name>torodb-stampede</assembler.name>
         <assembler.fullName>ToroDB Stampede</assembler.fullName>
         <assembler.url>https://www.torodb.com/stampede</assembler.url>
-        <assembler.revision>1</assembler.revision>
+        <assembler.url_src>https://www.github.com/torodb/torodb/stampede</assembler.url_src>
+        <assembler.maintainer>ToroDB Developers &lt;torodb-dev@8kdata.com&gt;</assembler.maintainer>
         <assembler.licenses>AGPLv3</assembler.licenses>
         <assembler.changelog></assembler.changelog>
         <assembler.libdir></assembler.libdir>
         <snap.grade>devel</snap.grade>
         <snap.confinement>devmode</snap.confinement>
         <snap.channel>edge</snap.channel>
+        <deb.urgency>low</deb.urgency>
         <launchpad.user>8kdata</launchpad.user>
         <launchpad.host>git.launchpad.net</launchpad.host>
+        <launchpad.dputprofile>8kdata-devel</launchpad.dputprofile>
     </properties>
 
     <dependencies>
@@ -311,25 +314,6 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>generate-launchpad-dontpush</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>bsh-property</goal>
-                                </goals>
-                                <configuration>
-                                    <source>launchpadDontpush = !${launchpad.push};</source>
-                                    <properties>
-                                        <property>launchpadDontpush</property>
-                                    </properties>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
@@ -393,7 +377,6 @@
                                         <image>
                                             <name>snap-setup-launchpad</name>
                                             <build>
-                                                <skip>${launchpadDontpush}</skip>
                                                 <cleanup>try</cleanup>
                                                 <optimise>true</optimise>
                                                 <from>ubuntu:16.04</from>
@@ -403,7 +386,6 @@
                                                 </runCmds>
                                             </build>
                                             <run>
-                                                <skip>${launchpadDontpush}</skip>
                                                 <volumes>
                                                     <bind>
                                                         <volume>${basedir}/target/dist/snap:/snap</volume>
@@ -430,7 +412,10 @@
                                                     cp -a /config/.ssh /config/.gitconfig /root/.;
                                                     chown root:root /root/.ssh /root/.gitconfig -R;
                                                     cd /snap/${package.name};
-                                                    bash -x ../update-launchpad.sh;
+                                                    if [ "${launchpad.push}" == "true" ];
+                                                    then
+                                                        bash -x ../update-launchpad.sh;
+                                                    fi;
                                                     echo "'setup launchpad finished'";
                                                     </arg>
                                                 </cmd>
@@ -456,10 +441,28 @@
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>buildnumber-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create_revision</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>yyyyMMddHHmmss</timestampFormat>
+                                    <timestampPropertyName>assembler.revision</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>assembler-version-property</id>
+                                <phase>prepare-package</phase>
                                 <goals>
                                     <goal>regex-property</goal>
                                 </goals>
@@ -468,19 +471,6 @@
                                     <value>${project.version}</value>
                                     <regex>-</regex>
                                     <replacement>_</replacement>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>generate-copr-dontpush</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>bsh-property</goal>
-                                </goals>
-                                <configuration>
-                                    <source>coprDontpush = !${copr.push};</source>
-                                    <properties>
-                                        <property>coprDontpush</property>
-                                    </properties>
                                 </configuration>
                             </execution>
                         </executions>
@@ -550,7 +540,6 @@
                                             <alias>rpmbuilder</alias>
                                             <name>rpmbuilder</name>
                                             <build>
-                                                <skip>${coprDontpush}</skip>
                                                 <cleanup>try</cleanup>
                                                 <optimise>true</optimise>
                                                 <from>${rpmbuilder.image}</from>
@@ -560,7 +549,6 @@
                                                 </runCmds>
                                             </build>
                                             <run>
-                                                <skip>${coprDontpush}</skip>
                                                 <volumes>
                                                     <bind>
                                                         <volume>${basedir}/target/dist/rpm/${package.name}:/rpm</volume>
@@ -586,9 +574,12 @@
                                                     dnf -y builddep "$SPEC_FILE";
                                                     rpmbuild -bs "$SPEC_FILE";
                                                     cp -a "$HOME/rpmbuild" "/rpm/.";
-                                                    if ! copr-cli list-packages ${package.name}&gt;/dev/null 2&gt;&amp;1;
+                                                    if [ "${copr.push}" == "true" ];
                                                     then
-                                                        copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
+                                                        if ! copr-cli list-packages ${package.name}&gt;/dev/null 2&gt;&amp;1;
+                                                        then
+                                                            copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
+                                                        fi;
                                                     fi;
                                                     copr-cli build ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
                                                     echo "rpmbuilder finished";
@@ -612,24 +603,34 @@
                 <package.name>${assembler.name}</package.name>
                 <debbuilder.image>debian:8</debbuilder.image>
                 <launchpad.push>false</launchpad.push>
+                <deb.distro>xenial</deb.distro>
             </properties>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <artifactId>buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>generate-launchpad-dontpush</id>
+                                <id>create_deb_date</id>
                                 <phase>prepare-package</phase>
                                 <goals>
-                                    <goal>bsh-property</goal>
+                                    <goal>create-timestamp</goal>
                                 </goals>
                                 <configuration>
-                                    <source>launchpadDontpush = !${launchpad.push};</source>
-                                    <properties>
-                                        <property>launchpadDontpush</property>
-                                    </properties>
+                                    <timestampFormat>EEE, d MMM yyyy HH:mm:ss Z</timestampFormat>
+                                    <timestampPropertyName>deb.date</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>create_revision</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>yyyyMMddHHmmss</timestampFormat>
+                                    <timestampPropertyName>assembler.revision</timestampPropertyName>
                                 </configuration>
                             </execution>
                         </executions>
@@ -637,18 +638,18 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>1.7</version>
                         <executions>
                             <execution>
                                 <id>assembler-version-property</id>
+                                <phase>prepare-package</phase>
                                 <goals>
                                     <goal>regex-property</goal>
                                 </goals>
                                 <configuration>
                                     <name>assembler.version</name>
                                     <value>${project.version}</value>
-                                    <regex>-</regex>
-                                    <replacement>_</replacement>
+                                    <regex>-SNAPSHOT</regex>
+                                    <replacement></replacement>
                                 </configuration>
                             </execution>
                         </executions>
@@ -667,6 +668,27 @@
                         <executions>
                             <execution>
                                 <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>deb-append-copyright</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <concat 
+                                            destfile="${project.build.directory}/dist/deb/${package.name}/build/debian/copyright"
+                                            force="yes" append="yes">
+                                            <fileset dir="${project.build.directory}/dist/doc" include="LICENSE-GNU_AGPLv3.txt" />
+                                        </concat>
+                                    </target>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -693,7 +715,7 @@
                                     <descriptors>
                                         <descriptor>src/main/deb/assembly.xml</descriptor>
                                     </descriptors>
-                                    <finalName>build.orig</finalName>
+                                    <finalName>${package.name}</finalName>
                                     <outputDirectory>${project.build.directory}/dist/deb/${package.name}</outputDirectory>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
@@ -718,7 +740,6 @@
                                             <alias>debbuilder</alias>
                                             <name>debbuilder</name>
                                             <build>
-                                                <skip>${launchpadDontpush}</skip>
                                                 <cleanup>try</cleanup>
                                                 <optimise>false</optimise>
                                                 <from>${debbuilder.image}</from>
@@ -729,10 +750,11 @@
                                                 </runCmds>
                                             </build>
                                             <run>
-                                                <skip>${launchpadDontpush}</skip>
                                                 <volumes>
                                                     <bind>
                                                         <volume>${basedir}/target/dist/deb/${package.name}:/deb</volume>
+                                                        <volume>${user.home}/.gnupg:/config/.gnupg:ro</volume>
+                                                        <volume>${user.home}/.dput.cf:/config/.dput.cf:ro</volume>
                                                     </bind>
                                                 </volumes>
                                                 <wait>
@@ -745,14 +767,19 @@
                                                     <arg>
                                                     set -x -v -e;
                                                     trap "chmod a+w /deb -R" ERR EXIT;
+                                                    cp -a /config/.gnupg /config/.dput.cf /root/.;
+                                                    chown root:root /root/.gnupg /root/.dput.cf -R;
                                                     mkdir "$HOME/debbuild";
-                                                    cp -a /deb/* "$HOME/debbuild";
-                                                    rm -Rf "$HOME/debbuild/debbuild";
-                                                    find . -name "*.DS_Store" -type f -delete
-                                                    mkdir "$HOME/data";
-                                                    cp -a $HOME/debbuild/build.orig/build.orig/* "$HOME/data";
-                                                    cd "$HOME/debbuild/build";
-                                                    debuild -us -uc;
+                                                    cd "$HOME/debbuild";
+                                                    tar xzf /deb/${package.name}.tar.gz;
+                                                    cd ${package.name}/debian;
+                                                    if [ "${launchpad.push}" == "true" ];
+                                                    then
+                                                        debuild --no-tgz-check -S;
+                                                        dput ${launchpad.dputprofile} ../../${package.name}_*.changes;
+                                                    else
+                                                        debuild --no-tgz-check -us -uc;
+                                                    fi;
                                                     cp -a "$HOME/debbuild" "/deb/.";
                                                     echo "debbuilder finished";
                                                     </arg>
@@ -979,6 +1006,7 @@
                 <snap.grade>stable</snap.grade>
                 <snap.confinement>strict</snap.confinement>
                 <snap.channel>candidate</snap.channel>
+                <launchpad.dputprofile>8kdata-release</launchpad.dputprofile>
             </properties>
         </profile>
 

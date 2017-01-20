@@ -3,7 +3,7 @@
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
     <!--<id>bin</id>-->
     <formats>
-        <format>dir</format>
+        <format>tar.gz</format>
     </formats>
     <fileSets>
         <fileSet>
@@ -82,6 +82,12 @@
         <fileSet>
             <directory>${project.build.directory}/dist/lib</directory>
             <outputDirectory>lib</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/deb/${package.name}/debian</directory>
+            <outputDirectory>debian</outputDirectory>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>
