@@ -14,24 +14,6 @@
 
     <properties>
         <profiles.resources>src/main/profiles/dev</profiles.resources>
-        <assembler.mainClass>com.torodb.stampede.Main</assembler.mainClass>
-        <assembler.name>torodb-stampede</assembler.name>
-        <assembler.fullName>ToroDB Stampede</assembler.fullName>
-        <assembler.url>https://www.torodb.com/stampede</assembler.url>
-        <assembler.url_src>https://www.github.com/torodb/torodb/stampede</assembler.url_src>
-        <assembler.maintainer>ToroDB Developers &lt;torodb-dev@8kdata.com&gt;</assembler.maintainer>
-        <assembler.licenses>AGPLv3</assembler.licenses>
-        <assembler.changelog></assembler.changelog>
-        <assembler.libdir></assembler.libdir>
-        
-        <docker.tags.latest>${project.version}</docker.tags.latest>
-        <snap.grade>devel</snap.grade>
-        <snap.confinement>devmode</snap.confinement>
-        <snap.channel>edge</snap.channel>
-        <deb.urgency>low</deb.urgency>
-        <launchpad.user>8kdata</launchpad.user>
-        <launchpad.host>git.launchpad.net</launchpad.host>
-        <launchpad.dputprofile>8kdata-devel</launchpad.dputprofile>
     </properties>
 
     <dependencies>
@@ -118,12 +100,35 @@
                                         <directory>src/main/dist</directory>
                                         <filtering>true</filtering>
                                     </resource>
+                                    <resource>
+                                        <directory>${profiles.resources}</directory>
+                                        <include>packaging.properties</include>
+                                        <filtering>true</filtering>
+                                    </resource>
                                 </resources>
                                 <overwrite>true</overwrite>
                                 <delimiters>
                                     <delimiter>@{*}</delimiter>
                                 </delimiters>
                                 <useDefaultDelimiters>false</useDefaultDelimiters>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>read-packaging-properties</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>read-project-properties</goal>
+                            </goals>
+                            <configuration>
+                                <files>
+                                    <file>${basedir}/target/dist/packaging.properties</file>
+                                </files>
                             </configuration>
                         </execution>
                     </executions>
@@ -191,6 +196,15 @@
                         </executions>
                     </plugin>
                     <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
                         <executions>
@@ -251,6 +265,15 @@
                         </executions>
                     </plugin>
                     <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
                         <executions>
@@ -269,18 +292,15 @@
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build-nofork</goal>
+                                    <goal>start</goal>
                                 </goals>
                                 <configuration>
                                     <images>
                                         <image>
-                                            <name>torodb/base:%v</name>
+                                            <name>torodb-base</name>
                                             <build>
                                                 <from>${docker.javaimage}</from>
                                                 <cleanup>try</cleanup>
-                                                <tags>
-                                                    <tag>latest</tag>
-                                                </tags>
-                                                <nocache>true</nocache>
                                                 <optimise>true</optimise>
                                                 <runCmds>
                                                     <run>apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv D68FA50FEA312927</run>
@@ -292,6 +312,19 @@
                                                     <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
                                                 </runCmds>
                                             </build>
+                                            <run>
+                                                <wait>
+                                                    <log>base image generated</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    &gt; generated;
+                                                    echo base image generated;
+                                                    </arg>
+                                                </cmd>
+                                            </run>
                                         </image>
                                     </images>
                                 </configuration>
@@ -308,9 +341,9 @@
                                     <images>
                                         <image>
                                             <alias>torodb-stampede</alias>
-                                            <name>torodb/stampede:%v</name>
+                                            <name>torodb/stampede</name>
                                             <build>
-                                                <from>torodb/base:latest</from>
+                                                <from>torodb-base</from>
                                                 <cleanup>remove</cleanup>
                                                 <tags>
                                                     <tag>${project.version}</tag>
@@ -368,6 +401,15 @@
                         <executions>
                             <execution>
                                 <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -530,6 +572,15 @@
                         <executions>
                             <execution>
                                 <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -709,6 +760,15 @@
                         <executions>
                             <execution>
                                 <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -1044,11 +1104,6 @@
             <id>prod</id>
             <properties>
                 <profiles.resources>src/main/profiles/prod</profiles.resources>
-                <docker.tags.latest>latest</docker.tags.latest>
-                <snap.grade>stable</snap.grade>
-                <snap.confinement>strict</snap.confinement>
-                <snap.channel>candidate</snap.channel>
-                <launchpad.dputprofile>8kdata-release</launchpad.dputprofile>
             </properties>
         </profile>
 
