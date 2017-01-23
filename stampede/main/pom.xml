@@ -23,6 +23,8 @@
         <assembler.licenses>AGPLv3</assembler.licenses>
         <assembler.changelog></assembler.changelog>
         <assembler.libdir></assembler.libdir>
+        
+        <docker.tags.latest>${project.version}</docker.tags.latest>
         <snap.grade>devel</snap.grade>
         <snap.confinement>devmode</snap.confinement>
         <snap.channel>edge</snap.channel>
@@ -225,6 +227,10 @@
         
         <profile>
             <id>docker</id>
+            <properties>
+                <docker.javaimage>java:8-jre</docker.javaimage>
+                <docker.skip.push>true</docker.skip.push>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -257,47 +263,82 @@
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <extensions>true</extensions>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <alias>torodb-stampede</alias>
-                                    <name>torodb/stampede:%v</name>
-                                    <build>
-                                        <from>torodb/base:latest</from>
-                                        <tags>
-                                            <tag>${project.version}</tag>
-                                            <tag>latest</tag>
-                                        </tags>
-                                        <assembly>
-                                            <mode>dir</mode>
-                                            <descriptor>assembly.xml</descriptor>
-                                        </assembly>
-                                        <env>
-                                            <PATH>/maven/bin:$PATH</PATH>
-                                        </env>
-                                        <runCmds>
-                                            <run>useradd -d /maven torodb</run>
-                                            <run>chown torodb /maven -R</run>
-                                        </runCmds>
-                                        <entryPoint>
-                                            <exec>
-                                                <arg>/maven/bin/entry-point</arg>
-                                            </exec>
-                                        </entryPoint>
-                                        <cmd>
-                                            <arg>torodb-stampede</arg>
-                                        </cmd>
-                                    </build>
-                                </image>
-                            </images>
-                        </configuration>
                         <executions>
                             <execution>
-                                <id>docker-build</id>
+                                <id>docker-base</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build</goal>
+                                    <goal>build-nofork</goal>
                                 </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>torodb/base:%v</name>
+                                            <build>
+                                                <from>${docker.javaimage}</from>
+                                                <cleanup>try</cleanup>
+                                                <tags>
+                                                    <tag>latest</tag>
+                                                </tags>
+                                                <nocache>true</nocache>
+                                                <optimise>true</optimise>
+                                                <runCmds>
+                                                    <run>apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv D68FA50FEA312927</run>
+                                                    <run>echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list</run>
+                                                    <run>apt-get update</run>
+                                                    <run>apt-get -y install netcat postgresql-client python-pip mongodb-org-shell mongodb-org-tools</run>
+                                                    <run>pip install awscli</run>
+                                                    <run>apt-get clean</run>
+                                                    <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
+                                                </runCmds>
+                                            </build>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>docker-push</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <filter>torodb-stampede</filter>
+                                    <images>
+                                        <image>
+                                            <alias>torodb-stampede</alias>
+                                            <name>torodb/stampede:%v</name>
+                                            <build>
+                                                <from>torodb/base:latest</from>
+                                                <cleanup>remove</cleanup>
+                                                <tags>
+                                                    <tag>${project.version}</tag>
+                                                    <tag>${docker.tags.latest}</tag>
+                                                </tags>
+                                                <assembly>
+                                                    <mode>dir</mode>
+                                                    <descriptor>assembly.xml</descriptor>
+                                                </assembly>
+                                                <env>
+                                                    <PATH>/maven/bin:$PATH</PATH>
+                                                </env>
+                                                <runCmds>
+                                                    <run>useradd -d /maven torodb</run>
+                                                    <run>chown torodb /maven -R</run>
+                                                </runCmds>
+                                                <entryPoint>
+                                                    <exec>
+                                                        <arg>/maven/bin/entry-point</arg>
+                                                    </exec>
+                                                </entryPoint>
+                                                <cmd>
+                                                    <arg>torodb-stampede</arg>
+                                                </cmd>
+                                            </build>
+                                        </image>
+                                    </images>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -1003,6 +1044,7 @@
             <id>prod</id>
             <properties>
                 <profiles.resources>src/main/profiles/prod</profiles.resources>
+                <docker.tags.latest>latest</docker.tags.latest>
                 <snap.grade>stable</snap.grade>
                 <snap.confinement>strict</snap.confinement>
                 <snap.channel>candidate</snap.channel>
