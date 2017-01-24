@@ -28,6 +28,7 @@ import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 
 /**
@@ -55,8 +56,6 @@ public class ComplexIdOperationFilter {
   }
 
   private static class FilterVisitor implements OplogOperationVisitor<OplogOperation, Void> {
-
-    private static final String ID_KEY = "_id";
 
     @Override
     public OplogOperation visit(DbCmdOplogOperation op, Void arg) {
@@ -97,7 +96,7 @@ public class ComplexIdOperationFilter {
 
     private void checkFilter(OplogOperation op, BsonDocument filter, String desc, 
         boolean onSystemCol) throws UnexpectedOplogOperationException {
-      BsonValue<?> idValue = filter.get(ID_KEY);
+      BsonValue<?> idValue = filter.get(DefaultIdUtils.DEFAULT_ID_KEY);
 
       if (idValue == null) {
         if (!onSystemCol) {
