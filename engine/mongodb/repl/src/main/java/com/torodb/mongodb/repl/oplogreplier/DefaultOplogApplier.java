@@ -103,6 +103,7 @@ public class DefaultOplogApplier implements OplogApplier {
 
     RunnableGraph<Pair<UniqueKillSwitch, CompletionStage<Done>>> graph = createOplogSource(fetcher)
         .async()
+        .map(ComplexIdOperationFilter::filter)
         .via(createBatcherFlow(applierContext))
         .viaMat(KillSwitches.single(), Keep.right())
         .async()
