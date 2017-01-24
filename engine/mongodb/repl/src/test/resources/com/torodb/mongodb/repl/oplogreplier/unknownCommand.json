@@ -27,6 +27,7 @@
             ]
         }
     },
+    "expectedException": "UnexpectedOplogApplierException",
     "oplog": [
         { 
             "op": "c", 
