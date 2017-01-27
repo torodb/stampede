@@ -1,7 +1,14 @@
 language: java
+
+before_install:
+  - wget https://archive.apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  - tar xf apache-maven-3.2.2-bin.tar.gz
+  - export M2_HOME=$PWD/apache-maven-3.2.2
+  - export PATH=$M2_HOME/bin:$PATH
+
 sudo: false
 dist: trusty
-script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
+script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
 jdk: oraclejdk8
 
 env:
@@ -17,9 +24,15 @@ addons:
   apt:
     packages:
       - oracle-java8-installer
+  postgresql: "9.4"
+
+services:
+  - postgresql
 
 before_script:
-- export GIT_BRANCH=$TRAVIS_BRANCH
+  - export GIT_BRANCH=$TRAVIS_BRANCH
+  - psql -c "create user test password 'test';" -U postgres
+  - psql -c "create database test owner test;" -U postgres
 
 cache:
   directories:

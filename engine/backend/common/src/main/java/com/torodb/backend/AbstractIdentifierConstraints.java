@@ -49,10 +49,11 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
     this.fieldTypeIdentifiers = Maps.immutableEnumMap(ImmutableMap.<FieldType, Character>builder()
         .put(FieldType.BINARY, 'r') // [r]aw bytes
         .put(FieldType.BOOLEAN, 'b') // [b]oolean
-        .put(FieldType.DOUBLE, 'd') // [d]ouble
+        .put(FieldType.DOUBLE, 'd') // [d]ouble float
         .put(FieldType.INSTANT, 't') // [t]imestamp
         .put(FieldType.INTEGER, 'i') // [i]nteger
         .put(FieldType.LONG, 'l') // [l]ong
+        .put(FieldType.DECIMAL128, 'q') // [q]uad float
         .put(FieldType.NULL, 'n') // [n]ull
         .put(FieldType.STRING, 's') // [s]tring
         .put(FieldType.CHILD, 'e') // child [e]lement
@@ -63,7 +64,6 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
         // No-Mongo types
         .put(FieldType.DATE, 'c') // [c]alendar
         .put(FieldType.TIME, 'm') // ti[m]e
-
         .build());
 
     ImmutableMap.Builder<FieldType, String> scalarFieldTypeIdentifiersBuilder =

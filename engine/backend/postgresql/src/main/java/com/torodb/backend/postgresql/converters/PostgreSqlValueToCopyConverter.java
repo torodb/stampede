@@ -25,6 +25,7 @@ import com.torodb.kvdocument.values.KvArray;
 import com.torodb.kvdocument.values.KvBinary;
 import com.torodb.kvdocument.values.KvBoolean;
 import com.torodb.kvdocument.values.KvDate;
+import com.torodb.kvdocument.values.KvDecimal128;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvDouble;
 import com.torodb.kvdocument.values.KvInstant;
@@ -150,5 +151,11 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
   @Override
   public Void visit(KvDocument value, StringBuilder arg) {
     throw new UnsupportedOperationException("Ouch this should not occur");
+  }
+
+  @Override
+  public Void visit(KvDecimal128 value, StringBuilder arg) {
+    arg.append(value.getValue().toPlainString());
+    return null;
   }
 }

@@ -11,6 +11,7 @@
             ]
         }
     },
+    "expectedException": "UnexpectedOplogApplierException",
     "oplog": [
         {
             "ts": {

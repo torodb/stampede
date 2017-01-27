@@ -28,11 +28,7 @@ import com.torodb.stampede.CliConfig;
 import com.torodb.stampede.CliConfigUtils;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.postgres.Postgres;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -43,25 +39,6 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 public class ConfigTest {
-
-  public ConfigTest() {
-  }
-
-  @BeforeClass
-  public static void setUpClass() {
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-  }
-
-  @Before
-  public void setUp() {
-  }
-
-  @After
-  public void tearDown() {
-  }
 
   @Test
   public void testPrintConf() throws Exception {

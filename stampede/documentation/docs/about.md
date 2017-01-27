@@ -27,6 +27,7 @@ The following MongoDB features are not yet supported:
 * The [collMod](https://docs.mongodb.com/manual/reference/command/collMod/) command
 * The [applyOps](https://docs.mongodb.com/manual/reference/command/applyOps/) command (will stop the replication server)
 * The character `\0` is escaped in strings because PostgreSQL doesn't support it.
+* Decimal128 data type is not fully supported, if NaN, +Infinite or -Infinite representations are used Stampede stops and logs the error.
 
 The automatic creation of indexes in the target database is currently limited as follows:
 

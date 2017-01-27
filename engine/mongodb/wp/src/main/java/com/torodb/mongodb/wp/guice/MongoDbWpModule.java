@@ -18,6 +18,7 @@
 
 package com.torodb.mongodb.wp.guice;
 
+import com.eightkdata.mongowp.annotations.MongoWp;
 import com.eightkdata.mongowp.bson.netty.DefaultNettyBsonLowLevelReader;
 import com.eightkdata.mongowp.bson.netty.NettyBsonDocumentReader;
 import com.eightkdata.mongowp.bson.netty.NettyBsonDocumentWriter;
@@ -30,6 +31,7 @@ import com.eightkdata.mongowp.bson.netty.pool.ShortStringPoolPolicy;
 import com.eightkdata.mongowp.bson.netty.pool.StringPool;
 import com.eightkdata.mongowp.bson.netty.pool.WeakMapStringPool;
 import com.eightkdata.mongowp.server.MongoServerConfig;
+import com.eightkdata.mongowp.server.api.CommandLibrary;
 import com.eightkdata.mongowp.server.api.ErrorHandler;
 import com.eightkdata.mongowp.server.api.RequestProcessorAdaptor;
 import com.eightkdata.mongowp.server.callback.RequestProcessor;
@@ -50,31 +52,39 @@ import com.eightkdata.mongowp.server.wp.RequestMessageObjectHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.torodb.mongodb.commands.CommandClassifier;
+import com.torodb.mongodb.core.MongoDbCoreBundle;
+import com.torodb.mongodb.core.MongoDbCoreExtInt;
 import com.torodb.mongodb.core.MongodMetrics;
+import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ToroErrorHandler;
 import com.torodb.mongodb.wp.TorodbSafeRequestProcessor;
 
-/**
- *
- */
+import java.util.concurrent.ThreadFactory;
+
 public class MongoDbWpModule extends PrivateModule {
 
+  private final MongoDbCoreExtInt coreExtInt;
   private final int port;
 
-  public MongoDbWpModule(int port) {
+  public MongoDbWpModule(MongoDbCoreBundle coreBundle, int port) {
+    this.coreExtInt = coreBundle.getExternalInterface();
     this.port = port;
   }
 
   @Override
   protected void configure() {
+    expose(NettyMongoServer.class);
+    expose(MongoServerConfig.class);
+  
+    bindCore();
+
     bind(NettyMongoServer.class)
         .in(Singleton.class);
-    expose(NettyMongoServer.class);
-
+    
     bind(MongoServerConfig.class)
         .toInstance((MongoServerConfig) () -> port);
-    expose(MongoServerConfig.class);
-
+    
     bind(NettyStringReader.class)
         .to(PooledNettyStringReader.class)
         .in(Singleton.class);
@@ -114,6 +124,10 @@ public class MongoDbWpModule extends PrivateModule {
         .in(Singleton.class);
     bind(NettyBsonDocumentWriter.class)
         .in(Singleton.class);
+
+    bind(ThreadFactory.class)
+        .annotatedWith(MongoWp.class)
+        .to(ThreadFactory.class);
   }
 
   private void bindMessageDecoder() {
@@ -155,6 +169,15 @@ public class MongoDbWpModule extends PrivateModule {
   RequestProcessor createRequestProcessorAdaptor(TorodbSafeRequestProcessor tsrp,
       ErrorHandler errorHandler) {
     return new RequestProcessorAdaptor<>(tsrp, errorHandler);
+  }
+
+  private void bindCore() {
+    bind(CommandLibrary.class)
+        .toInstance(coreExtInt.getCommandLibrary());
+    bind(CommandClassifier.class)
+        .toInstance(coreExtInt.getMongodServer().getCommandsExecutorClassifier());
+    bind(MongodServer.class)
+        .toInstance(coreExtInt.getMongodServer());
   }
 
 }

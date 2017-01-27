@@ -18,16 +18,21 @@
 
 package com.torodb.core.modules;
 
+import com.google.common.util.concurrent.Service;
 import com.torodb.core.services.TorodbService;
 import com.torodb.core.supervision.SupervisedService;
 
 import java.util.Collection;
+import java.util.function.Function;
 
-/**
- *
- */
-public interface Bundle extends TorodbService, SupervisedService {
+public interface Bundle<ExtIntT> extends TorodbService, SupervisedService {
 
-  public Collection<Bundle> getDependencies();
+  public abstract Collection<Service> getDependencies();
+  
+  public abstract ExtIntT getExternalInterface();
+
+  public default <O> Bundle<O> map(Function<ExtIntT, O> transformationFunction) {
+    return new TransformationBundle<>(this, transformationFunction);
+  }
 
 }

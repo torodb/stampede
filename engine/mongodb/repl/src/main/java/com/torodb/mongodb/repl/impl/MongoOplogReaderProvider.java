@@ -29,9 +29,6 @@ import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class MongoOplogReaderProvider implements OplogReaderProvider {
 
   private final MongoClientFactory mongoClientFactory;

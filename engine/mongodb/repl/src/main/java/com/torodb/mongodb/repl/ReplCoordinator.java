@@ -25,7 +25,6 @@ import com.torodb.core.supervision.EscalatingException;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplierService;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

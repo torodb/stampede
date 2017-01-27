@@ -18,9 +18,9 @@
 
 package com.torodb.packaging.config.model.backend;
 
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
+import com.torodb.packaging.config.util.BackendImplementationVisitor;
 
 public interface BackendImplementation {
 
-  public void accept(BackendImplementationVisitor visitor);
+  public <R, A> R accept(BackendImplementationVisitor<R, A> visitor, A arg);
 }

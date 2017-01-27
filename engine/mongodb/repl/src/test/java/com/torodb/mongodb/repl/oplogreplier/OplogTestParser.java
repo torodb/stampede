@@ -18,10 +18,10 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import static org.junit.Assert.*;
 
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.bson.BsonInt32;
+import com.eightkdata.mongowp.bson.BsonString;
 import com.eightkdata.mongowp.bson.BsonValue;
 import com.eightkdata.mongowp.bson.org.bson.utils.MongoBsonTranslator;
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
@@ -29,29 +29,33 @@ import com.eightkdata.mongowp.exceptions.MongoException;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.google.common.base.Charsets;
-import com.google.common.truth.Truth;
 import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
 import com.torodb.kvdocument.values.KvDocument;
-import com.torodb.kvdocument.values.KvValue;
 import com.torodb.mongodb.commands.pojos.OplogOperationParser;
-import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
-import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.torod.TorodTransaction;
+import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
+import com.torodb.mongodb.repl.oplogreplier.BddOplogTest;
+import com.torodb.mongodb.repl.oplogreplier.BddOplogTest.CollectionState;
+import com.torodb.mongodb.repl.oplogreplier.BddOplogTest.DatabaseState;
+import com.torodb.mongodb.repl.oplogreplier.UnexpectedOplogOperationException;
+import org.jooq.lambda.Unchecked;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public class OplogTestParser {
 
-  public static BDDOplogTest fromExtendedJsonResource(String resourceName) throws IOException {
+  public static BddOplogTest fromExtendedJsonResource(String resourceName) throws IOException {
     String text;
     try (InputStream resourceAsStream = OplogTestParser.class.getResourceAsStream(resourceName);
         BufferedReader reader = new BufferedReader(new InputStreamReader(resourceAsStream))) {
@@ -60,12 +64,12 @@ public class OplogTestParser {
     return fromExtendedJsonString(text);
   }
 
-  public static BDDOplogTest fromExtendedJsonFile(File f) throws IOException {
+  public static BddOplogTest fromExtendedJsonFile(File f) throws IOException {
     String text = new String(Files.readAllBytes(Paths.get(f.toURI())), Charsets.UTF_8);
     return fromExtendedJsonString(text);
   }
 
-  public static BDDOplogTest fromExtendedJsonString(String text) {
+  public static BddOplogTest fromExtendedJsonString(String text) {
     BsonDocument doc = MongoBsonTranslator.translate(
         org.bson.BsonDocument.parse(text)
     );
@@ -73,14 +77,14 @@ public class OplogTestParser {
     return fromDocument(doc);
   }
 
-  public static BDDOplogTest fromDocument(BsonDocument doc) {
+  public static BddOplogTest fromDocument(BsonDocument doc) {
     ApplierContext applierContext = new ApplierContext.Builder()
         .setReapplying(true)
         .setUpdatesAsUpserts(true)
         .build();
     return new ParsedOplogTest(getTestName(doc), getIgnore(doc),
         getInitialState(doc), getExpectedState(doc), getOps(doc),
-        applierContext);
+        getExpectedException(doc).orElse(null), applierContext);
   }
 
   private static Collection<DatabaseState> getInitialState(BsonDocument root) {
@@ -159,6 +163,25 @@ public class OplogTestParser {
         .collect(Collectors.toList());
   }
 
+  private static Optional<Class<? extends Exception>> getExpectedException(BsonDocument doc) {
+    @SuppressWarnings("unchecked")
+    Function<String, Class<? extends Exception>> toClazz = Unchecked.function(name ->
+        (Class<? extends Exception>) Class.forName(name)
+    );
+    return doc.getOptional("expectedException")
+        .map(BsonValue::asString)
+        .map(BsonString::getValue)
+        .map(OplogTestParser::exceptionAlias)
+        .map(toClazz);
+  }
+
+  private static String exceptionAlias(String exceptionName) {
+    if (exceptionName.equals("UnexpectedOplogApplierException")) {
+      return UnexpectedOplogOperationException.class.getCanonicalName();
+    }
+    return exceptionName;
+  }
+
   private static boolean getIgnore(BsonDocument doc) {
     BsonValue<?> ignoreValue = doc.get("ignore");
     return ignoreValue != null && ignoreValue.asBoolean().getPrimitiveValue();
@@ -169,12 +192,14 @@ public class OplogTestParser {
     return Optional.ofNullable(nameValue).map(value -> value.asString().getValue());
   }
 
-  private static class ParsedOplogTest extends BDDOplogTest {
+  private static class ParsedOplogTest extends BddOplogTest {
 
     private final Optional<String> name;
     private final boolean ignore;
     private final Collection<DatabaseState> initialState;
     private final Collection<DatabaseState> expectedState;
+    @Nullable
+    private final Class<? extends Exception> expectedThrowableClass;
     private final List<OplogOperation> oplogOps;
     private final ApplierContext applierContext;
 
@@ -182,13 +207,30 @@ public class OplogTestParser {
         Collection<DatabaseState> initialState,
         Collection<DatabaseState> expectedState,
         List<OplogOperation> oplogOps,
+        @Nullable Class<? extends Exception> expectedThrowableClass,
         ApplierContext applierContext) {
       this.initialState = initialState;
       this.expectedState = expectedState;
       this.oplogOps = oplogOps;
+      this.expectedThrowableClass = expectedThrowableClass;
       this.applierContext = applierContext;
       this.name = name;
       this.ignore = ignore;
+    }
+
+    @Override
+    protected Collection<DatabaseState> getInitialState() {
+      return initialState;
+    }
+
+    @Override
+    protected Collection<DatabaseState> getExpectedState() {
+      return expectedState;
+    }
+
+    @Override
+    protected Class<? extends Exception> getExpectedExceptionClass() {
+      return expectedThrowableClass;
     }
 
     @Override
@@ -207,122 +249,10 @@ public class OplogTestParser {
     }
 
     @Override
-    public void given(WriteMongodTransaction trans) throws Exception {
-      for (DatabaseState db : initialState) {
-        String dbName = db.getName();
-        for (CollectionState col : db.getCollections()) {
-          String colName = col.getName();
-          trans.getTorodTransaction().insert(dbName, colName,
-              col.getDocs().stream());
-        }
-      }
-    }
-
-    @Override
     public Stream<OplogOperation> streamOplog() {
       return oplogOps.stream();
     }
 
-    @Override
-    public void then(ReadOnlyMongodTransaction trans) throws Exception {
-      TorodTransaction torodTrans = trans.getTorodTransaction();
-      for (DatabaseState db : expectedState) {
-        String dbName = db.getName();
-        for (CollectionState col : db.getCollections()) {
-          String colName = col.getName();
-
-          Map<KvValue<?>, KvDocument> storedDocs = torodTrans
-              .findAll(dbName, colName)
-              .asDocCursor()
-              .transform(toroDoc -> toroDoc.getRoot())
-              .getRemaining()
-              .stream()
-              .collect(Collectors.toMap(
-                  doc -> doc.get("_id"),
-                  doc -> doc)
-              );
-
-          for (KvDocument expectedDoc : col.getDocs()) {
-            KvValue<?> id = expectedDoc.get("_id");
-            assert id != null;
-
-            KvDocument storedDoc = storedDocs.get(id);
-            assertTrue("It was expected to have a document with _id " + id,
-                storedDoc != null);
-            assertEquals("The found document is different than expected",
-                expectedDoc, storedDoc);
-          }
-
-          assertEquals("Unexpected size on " + dbName + "." + colName,
-              col.getDocs().size(),
-              storedDocs.size());
-        }
-      }
-
-      Set<String> foundNs = torodTrans.getDatabases().stream()
-          .filter(dbName -> !dbName.equals("torodb"))
-          .flatMap(dbName -> torodTrans.getCollectionsInfo(dbName)
-              .map(colInfo -> dbName + '.' + colInfo.getName())
-          ).collect(Collectors.toSet());
-      Set<String> expectedNs = expectedState.stream()
-          .flatMap(db -> db.getCollections().stream()
-              .map(col -> db.getName() + '.' + col.getName())
-          ).collect(Collectors.toSet());
-
-      Truth.assertWithMessage("Unexpected namespaces")
-          .that(foundNs)
-          .containsExactlyElementsIn(expectedNs);
-
-      Set<String> expectedDbNames = expectedState.stream()
-          .map(DatabaseState::getName)
-          .collect(Collectors.toSet());
-      Set<String> foundDbNames = trans.getTorodTransaction()
-          .getDatabases()
-          .stream()
-          .filter(dbName -> !dbName.equals("torodb"))
-          .collect(Collectors.toSet());
-      Truth.assertWithMessage("Unexpected databases")
-          .that(foundDbNames)
-          .containsExactlyElementsIn(expectedDbNames);
-    }
-
   }
 
-  private static class DatabaseState {
-
-    private final String name;
-    private final Collection<CollectionState> collections;
-
-    public DatabaseState(String name, Stream<CollectionState> cols) {
-      this.name = name;
-      this.collections = cols.collect(Collectors.toList());
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public Collection<CollectionState> getCollections() {
-      return collections;
-    }
-  }
-
-  private static class CollectionState {
-
-    private final String name;
-    private final Set<KvDocument> docs;
-
-    public CollectionState(String name, Stream<KvDocument> docs) {
-      this.name = name;
-      this.docs = docs.collect(Collectors.toSet());
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public Set<KvDocument> getDocs() {
-      return docs;
-    }
-  }
 }

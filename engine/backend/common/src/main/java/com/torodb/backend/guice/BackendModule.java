@@ -20,8 +20,6 @@ package com.torodb.backend.guice;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.torodb.backend.BackendBundleImpl;
 import com.torodb.backend.BackendServiceImpl;
 import com.torodb.backend.DslContextFactory;
 import com.torodb.backend.DslContextFactoryImpl;
@@ -29,16 +27,15 @@ import com.torodb.backend.KvMetainfoHandler;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
 import com.torodb.backend.SqlInterfaceDelegate;
-import com.torodb.backend.jobs.BackendConnectionJobFactoryImpl;
 import com.torodb.backend.meta.SnapshotUpdaterImpl;
 import com.torodb.backend.rid.ReservedIdGeneratorImpl;
 import com.torodb.backend.rid.ReservedIdInfoFactory;
 import com.torodb.backend.rid.ReservedIdInfoFactoryImpl;
-import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.backend.BackendBundleFactory;
+import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.SnapshotUpdater;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.dsl.backend.impl.BackendConnectionJobFactoryImpl;
 
 /**
  *
@@ -79,18 +76,15 @@ public class BackendModule extends PrivateModule {
         .to(SnapshotUpdaterImpl.class);
     expose(SnapshotUpdater.class);
 
-    install(new FactoryModuleBuilder()
-        .implement(BackendBundle.class, BackendBundleImpl.class)
-        .build(BackendBundleFactory.class)
-    );
-    expose(BackendBundleFactory.class);
-
     bind(SqlHelper.class)
         .in(Singleton.class);
     expose(SqlHelper.class);
 
     bind(BackendServiceImpl.class)
         .in(Singleton.class);
+    bind(BackendService.class)
+        .to(BackendServiceImpl.class);
+    expose(BackendService.class);
 
     bind(KvMetainfoHandler.class);
   }

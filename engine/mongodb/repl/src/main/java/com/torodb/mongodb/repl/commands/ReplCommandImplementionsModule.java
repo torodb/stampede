@@ -18,35 +18,37 @@
 
 package com.torodb.mongodb.repl.commands;
 
+import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
-import com.torodb.mongodb.commands.CommandsExecutorClassifier;
-import com.torodb.mongodb.commands.ConnectionCommandsExecutor;
-import com.torodb.mongodb.commands.ExclusiveWriteTransactionImplementations;
-import com.torodb.mongodb.commands.GeneralTransactionImplementations;
-import com.torodb.mongodb.commands.WriteTransactionImplementations;
+import com.torodb.mongodb.commands.CommandClassifier;
+import com.torodb.mongodb.commands.impl.ConnectionCmdImpl;
+import com.torodb.mongodb.commands.impl.ExclusiveWriteTransactionCmdsImpl;
+import com.torodb.mongodb.commands.impl.GeneralTransactionCmdImpl;
+import com.torodb.mongodb.commands.impl.WriteTransactionCmdImpl;
+import com.torodb.mongodb.core.MongodServerConfig;
 
-/**
- *
- */
 public class ReplCommandImplementionsModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(CommandsExecutorClassifier.class)
+    bind(MongodServerConfig.class)
+        .toInstance(new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)));
+
+    bind(CommandClassifier.class)
         .in(Singleton.class);
 
-    bind(ConnectionCommandsExecutor.class)
+    bind(ConnectionCmdImpl.class)
         .in(Singleton.class);
 
-    bind(GeneralTransactionImplementations.class)
+    bind(GeneralTransactionCmdImpl.class)
         .in(Singleton.class);
 
-    bind(WriteTransactionImplementations.class)
+    bind(WriteTransactionCmdImpl.class)
         .to(ReplWriteTransactionImplementations.class)
         .in(Singleton.class);
 
-    bind(ExclusiveWriteTransactionImplementations.class)
+    bind(ExclusiveWriteTransactionCmdsImpl.class)
         .to(ReplExclusiveWriteTransactionImplementations.class)
         .in(Singleton.class);
   }

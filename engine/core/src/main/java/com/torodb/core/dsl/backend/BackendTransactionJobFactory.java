@@ -26,9 +26,6 @@ import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 
-/**
- *
- */
 public interface BackendTransactionJobFactory {
 
   AddDatabaseDdlJob createAddDatabaseDdlJob(MetaDatabase db);

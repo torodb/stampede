@@ -26,18 +26,24 @@ import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
+import com.google.inject.Guice;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.exceptions.SystemException;
-import com.torodb.packaging.DefaultBuildProperties;
+import com.torodb.core.metrics.MetricsConfig;
+import com.torodb.engine.essential.DefaultBuildProperties;
+import com.torodb.engine.essential.EssentialModule;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
+import com.torodb.packaging.config.util.BackendImplementationVisitor;
+import com.torodb.packaging.config.util.BundleFactory;
 import com.torodb.packaging.config.util.ConfigUtils;
-import com.torodb.packaging.config.visitor.BackendImplementationVisitor;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.stampede.config.model.Config;
+import com.torodb.stampede.config.model.backend.Backend;
+import com.torodb.stampede.config.model.mongo.replication.Replication;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,18 +56,22 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
- * ToroDB's entry point
+ * ToroDB Stampede entry point.
  */
 public class Main {
 
   private static final Logger LOGGER = LogManager.getLogger(Main.class);
 
+  /**
+   * The main method that runs ToroDB Stampede.
+   */
   public static void main(String[] args) throws Exception {
     try {
       Console console = JCommander.getConsole();
 
       ResourceBundle cliBundle = PropertyResourceBundle.getBundle("CliMessages");
       final CliConfig cliConfig = new CliConfig();
+      @SuppressWarnings("checkstyle:LocalVariableName")
       JCommander jCommander = new JCommander(cliConfig, cliBundle, args);
       jCommander.setColumnSize(Integer.MAX_VALUE);
 
@@ -110,25 +120,8 @@ public class Main {
 
       configureLogger(cliConfig, config);
 
-      config.getBackend().getBackendImplementation().accept(new BackendImplementationVisitor() {
-        @Override
-        public void visit(AbstractDerby value) {
-          parseToropassFile(value);
-        }
+      parseToropassFile(config);
 
-        @Override
-        public void visit(AbstractPostgres value) {
-          parseToropassFile(value);
-        }
-
-        public void parseToropassFile(BackendPasswordConfig value) {
-          try {
-            ConfigUtils.parseToropassFile(value);
-          } catch (Exception ex) {
-            throw new SystemException(ex);
-          }
-        }
-      });
       AbstractReplication replication = config.getReplication();
       if (replication.getAuth().getUser() != null) {
         HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
@@ -162,7 +155,7 @@ public class Main {
 
           @Override
           public String getHost() {
-            return syncSource.getHostText();
+            return syncSource.getHost();
           }
 
           @Override
@@ -191,7 +184,6 @@ public class Main {
       }
 
       try {
-        Clock clock = Clock.systemDefaultZone();
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
           @Override
@@ -200,10 +192,10 @@ public class Main {
               "Since is really hard to stop cleanly all threads when an OOME is thrown we must "
                   + "exit to avoid no more action is performed that could lead to an unespected "
                   + "state")
-          public void uncaughtException(Thread t, Throwable e) {
-            if (e instanceof OutOfMemoryError) {
+          public void uncaughtException(Thread thread, Throwable ex) {
+            if (ex instanceof OutOfMemoryError) {
               try {
-                LOGGER.error("Fatal out of memory: " + e.getLocalizedMessage(), e);
+                LOGGER.error("Fatal out of memory: " + ex.getLocalizedMessage(), ex);
               } finally {
                 System.exit(1);
               }
@@ -211,7 +203,7 @@ public class Main {
           }
         });
 
-        Service stampedeService = StampedeBootstrap.createStampedeService(config, clock);
+        Service stampedeService = new StampedeService(createStampedeConfig(config));
 
         stampedeService.startAsync();
         stampedeService.awaitTerminated();
@@ -241,6 +233,26 @@ public class Main {
     }
   }
 
+  private static StampedeConfig createStampedeConfig(Config config) {
+    Clock clock = Clock.systemDefaultZone();
+
+    MetricsConfig metricsConfig = config::getMetricsEnabled;
+    Backend backendConfig = config.getBackend();
+    Replication replicationConfig = config.getReplication();
+
+    return new StampedeConfig(
+        Guice.createInjector(new EssentialModule(metricsConfig, clock)),
+        generalConfig -> BundleFactory.createBackendBundle(
+            backendConfig,
+            generalConfig
+        ),
+        generalConfig -> BundleFactory.createMongoDbReplConfigBundle(
+            replicationConfig,
+            generalConfig
+        )
+    );
+  }
+
   private static void configureLogger(CliConfig cliConfig, Config config) {
     // If not specified in configuration then the log4j2.xml is used
     // instead (by default)
@@ -258,23 +270,49 @@ public class Main {
   }
 
   private static String readPwd() throws IOException {
-    Console c = JCommander.getConsole();
+    Console console = JCommander.getConsole();
     if (System.console() == null) { // In Eclipse IDE
       InputStream in = System.in;
       int max = 50;
-      byte[] b = new byte[max];
+      byte[] bytes = new byte[max];
 
-      int l = in.read(b);
-      l--;// last character is \n
-      if (l > 0) {
-        byte[] e = new byte[l];
-        System.arraycopy(b, 0, e, 0, l);
-        return new String(e, Charsets.UTF_8);
+      int length = in.read(bytes);
+      length--;// last character is \n
+      if (length > 0) {
+        byte[] newBytes = new byte[length];
+        System.arraycopy(bytes, 0, newBytes, 0, length);
+        return new String(newBytes, Charsets.UTF_8);
       } else {
         return null;
       }
     } else { // Outside Eclipse IDE
-      return new String(c.readPassword(false));
+      return new String(console.readPassword(false));
     }
+  }
+
+  private static void parseToropassFile(Config config) {
+    BackendImplementationVisitor<?, ?> visitor = new BackendImplementationVisitor<Void, Void>() {
+      @Override
+      public Void visit(AbstractDerby value, Void arg) {
+        parseToropassFile(value);
+        return null;
+      }
+
+      @Override
+      public Void visit(AbstractPostgres value, Void arg) {
+        parseToropassFile(value);
+        return null;
+      }
+
+      public void parseToropassFile(BackendPasswordConfig value) {
+        try {
+          ConfigUtils.parseToropassFile(value);
+        } catch (Exception ex) {
+          throw new SystemException(ex);
+        }
+      }
+    };
+
+    config.getBackend().getBackendImplementation().accept(visitor, null);
   }
 }

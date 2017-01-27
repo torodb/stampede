@@ -35,14 +35,7 @@
             <groupId>org.apache.derby</groupId>
             <artifactId>derbyclient</artifactId>
         </dependency>
-        
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>core</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
