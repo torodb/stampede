@@ -2,6 +2,7 @@
 
 This guides provides a step-by-step procedure through your very first ToroDB Stampede sandbox installation. It also covers installation and dummy configuration of MongoDB and PostgreSQL. The sole purpose of this guide is to give ToroDB Stampede a quick try. For other purposes, read the [installation](installation/prerequisites.md) and [configuration](configuration/index.md) chapters.
 
+__In case of any problems, consult the [Trouble Shooting Guide](trouble-shooting.md)__
 
 ## Prerequisites
 

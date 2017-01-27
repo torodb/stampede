@@ -18,6 +18,7 @@ pages:
     - 'PostgreSQL Configuration Tips': configuration/postgresql-configuration-tips.md
     - 'JVM Configuration Tips': configuration/jvm-configuration-tips.md
   - 'The Relational Schema': relational-schema.md
+  - 'Trouble Shooting': trouble-shooting.md
   - 'FAQ': faq.md
   - 'Glossary': glossary.md
 extra_css:
