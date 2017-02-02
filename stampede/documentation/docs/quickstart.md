@@ -72,7 +72,7 @@ torodb-stampede-1.0.0-beta1/bin/torodb-stampede --ask-for-password
 
 ToroDB Stampede will ask for the password of the `torodb` PostgreSQL user you just created.
 
-By now, you should have running sandbox environment. Changes done in MongoDB are replicated to PostgreSQL and stroed in the [relational schema](relational-schema.md). The following sections demos ToroDB Stampede by uploading test data into MongoDB and runing a very simple query against this data in the PostgreSQL database.
+By now, you should have running sandbox environment. Changes done in MongoDB are replicated to PostgreSQL and stored in the [relational schema](relational-schema.md). The following sections demos ToroDB Stampede by uploading test data into MongoDB and runing a very simple query against this data in the PostgreSQL database.
 
 ## Uploading Test Data
 

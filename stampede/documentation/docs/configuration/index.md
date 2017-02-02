@@ -1,6 +1,6 @@
 <h1>Configuration via Options or File</h1>
 
-ToroDB Stampede can be launch with custom configuration options. There are two ways to do it, using command modifiers or using a configuration file. The recommended way is using a configuration file because it is more versatile and self-documented.
+ToroDB Stampede would start with custom configuration options. There are two ways to do it, using command modifiers or using a configuration file. The recommended way is using a configuration file because it is more versatile and self-documented.
 
 To use the configuration file, the `-c` parameter should be specified.
 

@@ -33,7 +33,7 @@ docker-compose up
 
 ### Linux/macOS
 
-The source code contains some Maven tasks that can build the right artifacts to execute ToroDB Stampede and its dependencies in Docker containers.
+The source code contains some Maven tasks that can build the right artifacts to execute ToroDB Stampede and its dependencies into Docker containers.
 
 ```no-highlight
 mvn clean package -P prod,docker -Ddocker.skipbase=false
@@ -41,7 +41,7 @@ mvn clean package -P prod,docker -Ddocker.skipbase=false
 mvn -f stampede/main/pom.xml -P docker-stampede-fullstack docker:run -Ddocker.follow
 ```
 
-Sometimes, errors can appear due to the Docker cache. If that happens, cache can be disabled using command options, like is done in the next example. Usually these errors are related to network connection timeouts.
+Sometimes, errors can appear due to the Docker cache. If that happens, cache can be disabled using command options, as showed in the next example. Usually these errors are related to network connection timeouts.
 
 ```no-highlight
 mvn clean package -P prod,docker -Ddocker.skipbase=false -Ddocker.nocache=true
