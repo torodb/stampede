@@ -8,6 +8,9 @@ pages:
     - 'Previous requirements': installation/previous-requirements.md
     - 'Installation with Docker': installation/docker.md
     - 'Installation with binaries': installation/binaries.md
+    - 'Installation with SNAP': installation/snap.md
+    - 'Installation for Ubuntu/Debian': installation/deb.md
+    - 'Installation for Fedora/CentOS': installation/rpm.md
     - 'Installation from source code': installation/source-code.md
     - 'Configuration': installation/configuration.md
     - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
