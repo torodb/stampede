@@ -94,7 +94,7 @@
                                 <goal>copy-resources</goal>
                             </goals>
                             <configuration>
-                                <outputDirectory>${basedir}/target/dist/</outputDirectory>
+                                <outputDirectory>${project.build.directory}/dist/</outputDirectory>
                                 <resources>
                                     <resource>
                                         <directory>src/main/dist</directory>
@@ -127,7 +127,7 @@
                             </goals>
                             <configuration>
                                 <files>
-                                    <file>${basedir}/target/dist/packaging.properties</file>
+                                    <file>${project.build.directory}/dist/packaging.properties</file>
                                 </files>
                             </configuration>
                         </execution>
@@ -144,7 +144,7 @@
                                 <goal>jar</goal>
                             </goals>
                             <configuration>
-                                <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
+                                <outputDirectory>${project.build.directory}/dist/lib/</outputDirectory>
                                 <finalName>${assembler.name}-${project.version}</finalName>
                                 <archive>
                                     <manifest>
@@ -471,7 +471,7 @@
                                             <run>
                                                 <volumes>
                                                     <bind>
-                                                        <volume>${basedir}/target/dist/snap:/snap</volume>
+                                                        <volume>${project.build.directory}/dist/snap:/snap</volume>
                                                         <volume>${user.home}/.gitconfig:/config/.gitconfig:ro</volume>
                                                         <volume>${user.home}/.ssh:/config/.ssh:ro</volume>
                                                     </bind>
@@ -643,7 +643,7 @@
                                             <run>
                                                 <volumes>
                                                     <bind>
-                                                        <volume>${basedir}/target/dist/rpm/${package.name}:/rpm</volume>
+                                                        <volume>${project.build.directory}/dist/rpm/${package.name}:/rpm</volume>
                                                         <volume>${user.home}/.config/copr:/root/.config/copr:ro</volume>
                                                     </bind>
                                                 </volumes>
@@ -853,7 +853,7 @@
                                             <run>
                                                 <volumes>
                                                     <bind>
-                                                        <volume>${basedir}/target/dist/deb/${package.name}:/deb</volume>
+                                                        <volume>${project.build.directory}/dist/deb/${package.name}:/deb</volume>
                                                         <volume>${user.home}/.gnupg:/config/.gnupg:ro</volume>
                                                         <volume>${user.home}/.dput.cf:/config/.dput.cf:ro</volume>
                                                     </bind>
