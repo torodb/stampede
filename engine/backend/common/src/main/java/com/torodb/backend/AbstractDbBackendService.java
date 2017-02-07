@@ -22,6 +22,11 @@ import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.services.IdleTorodbService;
+import com.vladmihalcea.flexypool.FlexyPoolDataSource;
+import com.vladmihalcea.flexypool.adaptor.HikariCPPoolAdapter;
+import com.vladmihalcea.flexypool.config.Configuration;
+import com.vladmihalcea.flexypool.strategy.IncrementPoolOnTimeoutConnectionAcquiringStrategy;
+import com.vladmihalcea.flexypool.strategy.RetryConnectionAcquiringStrategy;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -49,9 +54,9 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
 
   private final ConfigurationT configuration;
   private final ErrorHandler errorHandler;
-  private HikariDataSource writeDataSource;
-  private HikariDataSource systemDataSource;
-  private HikariDataSource readOnlyDataSource;
+  private FlexyPoolDataSource<HikariDataSource> writeDataSource;
+  private FlexyPoolDataSource<HikariDataSource> systemDataSource;
+  private FlexyPoolDataSource<HikariDataSource> readOnlyDataSource;
   /**
    * Global state variable for data import mode. If true data import mode is enabled, data import
    * mode is otherwise disabled. Indexes will not be created while data import mode is enabled. When
@@ -69,7 +74,7 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
    *                      threads
    */
   public AbstractDbBackendService(@TorodbIdleService ThreadFactory threadFactory,
-      ConfigurationT configuration, ErrorHandler errorHandler) {
+                                  ConfigurationT configuration, ErrorHandler errorHandler) {
     super(threadFactory);
     this.configuration = configuration;
     this.errorHandler = errorHandler;
@@ -80,7 +85,7 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     Preconditions.checkState(
         connectionPoolSize >= MIN_CONNECTIONS_DATABASE,
         "At least " + MIN_CONNECTIONS_DATABASE
-        + " total connections with the backend SQL database are required"
+            + " total connections with the backend SQL database are required"
     );
     Preconditions.checkState(
         reservedReadPoolSize >= MIN_READ_CONNECTIONS_DATABASE,
@@ -89,7 +94,7 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     Preconditions.checkState(
         connectionPoolSize - reservedReadPoolSize >= MIN_SESSION_CONNECTIONS_DATABASE,
         "Reserved read connections must be lower than total connections minus "
-        + MIN_SESSION_CONNECTIONS_DATABASE
+            + MIN_SESSION_CONNECTIONS_DATABASE
     );
   }
 
@@ -97,32 +102,36 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   protected void startUp() throws Exception {
     int reservedReadPoolSize = configuration.getReservedReadPoolSize();
 
-    writeDataSource = createPooledDataSource(
+    writeDataSource = createPooledObservableDataSource(
         configuration, "session",
         configuration.getConnectionPoolSize() - reservedReadPoolSize - SYSTEM_DATABASE_CONNECTIONS,
         getCommonTransactionIsolation(),
         false
     );
-    systemDataSource = createPooledDataSource(
+    systemDataSource = createPooledObservableDataSource(
         configuration, "system",
         SYSTEM_DATABASE_CONNECTIONS,
         getSystemTransactionIsolation(),
         false);
-    readOnlyDataSource = createPooledDataSource(
+    readOnlyDataSource = createPooledObservableDataSource(
         configuration, "cursors",
         reservedReadPoolSize,
         getGlobalCursorTransactionIsolation(),
         true);
+
+    writeDataSource.start();
+    systemDataSource.start();
+    readOnlyDataSource.start();
   }
 
   @Override
   @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
       justification =
-      "Object lifecyle is managed as a Service. Datasources are initialized in setup method")
+          "Object lifecyle is managed as a Service. Datasources are initialized in setup method")
   protected void shutDown() throws Exception {
-    writeDataSource.close();
-    systemDataSource.close();
-    readOnlyDataSource.close();
+    writeDataSource.stop();
+    systemDataSource.stop();
+    readOnlyDataSource.stop();
   }
 
   @Nonnull
@@ -133,6 +142,22 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
 
   @Nonnull
   protected abstract TransactionIsolationLevel getGlobalCursorTransactionIsolation();
+
+  private FlexyPoolDataSource<HikariDataSource> createPooledObservableDataSource(
+      ConfigurationT configuration, String poolName, int poolSize,
+      TransactionIsolationLevel transactionIsolationLevel,
+      boolean readOnly
+  ) {
+    HikariDataSource hikariDataSource = createPooledDataSource(configuration, poolName,
+        poolSize, transactionIsolationLevel, readOnly);
+
+    Configuration<HikariDataSource> hikariConfiguration =
+        createPooledObservableDataSourceConfiguration(hikariDataSource);
+
+    return new FlexyPoolDataSource<HikariDataSource>(hikariConfiguration,
+        new IncrementPoolOnTimeoutConnectionAcquiringStrategy.Factory(5),
+        new RetryConnectionAcquiringStrategy.Factory(2));
+  }
 
   private HikariDataSource createPooledDataSource(
       ConfigurationT configuration, String poolName, int poolSize,
@@ -162,8 +187,17 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     return new HikariDataSource(hikariConfig);
   }
 
+  private Configuration<HikariDataSource> createPooledObservableDataSourceConfiguration(
+      HikariDataSource poolingDataSource
+  ) {
+    return new Configuration.Builder<HikariDataSource>(
+        poolingDataSource.getPoolName(),
+        poolingDataSource,
+        HikariCPPoolAdapter.FACTORY).build();
+  }
+
   protected abstract DataSource getConfiguredDataSource(ConfigurationT configuration,
-      String poolName);
+                                                        String poolName);
 
   @Override
   public void disableDataInsertMode() {
