@@ -54,6 +54,10 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
 
   private final ConfigurationT configuration;
   private final ErrorHandler errorHandler;
+
+  private HikariDataSource embeddableWriteDataSource;
+  private HikariDataSource embeddableSystemDataSource;
+  private HikariDataSource embeddableReadOnlyDataSource;
   private FlexyPoolDataSource<HikariDataSource> writeDataSource;
   private FlexyPoolDataSource<HikariDataSource> systemDataSource;
   private FlexyPoolDataSource<HikariDataSource> readOnlyDataSource;
@@ -102,22 +106,26 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   protected void startUp() throws Exception {
     int reservedReadPoolSize = configuration.getReservedReadPoolSize();
 
-    writeDataSource = createPooledObservableDataSource(
+    embeddableWriteDataSource = createPooledDataSource(
         configuration, "session",
         configuration.getConnectionPoolSize() - reservedReadPoolSize - SYSTEM_DATABASE_CONNECTIONS,
         getCommonTransactionIsolation(),
         false
     );
-    systemDataSource = createPooledObservableDataSource(
+    embeddableSystemDataSource = createPooledDataSource(
         configuration, "system",
         SYSTEM_DATABASE_CONNECTIONS,
         getSystemTransactionIsolation(),
         false);
-    readOnlyDataSource = createPooledObservableDataSource(
+    embeddableReadOnlyDataSource = createPooledDataSource(
         configuration, "cursors",
         reservedReadPoolSize,
         getGlobalCursorTransactionIsolation(),
         true);
+
+    writeDataSource = wrapObservableDataSource(embeddableWriteDataSource);
+    systemDataSource = wrapObservableDataSource(embeddableSystemDataSource);
+    readOnlyDataSource = wrapObservableDataSource(embeddableReadOnlyDataSource);
 
     writeDataSource.start();
     systemDataSource.start();
@@ -132,6 +140,10 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     writeDataSource.stop();
     systemDataSource.stop();
     readOnlyDataSource.stop();
+
+    embeddableWriteDataSource.close();
+    embeddableSystemDataSource.close();
+    embeddableReadOnlyDataSource.close();
   }
 
   @Nonnull
@@ -143,26 +155,10 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   @Nonnull
   protected abstract TransactionIsolationLevel getGlobalCursorTransactionIsolation();
 
-  private FlexyPoolDataSource<HikariDataSource> createPooledObservableDataSource(
-      ConfigurationT configuration, String poolName, int poolSize,
-      TransactionIsolationLevel transactionIsolationLevel,
-      boolean readOnly
-  ) {
-    HikariDataSource hikariDataSource = createPooledDataSource(configuration, poolName,
-        poolSize, transactionIsolationLevel, readOnly);
-
-    Configuration<HikariDataSource> hikariConfiguration =
-        createPooledObservableDataSourceConfiguration(hikariDataSource);
-
-    return new FlexyPoolDataSource<HikariDataSource>(hikariConfiguration,
-        new IncrementPoolOnTimeoutConnectionAcquiringStrategy.Factory(5),
-        new RetryConnectionAcquiringStrategy.Factory(2));
-  }
-
   private HikariDataSource createPooledDataSource(
-      ConfigurationT configuration, String poolName, int poolSize,
-      TransactionIsolationLevel transactionIsolationLevel,
-      boolean readOnly
+          ConfigurationT configuration, String poolName, int poolSize,
+          TransactionIsolationLevel transactionIsolationLevel,
+          boolean readOnly
   ) {
     HikariConfig hikariConfig = new HikariConfig();
 
@@ -175,22 +171,26 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     hikariConfig.setMaximumPoolSize(poolSize);
     hikariConfig.setTransactionIsolation(transactionIsolationLevel.name());
     hikariConfig.setReadOnly(readOnly);
-    /*
-     * TODO: implement to add metric support. See
-     * https://github.com/brettwooldridge/HikariCP/wiki/Codahale-Metrics
-     * hikariConfig.setMetricRegistry(...);
-     */
 
     LOGGER.info("Created pool {} with size {} and level {}", poolName, poolSize,
-        transactionIsolationLevel.name());
+            transactionIsolationLevel.name());
 
     return new HikariDataSource(hikariConfig);
+  }
+
+  private FlexyPoolDataSource<HikariDataSource> wrapObservableDataSource(
+      HikariDataSource dataSource
+  ) {
+    Configuration<HikariDataSource> hikariConfiguration =
+            createPooledObservableDataSourceConfiguration(dataSource);
+
+    return new FlexyPoolDataSource<>(hikariConfiguration);
   }
 
   private Configuration<HikariDataSource> createPooledObservableDataSourceConfiguration(
       HikariDataSource poolingDataSource
   ) {
-    return new Configuration.Builder<HikariDataSource>(
+    return new Configuration.Builder<>(
         poolingDataSource.getPoolName(),
         poolingDataSource,
         HikariCPPoolAdapter.FACTORY).build();
