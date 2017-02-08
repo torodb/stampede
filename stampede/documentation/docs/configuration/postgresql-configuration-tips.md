@@ -16,6 +16,13 @@ Contrary to the general believe, a large number of connections is not so good. T
 
 There are corner cases but in general for dedicated servers with 64 bits Linux systems with more than 1GB of memory, 1/4 of the total memory is recommended.
 
+### effective_cache_size
+
+Setting the value to 1/2 of total memory would be a normal conservative setting, and 3/4 of memory is a more aggressive but still reasonable amount.
+
+However, if you are running any other application on the same machine--such as the ToroDB JVM--, make sure you reduce the `effective_cache_size` by the amount of memory needed by other applications.
+
+
 ### work_mem
 
 This is the memory used by internal sort operations and sometimes it is configured to higher values, actually it should be between 2MB and 4MB. For example, if there are 30 concurrent users querying and the value is set to 50MB the total memory used will be 1.5 GB.
@@ -30,9 +37,11 @@ It's safe to set this value significantly larger than work_mem.
 
 It is the maximum time between automatic WAL checkpoints. A value between 15 and 30 minutes is recommended.
 
-### effective_cache_size
+### synchronous_commit
 
-Setting the value to 1/2 of total memory would be a normal conservative setting, and 3/4 of memory is a more aggressive but still reasonable amount.
+Consider setting [`synchronous_commit`](https://www.postgresql.org/docs/9.6/static/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT) to off if you can tolerate potential data loss--e.g., if you use ToroDB Stampede as replication target but keep the required redundancy in MongoDB.
+
+This is similar to MongoDB's behavior: writes are acknlowledged back to the application before the non-volatile storage has confirmed the write operation. Even though those write operations were confirmed to the application, they can be lost if the server crashes shortly after. You can tune the [`wal_writer_delay`](https://www.postgresql.org/docs/9.6/static/runtime-config-wal.html#GUC-WAL-WRITER-DELAY) setting to mitigate the risk of potential data loss.
 
 <!--
 ## Linux configuration

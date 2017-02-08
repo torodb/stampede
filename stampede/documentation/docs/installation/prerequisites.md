@@ -1,8 +1,8 @@
-<h1>Previous requirements</h1>
-
-## Project dependencies
+<h1>Installation Prerequisites</h1>
 
 ToroDB Stampede's correct operation depends on a number of known dependencies, in the next table more information on how to install and manage them is provided.
+
+## Runtime Dependencies
 
 | | Description | External links |
 |-|-------------|----------------|
@@ -11,7 +11,7 @@ ToroDB Stampede's correct operation depends on a number of known dependencies, i
 | PostgreSQL | ToroDB Stampede correct operation relies on the existence of a backend, right now it should be PostgreSQL. | [more info](https://wiki.postgresql.org/wiki/Detailed_installation_guides) |
 | Java | ToroDB Stampede has been written in Java so a Java Virtual Machine is required for it's execution. | [more info](https://java.com/en/download/help/index_installing.xml) |
 
-Among the previous dependencies, if we want to compile the source code other requisites are mandatory.
+## Build Dependencies
 
 | | Description | External links |
 |-|-------------|----------------|
@@ -22,7 +22,7 @@ Among the previous dependencies, if we want to compile the source code other req
 
 ## Backend setup
 
-### PostgreSQL configuration
+### PostgreSQL Configuration
 
 To work properly, the default installation of ToroDB Stampede requires a new user and a new database. User and database can be custom and specified in the configuration, but here we will explain how to create the user and database to work with default configuration.
 
@@ -44,7 +44,7 @@ CREATE USER torodb WITH PASSWORD '<password>';
 CREATE DATABASE torod OWNER torodb;
 ```
 
-### Create .toropass file
+### Create .toropass File
 
 The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. The example assumes local connection with default port is being used, but it can be changed by the user too.
 

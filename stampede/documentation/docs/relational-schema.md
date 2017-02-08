@@ -1,4 +1,4 @@
-<h1>How to use</h1>
+<h1>The Relational Schema</h1>
 
 To understand better how the JSON document to relational storage mapping algorithm works, one example will be done using a known [dataset](https://docs.mongodb.com/getting-started/shell/import-data/) from MongoDB documentation.
 
@@ -84,7 +84,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 
 #### primer_address_coord
 
-The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metada](how-to-use.md#metadata).
+The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metada](relational-schema.md#metadata).
 
 ```no-highlight
 did  |  rid  |  pid  | seq |     v_d      
@@ -157,7 +157,7 @@ did  |  rid  | seq |         date_t         | score_i |    grade_s     | score_n
 
 [TODO]: <> (explain the possible values of `_e`)
 
-As it can be observed in the tables extracts above, the column names contains a postfix, it indicates the data type. In JSON there are no data type constraints but there are in a relational storage, so if one path contains two different data types two different columns are created (view more info at [Data conflict resolution](how-to-use.md#data-conflict-resolution))
+As it can be observed in the tables extracts above, the column names contains a postfix, it indicates the data type. In JSON there are no data type constraints but there are in a relational storage, so if one path contains two different data types two different columns are created (view more info at [Data conflict resolution](relational-schema.md#data-conflict-resolution))
 
 The different data types used by ToroDB Stampede are represented in the table below.
 

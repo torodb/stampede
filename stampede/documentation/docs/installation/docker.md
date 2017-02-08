@@ -1,9 +1,9 @@
-<h1>Installation with Docker</h1>
+<h1>Installation With Docker</h1>
 ToroDB Stampede can be tested in a Docker container in two different ways. First option is to download the container (or containers if you chose to use Docker Compose) from a repository, the second one is to launch with Maven Docker tasks (if source code was previously downloaded).
 
-## From Docker repository
+## From The Docker Repository
 
-### With Docker image
+### With Docker Image
 
 If `.toropass` file is created the docker containers can be launched with the command below.
 
@@ -29,11 +29,11 @@ wget https://raw.githubusercontent.com/torodb/torodb/master/stampede/main/src/ma
 docker-compose up
 ```
 
-## From source code
+## From Source Code
 
 ### Linux/macOS
 
-The source code contains some Maven tasks that can build the right artifacts to execute ToroDB Stampede and its dependencies in Docker containers.
+The source code contains some Maven tasks that can build the right artifacts to execute ToroDB Stampede and its dependencies into Docker containers.
 
 ```no-highlight
 mvn clean package -P prod,docker -Ddocker.skipbase=false
@@ -41,7 +41,7 @@ mvn clean package -P prod,docker -Ddocker.skipbase=false
 mvn -f stampede/main/pom.xml -P docker-stampede-fullstack docker:run -Ddocker.follow
 ```
 
-Sometimes, errors can appear due to the Docker cache. If that happens, cache can be disabled using command options, like is done in the next example. Usually these errors are related to network connection timeouts.
+Sometimes, errors can appear due to the Docker cache. If that happens, cache can be disabled using command options, as showed in the next example. Usually these errors are related to network connection timeouts.
 
 ```no-highlight
 mvn clean package -P prod,docker -Ddocker.skipbase=false -Ddocker.nocache=true
