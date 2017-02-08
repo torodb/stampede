@@ -110,18 +110,57 @@ TORO_PARAMS="$("$TOROCMD" "$@" \
     -lp /backend/postgres/port \
     -lp /backend/postgres/database \
     -lp /backend/postgres/user \
-    -lp /backend/postgres/toropassFile)"
-POSTGRES_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 1)"
-POSTGRES_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 2)"
-POSTGRES_DATABASE="$(echo "$TORO_PARAMS"|cut -d ',' -f 3)"
-POSTGRES_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 4)"
-TOROPASSFILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 5)"
+    -lp /backend/postgres/toropassFile \
+    -lp /replication/syncSource \
+    -lp /replication/replSetName \
+    -lp /replication/ssl/enabled \
+    -lp /replication/ssl/allowInvalidHostnames \
+    -lp /replication/ssl/trustStoreFile \
+    -lp /replication/ssl/trustStorePassword \
+    -lp /replication/ssl/keyStoreFile \
+    -lp /replication/ssl/keyStorePassword \
+    -lp /replication/ssl/keyPassword \
+    -lp /replication/ssl/fipsMode \
+    -lp /replication/ssl/caFile \
+    -lp /replication/auth/mode \
+    -lp /replication/auth/user \
+    -lp /replication/auth/source \
+    -lp /replication/mongopassFile|sed 'sed/\\,/#/g')"
+POSTGRES_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 1 | sed 'sed/#/,/g')"
+POSTGRES_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 2 | sed 'sed/#/,/g')"
+POSTGRES_DATABASE="$(echo "$TORO_PARAMS"|cut -d ',' -f 3 | sed 'sed/#/,/g')"
+POSTGRES_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 4 | sed 'sed/#/,/g')"
+TOROPASSFILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 5 | sed 'sed/#/,/g')"
+MONGO_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 6|cut -d ':' -f 1 | sed 'sed/#/,/g')"
+MONGO_HOST="${MONGO_HOST:-localhost}"
+MONGO_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 6|cut -d ':' -f 2 | sed 'sed/#/,/g')"
+MONGO_PORT="${MONGO_PORT:-27017}"
+MONGO_REPL_SET_NAME="$(echo "$TORO_PARAMS"|cut -d ',' -f 7 | sed 'sed/#/,/g')"
+MONGO_SSL_ENABLED="$(echo "$TORO_PARAMS"|cut -d ',' -f 8 | sed 'sed/#/,/g')"
+MONGO_SSL_ALLOW_INVALID_HOSTNAME="$(echo "$TORO_PARAMS"|cut -d ',' -f 9 | sed 'sed/#/,/g')"
+MONGO_SSL_TRUST_STORE_FILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 10 | sed 'sed/#/,/g')"
+MONGO_SSL_TRUST_STORE_PASSWORD="$(echo "$TORO_PARAMS"|cut -d ',' -f 11 | sed 'sed/#/,/g')"
+MONGO_SSL_KEY_STORE_FILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 12 | sed 'sed/#/,/g')"
+MONGO_SSL_KEY_STORE_PASSWORD="$(echo "$TORO_PARAMS"|cut -d ',' -f 13 | sed 'sed/#/,/g')"
+MONGO_SSL_KEY_PASSWORD="$(echo "$TORO_PARAMS"|cut -d ',' -f 14 | sed 'sed/#/,/g')"
+MONGO_SSL_FIPS_MODE="$(echo "$TORO_PARAMS"|cut -d ',' -f 15 | sed 'sed/#/,/g')"
+MONGO_SSL_CA_FILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 16 | sed 'sed/#/,/g')"
+MONGO_AUTH_MODE="$(echo "$TORO_PARAMS"|cut -d ',' -f 17 | sed 'sed/#/,/g')"
+declare -A MONGO_AUTH_MECHANISMS
+MONGO_AUTH_MECHANISMS["negotiate"]="SCRAM-SHA-1"
+MONGO_AUTH_MECHANISMS["cr"]="MONGODB-CR"
+MONGO_AUTH_MECHANISMS["x509"]="MONGODB-X509"
+MONGO_AUTH_MECHANISMS["scram_sha1"]="SCRAM-SHA-1"
+MONGO_AUTH_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 18 | sed 'sed/#/,/g')"
+MONGO_AUTH_SOURCE="$(echo "$TORO_PARAMS"|cut -d ',' -f 19 | sed 'sed/#/,/g')"
+MONGOPASSFILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 20 | sed 'sed/#/,/g')"
 PGPASSFILE="$([ -z "$PGPASSFILE" ] && echo "$HOME/.pgpass" || echo "$PGPASSFILE")"
 
 function random_string {
     base64 < /dev/urandom 2>/dev/null | tr -dc A-Za-z0-9_ 2>/dev/null | head -c 10 2>/dev/null
 }
 
+TORO_DATABASE_AND_USER_CONFIGURED=false
 if $INTERACTIVE
 then
     while true
@@ -134,18 +173,36 @@ then
         read -p "Type a different PostgreSQL's database or enter to continue [$POSTGRES_DATABASE]:" VALUE
         POSTGRES_DATABASE=${VALUE:-$POSTGRES_DATABASE}
         
-        if ! "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1 \
+        while true
+        do
+            read -p "Do you have configured @{assembler.fullName}'s database and user [Y/n]?" VALUE
+            if [ -z "$VALUE" ] || [ "$VALUE" == "y" ]
+            then
+                TORO_DATABASE_AND_USER_CONFIGURED=true
+                echo
+                break
+            fi
+            
+            if [ "$VALUE" == "n" ]
+            then
+                break
+            fi
+        done
+        
+        if ! $TORO_DATABASE_AND_USER_CONFIGURED && \
+            ! "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1 \
             && ! (ping -c 1 "$POSTGRES_HOST" 2>/dev/null|head -n 1|grep -q "(127.0.[01].1)" 2>/dev/null \
                 && "${exec_admin_command[@]}" "$psql_command --no-readline -w -c 'SELECT 1'")
         then
             echo
             echo "Can not connect to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT with user $POSTGRES_ADMIN_USER:"
-            "$psql_command" --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" || true
+            "$psql_command" --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null || true
             echo
             echo "Configure PostgreSQL's administrator user to setup database for @{assembler.fullName}:"
             read -p "Type a different PostgreSQL's administrator user or enter to continue [$POSTGRES_ADMIN_USER]:" VALUE
             POSTGRES_ADMIN_USER=${VALUE:-$POSTGRES_ADMIN_USER}
             read -s -p "Type password for PostgreSQL's administrator user $POSTGRES_ADMIN_USER:" VALUE
+            echo
             POSTGRES_ADMIN_PASSWORD=$VALUE
             TMPPGPASSFILE="/tmp/$(random_string)"
             (
@@ -163,7 +220,7 @@ then
                 break;
             else
                 echo "Can not connect to PostgreSQL at $POSTGRES_HOST:$POSTGRES_PORT with user $POSTGRES_ADMIN_USER and supplied credentials:"
-                bash -c "PGPASSFILE='$TMPPGPASSFILE' $psql_command --no-readline -w -U '$POSTGRES_ADMIN_USER' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1'"
+                bash -c "PGPASSFILE='$TMPPGPASSFILE' $psql_command --no-readline -w -U '$POSTGRES_ADMIN_USER' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1'" > /dev/null
                 while true
                 do
                     read -p "Do you want to retry [Y/n]?" VALUE
@@ -186,7 +243,8 @@ then
 fi
 
 PSQL_OPTIONS=()
-if "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1
+if ! $TORO_DATABASE_AND_USER_CONFIGURED && \
+    "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1
 then
     PSQL_OPTIONS+=("'-U'")
     PSQL_OPTIONS+=("'$POSTGRES_ADMIN_USER'")
@@ -220,6 +278,7 @@ then
             if [ "$VALUE" == "n" ]
             then
                 read -s -p "Type password for PostgreSQL's user $POSTGRES_USER:" VALUE
+                echo
                 TORODB_BACKEND_PASSWORD=$VALUE
                 break
             fi
@@ -227,16 +286,22 @@ then
     else
         while true
         do
-            read -p "Auto generate password for PostgreSQL's user $POSTGRES_USER [Y/n]:" VALUE
-            if [ -z "$VALUE" ] || [ "$VALUE" == "y" ]
+            if $TORO_DATABASE_AND_USER_CONFIGURED
             then
-                TORODB_BACKEND_PASSWORD=
-                break
+                VALUE=n
+            else
+                read -p "Auto generate password for PostgreSQL's user $POSTGRES_USER [Y/n]:" VALUE
+                if [ -z "$VALUE" ] || [ "$VALUE" == "y" ]
+                then
+                    TORODB_BACKEND_PASSWORD=
+                    break
+                fi
             fi
             
             if [ "$VALUE" == "n" ]
             then
                 read -s -p "Type password for PostgreSQL's user $POSTGRES_USER:" VALUE
+                echo
                 TORODB_BACKEND_PASSWORD=$VALUE
                 break
             fi
@@ -249,7 +314,8 @@ else
     fi
 fi
 
-if "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1'" > /dev/null 2>&1
+if "$TORO_DATABASE_AND_USER_CONFIGURED" || \
+    "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1'" > /dev/null 2>&1
 then
     if [ -z "$TORODB_BACKEND_PASSWORD" ]
     then
@@ -275,32 +341,35 @@ then
         chown "$TORO_USER" "$TOROPASSFILE"
     fi
     
-    if [ "1" != "$("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1 FROM pg_user WHERE usename = '"'"'"'$POSTGRES_USER'"'"'"' LIMIT 1'")" ]
+    if ! "$TORO_DATABASE_AND_USER_CONFIGURED"
     then
-        echo "Creating $POSTGRES_USER user"
-        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'CREATE USER "'"'"$POSTGRES_USER"'"'" WITH PASSWORD '"'"'"'$TORODB_BACKEND_PASSWORD'"'"'
-    else
-        echo "User $POSTGRES_USER already exists. Skipping creation"
-        echo "Resetting $POSTGRES_USER password"
-        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'ALTER USER "'"'"$POSTGRES_USER"'"'" WITH PASSWORD '"'"'"'$TORODB_BACKEND_PASSWORD'"'"'
-    fi
-    
-    if [ "1" != "$("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1 FROM pg_database WHERE datname = '"'"'"'$POSTGRES_DATABASE'"'"'"' LIMIT 1'")" ]
-    then
-        echo "Creating $POSTGRES_DATABASE database"
-        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_ADMIN_DATABASE' -c 'CREATE DATABASE "'"'"$POSTGRES_DATABASE"'"'" WITH OWNER "'"'"$POSTGRES_USER"'"'"'"
-    else
-        echo "Database $POSTGRES_DATABASE already exists. Skipping creation"
-        echo "Making $POSTGRES_USER owner of $POSTGRES_DATABASE"
-        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_ADMIN_DATABASE' -c 'ALTER DATABASE "'"'"$POSTGRES_DATABASE"'"'" OWNER TO "'"'"$POSTGRES_USER"'"'"'"
-        echo "Granting ALL to $POSTGRES_USER for existing schemas of $POSTGRES_DATABASE"
-        for POSTGRES_SCHEMA in $("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d '$POSTGRES_DATABASE' -c 'SELECT nspname FROM pg_namespace'"|grep -v "^pg_\|^public$\|^information_schema$")
-        do
-            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'ALTER SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" OWNER TO "'"'"$POSTGRES_USER"'"'"'"
-            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL TABLES IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
-            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
-            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
-        done
+        if [ "1" != "$("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1 FROM pg_user WHERE usename = '"'"'"'$POSTGRES_USER'"'"'"' LIMIT 1'")" ]
+        then
+            echo "Creating $POSTGRES_USER user"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'CREATE USER "'"'"$POSTGRES_USER"'"'" WITH PASSWORD '"'"'"'$TORODB_BACKEND_PASSWORD'"'"'
+        else
+            echo "User $POSTGRES_USER already exists. Skipping creation"
+            echo "Resetting $POSTGRES_USER password"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'ALTER USER "'"'"$POSTGRES_USER"'"'" WITH PASSWORD '"'"'"'$TORODB_BACKEND_PASSWORD'"'"'
+        fi
+        
+        if [ "1" != "$("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1 FROM pg_database WHERE datname = '"'"'"'$POSTGRES_DATABASE'"'"'"' LIMIT 1'")" ]
+        then
+            echo "Creating $POSTGRES_DATABASE database"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_ADMIN_DATABASE' -c 'CREATE DATABASE "'"'"$POSTGRES_DATABASE"'"'" WITH OWNER "'"'"$POSTGRES_USER"'"'"'"
+        else
+            echo "Database $POSTGRES_DATABASE already exists. Skipping creation"
+            echo "Making $POSTGRES_USER owner of $POSTGRES_DATABASE"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_ADMIN_DATABASE' -c 'ALTER DATABASE "'"'"$POSTGRES_DATABASE"'"'" OWNER TO "'"'"$POSTGRES_USER"'"'"'"
+            echo "Granting ALL to $POSTGRES_USER for existing schemas of $POSTGRES_DATABASE"
+            for POSTGRES_SCHEMA in $("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d '$POSTGRES_DATABASE' -c 'SELECT nspname FROM pg_namespace'"|grep -v "^pg_\|^public$\|^information_schema$")
+            do
+                "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'ALTER SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" OWNER TO "'"'"$POSTGRES_USER"'"'"'"
+                "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL TABLES IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
+                "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
+                "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
+            done
+        fi
     fi
 else
     echo >&2
@@ -331,27 +400,215 @@ then
     exit 1
 fi
 
-if [ ! -z "$TOROCONFIG" ]
+
+mongo_command="$(which mongo)"
+
+if $INTERACTIVE
 then
-    echo "Writing configuration file to $TOROCONFIG"
-    TORO_OPTIONS=("$@")
-    for todelete_parameter in --backend-host --backend-port --backend-database --backend-user
+    while true
     do
-        for index in "${!TORO_OPTIONS[@]}"
-        do
-            if [ "${TORO_OPTIONS[$index]}" == "$todelete_parameter" ]
+        echo "Configure sync source MongoDB's connection for @{assembler.fullName}:"
+        read -p "Type a different MongoDB's host or enter to continue [$MONGO_HOST]:" VALUE
+        MONGO_HOST=${VALUE:-$MONGO_HOST}
+        read -p "Type a different MongoDB's port or enter to continue [$MONGO_PORT]:" VALUE
+        MONGO_PORT=${VALUE:-$MONGO_PORT}
+        read -p "Type a different MongoDB's replica set name or enter to continue [$MONGO_REPL_SET_NAME]:" VALUE
+        MONGO_REPL_SET_NAME=${VALUE:-$MONGO_REPL_SET_NAME}
+        
+        MONGO_OPTIONS=()
+        
+        if $MONGO_SSL_ENABLED
+        then
+            MONGO_OPTIONS+=("--ssl")
+        fi
+        
+        if $MONGO_SSL_ALLOW_INVALID_HOSTNAME
+        then
+            MONGO_OPTIONS+=("--sslAllowInvalidHostnames")
+        fi
+        
+        if [ ! -z "$MONGO_SSL_CA_FILE" ]
+        then
+            MONGO_OPTIONS+=("--sslCAFile" "$MONGO_SSL_CA_FILE")
+        else
+            if [ ! -z "$MONGO_SSL_TRUST_STORE_FILE" ]
             then
-                unset TORO_OPTIONS[$index]
-                unset TORO_OPTIONS[$((index+1))]
+                MONGO_SSL_CA_FILE_TEMP="/tmp/$(random_string)"
+                keytool -exportcert \
+                    -keystore "$MONGO_SSL_TRUST_STORE_FILE" \
+                    -storepass "$MONGO_SSL_TRUST_STORE_PASSWORD" \
+                    -alias "$(keytool -list \
+                        -keystore "$MONGO_SSL_TRUST_STORE_FILE" \
+                        -storepass "$MONGO_SSL_TRUST_STORE_PASSWORD"|\
+                        tail -n +7|head -n 1|cut -d ',' -f 1)" |\
+                        openssl x509 -inform der > "$MONGO_SSL_CA_FILE_TEMP"
+                MONGO_OPTIONS+=("--sslCAFile" "$MONGO_SSL_CA_FILE_TEMP")
             fi
-        done
+        fi
+        
+        if [ ! -z "$MONGO_SSL_KEY_STORE_FILE" ]
+        then
+            MONGO_SSL_PK12_KEY_FILE_TEMP="/tmp/$(random_string)"
+            MONGO_SSL_KEY_FILE_TEMP="/tmp/$(random_string)"
+            keytool -importkeystore \
+                -srckeystore "$MONGO_SSL_KEY_STORE_FILE" \
+                -destkeystore "$MONGO_SSL_PK12_KEY_FILE_TEMP" \
+                -deststoretype PKCS12 \
+                -srcalias "$(keytool -list \
+                    -keystore "$MONGO_SSL_KEY_STORE_FILE" \
+                    -storepass "$MONGO_SSL_KEY_STORE_PASSWORD"|\
+                    tail -n +7|head -n 1|cut -d ',' -f 1)" \
+                -srcstorepass "$MONGO_SSL_KEY_STORE_PASSWORD" \
+                -srckeypass "$MONGO_SSL_KEY_STORE_PASSWORD" \
+                -deststorepass "$MONGO_SSL_KEY_STORE_PASSWORD" \
+                -destkeypass "$MONGO_SSL_KEY_STORE_PASSWORD"
+            openssl pkcs12 -in "$MONGO_SSL_PK12_KEY_FILE_TEMP" \
+                -passin pass:"$MONGO_SSL_KEY_STORE_PASSWORD" \
+                -passout pass:"$MONGO_SSL_KEY_STORE_PASSWORD" \
+                -out "$MONGO_SSL_KEY_FILE_TEMP"
+            rm -f "$MONGO_SSL_PK12_KEY_FILE_TEMP"
+            MONGO_OPTIONS+=("--sslPEMKeyFile" "$MONGO_SSL_KEY_FILE_TEMP")
+            MONGO_OPTIONS+=("--sslPEMKeyPassword" "$MONGO_SSL_KEY_STORE_PASSWORD")
+        fi
+        
+        if $MONGO_SSL_FIPS_MODE
+        then
+            MONGO_OPTIONS+=("--sslFIPSMode")
+        fi
+        
+        MONGO_AUTH_COMMAND=""
+        if [ "$MONGO_AUTH_MODE" != "disabled" ]
+        then
+            MONGO_OPTIONS+=("--authenticationMechanism" "${MONGO_AUTH_MECHANISMS[$MONGO_AUTH_MODE]}")
+            
+            if [ ! -z "$MONGO_AUTH_SOURCE" ]
+            then
+                MONGO_OPTIONS+=("--authenticationDatabase" "$MONGO_AUTH_SOURCE")
+            fi
+            
+            if [ ! -z "$MONGO_AUTH_USER" ]
+            then
+                MONGO_OPTIONS+=("--username" "$MONGO_AUTH_USER")
+                if [ "$MONGO_AUTH_MODE" != "x509" ]
+                then
+                    if [ -f "$MONGOPASSFILE" ] && grep -q "^\(\*\|$MONGO_HOST\):\(\*\|$MONGO_PORT\):[^:]\+:\(\*\|$MONGO_AUTH_USER\):" "$MONGOPASSFILE"
+                    then
+                        MONGO_AUTH_PASSWORD="$(grep "^\(\*\|$MONGO_HOST\):\(\*\|$MONGO_PORT\):[^:]\+:\(\*\|$MONGO_AUTH_USER\):" "$MONGOPASSFILE"|head -n 1|cut -d ':' -f 5)"
+                    else
+                        read -s -p "Type password for MongoDB's user $MONGO_AUTH_USER:" VALUE
+                        echo
+                        MONGO_AUTH_PASSWORD=$VALUE
+                        echo "Creating entry for user $POSTGRES_USER in $TOROPASSFILE"
+                        TMPMONGOPASSFILE="/tmp/$(random_string)"
+                        (
+                            echo "$MONGO_HOST:$MONGO_PORT:$MONGO_AUTH_SOURCE:$MONGO_AUTH_USER:$MONGO_AUTH_PASSWORD"
+                            if [ -f "$MONGOPASSFILE" ]
+                            then
+                                cat "$MONGOPASSFILE"
+                            fi
+                        ) > "$TMPMONGOPASSFILE" 
+                        mv "$TMPMONGOPASSFILE" "$MONGOPASSFILE"
+                        chmod 0600 "$MONGOPASSFILE"
+                        if [ "$(whoami)" != "$TORO_USER" ]
+                        then
+                            chown "$TORO_USER" "$MONGOPASSFILE"
+                        fi
+                    fi
+                    MONGO_OPTIONS+=("--password" "$MONGO_AUTH_PASSWORD")
+                fi
+            elif [ "$MONGO_AUTH_MODE" == "x509" ]
+            then
+                MONGO_AUTH_USER="$(openssl x509 -inform PEM -in "$MONGO_SSL_KEY_FILE_TEMP" -text | \
+                    grep 'Subject: ' | cut -d ':' -f 2 | sed 's/\(^\s\+\|\s\+$\)//g' | sed 's/,\s\+/,/g')"
+                MONGO_OPTIONS+=("--username" "$MONGO_AUTH_USER")
+            fi
+            MONGO_AUTH_COMMAND="db.getSiblingDB('$MONGO_AUTH_SOURCE').auth({user: '$MONGO_AUTH_USER', $([ -z "$MONGO_AUTH_PASSWORD" ] || echo "pwd: '$MONGO_AUTH_PASSWORD',") mechanism: '${MONGO_AUTH_MECHANISMS[$MONGO_AUTH_MODE]}'});"
+        fi
+        
+        if ! "$mongo_command" --host "$MONGO_HOST" --port "$MONGO_PORT" \
+            "${MONGO_OPTIONS[@]}" \
+            --eval "$MONGO_AUTH_COMMAND assert(rs.config()._id == '$MONGO_REPL_SET_NAME')" > /dev/null 2>&1
+        then
+            echo
+            echo "There are problems with connection to MongoDB $MONGO_HOST:$MONGO_PORT:"
+            "$mongo_command" --host "$MONGO_HOST" --port "$MONGO_PORT" \
+                "${MONGO_OPTIONS[@]}" \
+                --eval "$MONGO_AUTH_COMMAND assert(rs.config()._id == '$MONGO_REPL_SET_NAME')" || true
+            if [ -f "$MONGO_SSL_CA_FILE_TEMP" ]
+            then
+                rm -f "$MONGO_SSL_CA_FILE_TEMP"
+            fi
+            if [ -f "$MONGO_SSL_KEY_FILE_TEMP" ]
+            then
+                rm -f "$MONGO_SSL_KEY_FILE_TEMP"
+            fi
+            while true
+            do
+                read -p "Your MongoDB configuration include some authentication mechanism or SSL setup [y/N]:" VALUE
+                if [ "$VALUE" == "y" ]
+                then
+                    echo "Setup @{assembler.fullName} passing advanced MongoDB connection parameters"
+                    echo
+                    echo "To get available parameters: @{assembler.name} -h"
+                    exit 1
+                fi
+                
+                if [ -z "$VALUE" ] || [ "$VALUE" == "n" ]
+                then
+                    break
+                fi
+            done
+        else
+            if [ -f "$MONGO_SSL_CA_FILE_TEMP" ]
+            then
+                rm -f "$MONGO_SSL_CA_FILE_TEMP"
+            fi
+            if [ -f "$MONGO_SSL_KEY_FILE_TEMP" ]
+            then
+                rm -f "$MONGO_SSL_KEY_FILE_TEMP"
+            fi
+            break
+        fi
     done
-    TMPTOROCONFIG="/tmp/$(random_string)"
-    "$TOROCMD" "${TORO_OPTIONS[@]}" \
+fi
+
+if [ -z "$TOROCONFIG" ]
+then
+  TOROCONFIG="$BASEDIR"/conf/@{assembler.name}.yml
+fi
+
+echo "Writing configuration file to $TOROCONFIG"
+TORO_OPTIONS=("$@")
+for todelete_parameter in --backend-host --backend-port --backend-database --backend-user --sync-source --repl-set-name
+do
+    for index in "${!TORO_OPTIONS[@]}"
+    do
+        if [ "${TORO_OPTIONS[$index]}" == "$todelete_parameter" ]
+        then
+            unset TORO_OPTIONS[$index]
+            unset TORO_OPTIONS[$((index+1))]
+        fi
+    done
+done
+
+TMPTOROCONFIG="/tmp/$(random_string)"
+if ! bash "$TOROCMD" "${TORO_OPTIONS[@]}" \
+    --backend-host "$POSTGRES_HOST" \
+    --backend-port "$POSTGRES_PORT" \
+    --backend-database "$POSTGRES_DATABASE" \
+    --backend-user "$POSTGRES_USER" \
+    --sync-source "$MONGO_HOST:$MONGO_PORT" \
+    --repl-set-name "$MONGO_REPL_SET_NAME" \
+    -l > "$TMPTOROCONFIG"
+then
+    bash "$TOROCMD" "${TORO_OPTIONS[@]}" \
         --backend-host "$POSTGRES_HOST" \
         --backend-port "$POSTGRES_PORT" \
         --backend-database "$POSTGRES_DATABASE" \
         --backend-user "$POSTGRES_USER" \
-        -l > "$TMPTOROCONFIG"
-    mv "$TMPTOROCONFIG" "$TOROCONFIG"
+        --sync-source "$MONGO_HOST:$MONGO_PORT" \
+        --repl-set-name "$MONGO_REPL_SET_NAME" \
+        -l || true
+    exit 1
 fi
+mv "$TMPTOROCONFIG" "$TOROCONFIG"

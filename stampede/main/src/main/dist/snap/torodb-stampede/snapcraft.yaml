@@ -33,8 +33,10 @@ parts:
       - libc-bin
       - coreutils
       - iputils-ping
-      - postgresql-client
       - openjdk-8-jre-headless
+      - postgresql-client
+      - mongodb-clients
+      - openssl
     organize:
       assembler/assembler/bin: bin
       assembler/assembler/doc: doc
@@ -60,6 +62,8 @@ parts:
       - etc/ssl/certs/java
       - usr/lib/postgresql/*/bin/psql
       - usr/lib/*-linux-gnu/libpq.so*
+      - usr/bin/mongo
+      - usr/bin/openssl
     snap:
       - bin
       - doc
@@ -80,3 +84,5 @@ parts:
       - etc/ssl/certs/java
       - usr/lib/postgresql/*/bin/psql
       - usr/lib/*-linux-gnu/libpq*
+      - usr/bin/mongo
+      - usr/bin/openssl

@@ -130,7 +130,7 @@ public class MongoClientConfigurationFactory {
     } else if (ssl.getTrustStoreFile() != null) {
       TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory
           .getDefaultAlgorithm());
-      try (InputStream is = new FileInputStream(ssl.getCaFile())) {
+      try (InputStream is = new FileInputStream(ssl.getTrustStoreFile())) {
         char[] storePassword = null;
 
         if (ssl.getTrustStorePassword() != null) {

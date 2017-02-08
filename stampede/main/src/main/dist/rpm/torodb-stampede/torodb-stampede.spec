@@ -11,6 +11,8 @@ BuildRequires: java-1.8.0-openjdk-headless
 BuildRequires: help2man
 Requires: java-1.8.0-openjdk-headless
 Requires: postgresql
+Requires: mongodb
+Requires: openssl
 
 %description
 @{project.description}

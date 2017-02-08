@@ -82,9 +82,9 @@ public class CliConfig {
   private Boolean sslEnabled;
   @Parameter(names = {"--ssl-allow-invalid-hostnames"}, descriptionKey =
       "config.mongo.replication.ssl.allowInvalidHostnames")
-  private String sslAllowInvalidHostnames;
+  private boolean sslAllowInvalidHostnames = false;
   @Parameter(names = {"--ssl-fips-mode"}, descriptionKey = "config.mongo.replication.ssl.fipsMode")
-  private String sslFipsMode;
+  private boolean sslFipsMode;
   @Parameter(names = {"--ssl-ca-file"}, descriptionKey = "config.mongo.replication.ssl.caFile")
   private String sslCaFile;
   @Parameter(names = {"--ssl-trust-store-file"}, descriptionKey =
@@ -230,11 +230,11 @@ public class CliConfig {
     return sslEnabled;
   }
 
-  public String getSslAllowInvalidHostnames() {
+  public boolean getSslAllowInvalidHostnames() {
     return sslAllowInvalidHostnames;
   }
 
-  public String getSslFipsMode() {
+  public boolean getSslFipsMode() {
     return sslFipsMode;
   }
 
@@ -321,11 +321,12 @@ public class CliConfig {
     if (sslEnabled != null) {
       addParam("/replication/ssl/enabled", sslEnabled ? "true" : "false");
     }
-    if (sslAllowInvalidHostnames != null) {
-      addParam("/replication/ssl/allowInvalidHostnames", sslAllowInvalidHostnames);
+    if (sslAllowInvalidHostnames) {
+      addParam("/replication/ssl/allowInvalidHostnames", 
+          sslAllowInvalidHostnames ? "true" : "false");
     }
-    if (sslFipsMode != null) {
-      addParam("/replication/ssl/fipsMode", sslFipsMode);
+    if (sslFipsMode) {
+      addParam("/replication/ssl/fipsMode", sslFipsMode ? "true" : "false");
     }
     if (sslCaFile != null) {
       addParam("/replication/ssl/caFile", sslCaFile);

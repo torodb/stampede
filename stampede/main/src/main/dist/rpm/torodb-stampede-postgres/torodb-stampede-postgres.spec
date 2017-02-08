@@ -12,6 +12,8 @@ BuildRequires: help2man
 Requires: java-1.8.0-openjdk-headless
 Requires: postgresql
 Requires: postgresql-server
+Requires: mongodb
+Requires: openssl
 Conflicts: @{assembler.name}
 
 %description

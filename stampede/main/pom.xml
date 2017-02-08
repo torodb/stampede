@@ -176,6 +176,11 @@
     <profiles>
         <profile>
             <id>assembler</id>
+            <properties>
+                <s3.push>false</s3.push>
+                <s3.path>s3://torodb.download/stampede</s3.path>
+                <s3.profile>default</s3.profile>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -188,19 +193,19 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-resources</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>properties-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -227,15 +232,78 @@
                                     <descriptors>
                                         <descriptor>src/main/assembly/assembly.xml</descriptor>
                                     </descriptors>
-                                    <finalName>torodb-stampede-${project.version}</finalName>
+                                    <finalName>${assembler.name}-${project.version}</finalName>
                                     <outputDirectory>${project.build.directory}/dist</outputDirectory>
                                     <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>assembler-push-s3</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>assembler-push-s3</name>
+                                            <build>
+                                                <cleanup>try</cleanup>
+                                                <optimise>true</optimise>
+                                                <from>ubuntu:16.04</from>
+                                                <runCmds>
+                                                    <run>apt update</run>
+                                                    <run>apt -y install python-pip</run>
+                                                    <run>pip install awscli</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${project.build.directory}/dist:/dist</volume>
+                                                        <volume>${user.home}/.aws:/root/.aws:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <env>
+                                                    <S3_PATH>${s3.path}</S3_PATH>
+                                                    <S3_PROFILE>${s3.profile}</S3_PROFILE>
+                                                    <FINAL_NAME>${assembler.name}-${project.version}</FINAL_NAME>
+                                                </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>setup s3 finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /dist -R" ERR EXIT;
+                                                    cd /dist
+                                                    if [ "${s3.push}" == "true" ];
+                                                    then
+                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".tar.bz2 "$S3_PATH"/"$FINAL_NAME".tar.bz2
+                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".zip "$S3_PATH"/"$FINAL_NAME".zip
+                                                    fi;
+                                                    echo "'setup s3 finished'";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
-                <finalName>${project.name}-${project.version}</finalName>
             </build>
         </profile>
         
@@ -257,19 +325,19 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-resources</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>properties-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -320,7 +388,6 @@
                                                     <arg>/bin/bash</arg>
                                                     <arg>-c</arg>
                                                     <arg>
-                                                    &gt; generated;
                                                     echo base image generated;
                                                     </arg>
                                                 </cmd>
@@ -397,19 +464,19 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-resources</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>properties-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -568,19 +635,19 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-resources</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>properties-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -756,19 +823,19 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-resources</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>properties-maven-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>

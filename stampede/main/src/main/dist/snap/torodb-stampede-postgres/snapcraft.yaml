@@ -33,9 +33,11 @@ parts:
       - libc-bin
       - coreutils
       - iputils-ping
+      - openjdk-8-jre-headless
       - postgresql-client
       - postgresql
-      - openjdk-8-jre-headless
+      - mongodb-clients
+      - openssl
     organize:
       assembler/assembler/bin: bin
       assembler/assembler/doc: doc
@@ -66,6 +68,8 @@ parts:
       - usr/lib/*-linux-gnu/libxml2.so*
       - usr/lib/*-linux-gnu/libicuuc.so*
       - usr/lib/*-linux-gnu/libicudata.so*
+      - usr/bin/mongo
+      - usr/bin/openssl
     snap:
       - bin
       - doc
@@ -91,3 +95,5 @@ parts:
       - usr/lib/*-linux-gnu/libxml2.so*
       - usr/lib/*-linux-gnu/libicuuc.so*
       - usr/lib/*-linux-gnu/libicudata.so*
+      - usr/bin/mongo
+      - usr/bin/openssl

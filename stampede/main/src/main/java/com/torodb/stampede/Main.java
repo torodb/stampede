@@ -120,7 +120,7 @@ public class Main {
           }
           
           if (jsonNode != null) {
-            printParamsBuilder.append(jsonNode.asText());
+            printParamsBuilder.append(jsonNode.asText().replace(",", "\\,"));
           }
         }
         
