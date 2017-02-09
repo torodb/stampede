@@ -265,7 +265,7 @@
                         <extensions>true</extensions>
                         <executions>
                             <execution>
-                                <id>assembler-push-s3</id>
+                                <id>docker-assembler-push-s3</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build-nofork</goal>
@@ -542,7 +542,7 @@
                         <extensions>true</extensions>
                         <executions>
                             <execution>
-                                <id>snap-setup-launchpad</id>
+                                <id>docker-snapbuilder</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build-nofork</goal>
@@ -551,7 +551,7 @@
                                 <configuration>
                                     <images>
                                         <image>
-                                            <name>snap-setup-launchpad</name>
+                                            <name>snapbuilder</name>
                                             <build>
                                                 <cleanup>try</cleanup>
                                                 <optimise>true</optimise>
@@ -591,6 +591,9 @@
                                                     if [ "${launchpad.push}" == "true" ];
                                                     then
                                                         bash -x ../update-launchpad.sh;
+                                                    else
+                                                        snapcraft clean;
+                                                        snapcraft;
                                                     fi;
                                                     echo "'setup launchpad finished'";
                                                     </arg>
@@ -727,7 +730,7 @@
                         <extensions>true</extensions>
                         <executions>
                             <execution>
-                                <id>rpm-setup-copr</id>
+                                <id>docker-rpmbuilder</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build-nofork</goal>
@@ -736,7 +739,6 @@
                                 <configuration>
                                     <images>
                                         <image>
-                                            <alias>rpmbuilder</alias>
                                             <name>rpmbuilder</name>
                                             <build>
                                                 <cleanup>try</cleanup>
@@ -975,7 +977,7 @@
                         <extensions>true</extensions>
                         <executions>
                             <execution>
-                                <id>dep-setup-launchpad</id>
+                                <id>docker-debbuilder</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build-nofork</goal>
@@ -984,7 +986,6 @@
                                 <configuration>
                                     <images>
                                         <image>
-                                            <alias>debbuilder</alias>
                                             <name>debbuilder</name>
                                             <build>
                                                 <cleanup>try</cleanup>

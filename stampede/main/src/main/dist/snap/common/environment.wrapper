@@ -19,7 +19,7 @@ if [ ! -e $SNAP_DATA/$LOC ]; then
     $SNAP/usr/bin/localedef --prefix=$SNAP_DATA -f $ENC -i $LANG1 $SNAP_DATA/$LOC
 fi
 
-export PATH="$PATH:$(ls -1 -d "$SNAP"/usr/lib/postgresql/*/bin|head -n 1)"
+export PATH="$PATH:$(ls -1 -d "$SNAP"/usr/lib/postgresql/*/bin|head -n 1):$(ls -1 -d "$SNAP"/usr/lib/jvm/java-8-openjdk-*|head -n 1)/bin"
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(ls -1 -d "$SNAP"/usr/lib/*-linux-gnu|head -n 1)"
 export TMPDIR="$SNAP_COMMON"
 export JAVA_HOME="$(ls -1 -d "$SNAP"/usr/lib/jvm/java-8-openjdk-*|head -n 1)"

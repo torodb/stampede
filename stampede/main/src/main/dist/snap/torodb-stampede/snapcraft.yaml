@@ -33,7 +33,7 @@ parts:
       - libc-bin
       - coreutils
       - iputils-ping
-      - openjdk-8-jre-headless
+      - openjdk-8-jdk-headless
       - postgresql-client
       - mongodb-clients
       - openssl
@@ -63,6 +63,14 @@ parts:
       - usr/lib/postgresql/*/bin/psql
       - usr/lib/*-linux-gnu/libpq.so*
       - usr/bin/mongo
+      - usr/lib/*-linux-gnu/libyaml-cpp*
+      - usr/lib/*-linux-gnu/libboost_*
+      - usr/lib/*-linux-gnu/libpcrecpp*
+      - usr/lib/*-linux-gnu/libcrypto*
+      - usr/lib/*-linux-gnu/libssl*
+      - usr/lib/*-linux-gnu/libunwind*
+      - usr/lib/libtcmalloc*
+      - usr/lib/libv8*
       - usr/bin/openssl
     snap:
       - bin
@@ -85,4 +93,12 @@ parts:
       - usr/lib/postgresql/*/bin/psql
       - usr/lib/*-linux-gnu/libpq*
       - usr/bin/mongo
+      - usr/lib/*-linux-gnu/libyaml-cpp*
+      - usr/lib/*-linux-gnu/libboost_*
+      - usr/lib/*-linux-gnu/libpcrecpp*
+      - usr/lib/*-linux-gnu/libcrypto*
+      - usr/lib/*-linux-gnu/libssl*
+      - usr/lib/*-linux-gnu/libunwind*
+      - usr/lib/libtcmalloc*
+      - usr/lib/libv8*
       - usr/bin/openssl
