@@ -914,7 +914,7 @@
                                                 <runCmds>
                                                     <run>echo "deb http://ftp.de.debian.org/debian jessie-backports main" &gt;&gt; /etc/apt/sources.list</run>
                                                     <run>apt update</run>
-                                                    <run>apt -y install devscripts build-essential lintian help2man openjdk-8-jdk-headless postgresql-client</run>
+                                                    <run>apt -y install -t jessie-backports devscripts build-essential lintian help2man openjdk-8-jdk-headless postgresql-client</run>
                                                 </runCmds>
                                             </build>
                                             <run>
