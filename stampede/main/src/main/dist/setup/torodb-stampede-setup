@@ -81,12 +81,17 @@ psql_command="$(which psql)"
 exec_admin_command=(su -p -s /bin/bash "$ADMIN_USER" -c)
 exec_user_command=(su -p -s /bin/bash "$TORO_USER" -c)
 
-
 if echo ' '"$@"' ' | grep -q -- "\s-h\s\|\s--help\s"
 then
     echo "Usage: $0 [<@{assembler.fullName}'s parameter>, ...]"
     echo
     echo "To get available parameters: @{assembler.name} -h"
+    exit
+fi
+
+if echo ' '"$@"' ' | grep -q -- "\s-v\s\|\s--version\s"
+then
+    echo "@{project.version}"
     exit
 fi
 
