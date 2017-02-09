@@ -110,28 +110,6 @@
                             </configuration>
                         </execution>
                         <execution>
-                            <id>dist-copy-specific-package-properties</id>
-                            <phase>process-resources</phase>
-                            <goals>
-                                <goal>copy-resources</goal>
-                            </goals>
-                            <configuration>
-                                <outputDirectory>${project.build.directory}/dist/${dist.type}</outputDirectory>
-                                <resources>
-                                    <resource>
-                                        <directory>src/main/dist/${dist.type}</directory>
-                                        <include>packaging.properties</include>
-                                        <filtering>true</filtering>
-                                    </resource>
-                                </resources>
-                                <overwrite>true</overwrite>
-                                <delimiters>
-                                    <delimiter>@{*}</delimiter>
-                                </delimiters>
-                                <useDefaultDelimiters>false</useDefaultDelimiters>
-                            </configuration>
-                        </execution>
-                        <execution>
                             <id>dist-copy-resources</id>
                             <phase>prepare-package</phase>
                             <goals>
@@ -167,18 +145,6 @@
                             <configuration>
                                 <files>
                                     <file>${project.build.directory}/dist/packaging.properties</file>
-                                </files>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>read-specific-packaging-properties</id>
-                            <phase>prepare-package</phase>
-                            <goals>
-                                <goal>read-project-properties</goal>
-                            </goals>
-                            <configuration>
-                                <files>
-                                    <file>${project.build.directory}/dist/${dist.type}/packaging.properties</file>
                                 </files>
                             </configuration>
                         </execution>
@@ -654,6 +620,17 @@
                         <artifactId>buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
+                                <id>create_deb_date</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>EEE MMM d yyyy</timestampFormat>
+                                    <timestampPropertyName>rpm.date</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                            <execution>
                                 <id>create_revision</id>
                                 <phase>prepare-package</phase>
                                 <goals>
@@ -766,7 +743,7 @@
                                                 <optimise>true</optimise>
                                                 <from>${rpmbuilder.image}</from>
                                                 <runCmds>
-                                                    <run>dnf -y install rpmdevtools rpmlint copr-cli help2man java-1.8.0-openjdk-headless postgresql</run>
+                                                    <run>dnf -y install --best rpmdevtools rpmlint copr-cli systemd help2man java-1.8.0-openjdk-headless postgresql mongodb openssl</run>
                                                     <run>rpmdev-setuptree</run>
                                                 </runCmds>
                                             </build>
@@ -793,17 +770,20 @@
                                                     cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
                                                     rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
                                                     spectool -g -R "$SPEC_FILE";
-                                                    dnf -y builddep "$SPEC_FILE";
-                                                    rpmbuild -bs "$SPEC_FILE";
-                                                    cp -a "$HOME/rpmbuild" "/rpm/.";
+                                                    #dnf -y builddep "$SPEC_FILE";
                                                     if [ "${copr.push}" == "true" ];
                                                     then
+                                                        rpmbuild -bs "$SPEC_FILE";
+                                                        cp -a "$HOME/rpmbuild" "/rpm/.";
                                                         if ! copr-cli list-packages ${package.name}&gt;/dev/null 2&gt;&amp;1;
                                                         then
                                                             copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
                                                         fi;
+                                                        copr-cli build ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
+                                                    else
+                                                        rpmbuild -ba "$SPEC_FILE";
+                                                        cp -a "$HOME/rpmbuild" "/rpm/.";
                                                     fi;
-                                                    copr-cli build ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
                                                     echo "rpmbuilder finished";
                                                     </arg>
                                                 </cmd>
@@ -821,7 +801,6 @@
         <profile>
             <id>deb</id>
             <properties>
-                <dist.type>deb</dist.type>
                 <package.name>${assembler.name}</package.name>
                 <debbuilder.image>debian:8</debbuilder.image>
                 <launchpad.push>false</launchpad.push>
@@ -891,6 +870,15 @@
                         <executions>
                             <execution>
                                 <id>read-specific-packaging-properties</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${project.build.directory}/dist/deb/packaging.properties</file>
+                                    </files>
+                                </configuration>
                             </execution>
                             <execution>
                                 <id>read-packaging-properties</id>
@@ -905,6 +893,25 @@
                             </execution>
                             <execution>
                                 <id>dist-copy-specific-package-properties</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/dist/deb</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/dist/deb</directory>
+                                            <include>packaging.properties</include>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                    <overwrite>true</overwrite>
+                                    <delimiters>
+                                        <delimiter>@{*}</delimiter>
+                                    </delimiters>
+                                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                                </configuration>
                             </execution>
                             <execution>
                                 <id>dist-copy-resources</id>

@@ -74,4 +74,5 @@ getent passwd torodb >/dev/null || useradd -r -g torodb -u 184 \
 %systemd_postun_with_restart @{assembler.name}.service
 
 %changelog
-@{assembler.changelog}
+* @{rpm.date} @{assembler.maintainer} @{assembler.version}-@{assembler.revision}
+- @{assembler.changelog}
