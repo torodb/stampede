@@ -111,26 +111,26 @@ public class MongoDbBsonTypesTest {
 
     Collection<Object[]> result = Arrays.asList(new Object[][] {
             {"DOUBLE", PrimitiveBsonDouble.newInstance(2.3)},
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            {"STRING", new StringBsonString("hello")},
+            {"DOCUMENT", new SingleEntryBsonDocument("salutation", new StringBsonString("hello"))},
+            {"ARRAY", new SingleValueBsonArray(new StringBsonString("hello"))},
+            {"BINARY", new ByteArrayBsonBinary(BinarySubtype.USER_DEFINED, Byte.parseByte("1000", 2), new byte [1])},
+            {"UNDEFINED", SimpleBsonUndefined.getInstance()},
+            {"OBJECT_ID", new IntBasedBsonObjectId(1, 1, 1, 1)},
+            {"BOOLEAN", TrueBsonBoolean.getInstance()},
+            {"DATETIME", new LongBsonDateTime(0L)},
+            {"NULL", SimpleBsonNull.getInstance()},
+            {"REGEX", new DefaultBsonRegex(EnumSet.noneOf(BsonRegex.Options.class), "asd")},
+            {"DB_POINTER", new DefaultBsonDbPointer("asd", new IntBasedBsonObjectId(1, 1, 1, 1))},
+            {"JAVA_SCRIPT", new DefaultBsonJavaScript("alert(\"hello\");")},
+            {"DEPRECATED", new StringBsonDeprecated("Deprecable me")},
+            {"JAVA_SCRIPT_WITH_SCOPE", new DefaultBsonJavaScriptWithCode("alert(\"hello\");", new SingleEntryBsonDocument("class", new StringBsonString(".main-menu")))},
             {"INT32", PrimitiveBsonInt32.newInstance(55)},
-
-            {"INT64", PrimitiveBsonInt64.newInstance(1525155)}
-
-
-
+            {"TIMESTAMP", new DefaultBsonTimestamp(1482000000, 1)},
+            {"INT64", PrimitiveBsonInt64.newInstance(1525155)},
+            {"DECIMAL128", new LongsBsonDecimal128(1L,1L)},
+            {"MIN", SimpleBsonMin.getInstance()},
+            {"MAX", SimpleBsonMax.getInstance()}
     });
 
     Arrays.asList(BsonType.values()).forEach(
