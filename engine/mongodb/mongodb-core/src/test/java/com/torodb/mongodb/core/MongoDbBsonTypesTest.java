@@ -20,13 +20,8 @@ package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.WriteConcern;
-import com.eightkdata.mongowp.bson.BsonArray;
-import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.bson.BsonInt32;
-import com.eightkdata.mongowp.bson.BsonValue;
-import com.eightkdata.mongowp.bson.impl.ListBasedBsonDocument;
-import com.eightkdata.mongowp.bson.impl.PrimitiveBsonInt32;
-import com.eightkdata.mongowp.bson.impl.SingleEntryBsonDocument;
+import com.eightkdata.mongowp.bson.*;
+import com.eightkdata.mongowp.bson.impl.*;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.NameBasedCommandLibrary;
 import com.google.common.collect.ImmutableMap;
@@ -48,17 +43,18 @@ import com.torodb.torod.TorodBundle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.lang.reflect.Parameter;
 import java.time.Clock;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-
+@RunWith(Parameterized.class)
 public class MongoDbBsonTypesTest {
 
   private BundleConfig generalConfig;
@@ -110,17 +106,54 @@ public class MongoDbBsonTypesTest {
     }
   }
 
-  @Test
-  public void test() {
+  @Parameterized.Parameters(name = "{index}: Collection {0}")
+  public static Collection<Object[]> data() {
 
-    BsonDocument doc = new SingleEntryBsonDocument("number", PrimitiveBsonInt32.newInstance(55));
-    baseWriteTest(doc, "int32");
+    Collection<Object[]> result = Arrays.asList(new Object[][] {
+            {"DOUBLE", PrimitiveBsonDouble.newInstance(2.3)},
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+            {"INT32", PrimitiveBsonInt32.newInstance(55)},
+
+            {"INT64", PrimitiveBsonInt64.newInstance(1525155)}
+
+
+
+    });
+
+    Arrays.asList(BsonType.values()).forEach(
+            type -> assertTrue(type + " type is never tested",result.stream().anyMatch(
+                    toTest -> type.getValueClass().isAssignableFrom(toTest[1].getClass())
+                    )
+            )
+    );
+
+    return result;
   }
 
-  private void baseWriteTest(BsonDocument doc, String collName) {
+  @Parameterized.Parameter(0)
+  public String collName;
+
+
+  @Parameterized.Parameter(1)
+  public BsonValue value;
+
+  @Test
+  public void test() {
     List<BsonDocument> docs = new ArrayList<>();
-    docs.add(doc);
+    docs.add(new SingleEntryBsonDocument("number", value));
 
     baseWriteTest(docs, collName);
   }
