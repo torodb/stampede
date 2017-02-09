@@ -129,23 +129,29 @@ public class MongoDbBsonTypesTest {
 
     writeTransaction = bundle.getExternalInterface().getMongodServer().openConnection().openWriteTransaction();
 
-    InsertCommand.InsertArgument insertArgument = new InsertCommand.InsertArgument(collName,
-            docs, WriteConcern.acknowledged(), true, null);
+    //Prepare and do the insertion
+
+    InsertCommand.InsertArgument insertArgument = new InsertCommand.InsertArgument.Builder(collName)
+            .addDocuments(docs)
+            .build();
+    Status<InsertCommand.InsertResult> insertResultStatus =
+            writeTransaction.execute(request, InsertCommand.INSTANCE, insertArgument);
+
+    //Prepare and do the retrieval
 
     FindCommand.FindArgument findArgument = new FindCommand.FindArgument.Builder()
             .setCollection(collName)
             .build();
-
-    Status<InsertCommand.InsertResult> insertResultStatus = writeTransaction.execute(request, InsertCommand.INSTANCE, insertArgument);
-
-    Status<FindCommand.FindResult> findResultStatus = writeTransaction.execute(request, FindCommand.INSTANCE, findArgument);
+    Status<FindCommand.FindResult> findResultStatus =
+            writeTransaction.execute(request, FindCommand.INSTANCE, findArgument);
 
     writeTransaction.close();
 
+
     //Asserting that the status of both operations are right
 
-    assertTrue(insertResultStatus.isOk()?"ok":insertResultStatus.getErrorMsg() + " in collection " + collName, insertResultStatus.isOk());
     assertTrue(insertResultStatus.getResult().getWriteErrors().isEmpty());
+    assertTrue(insertResultStatus.isOk()?"ok":insertResultStatus.getErrorMsg() + " in collection " + collName, insertResultStatus.isOk());
     assertTrue(findResultStatus.isOk()?"ok":findResultStatus.getErrorMsg() + " in collection " + collName, findResultStatus.isOk());
 
     //We ensure that every element in the inserted list exists in the list retrieved from DB and viceversa
@@ -153,13 +159,11 @@ public class MongoDbBsonTypesTest {
 
     BsonArray result = findResultStatus.getResult().getCursor().marshall(elm -> elm).get("firstBatch").asArray();
 
-    result.stream().forEach(doc ->{
-      System.out.println(doc);
+    result.forEach(doc ->{
       assertTrue(docs.contains(doc));
     });
 
-    docs.stream().forEach(doc ->{
-      System.out.println(doc);
+    docs.forEach(doc ->{
       assertTrue(result.contains(doc));
     });
   }
