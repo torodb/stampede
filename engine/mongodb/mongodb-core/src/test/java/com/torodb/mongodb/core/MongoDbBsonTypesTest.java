@@ -109,7 +109,8 @@ public class MongoDbBsonTypesTest {
   @Parameterized.Parameters(name = "{index}: Collection {0}")
   public static Collection<Object[]> data() {
 
-    Collection<Object[]> result = Arrays.asList(new Object[][] {
+
+    Collection<Object[]> allTests = Arrays.asList(new Object[][] {
             {"DOUBLE", PrimitiveBsonDouble.newInstance(2.3)},
             {"STRING", new StringBsonString("hello")},
             {"DOCUMENT", new SingleEntryBsonDocument("salutation", new StringBsonString("hello"))},
@@ -129,18 +130,20 @@ public class MongoDbBsonTypesTest {
             {"TIMESTAMP", new DefaultBsonTimestamp(1482000000, 1)},
             {"INT64", PrimitiveBsonInt64.newInstance(1525155)},
             {"DECIMAL128", new LongsBsonDecimal128(1L,1L)},
+            {"DECIMAL128_NaN", new LongsBsonDecimal128(8935141660703064064L,1L)},
+            {"DECIMAL128_INFINITE", new LongsBsonDecimal128(8646911284551352320L,1L)},
             {"MIN", SimpleBsonMin.getInstance()},
             {"MAX", SimpleBsonMax.getInstance()}
     });
 
     Arrays.asList(BsonType.values()).forEach(
-            type -> assertTrue(type + " type is never tested",result.stream().anyMatch(
+            type -> assertTrue(type + " type is never tested",allTests.stream().anyMatch(
                     toTest -> type.getValueClass().isAssignableFrom(toTest[1].getClass())
                     )
             )
     );
 
-    return result;
+    return allTests;
   }
 
   @Parameterized.Parameter(0)
