@@ -50,4 +50,7 @@ public interface KvValueVisitor<R, A> {
 
   public R visit(KvDecimal128 value, A arg);
 
+  public R visit(KvJavascript value, A arg);
+
+  public R visit(KvJavascriptWithScope value, A arg);
 }

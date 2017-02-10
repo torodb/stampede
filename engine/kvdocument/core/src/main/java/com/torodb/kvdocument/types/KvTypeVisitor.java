@@ -54,4 +54,7 @@ public interface KvTypeVisitor<R, A> {
 
   public R visit(Decimal128Type type, A arg);
 
+  public R visit(JavascriptType type, A arg);
+
+  public R visit(JavascriptWithScopeType value, A arg);
 }

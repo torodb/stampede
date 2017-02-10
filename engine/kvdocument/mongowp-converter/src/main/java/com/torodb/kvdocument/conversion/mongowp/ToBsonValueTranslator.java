@@ -27,35 +27,13 @@ import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newInt;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newLong;
 import static com.eightkdata.mongowp.bson.utils.DefaultBsonValues.newString;
 
-import com.eightkdata.mongowp.bson.BinarySubtype;
-import com.eightkdata.mongowp.bson.BsonBinary;
+import com.eightkdata.mongowp.bson.*;
 import com.eightkdata.mongowp.bson.BsonDocument.Entry;
-import com.eightkdata.mongowp.bson.BsonTimestamp;
-import com.eightkdata.mongowp.bson.BsonValue;
 import com.eightkdata.mongowp.bson.abst.AbstractBsonDocument.SimpleEntry;
-import com.eightkdata.mongowp.bson.impl.ByteArrayBsonBinary;
-import com.eightkdata.mongowp.bson.impl.ByteArrayBsonObjectId;
-import com.eightkdata.mongowp.bson.impl.DefaultBsonTimestamp;
-import com.eightkdata.mongowp.bson.impl.LongBsonDateTime;
+import com.eightkdata.mongowp.bson.impl.*;
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
-import com.torodb.kvdocument.values.KvArray;
-import com.torodb.kvdocument.values.KvBinary;
-import com.torodb.kvdocument.values.KvBoolean;
-import com.torodb.kvdocument.values.KvDate;
-import com.torodb.kvdocument.values.KvDecimal128;
-import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.KvDocument.DocEntry;
-import com.torodb.kvdocument.values.KvDouble;
-import com.torodb.kvdocument.values.KvInstant;
-import com.torodb.kvdocument.values.KvInteger;
-import com.torodb.kvdocument.values.KvLong;
-import com.torodb.kvdocument.values.KvMongoObjectId;
-import com.torodb.kvdocument.values.KvMongoTimestamp;
-import com.torodb.kvdocument.values.KvNull;
-import com.torodb.kvdocument.values.KvString;
-import com.torodb.kvdocument.values.KvTime;
-import com.torodb.kvdocument.values.KvValue;
-import com.torodb.kvdocument.values.KvValueVisitor;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -208,6 +186,16 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
   @Override
   public BsonValue<?> visit(KvDecimal128 value, Void arg) {
     return newDecimal128(value.getHigh(), value.getLow());
+  }
+
+  @Override
+  public BsonJavaScript visit(KvJavascript value, Void arg) {
+    return new DefaultBsonJavaScript(value.getValue());
+  }
+
+  @Override
+  public DefaultBsonJavaScriptWithCode visit(KvJavascriptWithScope value, Void arg) {
+    return new DefaultBsonJavaScriptWithCode(value.getJs(), (BsonDocument) visit(value.getScope(), arg));
   }
 
   private static class ToBsonValueTranslatorHolder {

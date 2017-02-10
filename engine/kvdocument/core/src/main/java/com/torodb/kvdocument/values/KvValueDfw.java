@@ -301,4 +301,38 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
     return null;
   }
 
+  protected void preJavascript(KvJavascript value, A arg) {
+  }
+
+  protected void postJavascript(KvJavascript value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvJavascript value, A arg) {
+    preKvValue(value, arg);
+    preJavascript(value, arg);
+
+    postJavascript(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
+  protected void preJavascriptWithoutScope(KvJavascriptWithScope value, A arg) {
+  }
+
+  protected void postJavascriptWithoutScope(KvJavascriptWithScope value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvJavascriptWithScope value, A arg) {
+    preKvValue(value, arg);
+    preJavascriptWithoutScope(value, arg);
+
+    postJavascriptWithoutScope(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
 }

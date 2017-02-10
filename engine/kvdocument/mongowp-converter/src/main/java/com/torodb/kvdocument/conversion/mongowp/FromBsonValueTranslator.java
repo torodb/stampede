@@ -43,14 +43,8 @@ import com.eightkdata.mongowp.bson.BsonValue;
 import com.eightkdata.mongowp.bson.BsonValueVisitor;
 import com.eightkdata.mongowp.bson.impl.InstantBsonDateTime;
 import com.torodb.kvdocument.conversion.mongowp.values.BsonKvString;
+import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
-import com.torodb.kvdocument.values.KvBoolean;
-import com.torodb.kvdocument.values.KvDecimal128;
-import com.torodb.kvdocument.values.KvDouble;
-import com.torodb.kvdocument.values.KvInteger;
-import com.torodb.kvdocument.values.KvLong;
-import com.torodb.kvdocument.values.KvNull;
-import com.torodb.kvdocument.values.KvValue;
 import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 import com.torodb.kvdocument.values.heap.ByteSourceKvBinary;
 import com.torodb.kvdocument.values.heap.DefaultKvMongoTimestamp;
@@ -158,12 +152,12 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonJavaScript value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvJavascript.of(value.getValue());
   }
 
   @Override
   public KvValue<?> visit(BsonJavaScriptWithScope value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvJavascriptWithScope.of(value.getJavaScript(), (KvDocument)visit(value.getScope(), arg));
   }
 
   @Override

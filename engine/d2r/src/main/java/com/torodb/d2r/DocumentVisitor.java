@@ -19,22 +19,7 @@
 package com.torodb.d2r;
 
 import com.torodb.d2r.D2Relational.DocConsumer;
-import com.torodb.kvdocument.values.KvArray;
-import com.torodb.kvdocument.values.KvBinary;
-import com.torodb.kvdocument.values.KvBoolean;
-import com.torodb.kvdocument.values.KvDate;
-import com.torodb.kvdocument.values.KvDecimal128;
-import com.torodb.kvdocument.values.KvDocument;
-import com.torodb.kvdocument.values.KvDouble;
-import com.torodb.kvdocument.values.KvInstant;
-import com.torodb.kvdocument.values.KvInteger;
-import com.torodb.kvdocument.values.KvLong;
-import com.torodb.kvdocument.values.KvMongoObjectId;
-import com.torodb.kvdocument.values.KvMongoTimestamp;
-import com.torodb.kvdocument.values.KvNull;
-import com.torodb.kvdocument.values.KvString;
-import com.torodb.kvdocument.values.KvTime;
-import com.torodb.kvdocument.values.KvValueVisitor;
+import com.torodb.kvdocument.values.*;
 
 public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
 
@@ -112,6 +97,16 @@ public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
 
   @Override
   public Void visit(KvDecimal128 value, DocConsumer arg) {
+    return null;
+  }
+
+  @Override
+  public Void visit(KvJavascript value, DocConsumer arg) {
+    return null;
+  }
+
+  @Override
+  public Void visit(KvJavascriptWithScope value, DocConsumer arg) {
     return null;
   }
 

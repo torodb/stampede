@@ -18,25 +18,7 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.kvdocument.types.ArrayType;
-import com.torodb.kvdocument.types.BinaryType;
-import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.types.DateType;
-import com.torodb.kvdocument.types.Decimal128Type;
-import com.torodb.kvdocument.types.DocumentType;
-import com.torodb.kvdocument.types.DoubleType;
-import com.torodb.kvdocument.types.GenericType;
-import com.torodb.kvdocument.types.InstantType;
-import com.torodb.kvdocument.types.IntegerType;
-import com.torodb.kvdocument.types.KvType;
-import com.torodb.kvdocument.types.KvTypeVisitor;
-import com.torodb.kvdocument.types.LongType;
-import com.torodb.kvdocument.types.MongoObjectIdType;
-import com.torodb.kvdocument.types.MongoTimestampType;
-import com.torodb.kvdocument.types.NonExistentType;
-import com.torodb.kvdocument.types.NullType;
-import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.types.*;
 
 /**
  *
@@ -55,7 +37,9 @@ public enum FieldType {
   STRING,
   TIME,
   CHILD, 
-  DECIMAL128;
+  DECIMAL128,
+  JAVASCRIPT,
+  JAVASCRIPT_WITHOUT_SCOPE;
 
   private static final FromKvTypeVisitor FROM_KVTYPE_VISITOR = new FromKvTypeVisitor();
 
@@ -150,6 +134,16 @@ public enum FieldType {
     @Override
     public FieldType visit(Decimal128Type type, Void arg) {
       return DECIMAL128;
+    }
+
+    @Override
+    public FieldType visit(JavascriptType type, Void arg) {
+      return JAVASCRIPT;
+    }
+
+    @Override
+    public FieldType visit(JavascriptWithScopeType value, Void arg) {
+      return JAVASCRIPT_WITHOUT_SCOPE;
     }
 
   }

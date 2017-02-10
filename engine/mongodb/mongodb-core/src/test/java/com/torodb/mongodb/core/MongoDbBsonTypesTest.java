@@ -195,12 +195,8 @@ public class MongoDbBsonTypesTest {
 
     BsonArray result = findResultStatus.getResult().getCursor().marshall(elm -> elm).get("firstBatch").asArray();
 
-    result.forEach(doc ->{
-      assertTrue(docs.contains(doc));
-    });
+    result.forEach(doc -> assertTrue(docs.contains(doc)));
 
-    docs.forEach(doc ->{
-      assertTrue(result.contains(doc));
-    });
+    docs.forEach(doc -> assertTrue(result.contains(doc)));
   }
 }

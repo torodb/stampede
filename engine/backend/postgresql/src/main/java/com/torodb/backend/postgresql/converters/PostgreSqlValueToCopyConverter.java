@@ -21,22 +21,7 @@ package com.torodb.backend.postgresql.converters;
 import com.torodb.backend.postgresql.converters.util.CopyEscaper;
 import com.torodb.common.util.HexUtils;
 import com.torodb.common.util.TextEscaper;
-import com.torodb.kvdocument.values.KvArray;
-import com.torodb.kvdocument.values.KvBinary;
-import com.torodb.kvdocument.values.KvBoolean;
-import com.torodb.kvdocument.values.KvDate;
-import com.torodb.kvdocument.values.KvDecimal128;
-import com.torodb.kvdocument.values.KvDocument;
-import com.torodb.kvdocument.values.KvDouble;
-import com.torodb.kvdocument.values.KvInstant;
-import com.torodb.kvdocument.values.KvInteger;
-import com.torodb.kvdocument.values.KvLong;
-import com.torodb.kvdocument.values.KvMongoObjectId;
-import com.torodb.kvdocument.values.KvMongoTimestamp;
-import com.torodb.kvdocument.values.KvNull;
-import com.torodb.kvdocument.values.KvString;
-import com.torodb.kvdocument.values.KvTime;
-import com.torodb.kvdocument.values.KvValueVisitor;
+import com.torodb.kvdocument.values.*;
 
 /**
  *
@@ -156,6 +141,18 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
   @Override
   public Void visit(KvDecimal128 value, StringBuilder arg) {
     arg.append(value.getValue().toPlainString());
+    return null;
+  }
+
+  @Override
+  public Void visit(KvJavascript value, StringBuilder arg) {
+    ESCAPER.appendEscaped(arg, value.getValue());
+    return null;
+  }
+
+  @Override
+  public Void visit(KvJavascriptWithScope value, StringBuilder arg) {
+    ESCAPER.appendEscaped(arg, value.getValue());
     return null;
   }
 }
