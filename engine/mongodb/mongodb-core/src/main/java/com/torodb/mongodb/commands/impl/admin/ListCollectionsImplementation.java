@@ -72,7 +72,7 @@ public class ListCollectionsImplementation implements
             CursorResult.createSingleBatchCursor(req.getDatabase(),
                 NamespaceUtil.LIST_COLLECTIONS_GET_MORE_COLLECTION,
                 context.getTorodTransaction().getCollectionsInfo(req.getDatabase()).map(colInfo ->
-                    new Entry(colInfo.getName(), DEFAULT_COLLECTION_OPTIONS)
+                    new Entry(colInfo.getName(), colInfo.getType(), DEFAULT_COLLECTION_OPTIONS)
                 )
             )
         )

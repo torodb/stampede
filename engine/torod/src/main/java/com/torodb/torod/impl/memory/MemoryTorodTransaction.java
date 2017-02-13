@@ -29,6 +29,7 @@ import com.torodb.core.util.AttributeRefKvDocResolver;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.torod.CollectionInfo;
+import com.torodb.torod.CollectionInfo.Type;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.TorodTransaction;
 import com.torodb.torod.cursors.DocTorodCursor;
@@ -178,7 +179,7 @@ public abstract class MemoryTorodTransaction implements TorodTransaction {
   }
 
   private CollectionInfo getCollectionInfoPrivate(String colName) {
-    return new CollectionInfo(colName, Json.createObjectBuilder().build());
+    return new CollectionInfo(colName, Type.COLLECTION, Json.createObjectBuilder().build());
   }
 
   @Override

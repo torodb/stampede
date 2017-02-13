@@ -30,16 +30,24 @@ public class CollectionInfo {
   private static final String MAX_IF_CAPPED = "maxIfCapped";
 
   private final String name;
+  private final Type type;
   private final JsonObject properties;
 
-  public CollectionInfo(@Nonnull String name, @Nonnull JsonObject properties) {
+  public CollectionInfo(@Nonnull String name, @Nonnull Type type,
+      @Nonnull JsonObject properties) {
     this.name = name;
+    this.type = type;
     this.properties = properties;
   }
 
   @Nonnull
   public String getName() {
     return name;
+  }
+
+  @Nonnull
+  public String getType() {
+    return type.getValue();
   }
 
   @Nonnull
@@ -58,5 +66,20 @@ public class CollectionInfo {
     }
 
     return properties.getInt(MAX_IF_CAPPED);
+  }
+  
+  public static enum Type {
+    COLLECTION("collection"),
+    VIEW("view");
+    
+    public final String value;
+    
+    Type(String value) {
+      this.value = value;
+    }
+    
+    public String getValue() {
+      return this.value;
+    }
   }
 }
