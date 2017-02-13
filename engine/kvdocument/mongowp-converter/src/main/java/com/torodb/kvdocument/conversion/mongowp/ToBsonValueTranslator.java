@@ -37,8 +37,10 @@ import com.torodb.kvdocument.values.KvDocument.DocEntry;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
@@ -206,6 +208,25 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
   @Override
   public BsonMax visit(KvMaxKey value, Void arg) {
     return SimpleBsonMax.getInstance();
+  }
+
+  @Override
+  public BsonUndefined visit(KvUndefined value, Void arg) {
+    return SimpleBsonUndefined.getInstance();
+  }
+
+  @Override
+  public BsonRegex visit(KvMongoRegex value, Void arg) {
+
+    List<BsonRegex.Options> kvOptions = value.getOptions().stream().map(
+            bsonOption -> BsonRegex.Options.valueOf(bsonOption.name())).collect(Collectors.toList());
+
+    return new DefaultBsonRegex(
+            kvOptions.isEmpty()?EnumSet.noneOf(BsonRegex.Options.class):EnumSet.copyOf(kvOptions),
+            value.getPattern()
+    );
+
+
   }
 
   private static class ToBsonValueTranslatorHolder {

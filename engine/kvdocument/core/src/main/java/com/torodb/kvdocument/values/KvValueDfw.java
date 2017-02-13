@@ -351,6 +351,7 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
 
     return null;
   }
+
   protected void preMaxKey(KvMaxKey value, A arg) {
   }
 
@@ -363,6 +364,40 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
     preMaxKey(value, arg);
 
     postMaxKey(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
+  protected void preUndefined(KvUndefined value, A arg) {
+  }
+
+  protected void postUndefined(KvUndefined value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvUndefined value, A arg) {
+    preKvValue(value, arg);
+    preUndefined(value, arg);
+
+    postUndefined(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
+  protected void preMongoRegex(KvMongoRegex value, A arg) {
+  }
+
+  protected void postMongoRegex(KvMongoRegex value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvMongoRegex value, A arg) {
+    preKvValue(value, arg);
+    preMongoRegex(value, arg);
+
+    postMongoRegex(value, arg);
     postKvValue(value, arg);
 
     return null;

@@ -61,4 +61,8 @@ public interface KvTypeVisitor<R, A> {
   public R visit(MinKeyType value, A arg);
 
   public R visit(MaxKeyType value, A arg);
+
+  public R visit(UndefinedType value, A arg);
+
+  public R visit(MongoRegexType value, A arg);
 }

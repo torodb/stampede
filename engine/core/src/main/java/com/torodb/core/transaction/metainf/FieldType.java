@@ -41,7 +41,9 @@ public enum FieldType {
   JAVASCRIPT,
   JAVASCRIPT_WITHOUT_SCOPE,
   MIN_KEY,
-  MAX_KEY;
+  MAX_KEY,
+  UNDEFINED,
+  MONGO_REGEX;
 
   private static final FromKvTypeVisitor FROM_KVTYPE_VISITOR = new FromKvTypeVisitor();
 
@@ -156,6 +158,16 @@ public enum FieldType {
     @Override
     public FieldType visit(MaxKeyType value, Void arg) {
       return MAX_KEY;
+    }
+
+    @Override
+    public FieldType visit(UndefinedType value, Void arg) {
+      return UNDEFINED;
+    }
+
+    @Override
+    public FieldType visit(MongoRegexType value, Void arg) {
+      return MONGO_REGEX;
     }
 
   }

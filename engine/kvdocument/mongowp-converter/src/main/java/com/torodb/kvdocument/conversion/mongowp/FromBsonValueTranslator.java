@@ -51,7 +51,11 @@ import com.torodb.kvdocument.values.heap.DefaultKvMongoTimestamp;
 import com.torodb.kvdocument.values.heap.InstantKvInstant;
 import com.torodb.kvdocument.values.heap.LongKvInstant;
 
+import java.util.EnumSet;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -182,7 +186,14 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonRegex value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+
+    List<KvMongoRegex.Options> kvOptions = value.getOptions().stream().map(
+            bsonOption -> KvMongoRegex.Options.valueOf(bsonOption.name())).collect(Collectors.toList());
+
+    return new KvMongoRegex(
+            value.getPattern(),
+            kvOptions.isEmpty()?EnumSet.noneOf(KvMongoRegex.Options.class):EnumSet.copyOf(kvOptions)
+    );
   }
 
   @Override
@@ -192,7 +203,7 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonUndefined value, Void arg) {
-    return KvNull.getInstance();
+    return KvUndefined.getInstance();
   }
 
   @Override

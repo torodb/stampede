@@ -122,4 +122,14 @@ public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
     return defaultCase(value, arg);
   }
 
+  @Override
+  public R visit(KvUndefined value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMongoRegex value, A arg) {
+    return defaultCase(value, arg);
+  }
+
 }

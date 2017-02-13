@@ -49,7 +49,7 @@ public class KvJavascriptWithScope extends KvValue<KvJavascriptWithScope> {
 
     @Override
     public int hashCode() {
-        return getValue().hashCode();
+        return js.hashCode();
     }
 
     @Override

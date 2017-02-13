@@ -57,4 +57,8 @@ public interface KvValueVisitor<R, A> {
   public R visit(KvMinKey value, A arg);
 
   public R visit(KvMaxKey value, A arg);
+
+  public R visit(KvUndefined value, A arg);
+
+  public R visit(KvMongoRegex value, A arg);
 }
