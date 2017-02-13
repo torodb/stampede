@@ -112,4 +112,14 @@ public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
     return defaultCase(value, arg);
   }
 
+  @Override
+  public R visit(KvMinKey value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMaxKey value, A arg) {
+    return defaultCase(value, arg);
+  }
+
 }

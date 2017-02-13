@@ -162,12 +162,12 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonMax value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMaxKey.getInstance();
   }
 
   @Override
   public KvValue<?> visit(BsonMin value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMinKey.getInstance();
   }
 
   @Override

@@ -198,6 +198,16 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
     return new DefaultBsonJavaScriptWithCode(value.getJs(), (BsonDocument) visit(value.getScope(), arg));
   }
 
+  @Override
+  public BsonMin visit(KvMinKey value, Void arg) {
+    return SimpleBsonMin.getInstance();
+  }
+
+  @Override
+  public BsonMax visit(KvMaxKey value, Void arg) {
+    return SimpleBsonMax.getInstance();
+  }
+
   private static class ToBsonValueTranslatorHolder {
 
     private static final ToBsonValueTranslator INSTANCE = new ToBsonValueTranslator();

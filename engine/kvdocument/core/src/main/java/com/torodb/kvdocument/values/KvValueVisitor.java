@@ -53,4 +53,8 @@ public interface KvValueVisitor<R, A> {
   public R visit(KvJavascript value, A arg);
 
   public R visit(KvJavascriptWithScope value, A arg);
+
+  public R visit(KvMinKey value, A arg);
+
+  public R visit(KvMaxKey value, A arg);
 }

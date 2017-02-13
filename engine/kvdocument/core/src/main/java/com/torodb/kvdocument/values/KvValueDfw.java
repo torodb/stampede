@@ -335,4 +335,37 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
     return null;
   }
 
+  protected void preMinKey(KvMinKey value, A arg) {
+  }
+
+  protected void postMinKey(KvMinKey value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvMinKey value, A arg) {
+    preKvValue(value, arg);
+    preMinKey(value, arg);
+
+    postMinKey(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+  protected void preMaxKey(KvMaxKey value, A arg) {
+  }
+
+  protected void postMaxKey(KvMaxKey value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvMaxKey value, A arg) {
+    preKvValue(value, arg);
+    preMaxKey(value, arg);
+
+    postMaxKey(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
 }

@@ -110,4 +110,14 @@ public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
     return null;
   }
 
+  @Override
+  public Void visit(KvMinKey value, DocConsumer arg) {
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMaxKey value, DocConsumer arg) {
+    return null;
+  }
+
 }

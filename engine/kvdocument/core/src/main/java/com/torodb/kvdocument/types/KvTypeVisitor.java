@@ -57,4 +57,8 @@ public interface KvTypeVisitor<R, A> {
   public R visit(JavascriptType type, A arg);
 
   public R visit(JavascriptWithScopeType value, A arg);
+
+  public R visit(MinKeyType value, A arg);
+
+  public R visit(MaxKeyType value, A arg);
 }

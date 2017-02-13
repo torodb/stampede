@@ -39,7 +39,9 @@ public enum FieldType {
   CHILD, 
   DECIMAL128,
   JAVASCRIPT,
-  JAVASCRIPT_WITHOUT_SCOPE;
+  JAVASCRIPT_WITHOUT_SCOPE,
+  MIN_KEY,
+  MAX_KEY;
 
   private static final FromKvTypeVisitor FROM_KVTYPE_VISITOR = new FromKvTypeVisitor();
 
@@ -144,6 +146,16 @@ public enum FieldType {
     @Override
     public FieldType visit(JavascriptWithScopeType value, Void arg) {
       return JAVASCRIPT_WITHOUT_SCOPE;
+    }
+
+    @Override
+    public FieldType visit(MinKeyType value, Void arg) {
+      return MIN_KEY;
+    }
+
+    @Override
+    public FieldType visit(MaxKeyType value, Void arg) {
+      return MAX_KEY;
     }
 
   }
