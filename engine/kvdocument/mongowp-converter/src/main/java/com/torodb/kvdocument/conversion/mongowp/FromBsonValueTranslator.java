@@ -115,7 +115,9 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonDbPointer value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMongoDbPointer.of(value.getNamespace(),
+            (KvMongoObjectId) visit(value.getId(), arg)
+    );
   }
 
   @Override
@@ -190,7 +192,7 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
     List<KvMongoRegex.Options> kvOptions = value.getOptions().stream().map(
             bsonOption -> KvMongoRegex.Options.valueOf(bsonOption.name())).collect(Collectors.toList());
 
-    return new KvMongoRegex(
+    return KvMongoRegex.of(
             value.getPattern(),
             kvOptions.isEmpty()?EnumSet.noneOf(KvMongoRegex.Options.class):EnumSet.copyOf(kvOptions)
     );
@@ -213,7 +215,7 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonDeprecated value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvDeprecated.of(value.getValue());
   }
 
   @Override

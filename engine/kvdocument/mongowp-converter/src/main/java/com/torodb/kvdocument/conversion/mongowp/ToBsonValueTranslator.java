@@ -229,6 +229,19 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
 
   }
 
+  @Override
+  public BsonDbPointer visit(KvMongoDbPointer value, Void arg) {
+    return new DefaultBsonDbPointer(
+            value.getNamespace(),
+            (BsonObjectId) visit(value.getId(),arg)
+    );
+  }
+
+  @Override
+  public BsonValue<?> visit(KvDeprecated value, Void arg) {
+    return new StringBsonDeprecated(value.getValue());
+  }
+
   private static class ToBsonValueTranslatorHolder {
 
     private static final ToBsonValueTranslator INSTANCE = new ToBsonValueTranslator();

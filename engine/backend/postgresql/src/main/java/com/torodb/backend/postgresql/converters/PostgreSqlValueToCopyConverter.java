@@ -182,4 +182,17 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
     ESCAPER.appendEscaped(arg, value.getOptionsAsText());
     return null;
   }
+
+  @Override
+  public Void visit(KvMongoDbPointer value, StringBuilder arg) {
+    ESCAPER.appendEscaped(arg, value.getNamespace());
+    visit(value.getId(),arg);
+    return null;
+  }
+
+  @Override
+  public Void visit(KvDeprecated value, StringBuilder arg) {
+    arg.append(value.toString());
+    return null;
+  }
 }

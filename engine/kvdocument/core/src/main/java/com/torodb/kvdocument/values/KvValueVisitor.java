@@ -61,4 +61,8 @@ public interface KvValueVisitor<R, A> {
   public R visit(KvUndefined value, A arg);
 
   public R visit(KvMongoRegex value, A arg);
+
+  public R visit(KvMongoDbPointer value, A arg);
+
+  public R visit(KvDeprecated value, A arg);
 }

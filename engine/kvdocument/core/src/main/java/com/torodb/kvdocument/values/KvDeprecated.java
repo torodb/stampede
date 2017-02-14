@@ -18,23 +18,30 @@
 
 package com.torodb.kvdocument.values;
 
+import com.torodb.kvdocument.types.DeprecatedType;
+import com.torodb.kvdocument.types.KvType;
+
 import javax.annotation.Nonnull;
 
-public abstract class KVAbstractJavascript extends KvValue<String>{
+public abstract class KvDeprecated extends KvValue<String> {
 
-    private static final long serialVersionUID = 4677607234543862220L;
-    protected String value;
+    private static final long serialVersionUID = -628511849455517129L;
 
-    protected KVAbstractJavascript(String value)
-    {
-        this.value = value;
+    public static KvDeprecated of(String s) {
+        return new DefaultKvDeprecated(s);
     }
 
     @Nonnull
     @Override
-    public String getValue() {
-        return value;
+    public KvType getType() {
+        return DeprecatedType.INSTANCE;
     }
+
+    @Override
+    public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
+        return visitor.visit(this, arg);
+    }
+
 
     @Override
     public Class<? extends String> getValueClass() {
@@ -59,10 +66,24 @@ public abstract class KVAbstractJavascript extends KvValue<String>{
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof KVAbstractJavascript)) {
+        if (!(obj instanceof KvDeprecated)) {
             return false;
         }
-        return this.getValue().equals(((KVAbstractJavascript) obj).getValue());
+        return this.getValue().equals(((KvDeprecated) obj).getValue());
     }
 
+    private static class DefaultKvDeprecated extends KvDeprecated {
+
+        @Nonnull
+        @Override
+        public String getValue() {
+            return value;
+        }
+
+        private String value;
+
+        public DefaultKvDeprecated(String value) {
+            this.value = value;
+        }
+    }
 }

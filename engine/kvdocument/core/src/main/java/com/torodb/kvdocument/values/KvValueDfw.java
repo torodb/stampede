@@ -403,4 +403,39 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
     return null;
   }
 
+  protected void preMongoDbPointer(KvMongoDbPointer value, A arg) {
+  }
+
+  protected void postMongoDbPointer(KvMongoDbPointer value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvMongoDbPointer value, A arg) {
+    preKvValue(value, arg);
+    preMongoDbPointer(value, arg);
+
+    postMongoDbPointer(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
+  protected void preDeprecated(KvDeprecated value, A arg) {
+  }
+
+  protected void postDeprecated(KvDeprecated value, A arg) {
+  }
+
+  @Override
+  public Void visit(KvDeprecated value, A arg) {
+    preKvValue(value, arg);
+    preDeprecated(value, arg);
+
+    postDeprecated(value, arg);
+    postKvValue(value, arg);
+
+    return null;
+  }
+
+
 }

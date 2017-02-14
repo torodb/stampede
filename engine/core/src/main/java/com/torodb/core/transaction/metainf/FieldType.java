@@ -43,7 +43,9 @@ public enum FieldType {
   MIN_KEY,
   MAX_KEY,
   UNDEFINED,
-  MONGO_REGEX;
+  MONGO_REGEX,
+  MONGO_DB_POINTER,
+  DEPRECATED;
 
   private static final FromKvTypeVisitor FROM_KVTYPE_VISITOR = new FromKvTypeVisitor();
 
@@ -168,6 +170,16 @@ public enum FieldType {
     @Override
     public FieldType visit(MongoRegexType value, Void arg) {
       return MONGO_REGEX;
+    }
+
+    @Override
+    public FieldType visit(MongoDbPointerType value, Void arg) {
+      return MONGO_DB_POINTER;
+    }
+
+    @Override
+    public FieldType visit(DeprecatedType value, Void arg) {
+      return DEPRECATED;
     }
 
   }

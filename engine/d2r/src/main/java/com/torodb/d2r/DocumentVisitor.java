@@ -130,4 +130,14 @@ public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
     return null;
   }
 
+  @Override
+  public Void visit(KvMongoDbPointer value, DocConsumer arg) {
+    return null;
+  }
+
+  @Override
+  public Void visit(KvDeprecated value, DocConsumer arg) {
+    return null;
+  }
+
 }

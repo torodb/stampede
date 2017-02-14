@@ -65,4 +65,8 @@ public interface KvTypeVisitor<R, A> {
   public R visit(UndefinedType value, A arg);
 
   public R visit(MongoRegexType value, A arg);
+
+  public R visit(MongoDbPointerType value, A arg);
+
+  public R visit(DeprecatedType value, A arg);
 }

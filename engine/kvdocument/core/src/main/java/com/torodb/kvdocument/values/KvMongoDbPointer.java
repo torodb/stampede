@@ -20,21 +20,17 @@ package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.JavascriptWithScopeType;
 import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.types.MongoDbPointerType;
 
 import javax.annotation.Nonnull;
 
-public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScope> {
+public abstract class KvMongoDbPointer extends KvValue<KvMongoDbPointer> {
+
     private static final long serialVersionUID = 4130181266747513960L;
 
-    @Nonnull
     @Override
-    public KvJavascriptWithScope getValue() {
-        return this;
-    }
-
-    @Override
-    public Class<? extends KvJavascriptWithScope> getValueClass() {
-        return KvJavascriptWithScope.class;
+    public Class<? extends KvMongoDbPointer> getValueClass() {
+        return KvMongoDbPointer.class;
     }
 
     @Override
@@ -45,20 +41,21 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof KvJavascriptWithScope)) {
+        if (!(obj instanceof KvMongoDbPointer)) {
             return false;
         }
-        return this.getValue().equals(((KvJavascriptWithScope) obj).getValue());
+        return this.getValue().equals(((KvMongoDbPointer) obj).getValue());
     }
 
-    public static KvJavascriptWithScope of(String js, KvDocument scope) {
-        return new DefaultKvJavascriptWithScope(js, scope);
+    public static KvMongoDbPointer of(String namespace, KvMongoObjectId id) {
+        return new DefaultKvMongoDbPointer(namespace, id);
     }
+
 
     @Nonnull
     @Override
     public KvType getType() {
-        return JavascriptWithScopeType.INSTANCE;
+        return MongoDbPointerType.INSTANCE;
     }
 
     @Override
@@ -66,42 +63,45 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
         return visitor.visit(this, arg);
     }
 
-    public abstract String getJs();
+    public abstract String getNamespace();
 
-    public abstract KvDocument getScope();
+    public abstract KvMongoObjectId getId();
 
+    private static class DefaultKvMongoDbPointer extends KvMongoDbPointer{
 
+        private String namespace;
 
-    private static class DefaultKvJavascriptWithScope extends KvJavascriptWithScope{
+        private KvMongoObjectId id;
 
-        private String js;
-
-        private KvDocument scope;
-
-        public DefaultKvJavascriptWithScope(String js, KvDocument scope) {
-            this.js = js;
-            this.scope = scope;
+        @Override
+        public String getNamespace() {
+            return namespace;
         }
 
         @Override
-        public String getJs() {
-            return js;
+        public KvMongoObjectId getId() {
+            return id;
         }
 
-        @Override
-        public KvDocument getScope() {
-            return scope;
+        public DefaultKvMongoDbPointer(String namespace, KvMongoObjectId id) {
+            this.namespace = namespace;
+            this.id = id;
         }
-
 
         @Override
         public String toString() {
-            return js;
+            return namespace;
         }
 
         @Override
         public int hashCode() {
-            return js.hashCode();
+            return namespace.hashCode();
+        }
+
+        @Nonnull
+        @Override
+        public KvMongoDbPointer getValue() {
+            return this;
         }
 
     }

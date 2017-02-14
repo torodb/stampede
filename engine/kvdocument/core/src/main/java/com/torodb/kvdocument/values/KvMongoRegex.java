@@ -27,17 +27,10 @@ import java.util.*;
 /**
  *
  */
-public class KvMongoRegex extends KvValue<KvMongoRegex> {
+public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
   private static final long serialVersionUID = 4583557874141119051L;
 
-  public String getPattern() {
-    return pattern;
-  }
-
-  public Set<Options> getOptions() {
-    return options;
-  }
 
   public String getOptionsAsText() {
     Set options = this.getOptions();
@@ -60,13 +53,10 @@ public class KvMongoRegex extends KvValue<KvMongoRegex> {
     }
   }
 
-  private String pattern;
 
-  private Set<Options> options;
 
-  public KvMongoRegex(String pattern, Set<Options> options) {
-    this.pattern = pattern;
-    this.options = options;
+  public static KvMongoRegex of(String pattern, Set<Options> options) {
+    return new DefaultKvMongoRegex(pattern, options);
   }
 
   @Override
@@ -85,24 +75,19 @@ public class KvMongoRegex extends KvValue<KvMongoRegex> {
   }
 
   @Override
-  public String toString() {
-    return "null";
-  }
-
-  @Override
   public boolean equals(Object obj) {
     return obj == this || obj != null && obj instanceof KvMongoRegex;
   }
 
-  @Override
-  public int hashCode() {
-    return pattern.hashCode();
-  }
 
   @Override
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
+
+  public abstract String getPattern();
+
+  public abstract Set<Options> getOptions();
 
   public enum Options {
     CASE_INSENSITIVE('i'),
@@ -153,6 +138,39 @@ public class KvMongoRegex extends KvValue<KvMongoRegex> {
       public int compare(KvMongoRegex.Options o1, KvMongoRegex.Options o2) {
         return o1.getCharId() - o2.getCharId();
       }
+    }
+  }
+
+  private static class DefaultKvMongoRegex extends KvMongoRegex{
+
+
+    private String pattern;
+
+    private Set<Options> options;
+
+    public DefaultKvMongoRegex(String pattern, Set<Options> options) {
+      this.pattern = pattern;
+      this.options = options;
+    }
+
+    @Override
+    public String getPattern() {
+      return pattern;
+    }
+
+    @Override
+    public Set<Options> getOptions() {
+      return options;
+    }
+
+    @Override
+    public int hashCode() {
+      return pattern.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return pattern;
     }
   }
 }
