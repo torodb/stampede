@@ -60,7 +60,7 @@ help2man %{buildroot}%{_datadir}/@{assembler.name}/bin/@{assembler.name} -N > %{
 
 %pre
 getent group  torodb >/dev/null || groupadd -r torodb
-getent passwd torodb >/dev/null || useradd -r -g torodb -u 184 \
+getent passwd torodb >/dev/null || useradd -r -g torodb \
   -d %{_sharedstatedir}/@{assembler.name} -s /sbin/nologin \
   -c "@{assembler.fullName}" torodb
 
