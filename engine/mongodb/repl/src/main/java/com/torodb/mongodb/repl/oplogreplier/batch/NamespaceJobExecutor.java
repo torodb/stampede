@@ -32,6 +32,8 @@ import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOp;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpType;
+import com.torodb.mongodb.utils.DefaultIdUtils;
+
 import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
@@ -49,7 +51,7 @@ import javax.annotation.concurrent.ThreadSafe;
 public class NamespaceJobExecutor {
 
   private static final AttributeReference _ID_ATT_REF = new AttributeReference.Builder()
-      .addObjectKey("_id")
+      .addObjectKey(DefaultIdUtils.ID_KEY)
       .build();
 
   public void apply(NamespaceJob job, WriteMongodTransaction transaction,

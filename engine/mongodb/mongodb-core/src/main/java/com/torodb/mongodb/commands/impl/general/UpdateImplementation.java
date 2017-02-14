@@ -46,12 +46,12 @@ import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateStatem
 import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpsertResult;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.mongodb.language.UpdateActionTranslator;
 import com.torodb.mongodb.language.update.SetDocumentUpdateAction;
 import com.torodb.mongodb.language.update.UpdateAction;
 import com.torodb.mongodb.language.update.UpdatedToroDocumentBuilder;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 
@@ -83,9 +83,9 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
     try {
       if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
         context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(),
-            Constants.ID_INDEX,
+            DefaultIdUtils.ID_INDEX,
             ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
-                .asList(new Key[]{new ObjectKey(Constants.ID)})), FieldIndexOrdering.ASC
+                .asList(new Key[]{new ObjectKey(DefaultIdUtils.ID_KEY)})), FieldIndexOrdering.ASC
                 .isAscending())), true);
       }
 
@@ -155,17 +155,17 @@ public class UpdateImplementation implements WriteTorodbCommandImpl<UpdateArgume
                 update(updateAction,
                     new ToroDocument(-1, (KvDocument) MongoWpConverter.translate(query)));
           }
-          if (!toInsertCandidate.containsKey(Constants.ID)) {
+          if (!toInsertCandidate.containsKey(DefaultIdUtils.ID_KEY)) {
             KvDocument.Builder builder = new KvDocument.Builder();
             for (DocEntry<?> entry : toInsertCandidate) {
               builder.putValue(entry.getKey(), entry.getValue());
             }
-            builder.putValue(Constants.ID, MongoWpConverter.translate(objectIdFactory
+            builder.putValue(DefaultIdUtils.ID_KEY, MongoWpConverter.translate(objectIdFactory
                 .consumeObjectId()));
             toInsertCandidate = builder.build();
           }
           updateStatus.increaseCandidates(1);
-          updateStatus.increaseCreated(toInsertCandidate.get(Constants.ID));
+          updateStatus.increaseCreated(toInsertCandidate.get(DefaultIdUtils.ID_KEY));
           Stream<KvDocument> toInsertCandidates = Stream.of(toInsertCandidate);
           context.getTorodTransaction().insert(req.getDatabase(), arg.getCollection(),
               toInsertCandidates);

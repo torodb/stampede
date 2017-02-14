@@ -40,6 +40,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.torodb.mongodb.commands.pojos.MemberConfig;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetUpdatePositionCommand.ReplSetUpdatePositionArgument;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import java.util.List;
 
@@ -139,7 +140,8 @@ public class ReplSetUpdatePositionCommand
 
     public static class UpdateInfo {
 
-      private static final ObjectIdField MEMBER_RID_FIELD = new ObjectIdField("_id");
+      private static final ObjectIdField MEMBER_RID_FIELD =
+          new ObjectIdField(DefaultIdUtils.ID_KEY);
       private static final DocField MEMBER_CONFIG_FIELD = new DocField("config");
       private static final TimestampField OP_TIME_FIELD = new TimestampField("optime");
       private static final LongField MEMBER_ID_FIELD = new LongField("memberId");
