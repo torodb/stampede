@@ -24,6 +24,7 @@ import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.kvdocument.values.heap.MapKvDocument;
 import com.torodb.mongodb.language.update.UpdateAction;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
@@ -69,7 +70,7 @@ public class NoopAnalyzedOp extends AbstractAnalyzedOp {
       KvDocument newFetched = fetched;
       if (newFetched == null) {
         LinkedHashMap<String, KvValue<?>> map = new LinkedHashMap<>(1);
-        map.put("_id", getMongoDocId());
+        map.put(DefaultIdUtils.ID_KEY, getMongoDocId());
         newFetched = new MapKvDocument(map);
       }
       UpdateAction updateAction = UpdateActionsTool.parseUpdateAction(op);

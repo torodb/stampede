@@ -21,21 +21,16 @@ package com.torodb.mongodb.utils;
 import com.eightkdata.mongowp.bson.BsonDocument;
 import com.eightkdata.mongowp.bson.BsonValue;
 
-/**
- *
- */
 public class DefaultIdUtils {
 
-  public static final String DEFAULT_ID_KEY = "_id";
+  public static final String ID_KEY = "_id";
+  public static final String ID_INDEX = "_id_";
 
-  private DefaultIdUtils() {
+  public static boolean containsIdKey(BsonDocument doc) {
+    return doc.containsKey(ID_KEY);
   }
 
-  public static boolean containsDefaultId(BsonDocument doc) {
-    return doc.containsKey(DEFAULT_ID_KEY);
-  }
-
-  public static BsonValue getDefaultId(BsonDocument doc) {
-    return doc.get(DEFAULT_ID_KEY);
+  public static BsonValue getIdKey(BsonDocument doc) {
+    return doc.get(ID_KEY);
   }
 }

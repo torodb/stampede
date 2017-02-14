@@ -45,6 +45,7 @@ import com.torodb.mongodb.commands.pojos.MemberState;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.commands.signatures.repl.ReplSetGetStatusCommand.ReplSetGetStatusReply;
 import com.torodb.mongodb.commands.tools.EmptyCommandArgumentMarshaller;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -214,7 +215,7 @@ public class ReplSetGetStatusCommand
     private static final ArrayField MEMBERS_FIELD = new ArrayField("members");
 
     private static final DoubleField OK_FIELD_NAME = new DoubleField("ok");
-    private static final IntField MEMBER_ID_FIELD = new IntField("_id");
+    private static final IntField MEMBER_ID_FIELD = new IntField(DefaultIdUtils.ID_KEY);
     private static final HostAndPortField MEMBER_NAME_FIELD = new HostAndPortField("name");
     private static final DoubleField MEMBER_HEALTH_FIELD = new DoubleField("health");
     private static final IntField MEMBER_STATE_FIELD = new IntField("state");

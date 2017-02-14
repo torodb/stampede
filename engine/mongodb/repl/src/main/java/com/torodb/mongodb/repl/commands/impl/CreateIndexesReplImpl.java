@@ -39,8 +39,8 @@ import com.torodb.mongodb.commands.pojos.index.type.DescIndexType;
 import com.torodb.mongodb.commands.pojos.index.type.IndexType;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesResult;
-import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
@@ -82,9 +82,9 @@ public class CreateIndexesReplImpl
       if (!existsCollection) {
         LOGGER.info("Creating collection {} on {}.{}", req.getDatabase(), arg.getCollection());
 
-        trans.createIndex(req.getDatabase(), arg.getCollection(), Constants.ID_INDEX,
+        trans.createIndex(req.getDatabase(), arg.getCollection(), DefaultIdUtils.ID_INDEX,
             ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
-                .asList(new Key[]{new ObjectKey(Constants.ID)})), FieldIndexOrdering.ASC
+                .asList(new Key[]{new ObjectKey(DefaultIdUtils.ID_KEY)})), FieldIndexOrdering.ASC
                 .isAscending())), true);
       }
 

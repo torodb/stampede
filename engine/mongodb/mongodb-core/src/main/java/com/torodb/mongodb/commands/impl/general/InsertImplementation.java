@@ -35,7 +35,7 @@ import com.torodb.mongodb.commands.signatures.general.InsertCommand.InsertArgume
 import com.torodb.mongodb.commands.signatures.general.InsertCommand.InsertResult;
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 
 import java.util.Arrays;
@@ -63,9 +63,9 @@ public class InsertImplementation implements WriteTorodbCommandImpl<InsertArgume
     try {
       if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
         context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(),
-            Constants.ID_INDEX,
+            DefaultIdUtils.ID_INDEX,
             ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
-                .asList(new Key[]{new ObjectKey(Constants.ID)})), FieldIndexOrdering.ASC
+                .asList(new Key[]{new ObjectKey(DefaultIdUtils.ID_KEY)})), FieldIndexOrdering.ASC
                 .isAscending())), true);
       }
 
