@@ -16,11 +16,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.common.util;
+package com.torodb.backend.derby;
 
-/**
- *
- */
-public class OctetUtils {
+import com.torodb.backend.tests.common.AbstractMetaDataIntegrationSuite;
+import com.torodb.backend.tests.common.DatabaseTestContext;
+
+public class DerbyMetaDataIT extends AbstractMetaDataIntegrationSuite {
+
+  @Override
+  protected DatabaseTestContext getDatabaseTestContext() {
+    return new DerbyDatabaseTestContextFactory().createInstance();
+  }
 
 }

@@ -16,6 +16,7 @@ pages:
     - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
     - 'Java Virtual Machine configuration tips': installation/jvm-configuration-tips.md
   - 'How to use?': how-to-use.md
+  - 'Metrics': metrics.md
   - 'FAQ': faq.md
   - 'Glossary': glossary.md
   - 'Appendix': appendix.md

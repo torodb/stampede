@@ -18,19 +18,26 @@
 
 package com.torodb.mongodb.core;
 
+import com.eightkdata.mongowp.server.api.CommandLibrary;
+
 /**
  * The external interface provided by a {@link MongoDbCoreBundle}.
  */
 public class MongoDbCoreExtInt {
 
   private final MongodServer mongodServer;
+  private final CommandLibrary commandLibrary;
 
-  public MongoDbCoreExtInt(MongodServer mongodServer) {
+  public MongoDbCoreExtInt(MongodServer mongodServer, CommandLibrary commandLibrary) {
     this.mongodServer = mongodServer;
+    this.commandLibrary = commandLibrary;
   }
 
   public MongodServer getMongodServer() {
     return mongodServer;
   }
 
+  public CommandLibrary getCommandLibrary() {
+    return commandLibrary;
+  }
 }

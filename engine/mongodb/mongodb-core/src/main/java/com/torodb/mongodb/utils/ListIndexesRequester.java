@@ -46,8 +46,9 @@ public class ListIndexesRequester {
       String database,
       String collection
   ) throws MongoException {
-    boolean commandSupported = connection.getClientOwner()
-        .getMongoVersion().compareTo(MongoVersion.V3_0) >= 0;
+    boolean commandSupported =
+        connection.getClientOwner().getMongoVersion().compareTo(MongoVersion.V3_0) >= 0
+            || connection.getClientOwner().getMongoVersion().equals(MongoVersion.UNKNOWN);
     if (commandSupported) {
       return getFromCommand(connection, database, collection);
     } else {
@@ -77,6 +78,7 @@ public class ListIndexesRequester {
       MongoConnection connection,
       String database,
       String collection) {
-    throw new UnsupportedOperationException("Not supported yet");
+    throw new UnsupportedOperationException(
+        "It is not supported to replicate from your MongoDB version");
   }
 }

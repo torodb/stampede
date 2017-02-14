@@ -35,6 +35,10 @@
             <artifactId>HikariCP</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.vladmihalcea.flexy-pool</groupId>
+            <artifactId>flexy-hikaricp</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.torodb.engine.kvdocument</groupId>
             <artifactId>kvdocument-core</artifactId>
             <version>${project.version}</version>
@@ -78,13 +82,6 @@
             <groupId>com.torodb.engine</groupId>
             <artifactId>d2r</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>d2r</artifactId>
-            <version>${project.version}</version>
-            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>

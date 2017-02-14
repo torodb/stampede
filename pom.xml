@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <prerequisites>
-        <maven>3.2.2</maven>
+        <maven>${maven.version}</maven>
     </prerequisites>
 
     <groupId>com.torodb</groupId>
@@ -84,9 +84,10 @@
         <mongodriver.version>3.4.1</mongodriver.version>
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
+        <maven.version>3.2.2</maven.version>
+        <flexy-pool.version>1.2.7</flexy-pool.version>
         <torodb.buildtools.version>0.50.1-SNAPSHOT</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
-        <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
         
         <!-- SonarQube properties -->
         <sonar.projectName>ToroDB</sonar.projectName>
@@ -94,6 +95,10 @@
         <sonar.links.ci>https://travis-ci.org/torodb/torodb</sonar.links.ci>
         <sonar.links.scm>https://github.com/torodb/torodb</sonar.links.scm>
         <sonar.links.issue>https://github.com/torodb/torodb/issues</sonar.links.issue>
+        
+        <!-- Checkstyle properties-->
+        <checkstyle.config.location>com/torodb/buildtools/checkstyle.xml</checkstyle.config.location>
+        <checkstyle.consoleOutput>false</checkstyle.consoleOutput>
     </properties>
 
     <modules>
@@ -171,7 +176,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>20.0</version>
+                <version>21.0</version>
             </dependency>
             <dependency>
                 <groupId>javax.json</groupId>
@@ -227,6 +232,28 @@
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
                 <version>2.5.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea.flexy-pool</groupId>
+                <artifactId>flexy-pool-core-java7</artifactId>
+                <version>${flexy-pool.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea.flexy-pool</groupId>
+                <artifactId>flexy-hikaricp</artifactId>
+                <version>${flexy-pool.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -335,7 +362,7 @@
             <dependency>
                 <groupId>org.scala-lang</groupId>
                 <artifactId>scala-library</artifactId>
-                <version>2.12.0</version>
+                <version>2.12.1</version>
             </dependency>
             <dependency>
                 <groupId>com.typesafe</groupId>
@@ -345,17 +372,18 @@
             <dependency>
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-stream_2.12</artifactId>
-                <version>2.4.14</version>
-<!--                <exclusions>
+                <version>2.4.16</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-slf4j_2.12</artifactId>
+                <version>2.4.16</version>
+                <exclusions>
                     <exclusion>
-                        <groupId>org.scala-lang</groupId>
-                        <artifactId>scala-library</artifactId>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>com.typesafe</groupId>
-                        <artifactId>config</artifactId>
-                    </exclusion>
-                </exclusions>-->
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -470,6 +498,19 @@
                 <version>1.4.1</version>
                 <executions>
                     <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>${maven.version}</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>enforce-dependencies</id>
                         <goals>
                             <goal>enforce</goal>
@@ -549,9 +590,6 @@
                     <execution>
                         <id>validate</id>
                         <configuration>
-                            <!--<configLocation>google_checks.xml</configLocation>-->
-                            <consoleOutput>true</consoleOutput>
-                            <!--<failsOnError>true</failsOnError>-->
                             <linkXRef>false</linkXRef>
                             <violationSeverity>error</violationSeverity>
                         </configuration>
@@ -693,6 +731,40 @@
                                     <includes>
                                         <include>%regex[.*integration.*]</include>
                                     </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>2.19.1</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>1.12</version>
+                        <executions>
+                            <execution>
+                                <id>add-test-source</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/test-integration/java</source>
+                                    </sources>
                                 </configuration>
                             </execution>
                         </executions>

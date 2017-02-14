@@ -19,15 +19,11 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.google.common.collect.Lists;
-import com.torodb.mongodb.repl.oplogreplier.OplogApplier.UnexpectedOplogApplierException;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.util.Collection;
 
-/**
- *
- */
 public class DefaultFailingOplogApplierTest extends DefaultOplogApplierTest {
 
   @Parameters(name = "{0}")
@@ -48,7 +44,7 @@ public class DefaultFailingOplogApplierTest extends DefaultOplogApplierTest {
     ));
   }
 
-  @Test(expected = UnexpectedOplogApplierException.class)
+  @Test
   public void test() throws Exception {
     super.test();
   }
