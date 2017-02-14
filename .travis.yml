@@ -1,7 +1,7 @@
 language: java
 sudo: false
 dist: trusty
-script: mvn -Psafer -Pintegration -Passembler -B -e -T 1C verify
+script: mvn -Psafer -Pintegration -B -e -T 1C verify
 jdk: oraclejdk8
 
 env:
