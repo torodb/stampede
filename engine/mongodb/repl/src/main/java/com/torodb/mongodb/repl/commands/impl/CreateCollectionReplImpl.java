@@ -29,7 +29,7 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.CreateCollectionArgument;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
@@ -61,12 +61,12 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
         trans.createIndex(
             req.getDatabase(),
             arg.getCollection(),
-            Constants.ID_INDEX,
+            DefaultIdUtils.ID_INDEX,
             ImmutableList.of(
                 new IndexFieldInfo(
                     new AttributeReference(
                         Arrays.asList(new Key[]{
-                          new ObjectKey(Constants.ID)})),
+                          new ObjectKey(DefaultIdUtils.ID_KEY)})),
                     FieldIndexOrdering.ASC.isAscending()
                 )
             ), true

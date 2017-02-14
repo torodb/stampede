@@ -25,7 +25,6 @@ import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.kvdocument.values.heap.MapKvDocument;
-import com.torodb.mongodb.language.Constants;
 import com.torodb.mongodb.language.UpdateActionTranslator;
 import com.torodb.mongodb.language.update.CompositeUpdateAction;
 import com.torodb.mongodb.language.update.IncrementUpdateAction;
@@ -39,6 +38,7 @@ import com.torodb.mongodb.language.update.UnsetFieldUpdateAction;
 import com.torodb.mongodb.language.update.UpdateAction;
 import com.torodb.mongodb.language.update.UpdateActionVisitor;
 import com.torodb.mongodb.language.update.UpdatedToroDocumentBuilder;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import javax.inject.Singleton;
 
@@ -57,7 +57,7 @@ public class UpdateActionsTool {
     @SuppressWarnings("checkstyle:LocalVariableName")
     KvValue<?> _id = MongoWpConverter.translate(updateAction.getDocId());
     KvDocument initialDoc = new MapKvDocument.Builder()
-        .putValue(Constants.ID, _id)
+        .putValue(DefaultIdUtils.ID_KEY, _id)
         .build();
     return applyModification(initialDoc, parseUpdateAction(updateAction));
   }

@@ -30,6 +30,8 @@ import com.torodb.kvdocument.values.KvInteger;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.kvdocument.values.heap.StringKvString;
 import com.torodb.mongodb.repl.oplogreplier.OpTimeFactory;
+import com.torodb.mongodb.utils.DefaultIdUtils;
+
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.function.Consumer3;
 import org.junit.Test;
@@ -214,7 +216,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
 
   public KvDocument createDefaultKVDoc(KvValue<?> mongoDocId) {
     return new KvDocument.Builder()
-        .putValue("_id", mongoDocId)
+        .putValue(DefaultIdUtils.ID_KEY, mongoDocId)
         .putValue("intAtt", KvInteger.of(RANDOM.nextInt()))
         .putValue("stringAtt", new StringKvString("a string value"))
         .build();
@@ -238,7 +240,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
   private UpdateOplogOperation createRandomUpdateModOplogOperation(KvValue<?> mongoDocId,
       boolean upsert) {
     return new UpdateOplogOperation(
-        newDocument("_id", MongoWpConverter.translate(mongoDocId)),
+        newDocument(DefaultIdUtils.ID_KEY, MongoWpConverter.translate(mongoDocId)),
         "db",
         "col",
         opTimeFactory.newOpTime(),
@@ -253,7 +255,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
   private UpdateOplogOperation createRandomUpdateSetOplogOperation(KvValue<?> mongoDocId,
       boolean upsert) {
     return new UpdateOplogOperation(
-        newDocument("_id", MongoWpConverter.translate(mongoDocId)),
+        newDocument(DefaultIdUtils.ID_KEY, MongoWpConverter.translate(mongoDocId)),
         "db",
         "col",
         opTimeFactory.newOpTime(),
@@ -267,7 +269,7 @@ public abstract class AbstractAnalyzedOpTest<E extends AnalyzedOp> {
 
   private DeleteOplogOperation createRandomDeleteOplogOperation(KvValue<?> mongoDocId) {
     return new DeleteOplogOperation(
-        newDocument("_id", MongoWpConverter.translate(mongoDocId)),
+        newDocument(DefaultIdUtils.ID_KEY, MongoWpConverter.translate(mongoDocId)),
         "db",
         "col",
         opTimeFactory.newOpTime(),

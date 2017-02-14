@@ -39,7 +39,7 @@ import com.torodb.mongodb.commands.pojos.index.type.IndexType;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesResult;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 
 import java.util.ArrayList;
@@ -67,9 +67,9 @@ public class CreateIndexesImplementation implements
           arg.getCollection());
       if (!existsCollection) {
         context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(),
-            Constants.ID_INDEX,
+            DefaultIdUtils.ID_INDEX,
             ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
-                .asList(new Key[]{new ObjectKey(Constants.ID)})), FieldIndexOrdering.ASC
+                .asList(new Key[]{new ObjectKey(DefaultIdUtils.ID_KEY)})), FieldIndexOrdering.ASC
                 .isAscending())), true);
       }
 
