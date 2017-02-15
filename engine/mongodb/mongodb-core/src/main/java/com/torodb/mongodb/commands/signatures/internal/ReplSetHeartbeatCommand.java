@@ -213,7 +213,7 @@ public class ReplSetHeartbeatCommand
       boolean checkEmpty = BsonReaderTool.getBoolean(bson, CHECK_EMPTY_FIELD_NAME, false);
 
       ReplSetProtocolVersion protocolVersion = ReplSetProtocolVersion.fromVersionId(
-          BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD)
+          BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD, 0)
       );
 
       long configVersion = BsonReaderTool.getLong(bson, CONFIG_VERSION_FIELD);
