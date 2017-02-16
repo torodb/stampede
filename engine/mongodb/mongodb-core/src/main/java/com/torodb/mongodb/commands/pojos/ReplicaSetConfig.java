@@ -360,7 +360,7 @@ public class ReplicaSetConfig {
       builder.putCustomWriteConcern(customWriteConcern.getKey(), customWriteConcern.getValue());
     }
 
-    builder.setProtocolVersion(BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD));
+    builder.setProtocolVersion(BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD, 0));
 
     return builder.build();
   }
