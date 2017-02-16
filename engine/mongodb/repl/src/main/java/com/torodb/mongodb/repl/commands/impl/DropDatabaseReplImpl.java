@@ -27,18 +27,27 @@ import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
+import javax.inject.Inject;
+
 public class DropDatabaseReplImpl extends ReplCommandImpl<Empty, Empty> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(DropDatabaseReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(DropDatabaseReplImpl.class);
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public DropDatabaseReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<Empty> apply(Request req,
       Command<? super Empty, ? super Empty> command, Empty arg,
       SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testDbFilter(req.getDatabase(), command)) {
+      return Status.ok();
+    }
+    
     try {
       LOGGER.info("Dropping database {}", req.getDatabase());
 

@@ -21,7 +21,6 @@ package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.eightkdata.mongowp.server.api.impl.NameBasedCommandLibrary;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Guice;
@@ -41,7 +40,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Clock;
-import java.util.regex.Pattern;
 
 public class MongoDbReplBundleTest {
 
@@ -106,8 +104,6 @@ public class MongoDbReplBundleTest {
   }
 
   private ReplicationFilters createReplicationFilters() {
-    return new ReplicationFilters(
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<ReplicationFilters.IndexPattern>>>of(),
-        ImmutableMap.<Pattern, ImmutableMap<Pattern, ImmutableList<ReplicationFilters.IndexPattern>>>of());
+    return new RelevantCollectionReplicationFilters();
   }
 }

@@ -63,12 +63,13 @@ public class MongoDbReplConfigBuilder {
   }
 
   public MongoDbReplConfig build() {
-    Preconditions.checkNotNull(coreBundle);
-    Preconditions.checkNotNull(mongoClientConfiguration);
-    Preconditions.checkNotNull(replicationFilters);
-    Preconditions.checkNotNull(replSetName);
-    Preconditions.checkNotNull(consistencyHandler);
-    Preconditions.checkNotNull(generalConfig);
+    Preconditions.checkNotNull(coreBundle, "core bundle must be not null");
+    Preconditions.checkNotNull(mongoClientConfiguration, "mongo client configuration must be not "
+        + "null");
+    Preconditions.checkNotNull(replicationFilters, "replication filters must be not null");
+    Preconditions.checkNotNull(replSetName, "replSetName must be not null");
+    Preconditions.checkNotNull(consistencyHandler, "consistency handler must be not null");
+    Preconditions.checkNotNull(generalConfig, "general config must be not null");
     return new MongoDbReplConfig(coreBundle, mongoClientConfiguration, replicationFilters,
         replSetName, consistencyHandler, generalConfig);
   }

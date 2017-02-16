@@ -16,18 +16,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.commands.impl;
+package com.torodb.mongodb.filters;
 
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
+import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 
-public abstract class ReplCommandImpl<A, R> 
-    implements CommandImplementation<A, R, SharedWriteTorodTransaction> {
+import java.util.Objects;
 
-  protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
-    logger.warn(cmd.getCommandName() + " command execution failed. "
-        + "Ignoring it", t);
+@FunctionalInterface
+public interface IndexFilter extends Filter<IndexOptions> {
+
+  @Override
+  public FilterResult<IndexOptions> apply(IndexOptions indexOptions);
+
+  @Override
+  public default IndexFilter and(Filter<IndexOptions> other) {
+    Objects.requireNonNull(other);
+    return (e) -> apply(e).and(other.apply(e));
   }
+
 }

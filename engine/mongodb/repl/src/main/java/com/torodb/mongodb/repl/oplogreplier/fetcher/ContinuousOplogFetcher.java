@@ -43,9 +43,9 @@ import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.oplogreplier.FinishedOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.NormalOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.NotReadyForMoreOplogBatch;
-import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

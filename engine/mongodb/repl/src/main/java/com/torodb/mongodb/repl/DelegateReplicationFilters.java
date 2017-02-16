@@ -16,39 +16,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.oplogreplier;
+package com.torodb.mongodb.repl;
 
-import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
-
-import java.util.List;
+import com.torodb.mongodb.filters.DatabaseFilter;
+import com.torodb.mongodb.filters.IndexFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
 
 /**
+ * A {@link ReplicationFilters} that delegates on another.
  *
+ * It is useful to create new replication filters that override a specific method.
  */
-public class NormalOplogBatch implements OplogBatch {
+public class DelegateReplicationFilters implements ReplicationFilters {
 
-  private final List<OplogOperation> ops;
-  private boolean readyForMore;
+  private final ReplicationFilters delegate;
 
-  public NormalOplogBatch(List<OplogOperation> ops, boolean readyForMore) {
-    this.ops = ops;
-    this.readyForMore = readyForMore;
+  public DelegateReplicationFilters(ReplicationFilters delegate) {
+    this.delegate = delegate;
   }
 
   @Override
-  public List<OplogOperation> getOps() {
-    return ops;
+  public DatabaseFilter getDatabaseFilter() {
+    return delegate.getDatabaseFilter();
   }
 
   @Override
-  public boolean isReadyForMore() {
-    return readyForMore;
+  public NamespaceFilter getNamespaceFilter() {
+    return delegate.getNamespaceFilter();
   }
 
   @Override
-  public boolean isLastOne() {
-    return false;
+  public IndexFilter getIndexFilter() {
+    return delegate.getIndexFilter();
   }
 
 }

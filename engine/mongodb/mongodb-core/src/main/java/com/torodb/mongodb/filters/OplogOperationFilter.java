@@ -16,18 +16,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.commands.impl;
+package com.torodb.mongodb.filters;
 
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
+import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 
-public abstract class ReplCommandImpl<A, R> 
-    implements CommandImplementation<A, R, SharedWriteTorodTransaction> {
+import java.util.Objects;
 
-  protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
-    logger.warn(cmd.getCommandName() + " command execution failed. "
-        + "Ignoring it", t);
+
+public interface OplogOperationFilter extends Filter<OplogOperation> {
+
+  @Override
+  public FilterResult<OplogOperation> apply(OplogOperation op);
+
+  @Override
+  public default OplogOperationFilter and(Filter<OplogOperation> other) {
+    Objects.requireNonNull(other);
+    return (e) -> apply(e).and(other.apply(e));
   }
+
 }

@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadFactory;
 public class MongoDbReplConfig implements BundleConfig {
   private final MongoDbCoreBundle coreBundle;
   private final MongoClientConfiguration mongoClientConfiguration;
-  private final ReplicationFilters replicationFilters;
+  private final ReplicationFilters userReplFilter;
   private final String replSetName;
   private final ConsistencyHandler consistencyHandler;
   private final BundleConfig generalConfig;
@@ -43,7 +43,7 @@ public class MongoDbReplConfig implements BundleConfig {
       String replSetName, ConsistencyHandler consistencyHandler, BundleConfig generalConfig) {
     this.coreBundle = coreBundle;
     this.mongoClientConfiguration = mongoClientConfiguration;
-    this.replicationFilters = replicationFilters;
+    this.userReplFilter = replicationFilters;
     this.replSetName = replSetName;
     this.consistencyHandler = consistencyHandler;
     this.generalConfig = generalConfig;
@@ -57,8 +57,8 @@ public class MongoDbReplConfig implements BundleConfig {
     return mongoClientConfiguration;
   }
 
-  public ReplicationFilters getReplicationFilters() {
-    return replicationFilters;
+  public ReplicationFilters getUserReplicationFilter() {
+    return userReplFilter;
   }
 
   public String getReplSetName() {

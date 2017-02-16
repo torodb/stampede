@@ -66,7 +66,7 @@ public class ReplCoreBundleTest extends AbstractReplBundleTest<ReplCoreBundle>{
 
     return new ReplCoreBundle(new ReplCoreConfig(
         MongoClientConfiguration.unsecure(seed),
-        ReplicationFilters.allowAll(),
+        new ToroDbReplicationFilters(),
         mongoDbCoreBundle,
         generalConfig.getEssentialInjector(),
         generalConfig.getSupervisor())

@@ -26,18 +26,26 @@ import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
+import javax.inject.Inject;
+
 public class LogAndIgnoreReplImpl extends ReplCommandImpl<String, Empty> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(LogAndIgnoreReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(LogAndIgnoreReplImpl.class);
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public LogAndIgnoreReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<Empty> apply(Request req,
       Command<? super String, ? super Empty> command,
       String arg, SharedWriteTorodTransaction trans) {
+    if (!filterUtil.testDbFilter(req.getDatabase(), command)) {
+      return Status.ok();
+    }
+
     LOGGER.warn("Command {} is not supported. It will not be executed", arg);
     return Status.ok();
   }

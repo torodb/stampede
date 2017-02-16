@@ -37,10 +37,17 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 
+import javax.inject.Inject;
+
 public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionArgument, Empty> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(CreateCollectionReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(CreateCollectionReplImpl.class);
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public CreateCollectionReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<Empty> apply(
@@ -48,6 +55,10 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
       Command<? super CreateCollectionArgument, ? super Empty> command,
       CreateCollectionArgument arg,
       SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testNamespaceFilter(req.getDatabase(), arg.getCollection(), command)) {
+      return Status.ok();
+    }
 
     try {
       LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());

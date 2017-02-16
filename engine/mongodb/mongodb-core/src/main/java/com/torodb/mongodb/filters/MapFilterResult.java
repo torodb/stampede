@@ -16,14 +16,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.utils;
+package com.torodb.mongodb.filters;
 
-import com.torodb.mongodb.commands.pojos.index.IndexOptions;
+import java.util.Optional;
+import java.util.function.Function;
 
-import java.util.List;
+public class MapFilterResult<E1, E2> implements FilterResult<E2> {
+  private final FilterResult<E1> delegate;
+  private final Function<Function<E1, String>, Function<E2, String>> transformation;
 
-public interface IndexPredicate {
+  public MapFilterResult(FilterResult<E1> delegate,
+      Function<Function<E1, String>, Function<E2, String>> transformation) {
+    this.delegate = delegate;
+    this.transformation = transformation;
+  }
+  
+  @Override
+  public boolean isSuccessful() {
+    return delegate.isSuccessful();
+  }
 
-  public boolean test(String database, String collection, String indexName, boolean unique,
-      List<IndexOptions.Key> keys);
+  @Override
+  public Optional<Function<E2, String>> getReason() {
+    return delegate.getReason()
+        .map(transformation::apply);
+  }
+
 }

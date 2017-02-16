@@ -37,6 +37,7 @@ public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
   private final CachedMongoClientFactory mongoClientFactory;
   private final OplogReaderProvider oplogReaderProvider;
   private final ReplMetrics replMetrics;
+  private final ToroDbReplicationFilters replicationFilters;
 
   public ReplCoreBundle(ReplCoreConfig replCoreConfig) {
     super(replCoreConfig);
@@ -48,6 +49,7 @@ public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
     mongoClientFactory = injector.getInstance(CachedMongoClientFactory.class);
     oplogReaderProvider = injector.getInstance(OplogReaderProvider.class);
     replMetrics = injector.getInstance(ReplMetrics.class);
+    replicationFilters = replCoreConfig.getReplicationFilters();
   }
 
   @Override
@@ -77,7 +79,9 @@ public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
 
   @Override
   public ReplCoreExtInt getExternalInterface() {
-    return new ReplCoreExtInt(oplogManager, mongoClientFactory, oplogReaderProvider, replMetrics);
+    return new ReplCoreExtInt(oplogManager, mongoClientFactory, oplogReaderProvider, replMetrics,
+      replicationFilters
+    );
   }
 
 }

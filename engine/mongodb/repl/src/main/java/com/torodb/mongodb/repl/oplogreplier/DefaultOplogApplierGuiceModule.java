@@ -19,10 +19,15 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.filters.ByNamespaceOplogOperationFilter;
+import com.torodb.mongodb.filters.DatabaseFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.repl.OplogManager;
+import com.torodb.mongodb.repl.ToroDbReplicationFilters;
 import com.torodb.mongodb.repl.commands.ReplCommandExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
@@ -30,6 +35,8 @@ import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.NamespaceJobExecutor;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchChecker;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchFilter;
 
 import java.time.Duration;
 
@@ -93,4 +100,18 @@ public class DefaultOplogApplierGuiceModule extends PrivateModule {
         .toInstance(config.getMongoDbCoreBundle().getExternalInterface().getMongodServer());
   }
 
+  @Provides
+  public OplogBatchChecker createOplogBatchChecker() {
+    return new OplogBatchChecker(new ComplexIdOpChecker());
+  }
+
+  @Provides
+  public OplogBatchFilter createOplogBatchFilter() {
+    ToroDbReplicationFilters replFilters = config.getReplCoreBundle()
+        .getExternalInterface()
+        .getReplicationFilters();
+    DatabaseFilter dbFilter = replFilters.getDatabaseFilter();
+    NamespaceFilter nsFilter = replFilters.getNamespaceFilter();
+    return new OplogBatchFilter(new ByNamespaceOplogOperationFilter(dbFilter, nsFilter));
+  }
 }

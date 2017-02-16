@@ -16,18 +16,35 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.commands.impl;
+package com.torodb.mongodb.filters;
 
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
 
-public abstract class ReplCommandImpl<A, R> 
-    implements CommandImplementation<A, R, SharedWriteTorodTransaction> {
+import java.util.Optional;
+import java.util.function.Function;
 
-  protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
-    logger.warn(cmd.getCommandName() + " command execution failed. "
-        + "Ignoring it", t);
+/**
+ * The result of a replication filter.
+ */
+class DefaultFilterResult<E> implements FilterResult<E> {
+  private final boolean successful;
+  private final Optional<Function<E, String>> reason;
+
+  DefaultFilterResult(boolean success, Optional<Function<E, String>> reason) {
+    this.successful = success;
+    this.reason = reason;
+  }
+
+  /**
+   * If the element fulfilled the filter.
+   */
+  public boolean isSuccessful() {
+    return successful;
+  }
+
+  /**
+   * An optional function that, if present, indicates why the element does not fulfill the filter.
+   */
+  public Optional<Function<E, String>> getReason() {
+    return reason;
   }
 }

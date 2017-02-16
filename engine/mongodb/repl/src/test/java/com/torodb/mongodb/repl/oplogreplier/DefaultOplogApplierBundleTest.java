@@ -18,7 +18,6 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.torodb.mongodb.repl.commands.ReplCommandsBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.modules.BundleConfig;
@@ -28,6 +27,8 @@ import com.torodb.mongodb.repl.MongoDbCoreBundleServiceBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundleTest;
 import com.torodb.mongodb.repl.TestBundleConfig;
+import com.torodb.mongodb.repl.ToroDbReplicationFilters;
+import com.torodb.mongodb.repl.commands.ReplCommandsBuilder;
 import org.junit.Before;
 
 import java.util.List;
@@ -67,7 +68,8 @@ public class DefaultOplogApplierBundleTest extends AbstractReplBundleTest<Defaul
 
   public static DefaultOplogApplierBundle createBundle(BundleConfig generalConfig,
       ReplCoreBundle replCoreBundle, MongoDbCoreBundle mongoDbCoreBundle) {
-    ReplCommandsBuilder testReplCommandsUtil = new ReplCommandsBuilder(generalConfig);
+    ReplCommandsBuilder testReplCommandsUtil = new ReplCommandsBuilder(generalConfig,
+        new ToroDbReplicationFilters());
     
     return new DefaultOplogApplierBundle(new DefaultOplogApplierBundleConfig(
         replCoreBundle,

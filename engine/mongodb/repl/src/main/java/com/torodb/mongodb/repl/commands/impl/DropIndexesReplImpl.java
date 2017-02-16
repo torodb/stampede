@@ -38,13 +38,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- *
- */
+import javax.inject.Inject;
+
 public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, DropIndexesResult> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(DropIndexesReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(DropIndexesReplImpl.class);
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public DropIndexesReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<DropIndexesResult> apply(
@@ -52,6 +56,11 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
       Command<? super DropIndexesArgument, ? super DropIndexesResult> command,
       DropIndexesArgument arg,
       SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testNamespaceFilter(req.getDatabase(), arg.getCollection(), command)) {
+      return Status.ok(new DropIndexesResult(0));
+    }
+    
     int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
 
     List<String> indexesToDrop;

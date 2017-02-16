@@ -22,7 +22,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
+import com.torodb.mongodb.filters.DatabaseFilter;
+import com.torodb.mongodb.filters.IndexFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.commands.impl.CommandFilterUtil;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 
 /**
@@ -33,11 +37,11 @@ public class ReplCommandsBuilder {
   private final ReplCommandLibrary replCommandsLibrary;
   private final ReplCommandExecutor replCommandsExecutor;
 
-  public ReplCommandsBuilder(BundleConfig generalConfig) {
+  public ReplCommandsBuilder(BundleConfig generalConfig, ReplicationFilters replFilters) {
     Injector replCommandsInjector = generalConfig.getEssentialInjector()
         .createChildInjector(
-            new ReplCommandsGuiceModule(),
-            new ExtraModule(generalConfig)
+            new ExtraModule(generalConfig, replFilters),
+            new ReplCommandsGuiceModule()
         );
 
     replCommandsLibrary = replCommandsInjector.getInstance(ReplCommandLibrary.class);
@@ -54,15 +58,22 @@ public class ReplCommandsBuilder {
 
   private static final class ExtraModule extends AbstractModule {
     private final BundleConfig generalConfig;
+    private final ReplicationFilters replFilters;
 
-    public ExtraModule(BundleConfig generalConfig) {
+    public ExtraModule(BundleConfig generalConfig, ReplicationFilters replFilters) {
       this.generalConfig = generalConfig;
+      this.replFilters = replFilters;
     }
 
     @Override
     protected void configure() {
-      bind(ReplicationFilters.class)
-          .toInstance(ReplicationFilters.allowAll());
+      bind(CommandFilterUtil.class);
+      bind(DatabaseFilter.class)
+          .toInstance(replFilters.getDatabaseFilter());
+      bind(NamespaceFilter.class)
+          .toInstance(replFilters.getNamespaceFilter());
+      bind(IndexFilter.class)
+          .toInstance(replFilters.getIndexFilter());
       bind(Supervisor.class)
           .annotatedWith(MongoDbRepl.class)
           .toInstance(generalConfig.getSupervisor());

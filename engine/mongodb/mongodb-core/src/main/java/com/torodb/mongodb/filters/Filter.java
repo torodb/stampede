@@ -16,18 +16,25 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.commands.impl;
+package com.torodb.mongodb.filters;
 
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
+import java.util.Objects;
+import java.util.function.Function;
 
-public abstract class ReplCommandImpl<A, R> 
-    implements CommandImplementation<A, R, SharedWriteTorodTransaction> {
+/**
+ * A filter that instead of a boolean, returns a {@link FilterResult}, so it can be used to show
+ * the reason why the element does not fulfill the filter.
+ */
+@FunctionalInterface
+public interface Filter<E> extends Function<E, FilterResult<E>> {
 
-  protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
-    logger.warn(cmd.getCommandName() + " command execution failed. "
-        + "Ignoring it", t);
+  default boolean filter(E element) {
+    return this.apply(element).isSuccessful();
   }
+
+  public default Filter<E> and(Filter<E> other) {
+    Objects.requireNonNull(other);
+    return (e) -> apply(e).and(other.apply(e));
+  }
+
 }

@@ -16,18 +16,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.commands.impl;
+package com.torodb.mongodb.filters;
 
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.CommandImplementation;
-import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.Logger;
+import java.util.Optional;
+import java.util.function.Function;
 
-public abstract class ReplCommandImpl<A, R> 
-    implements CommandImplementation<A, R, SharedWriteTorodTransaction> {
+public class AndFilterResult<E> implements FilterResult<E> {
+  private final FilterResult<E> r1;
+  private final FilterResult<E> r2;
 
-  protected void reportErrorIgnored(Logger logger, Command<?, ?> cmd, Throwable t) {
-    logger.warn(cmd.getCommandName() + " command execution failed. "
-        + "Ignoring it", t);
+  public AndFilterResult(FilterResult<E> r1, FilterResult<E> r2) {
+    this.r1 = r1;
+    this.r2 = r2;
+  }
+
+  @Override
+  public boolean isSuccessful() {
+    return r1.isSuccessful() && r2.isSuccessful();
+  }
+
+  @Override
+  public Optional<Function<E, String>> getReason() {
+    if (!r1.isSuccessful()) {
+      return r1.getReason();
+    }
+    if (!r2.isSuccessful()) {
+      return r2.getReason();
+    }
+    return Optional.empty();
   }
 }

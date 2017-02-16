@@ -27,13 +27,13 @@ import com.torodb.mongodb.core.MongoDbCoreBundle;
 public class ReplCoreConfig implements BundleConfig {
 
   private final MongoClientConfiguration mongoClientConfig;
-  private final ReplicationFilters replicationFilters;
+  private final ToroDbReplicationFilters replicationFilters;
   private final MongoDbCoreBundle mongoDbCoreBundle;
   private final Injector essentialInjector;
   private final Supervisor replSupervisor;
 
   public ReplCoreConfig(MongoClientConfiguration mongoClientConfig,
-      ReplicationFilters replicationFilters, MongoDbCoreBundle mongoDbCoreBundle,
+      ToroDbReplicationFilters replicationFilters, MongoDbCoreBundle mongoDbCoreBundle,
       Injector essentialInjector, Supervisor replSupervisor) {
     this.mongoClientConfig = mongoClientConfig;
     this.replicationFilters = replicationFilters;
@@ -46,7 +46,7 @@ public class ReplCoreConfig implements BundleConfig {
     return mongoClientConfig;
   }
 
-  public ReplicationFilters getReplicationFilters() {
+  public ToroDbReplicationFilters getReplicationFilters() {
     return replicationFilters;
   }
 

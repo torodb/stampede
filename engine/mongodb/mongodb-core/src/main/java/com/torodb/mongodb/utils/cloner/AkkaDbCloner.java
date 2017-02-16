@@ -92,9 +92,11 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Function;
 
 /**
  * This class is used to clone databases using a client, so remote and local databases can be
@@ -501,10 +503,14 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     List<IndexOptions> indexesToClone = new ArrayList<>();
     for (Iterator<IndexOptions> iterator = listindexes.iterator(); iterator.hasNext();) {
       IndexOptions indexEntry = iterator.next();
-      if (!opts.getIndexFilter().test(toCol, indexEntry.getName(), indexEntry.isUnique(), indexEntry
-          .getKeys())) {
-        LOGGER.info("Not cloning index {}.{} because it didn't pass the given filter predicate",
-            toCol, indexEntry.getName());
+
+      Optional<Function<IndexOptions, String>> reason = opts.getIndexFilter()
+          .apply(indexEntry)
+          .getReason();
+
+      if (reason.isPresent()) {
+        LOGGER.info("Index {}.{} didn't pass the index filter. {}", toCol, indexEntry.getName(),
+            reason.get().apply(indexEntry));
         continue;
       }
       LOGGER.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
