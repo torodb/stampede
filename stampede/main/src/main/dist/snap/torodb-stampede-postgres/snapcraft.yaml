@@ -1,0 +1,89 @@
+name: "@{assembler.name}-postgres"
+version: "@{project.version}"
+summary: "@{project.name}"
+description: "@{project.description}"
+grade: @{snap.grade}
+confinement: @{snap.confinement}
+apps:
+#  daemon:
+#    command: bin/@{assembler.name}-postgres.wrapper
+#    daemon: simple
+#    restart-condition: always
+#    plugs:
+#      - home
+#      - network
+#      - network-bind
+  run:
+    command: bin/@{assembler.name}-postgres.wrapper
+    plugs:
+      - home
+      - network
+      - network-bind
+  setup:
+    command: bin/@{assembler.name}-setup.wrapper
+    plugs:
+      - home
+      - network
+parts:
+  @{assembler.name}-postgres:
+    plugin: dump
+    source: .
+    stage-packages:
+      - locales
+      - libc-bin
+      - coreutils
+      - iputils-ping
+      - postgresql-client-9.6
+      - postgresql-9.6
+      - openjdk-8-jre-headless
+    organize:
+      assembler/assembler/bin: bin
+      assembler/assembler/doc: doc
+      assembler/assembler/conf: conf
+      assembler/assembler/lib: lib
+    stage:
+      - bin
+      - doc
+      - conf
+      - lib
+      - bin/chmod
+      - bin/chown
+      - bin/ping
+      - usr/bin/whoami
+      - usr/bin/base64
+      - usr/bin/localedef
+      - usr/share/i18n
+      - usr/lib/jvm/java-8-openjdk-*/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - etc/java-*
+      - etc/postgresql
+      - usr/lib/postgresql
+      - usr/share/postgresql
+      - usr/lib/x86_64-linux-gnu/libpq.so*
+      - usr/lib/x86_64-linux-gnu/libxml2.so*
+      - usr/lib/x86_64-linux-gnu/libicuuc.so*
+      - usr/lib/x86_64-linux-gnu/libicudata.so*
+    snap:
+      - bin
+      - doc
+      - conf
+      - lib
+      - bin/chmod
+      - bin/chown
+      - bin/ping
+      - usr/bin/whoami
+      - usr/bin/base64
+      - usr/bin/localedef
+      - usr/share/i18n
+      - usr/lib/jvm/java-8-openjdk-*/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - etc/java-*
+      - etc/postgresql
+      - usr/lib/postgresql
+      - usr/share/postgresql
+      - usr/lib/x86_64-linux-gnu/libpq.so*
+      - usr/lib/x86_64-linux-gnu/libxml2.so*
+      - usr/lib/x86_64-linux-gnu/libicuuc.so*
+      - usr/lib/x86_64-linux-gnu/libicudata.so*

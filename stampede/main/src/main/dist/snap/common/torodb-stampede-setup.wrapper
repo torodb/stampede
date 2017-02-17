@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. "$(dirname "$0")/environment.wrapper"
+
+cd "$SNAP"
+
+exec "$SNAP/bin/@{assembler.name}-setup" "$@"

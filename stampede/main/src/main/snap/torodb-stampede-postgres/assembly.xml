@@ -3,10 +3,27 @@
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
     <!--<id>bin</id>-->
     <formats>
-        <format>tar.bz2</format>
-        <format>zip</format>
+        <format>dir</format>
     </formats>
     <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/dist/snap/common</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/snap/torodb-stampede-postgres</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
         <fileSet>
             <directory>${project.build.directory}/dist/run</directory>
             <outputDirectory>bin</outputDirectory>
@@ -17,17 +34,23 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${project.build.directory}/dist/run</directory>
+            <directory>${project.build.directory}/dist/setup</directory>
             <outputDirectory>bin</outputDirectory>
-            <includes>
-                <include>*.bat</include>
-            </includes>
+            <excludes>
+                <exclude>*.bat</exclude>
+            </excludes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/conf</directory>
+            <outputDirectory>conf</outputDirectory>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
             <directory>${project.build.directory}/dist/doc/</directory>
-            <outputDirectory>.</outputDirectory>
+            <outputDirectory>doc</outputDirectory>
             <includes>
                 <include>README.md</include>
                 <include>LICENSE-GNU_AGPLv3.txt</include>
@@ -41,27 +64,5 @@
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>
-        <fileSet>
-            <directory>${project.build.directory}</directory>
-            <outputDirectory>conf</outputDirectory>
-            <directoryMode>0755</directoryMode>
-            <excludes>
-                <exclude>*/**</exclude>
-            </excludes>
-        </fileSet>
     </fileSets>
-    <files>
-        <file>
-            <source>${project.build.directory}/dist/conf/${assembler.name}.yml</source>
-            <outputDirectory>conf</outputDirectory>
-            <destName>${assembler.name}.yml.sample</destName>
-            <fileMode>0644</fileMode>
-        </file>
-        <file>
-            <source>${project.build.directory}/dist/systemd/${assembler.name}.service</source>
-            <outputDirectory>conf</outputDirectory>
-            <destName>${assembler.name}.service.sample</destName>
-            <fileMode>0644</fileMode>
-        </file>
-    </files>
 </assembly>

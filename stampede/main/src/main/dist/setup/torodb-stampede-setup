@@ -24,6 +24,7 @@ set -e
 
 # resolve links - $0 may be a softlink
 PRG="$0"
+PRG=`which $PRG`
 
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`
@@ -42,84 +43,306 @@ if [ -z "$ADMIN_USER" ]
 then
     ADMIN_USER="postgres"
 fi
-
-if [ "$(whoami)" != "root" ]
+POSTGRES_ADMIN_USER="$ADMIN_USER"
+if [ -z "$POSTGRES_ADMIN_DATABASE" ]
 then
-    echo "You must run setup as root. Please run this command prepending sudo" >&2
+    POSTGRES_ADMIN_DATABASE=template1
+fi
+
+if [ "$(whoami)" != "root" ] && [ "$(whoami)" != "$ADMIN_USER" ]
+then
+    echo "You must run this command as root or as $ADMIN_USER" >&2
     exit 1
 fi
 
-if [ -z "$1" ]
+if [ -z "$INTERACTIVE" ] || [ "$INTERACTIVE" != "true" ]
 then
-    TOROUSER="$(whoami)"
+    INTERACTIVE="false"
+fi
+
+if [ -z "$TORO_USER" ]
+then
+    TORO_USER="$(whoami)"
 else
-    TOROUSER="$1"
-    shift
-    su - $TOROUSER -c "echo 'User $TOROUSER found'"
+    if ! id $TORO_USER > /dev/null
+    then
+        echo "User $TORO_USER not found" >&2
+        exit 1
+    fi
 fi
 
-if [ -z "$TOROPASSFILE" ]
+if ! which psql > /dev/null
 then
-    TOROPASSFILE="$(su - "$TOROUSER" -c 'echo "$HOME/.toropass"')"
+    echo "psql command not installed or not in the path" >&2
+    exit 1
 fi
 
-POSTGRES_HOST="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/host)"
-POSTGRES_PORT="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/port)"
-POSTGRES_USER="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/user)"
-POSTGRES_DATABASE="$("$PRGDIR/@{assembler.name}" "$@" -lp /backend/postgres/database)"
+psql_command="$(which psql)"
+exec_admin_command=(su -p "$ADMIN_USER" -c)
+exec_user_command=(su -p "$TORO_USER" -c)
+
+
+if echo ' '"$@"' ' | grep -q -- "\s-h\s\|\s--help\s"
+then
+    echo "Usage: $0 [<@{assembler.fullName}'s parameter>, ...]"
+    echo
+    echo "To get available parameters: @{assembler.name} -h"
+    exit
+fi
+
+for invalid_parameter in -l --print-config -lx --print-xml-config\
+    -lp --print-param -hp --help-param -W --ask-for-password
+do
+    if echo ' '"$@"' ' | grep -q -- "\s$invalid_parameter\s"
+    then
+        echo "Invalid parameter $invalid_parameter" >&2
+        exit 1
+    fi
+done
+
+if [ -z "$TOROCMD" ]
+then
+    TOROCMD="$PRGDIR/@{assembler.name}"
+fi
+
+TORO_PARAMS="$("$TOROCMD" "$@" \
+    -lp /backend/postgres/host \
+    -lp /backend/postgres/port \
+    -lp /backend/postgres/database \
+    -lp /backend/postgres/user \
+    -lp /backend/postgres/toropassFile)"
+POSTGRES_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 1)"
+POSTGRES_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 2)"
+POSTGRES_DATABASE="$(echo "$TORO_PARAMS"|cut -d ',' -f 3)"
+POSTGRES_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 4)"
+TOROPASSFILE="$(echo "$TORO_PARAMS"|cut -d ',' -f 5)"
+PGPASSFILE="$([ -z "$PGPASSFILE" ] && echo "$HOME/.pgpass" || echo "$PGPASSFILE")"
+
+if $INTERACTIVE
+then
+    while true
+    do
+        echo "Configure PostgreSQL's connection for @{assembler.fullName}:"
+        read -p "Type a different PostgreSQL's host or enter to continue [$POSTGRES_HOST]:" VALUE
+        POSTGRES_HOST=${VALUE:-$POSTGRES_HOST}
+        read -p "Type a different PostgreSQL's port or enter to continue [$POSTGRES_PORT]:" VALUE
+        POSTGRES_PORT=${VALUE:-$POSTGRES_PORT}
+        read -p "Type a different PostgreSQL's database or enter to continue [$POSTGRES_DATABASE]:" VALUE
+        POSTGRES_DATABASE=${VALUE:-$POSTGRES_DATABASE}
+        
+        if ! "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1 \
+            && ! (ping -c 1 "$POSTGRES_HOST" 2>/dev/null|head -n 1|grep -q "(127.0.[01].1)" 2>/dev/null \
+                && "${exec_admin_command[@]}" "$psql_command --no-readline -w -c 'SELECT 1'")
+        then
+            echo
+            echo "Can not connect to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT with user $POSTGRES_ADMIN_USER:"
+            "$psql_command" --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" || true
+            echo
+            echo "Configure PostgreSQL's administrator user to setup database for @{assembler.fullName}:"
+            read -p "Type a different PostgreSQL's administrator user or enter to continue [$POSTGRES_ADMIN_USER]:" VALUE
+            POSTGRES_ADMIN_USER=${VALUE:-$POSTGRES_ADMIN_USER}
+            read -s -p "Type password for PostgreSQL's administrator user $POSTGRES_ADMIN_USER:" VALUE
+            POSTGRES_ADMIN_PASSWORD=$VALUE
+            TMPPGPASSFILE="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
+            (
+                echo "$POSTGRES_HOST:$POSTGRES_PORT:*:$POSTGRES_ADMIN_USER:$POSTGRES_ADMIN_PASSWORD"
+                if [ -f "$PGPASSFILE" ]
+                then
+                    cat "$PGPASSFILE"
+                fi
+            ) > "$TMPPGPASSFILE" 
+            chmod 0600 "$TMPPGPASSFILE"
+            if bash -c "PGPASSFILE='$TMPPGPASSFILE' $psql_command --no-readline -w -U '$POSTGRES_ADMIN_USER' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1'" > /dev/null 2>&1
+            then
+                echo "Creating entry for user $POSTGRES_ADMIN_USER in $PGPASSFILE"
+                mv "$TMPPGPASSFILE" "$PGPASSFILE"
+                break;
+            else
+                echo "Can not connect to PostgreSQL at $POSTGRES_HOST:$POSTGRES_PORT with user $POSTGRES_ADMIN_USER and supplied credentials:"
+                bash -c "PGPASSFILE='$TMPPGPASSFILE' $psql_command --no-readline -w -U '$POSTGRES_ADMIN_USER' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1'"
+                while true
+                do
+                    read -p "Do you want to retry [Y/n]?" VALUE
+                    if [ -z "$VALUE" ] || [ "$VALUE" == "y" ]
+                    then
+                        echo
+                        break
+                    fi
+                    
+                    if [ "$VALUE" == "n" ]
+                    then
+                        exit 1
+                    fi
+                done
+            fi
+        else
+            break
+        fi
+    done
+fi
 
 PSQL_OPTIONS=()
-if psql --no-readline -w -U "$ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -c "SELECT 1" > /dev/null 2>&1
+if "$psql_command" --no-readline -w -U "$POSTGRES_ADMIN_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_ADMIN_DATABASE" -c "SELECT 1" > /dev/null 2>&1
 then
     PSQL_OPTIONS+=("'-U'")
-    PSQL_OPTIONS+=("'$ADMIN_USER'")
+    PSQL_OPTIONS+=("'$POSTGRES_ADMIN_USER'")
     PSQL_OPTIONS+=("'-h'")
     PSQL_OPTIONS+=("'$POSTGRES_HOST'")
     PSQL_OPTIONS+=("'-p'")
     PSQL_OPTIONS+=("'$POSTGRES_PORT'")
     ADMIN_USER="root"
+    exec_admin_command=(bash -c)
+    exec_user_command=(bash -c)
 fi
 
-if [ -z "$TORODB_BACKEND_PASSWORD" ]
+if $INTERACTIVE
 then
-    TORODB_BACKEND_PASSWORD=$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)
+    echo
+    echo "Configure PostgreSQL's user for @{assembler.fullName}:"
+    read -p "Type a different PostgreSQL's user or enter to continue [$POSTGRES_USER]:" VALUE
+    POSTGRES_USER=${VALUE:-$POSTGRES_USER}
+    TORODB_BACKEND_CONFIGURED=false
+    if [ -f "$TOROPASSFILE" ] && grep -q "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):[^:]\+:\(\*\|$POSTGRES_USER\):" "$TOROPASSFILE"
+    then
+        TORODB_BACKEND_PASSWORD="$(grep "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):[^:]\+:\(\*\|$POSTGRES_USER\):" "$TOROPASSFILE"|head -n 1|cut -d ':' -f 5)"
+        while true
+        do
+            read -p "Use current password for PostgreSQL's user $POSTGRES_USER [Y/n]:" VALUE
+            if [ -z "$VALUE" ] || [ "$VALUE" == "y" ]
+            then
+                break
+            fi
+            
+            if [ "$VALUE" == "n" ]
+            then
+                read -s -p "Type password for PostgreSQL's user $POSTGRES_USER:" VALUE
+                TORODB_BACKEND_PASSWORD=$VALUE
+                break
+            fi
+        done
+    else
+        while true
+        do
+            read -p "Auto generate password for PostgreSQL's user $POSTGRES_USER [Y/n]:" VALUE
+            if [ -z "$VALUE" ] || [ "$VALUE" == "y" ]
+            then
+                TORODB_BACKEND_PASSWORD=
+                break
+            fi
+            
+            if [ "$VALUE" == "n" ]
+            then
+                read -s -p "Type password for PostgreSQL's user $POSTGRES_USER:" VALUE
+                TORODB_BACKEND_PASSWORD=$VALUE
+                break
+            fi
+        done
+    fi 
 fi
 
-if su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c 'SELECT 1'" > /dev/null 2>&1
+if "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1'" > /dev/null 2>&1
 then
-    if ! su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -d torod -c 'SELECT 1'" > /dev/null 2>&1
+    if [ -z "$TORODB_BACKEND_PASSWORD" ]
+    then
+        echo "Generating password for user $POSTGRES_USER"
+        TORODB_BACKEND_PASSWORD=$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)
+    fi
+    if [ ! -f "$TOROPASSFILE" ] || ! grep -q "^\(\*\|$POSTGRES_HOST\):\(\*\|$POSTGRES_PORT\):\(\*\|$POSTGRES_DATABASE\):\(\*\|$POSTGRES_USER\):$TORODB_BACKEND_PASSWORD" "$TOROPASSFILE"
+    then
+        echo "Creating entry for user $POSTGRES_USER in $TOROPASSFILE"
+        TMPTOROPASSFILE="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
+        (
+            echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DATABASE:$POSTGRES_USER:$TORODB_BACKEND_PASSWORD"
+            if [ -f "$TOROPASSFILE" ]
+            then
+                cat "$TOROPASSFILE"
+            fi
+        ) > "$TMPTOROPASSFILE" 
+        mv "$TMPTOROPASSFILE" "$TOROPASSFILE"
+    fi
+    chmod 0600 "$TOROPASSFILE"
+    if [ "$(whoami)" != "$TORO_USER" ]
+    then
+        chown "$TORO_USER" "$TOROPASSFILE"
+    fi
+    
+    if [ "1" != "$("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d "$POSTGRES_ADMIN_DATABASE" -c 'SELECT 1 FROM pg_user WHERE usename = '"'"'"'$POSTGRES_USER'"'"'"' LIMIT 1'")" ]
     then
         echo "Creating $POSTGRES_USER user"
-        su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c "'"CREATE USER '"$POSTGRES_USER"' WITH PASSWORD '"'$TORODB_BACKEND_PASSWORD'"'"'
-        echo "Creating $POSTGRES_DATABASE database"
-        su "$ADMIN_USER" -c "psql --no-readline ${PSQL_OPTIONS[*]} -c 'CREATE DATABASE $POSTGRES_DATABASE WITH OWNER $POSTGRES_USER'"
+        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'CREATE USER "'"'"$POSTGRES_USER"'"'" WITH PASSWORD '"'"'"'$TORODB_BACKEND_PASSWORD'"'"'
     else
-        echo "Database $POSTGRES_DATABASE already exists" >&2
-        exit 1
+        echo "User $POSTGRES_USER already exists. Skipping creation"
+        echo "Resetting $POSTGRES_USER password"
+        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d "$POSTGRES_ADMIN_DATABASE" -c 'ALTER USER "'"'"$POSTGRES_USER"'"'" WITH PASSWORD '"'"'"'$TORODB_BACKEND_PASSWORD'"'"'
+    fi
+    
+    if [ "1" != "$("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d '$POSTGRES_ADMIN_DATABASE' -c 'SELECT 1 FROM pg_database WHERE datname = '"'"'"'$POSTGRES_DATABASE'"'"'"' LIMIT 1'")" ]
+    then
+        echo "Creating $POSTGRES_DATABASE database"
+        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_ADMIN_DATABASE' -c 'CREATE DATABASE "'"'"$POSTGRES_DATABASE"'"'" WITH OWNER "'"'"$POSTGRES_USER"'"'"'"
+    else
+        echo "Database $POSTGRES_DATABASE already exists. Skipping creation"
+        echo "Making $POSTGRES_USER owner of $POSTGRES_DATABASE"
+        "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_ADMIN_DATABASE' -c 'ALTER DATABASE "'"'"$POSTGRES_DATABASE"'"'" OWNER TO "'"'"$POSTGRES_USER"'"'"'"
+        echo "Granting ALL to $POSTGRES_USER for existing schemas of $POSTGRES_DATABASE"
+        for POSTGRES_SCHEMA in $("${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -A -t -d '$POSTGRES_DATABASE' -c 'SELECT nspname FROM pg_namespace'"|grep -v "^pg_\|^public$\|^information_schema$")
+        do
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'ALTER SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" OWNER TO "'"'"$POSTGRES_USER"'"'"'"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL TABLES IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL SEQUENCES IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
+            "${exec_admin_command[@]}" "$psql_command --no-readline -w ${PSQL_OPTIONS[*]} -d '$POSTGRES_DATABASE' -c 'GRANT ALL ON ALL FUNCTIONS IN SCHEMA "'"'"$POSTGRES_SCHEMA"'"'" TO "'"'"$POSTGRES_USER"'"'"'"
+        done
     fi
 else
-    echo "PostgreSQL must be running to setup @{name}" >&2
+    echo >&2
+    echo "Connection to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT database $POSTGRES_DATABASE with user $POSTGRES_ADMIN_USER has failed!" >&2
+    echo >&2
+    echo "Please, check PostgreSQL is running and, if connecting with TCP, the password for user $POSTGRES_ADMIN_USER is correctly configured in $PGPASSFILE" >&2
+    echo "Remember to set file permission correctly to 0600:" >&2 
+    echo "chmod 0600 $PGPASSFILE" >&2 
+    echo >&2
+    echo "To specify a user different than $POSTGRES_ADMIN_USER to setup @{assembler.fullName} specify it with environment variable ADMIN_USER:" >&2
+    echo "export ADMIN_USER=<PostgreSQL's administrator user name>" >&2
     exit 1
 fi
 
-echo "Creating $TOROPASSFILE for user $TOROUSER"
-echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DATABASE:$POSTGRES_USER:$TORODB_BACKEND_PASSWORD" > "$TOROPASSFILE"
-chmod 400 "$TOROPASSFILE"
-chown "$TOROUSER" "$TOROPASSFILE"
-
-if ! su "$TOROUSER" -c "PGPASSFILE='$TOROPASSFILE' psql --no-readline -U $POSTGRES_USER -d $POSTGRES_DATABASE -h $POSTGRES_HOST -p $POSTGRES_PORT -c 'SELECT 1'" > /dev/null 2>&1
+if ! "${exec_user_command[@]}" "PGPASSFILE='$TOROPASSFILE' $psql_command --no-readline -w -U $POSTGRES_USER -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d '$POSTGRES_DATABASE' -c 'SELECT 1'" > /dev/null 2>&1
 then
-    echo "Seem that we can not connect to PostgreSQL due to some security restrictions. Please add those lines to pg_hba.conf file:" >&2
     echo >&2
-    if [ "$POSTGRES_HOST" == "localhost" ]
-    then
-        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          ::1/128                 md5" >&2
-        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          127.0.0.1/32            md5" >&2
-    else
-        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          <PostgreSQL's machine IPv6>     md5" >&2
-        echo "host    $POSTGRES_DATABASE           $POSTGRES_USER          <PostgreSQL's machine IP>       md5" >&2
-    fi
+    echo "Connection to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT database $POSTGRES_DATABASE with user $POSTGRES_USER has failed!" >&2
     echo >&2
-    echo "...and then restart PostgreSQL server" >&2 
+    echo "Please, check PostgreSQL's connection parameters and security restrictions (see pg_hba.conf file in your PostgreSQL installation)." >&2
+    echo >&2
+    echo "Password for user $POSTGRES_ADMIN_USER must be configured in $TOROPASSFILE" >&2
+    echo "Remember to set file permission correctly to 0600:" >&2 
+    echo "chmod 0600 $TOROPASSFILE" >&2
+    echo >&2
+    echo "To specify a user different than $POSTGRES_USER to connect @{assembler.fullName} to PostgreSQL specify it with --backend-user parameter:" >&2
+    echo "$0 --backend-user <PostgreSQL's user name>" >&2 
     exit 1
+fi
+
+if [ ! -z "$TOROCONFIG" ]
+then
+    echo "Writing configuration file to $TOROCONFIG"
+    TORO_OPTIONS=("$@")
+    for todelete_parameter in --backend-host --backend-port --backend-database --backend-user
+    do
+        for index in "${!TORO_OPTIONS[@]}"
+        do
+            if [ "${TORO_OPTIONS[$index]}" == "$todelete_parameter" ]
+            then
+                unset TORO_OPTIONS[$index]
+                unset TORO_OPTIONS[$((index+1))]
+            fi
+        done
+    done
+    TMPTOROCONFIG="/tmp/$(base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs)"
+    "$TOROCMD" "${TORO_OPTIONS[@]}" \
+        --backend-host "$POSTGRES_HOST" \
+        --backend-port "$POSTGRES_PORT" \
+        --backend-database "$POSTGRES_DATABASE" \
+        --backend-user "$POSTGRES_USER" \
+        -l > "$TMPTOROCONFIG"
+    mv "$TMPTOROCONFIG" "$TOROCONFIG"
 fi

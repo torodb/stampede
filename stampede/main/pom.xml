@@ -18,6 +18,11 @@
         <assembler.name>torodb-stampede</assembler.name>
         <assembler.fullName>ToroDB Stampede</assembler.fullName>
         <assembler.url>https://www.torodb.com/stampede</assembler.url>
+        <assembler.revision>1</assembler.revision>
+        <assembler.licenses>AGPLv3</assembler.licenses>
+        <assembler.changelog></assembler.changelog>
+        <snap.grade>devel</snap.grade>
+        <snap.confinement>devmode</snap.confinement>
     </properties>
 
     <dependencies>
@@ -70,6 +75,79 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dist-copy-dependencies</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
+                                <includeScope>runtime</includeScope>
+                                <overWriteReleases>false</overWriteReleases>
+                                <overWriteSnapshots>false</overWriteSnapshots>
+                                <overWriteIfNewer>true</overWriteIfNewer>
+                                <useRepositoryLayout>true</useRepositoryLayout>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dist-copy-resources</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${basedir}/target/dist/</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/dist</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                                <overwrite>true</overwrite>
+                                <delimiters>
+                                    <delimiter>@{*}</delimiter>
+                                </delimiters>
+                                <useDefaultDelimiters>false</useDefaultDelimiters>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dist-main-jar</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
+                                <finalName>${assembler.name}-${project.version}</finalName>
+                                <archive>
+                                    <manifest>
+                                        <addClasspath>true</addClasspath>
+                                        <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+                                        <useUniqueVersions>false</useUniqueVersions>
+                                        <classpathPrefix>./</classpathPrefix>
+                                        <mainClass>${mainClass}</mainClass>
+                                    </manifest>
+                                </archive>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -94,19 +172,7 @@
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
-                                    <includeScope>runtime</includeScope>
-                                    <overWriteReleases>false</overWriteReleases>
-                                    <overWriteSnapshots>false</overWriteSnapshots>
-                                    <overWriteIfNewer>true</overWriteIfNewer>
-                                    <useRepositoryLayout>true</useRepositoryLayout>
-                                </configuration>
+                                <id>dist-copy-dependencies</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -114,61 +180,37 @@
                         <artifactId>maven-resources-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-resources</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/dist/</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>src/main/dist</directory>
-                                            <filtering>true</filtering>
-                                        </resource>
-                                    </resources>
-                                    <overwrite>true</overwrite>
-                                    <delimiters>
-                                        <delimiter>@{*}</delimiter>
-                                    </delimiters>
-                                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                                </configuration>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
-                            <finalName>${assembler.name}-${project.version}</finalName>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
-                                    <classpathPrefix>./</classpathPrefix>
-                                    <mainClass>${mainClass}</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/main/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                            <finalName>torodb-stampede-${project.version}</finalName>
-                            <outputDirectory>${project.build.directory}/dist</outputDirectory>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                        </configuration>
                         <executions>
                             <execution>
+                                <id>assembler</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>torodb-stampede-${project.version}</finalName>
+                                    <outputDirectory>${project.build.directory}/dist</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -186,18 +228,7 @@
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
-                                    <overWriteReleases>false</overWriteReleases>
-                                    <overWriteSnapshots>false</overWriteSnapshots>
-                                    <overWriteIfNewer>true</overWriteIfNewer>
-                                    <useRepositoryLayout>true</useRepositoryLayout>
-                                </configuration>
+                                <id>dist-copy-dependencies</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -205,43 +236,18 @@
                         <artifactId>maven-resources-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-resources</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/dist/</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>src/main/dist</directory>
-                                            <filtering>true</filtering>
-                                        </resource>
-                                    </resources>
-                                    <overwrite>true</overwrite>
-                                    <delimiters>
-                                        <delimiter>@{*}</delimiter>
-                                    </delimiters>
-                                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                                </configuration>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
-                            <finalName>${assembler.name}-${project.version}</finalName>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
-                                    <classpathPrefix>./</classpathPrefix>
-                                    <mainClass>${mainClass}</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>io.fabric8</groupId>
@@ -283,13 +289,298 @@
                         </configuration>
                         <executions>
                             <execution>
-                                <id>build</id>
+                                <id>docker-build</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>build</goal>
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>snap</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-snap</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/snap/${assembler.name}/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>assembler</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/snap/${assembler.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>snapcraft-clean</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}</workingDirectory>
+                                    <executable>snapcraft</executable>
+                                    <arguments>
+                                        <argument>clean</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>snapcraft-build</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}</workingDirectory>
+                                    <executable>snapcraft</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>snap-postgres</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-snap-postgres</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/snap/${assembler.name}-postgres/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>assembler</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/snap/${assembler.name}-postgres</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.5.0</version>
+                        <executions>
+                            <execution>
+                                <id>snapcraft-clean-postgres</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}-postgres</workingDirectory>
+                                    <executable>snapcraft</executable>
+                                    <arguments>
+                                        <argument>clean</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>snapcraft-build-postgres</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${project.build.directory}/dist/snap/${assembler.name}-postgres</workingDirectory>
+                                    <executable>snapcraft</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>rpm</id>
+            <properties>
+                <rpmbuilder.image>fedora:25</rpmbuilder.image>
+                <assembler.libdir>share/${assembler.name}/lib</assembler.libdir>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-rpm</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/rpm/${assembler.name}/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>assembler</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/rpm/${assembler.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <alias>rpmbuilder</alias>
+                                    <name>rpmbuilder</name>
+                                    <build>
+                                        <cleanup>remove</cleanup>
+                                        <optimise>true</optimise>
+                                        <from>${rpmbuilder.image}</from>
+                                        <runCmds>
+                                            <run>dnf -y install rpmdevtools rpmlint copr-cli help2man java-1.8.0-openjdk-headless postgresql</run>
+                                            <run>rpmdev-setuptree</run>
+                                        </runCmds>
+                                    </build>
+                                    <run>
+                                        <volumes>
+                                            <bind>
+                                                <volume>${basedir}/target/dist/rpm/torodb-stampede:/rpm</volume>
+                                            </bind>
+                                        </volumes>
+                                        <env>
+                                            <SPEC_FILE>/rpm/torodb-stampede.spec</SPEC_FILE>
+                                        </env>
+                                        <wait>
+                                            <time>600000</time>
+                                            <log>rpmbuilder finished</log>
+                                        </wait>
+                                        <cmd>
+                                            <arg>/bin/sh</arg>
+                                            <arg>-c</arg>
+                                            <arg>
+                                            set -x -v -e;
+                                            cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
+                                            rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
+                                            sed -i '/^Version:/s/-/_/g' "$SPEC_FILE"
+                                            spectool -g -R "$SPEC_FILE";
+                                            dnf -y builddep "$SPEC_FILE";
+                                            rpmbuild -ba "$SPEC_FILE";
+                                            cp -a "$HOME/rpmbuild" "/rpm/.";
+                                            chmod a+w /rpm -R;
+                                            echo "rpmbuilder finished";
+                                            </arg>
+                                        </cmd>
+                                    </run>
+                                </image>
+                            </images>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -353,22 +644,6 @@
             </properties>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
-                            <finalName>${assembler.name}-${project.version}</finalName>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
-                                    <classpathPrefix>./</classpathPrefix>
-                                    <mainClass>${mainClass}</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </plugin>
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
@@ -518,6 +793,8 @@
             <id>prod</id>
             <properties>
                 <profiles.resources>src/main/profiles/prod</profiles.resources>
+                <snap.grade>stable</snap.grade>
+                <snap.confinement>strict</snap.confinement>
             </properties>
         </profile>
 
