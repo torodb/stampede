@@ -35,6 +35,7 @@ import com.torodb.mongodb.commands.pojos.CollectionOptions;
 import com.torodb.mongodb.commands.pojos.CursorResult;
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsResult;
+import com.torodb.torod.CollectionInfo.Type;
 
 import java.util.function.Function;
 
@@ -214,7 +215,7 @@ public class ListCollectionsCommand
           BsonDocument doc = from.asDocument();
           return new Entry(
               BsonReaderTool.getString(doc, NAME_FIELD),
-              BsonReaderTool.getString(doc, TYPE_FIELD),              
+              BsonReaderTool.getString(doc, TYPE_FIELD, Type.COLLECTION.getValue()),              
               CollectionOptions.unmarshal(
                   BsonReaderTool.getDocument(doc, OPTIONS_FIELD)
               )
