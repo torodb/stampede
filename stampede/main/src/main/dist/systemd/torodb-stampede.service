@@ -1,6 +1,7 @@
 [Unit]
-Description=ToroDB
-After=syslog.target network.target postgresql.target
+Description=@{assembler.fullName}
+Wants=network.service
+After=network.service
 
 [Service]
 Type=simple
@@ -9,6 +10,9 @@ ExecStart=/usr/bin/@{assembler.name}
 PrivateTmp=true
 LimitNOFILE=64000
 TimeoutStartSec=180
+RestartSec=30
+Restart=always
+SuccessExitStatus=143
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. "/etc/default/@{assembler.name}"
+
+TORO_OPTIONS=("$@")
+function contains_parameter {
+    for index in "${!TORO_OPTIONS[@]}"
+    do
+        if [ "${TORO_OPTIONS[$index]}" == "$1" ]
+        then
+            return 0
+        fi
+    done
+    
+    return 1
+}
+if [ ! -z "$TOROPASSFILE" ] && ! contains_parameter --toropass-file
+then
+    TORO_OPTIONS+=(--toropass-file "$TOROPASSFILE")
+fi
+
+if [ ! -z "$MONGOPASSFILE" ] && ! contains_parameter --mongopass-file
+then
+    TORO_OPTIONS+=(--mongopass-file "$MONGOPASSFILE")
+fi
+
+export TOROCONFIG
+
+exec "/usr/lib/@{assembler.name}/bin/@{assembler.name}" "${TORO_OPTIONS[@]}"

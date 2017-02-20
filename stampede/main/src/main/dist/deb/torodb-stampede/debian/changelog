@@ -1,0 +1,5 @@
+@{package.name} (@{assembler.version}-@{assembler.revision}) @{deb.distro}; urgency=@{deb.urgency}
+
+  * @{assembler.changelog}
+
+ -- @{assembler.maintainer}  @{deb.date}

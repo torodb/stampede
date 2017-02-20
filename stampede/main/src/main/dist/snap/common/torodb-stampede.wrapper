@@ -1,0 +1,54 @@
+#!/bin/bash
+
+. "$(dirname "$0")/environment.wrapper"
+
+TORO_OPTIONS=("$@")
+for todelete_parameter in --toropass-file --mongopass-file
+do
+    for index in "${!TORO_OPTIONS[@]}"
+    do
+        if [ "${TORO_OPTIONS[$index]}" == "$todelete_parameter" ]
+        then
+            unset TORO_OPTIONS[$index]
+            unset TORO_OPTIONS[$((index+1))]
+        fi
+    done
+done
+
+TORO_OPTIONS+=(--toropass-file "$TOROPASSFILE" --mongopass-file "$MONGOPASSFILE")
+
+for bypass_parameter in -l --print-config -lx --print-xml-config\
+    -lp --print-param -hp --help-param
+do
+    if echo ' '"$@"' ' | grep -q -- "\s$bypass_parameter\s"
+    then
+        exec "$SNAP/bin/@{assembler.name}" "${TORO_OPTIONS[@]}"
+    fi
+done
+
+TORO_PARAMS="$("$SNAP/bin/@{assembler.name}" "${TORO_OPTIONS[@]}" \
+    -lp /backend/postgres/host \
+    -lp /backend/postgres/port \
+    -lp /backend/postgres/database \
+    -lp /backend/postgres/user)"
+POSTGRES_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 1)"
+POSTGRES_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 2)"
+POSTGRES_DATABASE="$(echo "$TORO_PARAMS"|cut -d ',' -f 3)"
+POSTGRES_USER="$(echo "$TORO_PARAMS"|cut -d ',' -f 4)"
+
+export PGPASSFILE="$TOROPASSFILE"
+
+count=5
+while [ $count -gt 0 ] && ! psql --no-readline -w -U "$POSTGRES_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_DATABASE" -c "SELECT 1" > /dev/null 2>&1
+do
+    sleep 1
+    count=$((count-1))
+done
+if ! [ $count -gt 0 ] && ! psql --no-readline -w -U "$POSTGRES_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_DATABASE" -c "SELECT 1" > /dev/null 2>&1
+then
+    echo "Can not connect to PostgreSQL $POSTGRES_HOST:$POSTGRES_PORT at database $POSTGRES_DATABASE with user $POSTGRES_USER" >&2
+    psql --no-readline -w -U "$POSTGRES_USER" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -d "$POSTGRES_DATABASE" -c "SELECT 1"
+    exit 1
+fi
+
+exec "$SNAP/bin/@{assembler.name}" "${TORO_OPTIONS[@]}"
