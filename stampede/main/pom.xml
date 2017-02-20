@@ -14,10 +14,6 @@
 
     <properties>
         <profiles.resources>src/main/profiles/dev</profiles.resources>
-        <assembler.mainClass>com.torodb.stampede.Main</assembler.mainClass>
-        <assembler.name>torodb-stampede</assembler.name>
-        <assembler.fullName>ToroDB Stampede</assembler.fullName>
-        <assembler.url>https://www.torodb.com/stampede</assembler.url>
     </properties>
 
     <dependencies>
@@ -70,6 +66,119 @@
                         </execution>
                     </executions>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dist-copy-dependencies</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-dependencies</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
+                                <includeScope>runtime</includeScope>
+                                <overWriteReleases>false</overWriteReleases>
+                                <overWriteSnapshots>false</overWriteSnapshots>
+                                <overWriteIfNewer>true</overWriteIfNewer>
+                                <useRepositoryLayout>true</useRepositoryLayout>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dist-copy-package-properties</id>
+                            <phase>process-resources</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/dist/</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>${profiles.resources}</directory>
+                                        <include>packaging.properties</include>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                                <overwrite>true</overwrite>
+                                <delimiters>
+                                    <delimiter>@{*}</delimiter>
+                                </delimiters>
+                                <useDefaultDelimiters>false</useDefaultDelimiters>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>dist-copy-resources</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>copy-resources</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/dist/</outputDirectory>
+                                <resources>
+                                    <resource>
+                                        <directory>src/main/dist</directory>
+                                        <filtering>true</filtering>
+                                    </resource>
+                                </resources>
+                                <overwrite>true</overwrite>
+                                <delimiters>
+                                    <delimiter>@{*}</delimiter>
+                                </delimiters>
+                                <useDefaultDelimiters>false</useDefaultDelimiters>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>read-packaging-properties</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>read-project-properties</goal>
+                            </goals>
+                            <configuration>
+                                <files>
+                                    <file>${project.build.directory}/dist/packaging.properties</file>
+                                </files>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>dist-main-jar</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                            <configuration>
+                                <outputDirectory>${project.build.directory}/dist/lib/</outputDirectory>
+                                <finalName>${assembler.name}-${project.version}</finalName>
+                                <archive>
+                                    <manifest>
+                                        <addClasspath>true</addClasspath>
+                                        <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
+                                        <useUniqueVersions>false</useUniqueVersions>
+                                        <classpathPrefix>./</classpathPrefix>
+                                        <mainClass>${mainClass}</mainClass>
+                                    </manifest>
+                                </archive>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -87,6 +196,11 @@
     <profiles>
         <profile>
             <id>assembler</id>
+            <properties>
+                <s3.push>false</s3.push>
+                <s3.path>s3://torodb.download/stampede</s3.path>
+                <s3.profile>default</s3.profile>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
@@ -94,19 +208,16 @@
                         <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
-                                    <includeScope>runtime</includeScope>
-                                    <overWriteReleases>false</overWriteReleases>
-                                    <overWriteSnapshots>false</overWriteSnapshots>
-                                    <overWriteIfNewer>true</overWriteIfNewer>
-                                    <useRepositoryLayout>true</useRepositoryLayout>
-                                </configuration>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -114,186 +225,827 @@
                         <artifactId>maven-resources-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>copy-resources</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/dist/</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>src/main/dist</directory>
-                                            <filtering>true</filtering>
-                                        </resource>
-                                    </resources>
-                                    <overwrite>true</overwrite>
-                                    <delimiters>
-                                        <delimiter>@{*}</delimiter>
-                                    </delimiters>
-                                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                                </configuration>
+                                <id>dist-copy-package-properties</id>
+                            </execution>
+                            <execution>
+                                <id>dist-copy-resources</id>
                             </execution>
                         </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
-                            <finalName>${assembler.name}-${project.version}</finalName>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
-                                    <classpathPrefix>./</classpathPrefix>
-                                    <mainClass>${mainClass}</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-assembly-plugin</artifactId>
-                        <configuration>
-                            <descriptors>
-                                <descriptor>src/main/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                            <finalName>torodb-stampede-${project.version}</finalName>
-                            <outputDirectory>${project.build.directory}/dist</outputDirectory>
-                            <tarLongFileMode>gnu</tarLongFileMode>
-                        </configuration>
                         <executions>
                             <execution>
+                                <id>assembler</id>
                                 <phase>package</phase>
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-                <finalName>${project.name}-${project.version}</finalName>
-            </build>
-        </profile>
-        
-        <profile>
-            <id>docker</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>copy-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/dist/lib</outputDirectory>
-                                    <overWriteReleases>false</overWriteReleases>
-                                    <overWriteSnapshots>false</overWriteSnapshots>
-                                    <overWriteIfNewer>true</overWriteIfNewer>
-                                    <useRepositoryLayout>true</useRepositoryLayout>
+                                    <descriptors>
+                                        <descriptor>src/main/assembly/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>${assembler.name}-${project.version}</finalName>
+                                    <outputDirectory>${project.build.directory}/dist</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>copy-resources</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/dist/</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>src/main/dist</directory>
-                                            <filtering>true</filtering>
-                                        </resource>
-                                    </resources>
-                                    <overwrite>true</overwrite>
-                                    <delimiters>
-                                        <delimiter>@{*}</delimiter>
-                                    </delimiters>
-                                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
-                            <finalName>${assembler.name}-${project.version}</finalName>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
-                                    <classpathPrefix>./</classpathPrefix>
-                                    <mainClass>${mainClass}</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <extensions>true</extensions>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <alias>torodb-stampede</alias>
-                                    <name>torodb/stampede:%v</name>
-                                    <build>
-                                        <from>torodb/base:latest</from>
-                                        <tags>
-                                            <tag>${project.version}</tag>
-                                            <tag>latest</tag>
-                                        </tags>
-                                        <assembly>
-                                            <mode>dir</mode>
-                                            <descriptor>assembly.xml</descriptor>
-                                        </assembly>
-                                        <env>
-                                            <PATH>/maven/bin:$PATH</PATH>
-                                        </env>
-                                        <runCmds>
-                                            <run>useradd -d /maven torodb</run>
-                                            <run>chown torodb /maven -R</run>
-                                        </runCmds>
-                                        <entryPoint>
-                                            <exec>
-                                                <arg>/maven/bin/entry-point</arg>
-                                            </exec>
-                                        </entryPoint>
-                                        <cmd>
-                                            <arg>torodb-stampede</arg>
-                                        </cmd>
-                                    </build>
-                                </image>
-                            </images>
-                        </configuration>
                         <executions>
                             <execution>
-                                <id>build</id>
+                                <id>docker-assembler-push-s3</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build</goal>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
                                 </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>assembler-push-s3</name>
+                                            <build>
+                                                <cleanup>try</cleanup>
+                                                <optimise>true</optimise>
+                                                <from>ubuntu:16.04</from>
+                                                <runCmds>
+                                                    <run>apt update</run>
+                                                    <run>apt -y install python-pip</run>
+                                                    <run>pip install awscli</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${project.build.directory}/dist:/dist</volume>
+                                                        <volume>${user.home}/.aws:/root/.aws:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <env>
+                                                    <S3_PATH>${s3.path}</S3_PATH>
+                                                    <S3_PROFILE>${s3.profile}</S3_PROFILE>
+                                                    <FINAL_NAME>${assembler.name}-${project.version}</FINAL_NAME>
+                                                </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>setup s3 finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /dist -R" ERR EXIT;
+                                                    cd /dist
+                                                    if [ "${s3.push}" == "true" ];
+                                                    then
+                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".tar.bz2 "$S3_PATH"/"$FINAL_NAME".tar.bz2
+                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".zip "$S3_PATH"/"$FINAL_NAME".zip
+                                                    fi;
+                                                    echo "'setup s3 finished'";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
         </profile>
+        
+        <profile>
+            <id>docker</id>
+            <properties>
+                <docker.javaimage>java:8-jre</docker.javaimage>
+                <docker.skip.push>true</docker.skip.push>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-package-properties</id>
+                            </execution>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>docker-base</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>torodb-base</name>
+                                            <build>
+                                                <from>${docker.javaimage}</from>
+                                                <cleanup>try</cleanup>
+                                                <optimise>true</optimise>
+                                                <runCmds>
+                                                    <run>apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv D68FA50FEA312927</run>
+                                                    <run>echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" > /etc/apt/sources.list.d/mongodb-org-3.2.list</run>
+                                                    <run>apt-get update</run>
+                                                    <run>apt-get -y install netcat postgresql-client python-pip mongodb-org-shell mongodb-org-tools</run>
+                                                    <run>pip install awscli</run>
+                                                    <run>apt-get clean</run>
+                                                    <run>rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <wait>
+                                                    <log>base image generated</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    echo base image generated;
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>docker-push</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <filter>torodb-stampede</filter>
+                                    <images>
+                                        <image>
+                                            <alias>torodb-stampede</alias>
+                                            <name>torodb/stampede</name>
+                                            <build>
+                                                <from>torodb-base</from>
+                                                <cleanup>remove</cleanup>
+                                                <tags>
+                                                    <tag>${project.version}</tag>
+                                                    <tag>${docker.tags.latest}</tag>
+                                                </tags>
+                                                <assembly>
+                                                    <mode>dir</mode>
+                                                    <descriptor>assembly.xml</descriptor>
+                                                </assembly>
+                                                <env>
+                                                    <PATH>/maven/bin:$PATH</PATH>
+                                                </env>
+                                                <runCmds>
+                                                    <run>useradd -d /maven torodb</run>
+                                                    <run>chown torodb /maven -R</run>
+                                                </runCmds>
+                                                <entryPoint>
+                                                    <exec>
+                                                        <arg>/maven/bin/entry-point</arg>
+                                                    </exec>
+                                                </entryPoint>
+                                                <cmd>
+                                                    <arg>torodb-stampede</arg>
+                                                </cmd>
+                                            </build>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>snap</id>
+            <properties>
+                <package.name>${assembler.name}</package.name>
+                <launchpad.push>false</launchpad.push>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-package-properties</id>
+                            </execution>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-snap</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/snap/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>assembler</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/snap/${package.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>docker-snapbuilder</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>snapbuilder</name>
+                                            <build>
+                                                <cleanup>try</cleanup>
+                                                <optimise>true</optimise>
+                                                <from>ubuntu:16.04</from>
+                                                <runCmds>
+                                                    <run>apt update</run>
+                                                    <run>apt -y install snapcraft git</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${project.build.directory}/dist/snap:/snap</volume>
+                                                        <volume>${user.home}/.gitconfig:/config/.gitconfig:ro</volume>
+                                                        <volume>${user.home}/.ssh:/config/.ssh:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <env>
+                                                    <SNAP_CHANNEL>${snap.channel}</SNAP_CHANNEL>
+                                                    <LAUNCHPAD_USER>${launchpad.user}</LAUNCHPAD_USER>
+                                                    <LAUNCHPAD_HOST>${launchpad.host}</LAUNCHPAD_HOST>
+                                                    <PACKAGE_NAME>${package.name}</PACKAGE_NAME>
+                                                </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>setup launchpad finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /snap -R" ERR EXIT;
+                                                    cp -a /config/.ssh /config/.gitconfig /root/.;
+                                                    chown root:root /root/.ssh /root/.gitconfig -R;
+                                                    cd /snap/${package.name};
+                                                    if [ "${launchpad.push}" == "true" ];
+                                                    then
+                                                        bash -x ../update-launchpad.sh;
+                                                    else
+                                                        snapcraft clean;
+                                                        snapcraft;
+                                                    fi;
+                                                    echo "'setup launchpad finished'";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>rpm</id>
+            <properties>
+                <package.name>${assembler.name}</package.name>
+                <rpmbuilder.image>fedora:25</rpmbuilder.image>
+                <copr.push>false</copr.push>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>buildnumber-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create_deb_date</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>EEE MMM d yyyy</timestampFormat>
+                                    <timestampPropertyName>rpm.date</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>create_revision</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>yyyyMMddHHmmss</timestampFormat>
+                                    <timestampPropertyName>assembler.revision</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-version-property</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>regex-property</goal>
+                                </goals>
+                                <configuration>
+                                    <name>assembler.version</name>
+                                    <value>${project.version}</value>
+                                    <regex>-</regex>
+                                    <replacement>_</replacement>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-package-properties</id>
+                            </execution>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-rpm</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/rpm/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>assembler</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/rpm/${package.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>docker-rpmbuilder</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>rpmbuilder</name>
+                                            <build>
+                                                <cleanup>try</cleanup>
+                                                <optimise>true</optimise>
+                                                <from>${rpmbuilder.image}</from>
+                                                <runCmds>
+                                                    <run>dnf -y install --best rpmdevtools rpmlint copr-cli systemd help2man java-1.8.0-openjdk-headless postgresql mongodb openssl</run>
+                                                    <run>rpmdev-setuptree</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${project.build.directory}/dist/rpm/${package.name}:/rpm</volume>
+                                                        <volume>${user.home}/.config/copr:/root/.config/copr:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <env>
+                                                    <SPEC_FILE>/rpm/${package.name}.spec</SPEC_FILE>
+                                                </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>rpmbuilder finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /rpm -R" ERR EXIT;
+                                                    cp -a /rpm/* "$HOME/rpmbuild/SOURCES";
+                                                    rm -Rf "$HOME/rpmbuild/SOURCES/rpmbuild";
+                                                    spectool -g -R "$SPEC_FILE";
+                                                    #dnf -y builddep "$SPEC_FILE";
+                                                    if [ "${copr.push}" == "true" ];
+                                                    then
+                                                        rpmbuild -bs "$SPEC_FILE";
+                                                        cp -a "$HOME/rpmbuild" "/rpm/.";
+                                                        if ! copr-cli list-packages ${package.name}&gt;/dev/null 2&gt;&amp;1;
+                                                        then
+                                                            copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
+                                                        fi;
+                                                        copr-cli build ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
+                                                    else
+                                                        rpmbuild -ba "$SPEC_FILE";
+                                                        cp -a "$HOME/rpmbuild" "/rpm/.";
+                                                    fi;
+                                                    echo "rpmbuilder finished";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>deb</id>
+            <properties>
+                <package.name>${assembler.name}</package.name>
+                <debbuilder.image>debian:8</debbuilder.image>
+                <launchpad.push>false</launchpad.push>
+                <deb.distro>xenial</deb.distro>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>buildnumber-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>create_deb_date</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>EEE, d MMM yyyy HH:mm:ss Z</timestampFormat>
+                                    <timestampPropertyName>deb.date</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>create_revision</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>create-timestamp</goal>
+                                </goals>
+                                <configuration>
+                                    <timestampFormat>yyyyMMddHHmmss</timestampFormat>
+                                    <timestampPropertyName>assembler.revision</timestampPropertyName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-version-property</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>regex-property</goal>
+                                </goals>
+                                <configuration>
+                                    <name>assembler.version</name>
+                                    <value>${project.version}</value>
+                                    <regex>-SNAPSHOT</regex>
+                                    <replacement></replacement>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-specific-packaging-properties</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${project.build.directory}/dist/deb/packaging.properties</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-package-properties</id>
+                            </execution>
+                            <execution>
+                                <id>dist-copy-specific-package-properties</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/dist/deb</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/dist/deb</directory>
+                                            <include>packaging.properties</include>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                    <overwrite>true</overwrite>
+                                    <delimiters>
+                                        <delimiter>@{*}</delimiter>
+                                    </delimiters>
+                                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>dist-copy-resources</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>deb-append-copyright</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <concat 
+                                            destfile="${project.build.directory}/dist/deb/${package.name}/build/debian/copyright"
+                                            force="yes" append="yes">
+                                            <fileset dir="${project.build.directory}/dist/doc" include="LICENSE-GNU_AGPLv3.txt" />
+                                        </concat>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-main-jar</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>assembler-deb</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>src/main/deb/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <finalName>${package.name}</finalName>
+                                    <outputDirectory>${project.build.directory}/dist/deb/${package.name}</outputDirectory>
+                                    <tarLongFileMode>gnu</tarLongFileMode>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>docker-debbuilder</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build-nofork</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>debbuilder</name>
+                                            <build>
+                                                <cleanup>try</cleanup>
+                                                <optimise>false</optimise>
+                                                <from>${debbuilder.image}</from>
+                                                <runCmds>
+                                                    <run>echo "deb http://ftp.de.debian.org/debian jessie-backports main" &gt;&gt; /etc/apt/sources.list</run>
+                                                    <run>apt update</run>
+                                                    <run>apt -y install -t jessie-backports devscripts build-essential lintian help2man openjdk-8-jdk-headless postgresql-client mongodb-clients</run>
+                                                </runCmds>
+                                            </build>
+                                            <run>
+                                                <volumes>
+                                                    <bind>
+                                                        <volume>${project.build.directory}/dist/deb/${package.name}:/deb</volume>
+                                                        <volume>${user.home}/.gnupg:/config/.gnupg:ro</volume>
+                                                        <volume>${user.home}/.dput.cf:/config/.dput.cf:ro</volume>
+                                                    </bind>
+                                                </volumes>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>debbuilder finished</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>/bin/bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                    set -x -v -e;
+                                                    trap "chmod a+w /deb -R" ERR EXIT;
+                                                    cp -a /config/.gnupg /config/.dput.cf /root/.;
+                                                    chown root:root /root/.gnupg /root/.dput.cf -R;
+                                                    mkdir "$HOME/debbuild";
+                                                    cd "$HOME/debbuild";
+                                                    tar xzf /deb/${package.name}.tar.gz;
+                                                    cd ${package.name}/debian;
+                                                    if [ "${launchpad.push}" == "true" ];
+                                                    then
+                                                        debuild --no-tgz-check -S;
+                                                        dput ${launchpad.dputprofile} ../../${package.name}_*.changes;
+                                                    else
+                                                        debuild --no-tgz-check -us -uc;
+                                                    fi;
+                                                    cp -a "$HOME/debbuild" "/deb/.";
+                                                    echo "debbuilder finished";
+                                                    </arg>
+                                                </cmd>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
         
         <profile>
             <id>docker-stampede</id>
@@ -353,22 +1105,6 @@
             </properties>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/dist/lib/</outputDirectory>
-                            <finalName>${assembler.name}-${project.version}</finalName>
-                            <archive>
-                                <manifest>
-                                    <addClasspath>true</addClasspath>
-                                    <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
-                                    <classpathPrefix>./</classpathPrefix>
-                                    <mainClass>${mainClass}</mainClass>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </plugin>
                     <plugin>
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>

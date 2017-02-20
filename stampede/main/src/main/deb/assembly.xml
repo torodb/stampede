@@ -3,12 +3,24 @@
           xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
     <!--<id>bin</id>-->
     <formats>
-        <format>tar</format>
+        <format>tar.gz</format>
     </formats>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/dist/docker</directory>
+            <directory>${project.build.directory}/dist/deb/common</directory>
             <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/deb/${package.name}</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
             <directoryMode>0755</directoryMode>
             <fileMode>0755</fileMode>
         </fileSet>
@@ -37,8 +49,29 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
+            <directory>${project.build.directory}/dist/systemd</directory>
+            <outputDirectory>systemd</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/logrotate</directory>
+            <outputDirectory>logrotate</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/deb/common</directory>
+            <outputDirectory>default</outputDirectory>
+            <includes>
+                <include>*.default</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
             <directory>${project.build.directory}/dist/doc/</directory>
-            <outputDirectory>.</outputDirectory>
+            <outputDirectory>doc</outputDirectory>
             <includes>
                 <include>README.md</include>
                 <include>LICENSE-GNU_AGPLv3.txt</include>
@@ -49,6 +82,12 @@
         <fileSet>
             <directory>${project.build.directory}/dist/lib</directory>
             <outputDirectory>lib</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/deb/${package.name}/debian</directory>
+            <outputDirectory>debian</outputDirectory>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>

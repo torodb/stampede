@@ -1,0 +1,31 @@
+[ "$DEBUG" == "true" ] && set -x
+[ "$DEBUG" == "true" ] && set -v
+set -e
+
+if [ $(id -u) -ne 0 ]
+then
+    SNAP_DATA="$SNAP_USER_DATA"
+    SNAP_COMMON="$SNAP_USER_COMMON"
+fi
+
+export I18NPATH=$SNAP/usr/share/i18n
+export LOCPATH=$SNAP_DATA
+LANG1=$(echo $LANG | cut -f1 -d.)
+ENC=UTF-8
+LOC="$LANG"
+export LC_ALL=$LANG
+# generate a locale so we get properly working charsets and graphics
+if [ ! -e $SNAP_DATA/$LOC ]; then
+    $SNAP/usr/bin/localedef --prefix=$SNAP_DATA -f $ENC -i $LANG1 $SNAP_DATA/$LOC
+fi
+
+export PATH="$PATH:$(ls -1 -d "$SNAP"/usr/lib/postgresql/*/bin|head -n 1):$(ls -1 -d "$SNAP"/usr/lib/jvm/java-8-openjdk-*|head -n 1)/bin"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$(ls -1 -d "$SNAP"/usr/lib/*-linux-gnu|head -n 1)"
+export TMPDIR="$SNAP_COMMON"
+export JAVA_HOME="$(ls -1 -d "$SNAP"/usr/lib/jvm/java-8-openjdk-*|head -n 1)"
+export TOROCMD="$SNAP/bin/@{assembler.name}.wrapper"
+export TOROCONFIG="$SNAP_COMMON/@{assembler.name}.yml"
+export PGPASSFILE="$SNAP_COMMON/.pgpass"
+export TOROPASSFILE="$SNAP_COMMON/.toropass"
+export MONGOPASSFILE="$SNAP_COMMON/.mongopass"
+export INTERACTIVE=true

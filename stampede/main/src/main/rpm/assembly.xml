@@ -7,8 +7,20 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>${project.build.directory}/dist/docker</directory>
+            <directory>${project.build.directory}/dist/rpm/common</directory>
             <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0755</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/rpm/${package.name}</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>*.wrapper</include>
+            </includes>
             <directoryMode>0755</directoryMode>
             <fileMode>0755</fileMode>
         </fileSet>
@@ -37,8 +49,29 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
+            <directory>${project.build.directory}/dist/systemd</directory>
+            <outputDirectory>systemd</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/logrotate</directory>
+            <outputDirectory>logrotate</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/dist/rpm/common</directory>
+            <outputDirectory>sysconfig</outputDirectory>
+            <includes>
+                <include>*.sysconfig</include>
+            </includes>
+            <directoryMode>0755</directoryMode>
+            <fileMode>0644</fileMode>
+        </fileSet>
+        <fileSet>
             <directory>${project.build.directory}/dist/doc/</directory>
-            <outputDirectory>.</outputDirectory>
+            <outputDirectory>doc</outputDirectory>
             <includes>
                 <include>README.md</include>
                 <include>LICENSE-GNU_AGPLv3.txt</include>
