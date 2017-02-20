@@ -18,15 +18,12 @@
 
 package com.torodb.d2r;
 
-import com.google.common.collect.UnmodifiableIterator;
 import com.google.common.io.ByteSource;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.*;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
-import com.torodb.kvdocument.conversion.json.JacksonJsonParser;
-import com.torodb.kvdocument.conversion.json.JsonParser;
 import com.torodb.kvdocument.types.*;
 import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.heap.*;
@@ -36,7 +33,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
+import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -125,6 +125,8 @@ public class DocumentsAndRelationsTypesTest {
             KvDecimal128.of(912012L,912912741L),
             KvDecimal128.of(0x7800000000000000L,912912741L),
             KvDecimal128.of(0x7c00000000000000L,912912741L),
+            new LongKvInstant(234123L),
+            new LocalTimeKvTime(LocalTime.now()),
             new ListKvArray(Arrays.asList(new KvValue[] {
                     KvBoolean.FALSE,
                     KvInteger.of(123),
@@ -141,8 +143,7 @@ public class DocumentsAndRelationsTypesTest {
 
     Stream<Class<?>> untestedKvTypes = KvTypeFinder.findAllKvTypes().filter(
             type -> allTests.stream().noneMatch(
-                    //toTest -> toTest[1].getClass().isAssignableFrom(type)
-                    toTest -> type.isAssignableFrom(toTest[1].getClass())
+                    toTest -> type.isAssignableFrom(((KvValue)toTest[1]).getType().getClass())
             )
     );
 
@@ -150,7 +151,7 @@ public class DocumentsAndRelationsTypesTest {
 
     if(!joinedTypes.isEmpty())
     {
-      //throw new Exception(joinedTypes+ " types aren't tested");
+      throw new Exception(joinedTypes+ " types aren't tested");
     }
 
     return allTests;
@@ -254,4 +255,60 @@ public class DocumentsAndRelationsTypesTest {
   }
 
 
+  private static class KvTypeFinder{
+
+    public static Stream<Class<?>> findAllKvTypes(){
+      return find("com.torodb.kvdocument.types").stream().filter(
+              (clazz) -> KvType.class.isAssignableFrom(clazz) &&
+                      !bannedClasses.contains(clazz)
+      );
+    }
+
+    private static final List<Class<?>> bannedClasses = Arrays.asList(new Class<?>[]{
+            NonExistentType.class,
+            GenericType.class
+    });
+
+      private static final char PKG_SEPARATOR = '.';
+
+      private static final char DIR_SEPARATOR = '/';
+
+      private static final String CLASS_FILE_SUFFIX = ".class";
+
+      private static final String BAD_PACKAGE_ERROR = "Unable to get resources from path '%s'. Are you sure the package '%s' exists?";
+
+      private static List<Class<?>> find(String scannedPackage) {
+        String scannedPath = scannedPackage.replace(PKG_SEPARATOR, DIR_SEPARATOR);
+        URL scannedUrl = Thread.currentThread().getContextClassLoader().getResource(scannedPath);
+        if (scannedUrl == null) {
+          throw new IllegalArgumentException(String.format(BAD_PACKAGE_ERROR, scannedPath, scannedPackage));
+        }
+        File scannedDir = new File(scannedUrl.getFile());
+        List<Class<?>> classes = new ArrayList<Class<?>>();
+        for (File file : scannedDir.listFiles()) {
+          classes.addAll(find(file, scannedPackage));
+        }
+        return classes;
+      }
+
+      private static List<Class<?>> find(File file, String scannedPackage) {
+        List<Class<?>> classes = new ArrayList<Class<?>>();
+        String resource = scannedPackage + PKG_SEPARATOR + file.getName();
+        if (file.isDirectory()) {
+          for (File child : file.listFiles()) {
+            classes.addAll(find(child, resource));
+          }
+        } else if (resource.endsWith(CLASS_FILE_SUFFIX)) {
+          int endIndex = resource.length() - CLASS_FILE_SUFFIX.length();
+          String className = resource.substring(0, endIndex);
+          try {
+            classes.add(Class.forName(className));
+          } catch (ClassNotFoundException ignore) {
+          }
+        }
+        return classes;
+      }
+
+
+  }
 }
