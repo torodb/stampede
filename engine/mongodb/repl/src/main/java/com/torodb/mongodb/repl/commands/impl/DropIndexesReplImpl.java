@@ -26,7 +26,7 @@ import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
 import com.torodb.mongodb.commands.signatures.admin.DropIndexesCommand.DropIndexesArgument;
 import com.torodb.mongodb.commands.signatures.admin.DropIndexesCommand.DropIndexesResult;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
@@ -67,7 +67,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
 
     if (!arg.isDropAllIndexes()) {
       if (!arg.isDropByKeys()) {
-        if (Constants.ID_INDEX.equals(arg.getIndexToDrop())) {
+        if (DefaultIdUtils.ID_INDEX.equals(arg.getIndexToDrop())) {
           LOGGER.warn("Trying to drop index {}. Ignoring the whole request",
               arg.getIndexToDrop());
           return Status.ok(new DropIndexesResult(indexesBefore));
@@ -92,7 +92,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
       }
     } else {
       indexesToDrop = trans.getIndexesInfo(req.getDatabase(), arg.getCollection())
-          .filter(indexInfo -> !Constants.ID_INDEX.equals(indexInfo.getName()))
+          .filter(indexInfo -> !DefaultIdUtils.ID_INDEX.equals(indexInfo.getName()))
           .map(indexInfo -> indexInfo.getName())
           .collect(Collectors.toList());
     }

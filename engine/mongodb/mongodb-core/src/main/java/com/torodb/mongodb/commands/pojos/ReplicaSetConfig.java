@@ -45,6 +45,7 @@ import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.net.HostAndPort;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ import javax.annotation.Nullable;
 public class ReplicaSetConfig {
 
   private static final IntField VERSION_FIELD = new IntField("version");
-  private static final StringField ID_FIELD = new StringField("_id");
+  private static final StringField ID_FIELD = new StringField(DefaultIdUtils.ID_KEY);
   private static final ArrayField MEMBERS_FIELD = new ArrayField("members");
   private static final DocField SETTINGS_FIELD = new DocField("settings");
   private static final String STEP_DOWN_CHECK_WRITE_CONCERN_MODE_FIELD_NAME = "$stepDownCheck";
@@ -359,7 +360,7 @@ public class ReplicaSetConfig {
       builder.putCustomWriteConcern(customWriteConcern.getKey(), customWriteConcern.getValue());
     }
 
-    builder.setProtocolVersion(BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD));
+    builder.setProtocolVersion(BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD, 0));
 
     return builder.build();
   }

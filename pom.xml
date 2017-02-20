@@ -85,6 +85,7 @@
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
         <maven.version>3.2.2</maven.version>
+        <flexy-pool.version>1.2.7</flexy-pool.version>
         <torodb.buildtools.version>0.50.1-SNAPSHOT</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
         
@@ -231,6 +232,28 @@
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
                 <version>2.5.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea.flexy-pool</groupId>
+                <artifactId>flexy-pool-core-java7</artifactId>
+                <version>${flexy-pool.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea.flexy-pool</groupId>
+                <artifactId>flexy-hikaricp</artifactId>
+                <version>${flexy-pool.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>

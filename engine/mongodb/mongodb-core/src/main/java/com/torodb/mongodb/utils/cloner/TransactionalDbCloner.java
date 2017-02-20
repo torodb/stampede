@@ -148,10 +148,22 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
         LOGGER.info("Not cloning {} because is a not user writable", collName);
         continue;
       }
+      
       if (NamespaceUtil.isNormal(fromDb, collName)) {
         LOGGER.info("Not cloning {} because it is not normal", collName);
         continue;
       }
+      
+      if (!opts.getCollectionFilter().test(collName)) {
+        LOGGER.info("Not cloning {} because it didn't pass the given filter predicate", collName);
+        continue;
+      }
+      
+      if (NamespaceUtil.isViewCollection(collEntry.getType())) {
+        LOGGER.info("Not cloning {} because it is a view", collName);
+        continue;
+      }
+      
       LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
       collsToClone.put(collName, collEntry.getCollectionOptions());
     }

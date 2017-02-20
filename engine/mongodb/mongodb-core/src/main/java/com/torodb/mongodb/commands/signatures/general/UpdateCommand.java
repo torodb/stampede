@@ -44,6 +44,7 @@ import com.torodb.mongodb.commands.pojos.WriteConcernError;
 import com.torodb.mongodb.commands.pojos.WriteError;
 import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateArgument;
 import com.torodb.mongodb.commands.signatures.general.UpdateCommand.UpdateResult;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import javax.annotation.Nullable;
 
@@ -420,7 +421,6 @@ public class UpdateCommand extends AbstractNotAliasableCommand<UpdateArgument, U
   public static class UpsertResult {
 
     private static final IntField INDEX_FIELD = new IntField("index");
-    private static final String ID_FIELD_ID = "_id";
 
     private final int index;
     private final BsonValue<?> id;
@@ -434,14 +434,14 @@ public class UpdateCommand extends AbstractNotAliasableCommand<UpdateArgument, U
         NoSuchKeyException {
       return new UpsertResult(
           BsonReaderTool.getInteger(document, INDEX_FIELD),
-          BsonReaderTool.getValue(document, ID_FIELD_ID)
+          BsonReaderTool.getValue(document, DefaultIdUtils.ID_KEY)
       );
     }
 
     private BsonDocument marshall() {
       return new BsonDocumentBuilder()
           .append(INDEX_FIELD, index)
-          .appendUnsafe(ID_FIELD_ID, id)
+          .appendUnsafe(DefaultIdUtils.ID_KEY, id)
           .build();
     }
 

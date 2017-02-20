@@ -16,10 +16,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.language;
+package com.torodb.mongodb.repl.oplogreplier;
 
-public class Constants {
+import com.google.common.collect.Lists;
+import org.junit.Test;
+import org.junit.runners.Parameterized.Parameters;
 
-  public static final String ID = "_id";
-  public static final String ID_INDEX = "_id_";
+import java.util.Collection;
+
+/**
+ * This class test that filters are correctly applied by {@link DefaultOplogApplier}.
+ */
+public class FilterOplogApplierTest extends DefaultOplogApplierTest {
+
+  @Parameters(name = "{0}")
+  public static Collection<Object[]> data() {
+    return loadData(Lists.newArrayList(
+        "create_collection_filtered",
+        "dropDatabase_ignored",
+        "drop_collection_filtered",
+        "rename_collection_filtered_1",
+        "rename_collection_filtered_2"
+    ));
+  }
+
+  @Test
+  public void test() throws Exception {
+    super.test();
+  }
+
 }

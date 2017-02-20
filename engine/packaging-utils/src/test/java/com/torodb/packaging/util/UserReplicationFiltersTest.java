@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
 import com.torodb.mongodb.language.Namespace;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.packaging.util.UserReplicationFilters.IndexFieldPattern;
 import com.torodb.packaging.util.UserReplicationFilters.IndexPattern;
 import org.junit.Test;

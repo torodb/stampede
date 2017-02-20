@@ -49,8 +49,9 @@ public class ListCollectionsRequester {
       String database,
       @Nullable BsonDocument filter
   ) throws MongoException {
-    boolean commandSupported = connection.getClientOwner()
-        .getMongoVersion().compareTo(MongoVersion.V3_0) >= 0;
+    boolean commandSupported =
+        connection.getClientOwner().getMongoVersion().compareTo(MongoVersion.V3_0) >= 0
+            || connection.getClientOwner().getMongoVersion().equals(MongoVersion.UNKNOWN);
     if (commandSupported) {
       return getFromCommand(connection, database, filter);
     } else {
@@ -81,7 +82,8 @@ public class ListCollectionsRequester {
       MongoConnection connection,
       String database,
       BsonDocument filter) {
-    throw new UnsupportedOperationException("Not supported yet");
+    throw new UnsupportedOperationException(
+        "It is not supported to replicate from your MongoDB version");
   }
 
 }

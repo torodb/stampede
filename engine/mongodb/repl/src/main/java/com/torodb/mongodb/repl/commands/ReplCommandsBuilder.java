@@ -25,8 +25,8 @@ import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.filters.DatabaseFilter;
 import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.filters.NamespaceFilter;
-import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.commands.impl.CommandFilterUtil;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 
 /**

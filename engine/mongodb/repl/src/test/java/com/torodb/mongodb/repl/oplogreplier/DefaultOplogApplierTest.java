@@ -20,8 +20,12 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.torodb.core.modules.Bundle;
 import com.torodb.core.modules.BundleConfig;
+import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
+import com.torodb.mongodb.repl.filters.SimpleReplicationFilters;
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.torodb.mongodb.repl.oplogreplier.OplogTestContextResourceRule.OplogApplierBundleFactory;
 
 public abstract class DefaultOplogApplierTest extends AbstractOplogApplierTest {
@@ -34,8 +38,34 @@ public abstract class DefaultOplogApplierTest extends AbstractOplogApplierTest {
   private static Bundle<OplogApplier> createOplogApplierBundle(BundleConfig generalConfig,
       ReplCoreBundle replCoreBundle, MongoDbCoreBundle mongoDbCoreBundle) {
 
-    return DefaultOplogApplierBundleTest.createBundle(generalConfig, replCoreBundle,
-        mongoDbCoreBundle).map(DefaultOplogApplierBundleExtInt::getOplogApplier);
+    DefaultOplogApplierBundle bundle = DefaultOplogApplierBundleTest.createBundle(
+        generalConfig,
+        replCoreBundle,
+        mongoDbCoreBundle,
+        createReplicationFilters()
+    );
+
+    return bundle.map(DefaultOplogApplierBundleExtInt::getOplogApplier);
+  }
+
+  private static ToroDbReplicationFilters createReplicationFilters() {
+    ReplicationFilters userFilters = new SimpleReplicationFilters() {
+      @Override
+      public boolean filterDatabase(String db) {
+        return !"ignoredDb".equals(db);
+      }
+
+      @Override
+      public boolean filterNamespace(String db, String col) {
+        return filterDatabase(db) && !"ignoredCol".equals(col);
+      }
+
+      @Override
+      public boolean filterIndex(IndexOptions idx) {
+        return filterNamespace(idx.getDatabase(), idx.getCollection());
+      }
+    };
+    return new ToroDbReplicationFilters(userFilters);
   }
 
 }

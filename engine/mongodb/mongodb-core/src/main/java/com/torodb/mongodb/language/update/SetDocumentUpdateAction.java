@@ -21,7 +21,7 @@ package com.torodb.mongodb.language.update;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvDocument.DocEntry;
 import com.torodb.kvdocument.values.KvValue;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 /**
  *
@@ -42,8 +42,8 @@ public class SetDocumentUpdateAction extends UpdateAction {
   @Override
   public void apply(UpdatedToroDocumentBuilder builder) {
     KvValue<?> objectId = null;
-    if (builder.contains(Constants.ID)) {
-      objectId = builder.getValue(Constants.ID);
+    if (builder.contains(DefaultIdUtils.ID_KEY)) {
+      objectId = builder.getValue(DefaultIdUtils.ID_KEY);
     }
 
     builder.clear();
@@ -52,7 +52,7 @@ public class SetDocumentUpdateAction extends UpdateAction {
     }
 
     if (objectId != null) {
-      builder.putValue(Constants.ID, objectId);
+      builder.putValue(DefaultIdUtils.ID_KEY, objectId);
     }
 
     builder.setUpdated();

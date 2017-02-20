@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl;
+package com.torodb.mongodb.repl.filters;
 
 /**
  * The {@link ReplicationFilters} that ToroDB applications will use.

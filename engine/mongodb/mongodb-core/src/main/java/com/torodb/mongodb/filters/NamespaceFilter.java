@@ -19,6 +19,7 @@
 package com.torodb.mongodb.filters;
 
 import com.torodb.mongodb.language.Namespace;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Objects;
 
@@ -37,6 +38,7 @@ public interface NamespaceFilter extends Filter<Namespace> {
   }
 
   @Override
+  @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
   public default NamespaceFilter and(Filter<Namespace> other) {
     Objects.requireNonNull(other);
     NamespaceFilter self = this;

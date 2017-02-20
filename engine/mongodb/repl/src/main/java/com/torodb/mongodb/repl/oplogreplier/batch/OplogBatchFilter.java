@@ -21,6 +21,7 @@ package com.torodb.mongodb.repl.oplogreplier.batch;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.mongodb.filters.FilterResult;
 import com.torodb.mongodb.filters.OplogOperationFilter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,6 +35,7 @@ import javax.inject.Inject;
  * all elements that do not fulfill the filter.
  */
 @SuppressWarnings("serial")
+@SuppressFBWarnings({"SE_BAD_FIELD", "SE_NO_SERIALVERSIONID"})
 public class OplogBatchFilter implements akka.japi.function.Function<OplogBatch, OplogBatch> {
   private static final Logger LOGGER = LogManager.getLogger(OplogBatchFilter.class);
   private final Predicate<OplogOperation> opPredicate;

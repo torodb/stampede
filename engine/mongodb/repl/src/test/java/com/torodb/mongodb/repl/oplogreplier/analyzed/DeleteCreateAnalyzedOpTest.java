@@ -21,6 +21,8 @@ package com.torodb.mongodb.repl.oplogreplier.analyzed;
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
 import com.torodb.kvdocument.values.KvValue;
+import com.torodb.mongodb.utils.DefaultIdUtils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,7 +35,7 @@ public class DeleteCreateAnalyzedOpTest extends AbstractAnalyzedOpTest<DeleteCre
 
   @Override
   DeleteCreateAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {
-    return new DeleteCreateAnalyzedOp(mongoDocId, DefaultBsonValues.newDocument("_id",
+    return new DeleteCreateAnalyzedOp(mongoDocId, DefaultBsonValues.newDocument(DefaultIdUtils.ID_KEY,
         MongoWpConverter.translate(mongoDocId)));
   }
 

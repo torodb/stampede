@@ -19,6 +19,7 @@
 package com.torodb.mongodb.repl;
 
 
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;

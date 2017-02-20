@@ -19,6 +19,7 @@
 package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 
 public class ReplCoreExtInt {
 

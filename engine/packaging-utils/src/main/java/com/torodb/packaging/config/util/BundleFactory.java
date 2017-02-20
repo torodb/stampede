@@ -29,7 +29,7 @@ import com.torodb.backend.postgresql.PostgreSqlBackendBundle;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.mongodb.repl.MongoDbReplConfigBuilder;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;

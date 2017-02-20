@@ -20,6 +20,7 @@ package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.mongodb.repl.oplogreplier.UnexpectedOplogOperationException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import javax.inject.Inject;
 
@@ -27,6 +28,7 @@ import javax.inject.Inject;
  * A class that checks if all operations on the given {@link OplogBatch} are supported.
  */
 @SuppressWarnings("serial")
+@SuppressFBWarnings({"SE_BAD_FIELD", "SE_NO_SERIALVERSIONID"})
 public class OplogBatchChecker implements akka.japi.function.Function<OplogBatch, OplogBatch> {
   private final OplogOperationChecker opChecker;
 

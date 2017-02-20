@@ -24,6 +24,7 @@ import com.google.inject.Injector;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 
 import java.util.concurrent.ThreadFactory;
 

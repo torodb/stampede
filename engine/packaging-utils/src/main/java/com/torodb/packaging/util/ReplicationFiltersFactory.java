@@ -21,7 +21,7 @@ package com.torodb.packaging.util;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;

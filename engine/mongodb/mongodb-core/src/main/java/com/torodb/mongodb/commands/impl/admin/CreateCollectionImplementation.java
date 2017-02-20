@@ -32,7 +32,7 @@ import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 
 import java.util.Arrays;
@@ -47,10 +47,12 @@ public class CreateCollectionImplementation implements
     try {
       if (!context.getTorodTransaction().existsCollection(req.getDatabase(), arg.getCollection())) {
         context.getTorodTransaction().createIndex(req.getDatabase(), arg.getCollection(),
-            Constants.ID_INDEX,
-            ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
-                .asList(new Key[]{new ObjectKey(Constants.ID)})), FieldIndexOrdering.ASC
-                .isAscending())), true);
+            DefaultIdUtils.ID_INDEX,
+            ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(
+                new AttributeReference(
+                    Arrays.asList(new Key[] {new ObjectKey(DefaultIdUtils.ID_KEY)})),
+                FieldIndexOrdering.ASC.isAscending())),
+            true);
       }
 
       context.getTorodTransaction().createCollection(req.getDatabase(), arg.getCollection());

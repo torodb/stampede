@@ -26,7 +26,7 @@ import com.torodb.mongodb.filters.FilterResult;
 import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.language.Namespace;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 
 import java.util.ArrayList;
 import java.util.Iterator;

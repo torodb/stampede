@@ -1,0 +1,71 @@
+{
+    "comment": "Verifies that system and ignored collections are not renamed from",
+    "initialState": {
+        "test": {
+            "system.aCol": [
+                {
+                    "_id": 1
+                }
+            ],
+            "ignoredCol": [
+                {
+                    "_id": 1
+                }
+            ]
+        },
+        "ignoredDb": {
+            "aCol": [
+                {
+                    "_id" : 1
+                }
+            ]
+        }
+    },
+    "expectedState": {
+        "test": {
+            "system.aCol": [
+                {
+                    "_id": 1
+                }
+            ],
+            "ignoredCol": [
+                {
+                    "_id": 1
+                }
+            ]
+        },
+        "ignoredDb": {
+            "aCol": [
+                {
+                    "_id" : 1
+                }
+            ]
+        }
+    },
+    "oplog": [
+        {
+            "op": "c",
+            "ns": "admin.$cmd",
+            "o": {
+                "renameCollection": "test.system.aCol",
+                "to": "test.validCol"
+            }
+        },
+        {
+            "op": "c",
+            "ns": "admin.$cmd",
+            "o": {
+                "renameCollection": "test.ignoredCol",
+                "to": "test.validCol"
+            }
+        },
+        {
+            "op": "c",
+            "ns": "admin.$cmd",
+            "o": {
+                "renameCollection": "ignoredDb.aCol",
+                "to": "test.validCol"
+            }
+        }
+    ]
+}

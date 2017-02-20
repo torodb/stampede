@@ -16,13 +16,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl;
+package com.torodb.mongodb.repl.filters;
 
 
 import com.torodb.mongodb.filters.DatabaseFilter;
 import com.torodb.mongodb.filters.FilterResult;
 import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.filters.NamespaceFilter;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Objects;
 
@@ -34,6 +35,7 @@ public interface ReplicationFilters {
 
   public IndexFilter getIndexFilter();
 
+  @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
   public default ReplicationFilters and(ReplicationFilters other) {
     Objects.requireNonNull(other);
     final ReplicationFilters self = this;

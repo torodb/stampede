@@ -35,6 +35,7 @@ import com.torodb.mongodb.commands.pojos.CollectionOptions;
 import com.torodb.mongodb.commands.pojos.CursorResult;
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsArgument;
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsResult;
+import com.torodb.torod.CollectionInfo.Type;
 
 import java.util.function.Function;
 
@@ -144,6 +145,7 @@ public class ListCollectionsCommand
     private static final DocField CURSOR_FIELD = new DocField("cursor");
     private static final StringField NAME_FIELD = new StringField("name");
     private static final DocField OPTIONS_FIELD = new DocField("options");
+    private static final StringField TYPE_FIELD = new StringField("type");
 
     private final CursorResult<Entry> cursor;
 
@@ -176,12 +178,14 @@ public class ListCollectionsCommand
     public static class Entry {
 
       private final String name;
+      private final String type;
       private final CollectionOptions options;
       public static final Function<BsonValue<?>, Entry> TO_ENTRY = new ToEntryConverter();
       public static final Function<Entry, BsonDocument> FROM_ENTRY = new FromEntryConverter();
 
-      public Entry(String name, CollectionOptions options) {
+      public Entry(String name, String type, CollectionOptions options) {
         this.name = name;
+        this.type = type;
         this.options = options;
       }
 
@@ -189,6 +193,10 @@ public class ListCollectionsCommand
         return name;
       }
 
+      public String getType() {
+        return type;
+      }
+      
       public CollectionOptions getCollectionOptions() {
         return options;
       }
@@ -207,6 +215,7 @@ public class ListCollectionsCommand
           BsonDocument doc = from.asDocument();
           return new Entry(
               BsonReaderTool.getString(doc, NAME_FIELD),
+              BsonReaderTool.getString(doc, TYPE_FIELD, Type.COLLECTION.getValue()),              
               CollectionOptions.unmarshal(
                   BsonReaderTool.getDocument(doc, OPTIONS_FIELD)
               )

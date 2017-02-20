@@ -32,7 +32,7 @@ import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.ReplCoreConfig;
 import com.torodb.mongodb.repl.ReplMetrics;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.impl.MongoOplogReaderProvider;
 
 import java.time.Duration;

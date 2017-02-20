@@ -37,6 +37,7 @@ import com.torodb.mongodb.filters.DatabaseFilter;
 import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.repl.commands.ReplCommandsBuilder;
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule;
 import com.torodb.mongodb.repl.guice.OplogApplierServiceModule;

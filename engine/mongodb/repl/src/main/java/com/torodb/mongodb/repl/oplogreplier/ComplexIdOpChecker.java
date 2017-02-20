@@ -89,7 +89,7 @@ public class ComplexIdOpChecker implements OplogOperationChecker {
 
     private void checkFilter(OplogOperation op, BsonDocument filter, String desc, 
         boolean onSystemCol) throws UnexpectedOplogOperationException {
-      BsonValue<?> idValue = filter.get(DefaultIdUtils.DEFAULT_ID_KEY);
+      BsonValue<?> idValue = filter.get(DefaultIdUtils.ID_KEY);
 
       if (idValue == null) {
         if (!onSystemCol) {

@@ -16,34 +16,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl;
+package com.torodb.mongodb.repl.filters;
 
-import com.torodb.mongodb.filters.FilterResult;
+import com.torodb.mongodb.filters.DatabaseFilter;
+import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.filters.NamespaceFilter;
-import com.torodb.mongodb.language.Namespace;
-import com.torodb.mongodb.utils.NamespaceUtil;
 
 /**
- * A {@link ReplicationFilters} that is fulfilled by namespaces that are relevant to ToroDB.
+ * A {@link ReplicationFilters} that delegates on another.
+ *
+ * It is useful to create new replication filters that override a specific method.
  */
-public class RelevantCollectionReplicationFilters extends DelegateReplicationFilters {
+public class DelegateReplicationFilters implements ReplicationFilters {
 
-  RelevantCollectionReplicationFilters() {
-    super(ReplicationFilters.allowAll());
+  private final ReplicationFilters delegate;
+
+  public DelegateReplicationFilters(ReplicationFilters delegate) {
+    this.delegate = delegate;
+  }
+
+  @Override
+  public DatabaseFilter getDatabaseFilter() {
+    return delegate.getDatabaseFilter();
   }
 
   @Override
   public NamespaceFilter getNamespaceFilter() {
-    return this::filterCollection;
+    return delegate.getNamespaceFilter();
   }
 
-  private FilterResult<Namespace> filterCollection(String db, String col) {
-    if (NamespaceUtil.isSystem(col)) {
-      if (NamespaceUtil.isIndexesMetaCollection(col)) {
-        return FilterResult.success();
-      }
-      return FilterResult.failure(col2 -> col2 + " is a system collection");
-    }
-    return FilterResult.success();
+  @Override
+  public IndexFilter getIndexFilter() {
+    return delegate.getIndexFilter();
   }
+
 }

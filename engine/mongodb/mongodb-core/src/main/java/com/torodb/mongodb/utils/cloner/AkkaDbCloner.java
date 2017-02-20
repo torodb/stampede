@@ -434,6 +434,11 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
         LOGGER.info("Not cloning {} because it didn't pass the given filter predicate", collName);
         continue;
       }
+      if (NamespaceUtil.isViewCollection(collEntry.getType())) {
+        LOGGER.info("Not cloning {} because it is a view", collName);
+        continue;
+      }
+      
       LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
       collsToClone.add(collEntry);
     }

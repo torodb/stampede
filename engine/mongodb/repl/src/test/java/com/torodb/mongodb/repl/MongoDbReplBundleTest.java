@@ -33,6 +33,7 @@ import com.torodb.engine.essential.EssentialModule;
 import com.torodb.mongodb.commands.impl.EmptyCommandClassifier;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.impl.AlwaysConsistentConsistencyHandler;
 import com.torodb.torod.MemoryTorodBundle;
 import org.junit.After;
@@ -104,6 +105,6 @@ public class MongoDbReplBundleTest {
   }
 
   private ReplicationFilters createReplicationFilters() {
-    return new RelevantCollectionReplicationFilters();
+    return ReplicationFilters.allowAll();
   }
 }

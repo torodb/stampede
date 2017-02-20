@@ -18,12 +18,10 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.google.inject.*;
 import com.torodb.core.modules.Bundle;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.essential.EssentialModule;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.MongoDbCoreBundleServiceBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
@@ -32,7 +30,6 @@ import com.torodb.mongodb.repl.TestBundleConfig;
 import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 
-import java.time.Clock;
 
 /**
  * A test rule that initializes the {@link OplogTestContext}.
@@ -48,10 +45,6 @@ public class OplogTestContextResourceRule extends ExternalResource {
       return SupervisorDecision.STOP;
     }
   };
-  private final Injector essentialInjector = Guice.createInjector(new EssentialModule(
-      () -> false,
-      Clock.systemUTC())
-  );
 
   private MongoDbCoreBundleServiceBundle mongoDbCoreBundleServiceBundle;
   private ReplCoreBundle replCoreBundle;
