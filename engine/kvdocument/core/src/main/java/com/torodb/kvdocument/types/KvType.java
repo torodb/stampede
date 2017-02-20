@@ -18,7 +18,12 @@
 
 package com.torodb.kvdocument.types;
 
+import java.io.File;
 import java.io.Serializable;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  *
@@ -26,5 +31,6 @@ import java.io.Serializable;
 public interface KvType extends Serializable {
 
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg);
+
 
 }

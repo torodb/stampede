@@ -48,6 +48,7 @@ import org.junit.runners.Parameterized;
 
 import java.lang.reflect.Parameter;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -121,6 +122,7 @@ public class MongoDbBsonTypesTest {
             {"OBJECT_ID", new IntBasedBsonObjectId(1, 1, 1, 1)},
             {"BOOLEAN", TrueBsonBoolean.getInstance()},
             {"DATETIME", new LongBsonDateTime(0L)},
+            {"DATETIME", new InstantBsonDateTime(Instant.now())},
             {"NULL", SimpleBsonNull.getInstance()},
             {"REGEX", new DefaultBsonRegex(EnumSet.noneOf(BsonRegex.Options.class), "asd")},
             {"REGEX_WITH_OPTIONS", new DefaultBsonRegex(EnumSet.copyOf(Arrays.asList(singleRegexOption)), "asd")},
