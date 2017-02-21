@@ -30,7 +30,7 @@ import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
 import com.torodb.mongodb.commands.signatures.diagnostic.CollStatsCommand.CollStatsArgument;
 import com.torodb.mongodb.commands.signatures.diagnostic.CollStatsCommand.CollStatsReply;
 import com.torodb.mongodb.core.MongodTransaction;
-import com.torodb.mongodb.language.utils.NamespaceUtil;
+import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.CollectionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

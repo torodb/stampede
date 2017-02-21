@@ -23,7 +23,6 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 import com.torodb.core.exceptions.user.UnsupportedCompoundIndexException;
 import com.torodb.core.exceptions.user.UnsupportedUniqueIndexException;
 import com.torodb.core.exceptions.user.UserException;
@@ -39,7 +38,7 @@ import com.torodb.mongodb.commands.pojos.index.type.DescIndexType;
 import com.torodb.mongodb.commands.pojos.index.type.IndexType;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesArgument;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesResult;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
@@ -51,27 +50,34 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import javax.inject.Inject;
+
 public class CreateIndexesReplImpl
     extends ReplCommandImpl<CreateIndexesArgument, CreateIndexesResult> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(CreateIndexesReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(CreateIndexesReplImpl.class);
 
   @SuppressWarnings("checkstyle:LineLength")
-  private static final FieldIndexOrderingConverterIndexTypeVisitor filedIndexOrderingConverterVisitor =
+  private static final FieldIndexOrderingConverterIndexTypeVisitor fieldIndexOrderingConverterVisitor =
       new FieldIndexOrderingConverterIndexTypeVisitor();
-
-  private final ReplicationFilters replicationFilters;
+  private final CommandFilterUtil filterUtil;
+  private final IndexFilter indexFilter;
 
   @Inject
-  public CreateIndexesReplImpl(ReplicationFilters replicationFilters) {
-    this.replicationFilters = replicationFilters;
+  public CreateIndexesReplImpl(CommandFilterUtil filterUtil, IndexFilter indexFilter) {
+    this.filterUtil = filterUtil;
+    this.indexFilter = indexFilter;
   }
 
   @Override
   public Status<CreateIndexesResult> apply(Request req,
       Command<? super CreateIndexesArgument, ? super CreateIndexesResult> command,
       CreateIndexesArgument arg, SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testNamespaceFilter(req.getDatabase(), arg.getCollection(), command)) {
+      return Status.ok(new CreateIndexesResult(0, 0, null, false));
+    }
+
     int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
     int indexesAfter = indexesBefore;
 
@@ -89,10 +95,15 @@ public class CreateIndexesReplImpl
       }
 
       for (IndexOptions indexOptions : arg.getIndexesToCreate()) {
-        if (!replicationFilters.getIndexPredicate().test(req.getDatabase(), arg.getCollection(),
-            indexOptions.getName(), indexOptions.isUnique(), indexOptions.getKeys())) {
+        assert req.getDatabase().equals(indexOptions.getDatabase()) : "Database modified by the "
+            + "request (" + req.getDatabase() + ") is different than the one specified on index "
+            + indexOptions.getName();
+        assert arg.getCollection().equals(indexOptions.getCollection()) : "Collection modified by "
+            + "the request (" + arg.getCollection() + ") is different than the one specified on "
+            + "index " + indexOptions.getName();
+        if (!indexFilter.filter(indexOptions)) {
           LOGGER.info("Skipping filtered index {}.{}.{}.",
-              req.getDatabase(), arg.getCollection(), indexOptions.getName());
+              indexOptions.getDatabase(), indexOptions.getCollection(), indexOptions.getName());
           continue;
         }
 
@@ -127,7 +138,7 @@ public class CreateIndexesReplImpl
           }
 
           Optional<FieldIndexOrdering> ordering = indexType.accept(
-              filedIndexOrderingConverterVisitor, null);
+              fieldIndexOrderingConverterVisitor, null);
           if (!ordering.isPresent()) {
             String note = "Index of type " + indexType.getName()
                 + " is not supported. Skipping index.";

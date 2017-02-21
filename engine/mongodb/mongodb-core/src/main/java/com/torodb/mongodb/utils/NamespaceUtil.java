@@ -90,10 +90,6 @@ public class NamespaceUtil {
   /**
    * Returns true iff the namespace corresponds with a system collection on which users can write,
    * like <em>system.users</em>.
-   *
-   * @param database
-   * @param collection
-   * @return
    */
   public static boolean isSystemAndUserWritable(String database, String collection) {
     if (!isSystem(collection)) {

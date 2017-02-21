@@ -16,97 +16,76 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl;
+package com.torodb.packaging.util;
 
-import com.eightkdata.mongowp.Status;
-import com.eightkdata.mongowp.bson.BsonDocument;
-import com.eightkdata.mongowp.server.api.Command;
-import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.DbOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.DeleteOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
-import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
-import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.core.exceptions.SystemException;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
-import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand;
-import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand;
-import com.torodb.mongodb.commands.signatures.admin.DropCollectionCommand;
-import com.torodb.mongodb.commands.signatures.admin.DropIndexesCommand;
-import com.torodb.mongodb.commands.signatures.admin.RenameCollectionCommand;
-import com.torodb.mongodb.commands.signatures.general.DeleteCommand;
-import com.torodb.mongodb.commands.signatures.general.InsertCommand;
-import com.torodb.mongodb.commands.signatures.general.UpdateCommand;
-import com.torodb.mongodb.repl.oplogreplier.fetcher.FilteredOplogFetcher;
-import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
-import com.torodb.mongodb.utils.IndexPredicate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.jooq.lambda.fi.util.function.CheckedFunction;
+import com.torodb.mongodb.filters.DatabaseFilter;
+import com.torodb.mongodb.filters.FilterResult;
+import com.torodb.mongodb.filters.IndexFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
+import com.torodb.mongodb.language.Namespace;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ReplicationFilters {
-
-  private static final Logger LOGGER = LogManager.getLogger(ReplicationFilters.class);
+public class UserReplicationFilters implements ReplicationFilters {
 
   private final ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> whitelist;
   private final ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> blacklist;
-  private final DatabasePredicate databasePredicate = new DatabasePredicate();
-  private final CollectionPredicate collectionPredicate = new CollectionPredicate();
-  private final IndexPredicateImpl indexPredicate = new IndexPredicateImpl();
-  private final OplogOperationPredicate oplogOperationPredicate = new OplogOperationPredicate();
 
-  public ReplicationFilters(
+  private final DatabaseFilter dbFilter = new UserDatabaseFilter();
+  private final NamespaceFilter nsFilter = new UserNamespaceFilter();
+  private final IndexFilter idxFilter = new UserIndexFilter();
+
+  public UserReplicationFilters(
       ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> whitelist,
       ImmutableMap<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> blacklist) {
     super();
     this.whitelist = whitelist;
     this.blacklist = blacklist;
+
+
   }
 
-  public static ReplicationFilters allowAll() {
-    return new ReplicationFilters(ImmutableMap.of(), ImmutableMap.of());
+  public static UserReplicationFilters allowAll() {
+    return new UserReplicationFilters(ImmutableMap.of(), ImmutableMap.of());
   }
 
-  public Predicate<String> getDatabasePredicate() {
-    return databasePredicate;
+  @Override
+  public DatabaseFilter getDatabaseFilter() {
+    return dbFilter;
   }
 
-  public BiPredicate<String, String> getCollectionPredicate() {
-    return collectionPredicate;
+  @Override
+  public NamespaceFilter getNamespaceFilter() {
+    return nsFilter;
   }
 
-  public IndexPredicate getIndexPredicate() {
-    return indexPredicate;
+  @Override
+  public IndexFilter getIndexFilter() {
+    return idxFilter;
   }
 
-  public Predicate<OplogOperation> getOperationPredicate() {
-    return oplogOperationPredicate;
+  private boolean filterDatabase(String db) {
+    return databaseWhiteFilter(db) && databaseBlackFilter(db);
   }
 
-  public OplogFetcher filterOplogFetcher(OplogFetcher originalFetcher) {
-    return new FilteredOplogFetcher(oplogOperationPredicate, originalFetcher);
+  private boolean filterNamespace(String db, String col) {
+    return collectionWhiteFilter(db, col) && collectionBlackFilter(db, col);
   }
 
-  @FunctionalInterface
-  public interface ResultFilter {
-
-    public <R> Status<R> filter(Status<R> result);
+  private boolean filterIndex(IndexOptions indexOptions) {
+    return indexWhiteFilter(indexOptions) && indexBlackFilter(indexOptions);
   }
 
   @SuppressWarnings("checkstyle:LineLength")
@@ -202,12 +181,16 @@ public class ReplicationFilters {
   }
 
   @SuppressWarnings("checkstyle:LineLength")
-  private boolean indexWhiteFilter(String database, String collection, String indexName,
-      boolean unique, List<IndexOptions.Key> keys) {
+  private boolean indexWhiteFilter(IndexOptions indexOptions) {
+    String database = indexOptions.getDatabase();
+    String collection = indexOptions.getCollection();
+    String indexName = indexOptions.getName();
+    boolean unique = indexOptions.isUnique();
+    List<IndexOptions.Key> keys = indexOptions.getKeys();
     if (whitelist.isEmpty()) {
       return true;
     }
-
+    
     for (Map.Entry<Pattern, ImmutableMap<Pattern, ImmutableList<IndexPattern>>> filterEntry : whitelist
         .entrySet()) {
       Matcher databaseMatcher = filterEntry.getKey().matcher(database);
@@ -225,7 +208,8 @@ public class ReplicationFilters {
             }
 
             for (IndexPattern indexPattern : collectionPattern.getValue()) {
-              if (indexPattern.match(indexName, unique, keys)) {
+              boolean match = indexPattern.match(indexName, unique, keys);
+              if (match) {
                 return true;
               }
             }
@@ -238,8 +222,12 @@ public class ReplicationFilters {
   }
 
   @SuppressWarnings("checkstyle:LineLength")
-  private boolean indexBlackFilter(String database, String collection, String indexName,
-      boolean unique, List<IndexOptions.Key> keys) {
+  private boolean indexBlackFilter(IndexOptions indexOptions) {
+    String database = indexOptions.getDatabase();
+    String collection = indexOptions.getCollection();
+    String indexName = indexOptions.getName();
+    boolean unique = indexOptions.isUnique();
+    List<IndexOptions.Key> keys = indexOptions.getKeys();
     if (blacklist.isEmpty()) {
       return true;
     }
@@ -271,133 +259,6 @@ public class ReplicationFilters {
     }
 
     return true;
-  }
-
-  private class DatabasePredicate implements Predicate<String> {
-
-    @Override
-    public boolean test(String database) {
-      return databaseWhiteFilter(database) && databaseBlackFilter(database);
-    }
-
-  }
-
-  private class CollectionPredicate implements BiPredicate<String, String> {
-
-    @Override
-    public boolean test(String database, String collection) {
-      return collectionWhiteFilter(database, collection) && collectionBlackFilter(database,
-          collection);
-    }
-
-  }
-
-  public class IndexPredicateImpl implements IndexPredicate {
-
-    @Override
-    public boolean test(String database, String collection, String indexName, boolean unique,
-        List<IndexOptions.Key> keys) {
-      return indexWhiteFilter(database, collection, indexName, unique, keys) && indexBlackFilter(
-          database, collection, indexName, unique, keys);
-    }
-  }
-
-  @SuppressWarnings("checkstyle:LineLength")
-  private static final ImmutableMap<Command<?, ?>, CheckedFunction<BsonDocument, String>> collectionCommands =
-      ImmutableMap.<Command<?, ?>, CheckedFunction<BsonDocument, String>>builder()
-          .put(CreateCollectionCommand.INSTANCE, d -> CreateCollectionCommand.INSTANCE
-              .unmarshallArg(d).getCollection())
-          .put(CreateIndexesCommand.INSTANCE, d -> CreateIndexesCommand.INSTANCE.unmarshallArg(d)
-              .getCollection())
-          .put(DropIndexesCommand.INSTANCE, d -> DropIndexesCommand.INSTANCE.unmarshallArg(d)
-              .getCollection())
-          .put(DropCollectionCommand.INSTANCE, d -> DropCollectionCommand.INSTANCE
-              .unmarshallArg(d).getCollection())
-          .put(RenameCollectionCommand.INSTANCE, d -> RenameCollectionCommand.INSTANCE
-              .unmarshallArg(d).getFromCollection())
-          .put(DeleteCommand.INSTANCE, d -> DeleteCommand.INSTANCE.unmarshallArg(d)
-              .getCollection())
-          .put(InsertCommand.INSTANCE, d -> InsertCommand.INSTANCE.unmarshallArg(d)
-              .getCollection())
-          .put(UpdateCommand.INSTANCE, d -> UpdateCommand.INSTANCE.unmarshallArg(d)
-              .getCollection())
-          .build();
-
-  private class OplogOperationPredicate implements OplogOperationVisitor<Boolean, Void>,
-      Predicate<OplogOperation> {
-
-    @Override
-    public Boolean visit(DbCmdOplogOperation op, Void arg) {
-      if (op.getCommandName().isPresent()) {
-        String commandName = op.getCommandName().get();
-        if (collectionCommands.containsKey(commandName)) {
-          try {
-            assert op.getRequest() != null;
-
-            String collection = collectionCommands.get(commandName)
-                .apply(op.getRequest());
-            return testCollection(commandName, op.getDatabase(), collection);
-          } catch (Throwable e) {
-            throw new SystemException("Error while parsing argument for command " + op
-                .getCommandName(), e);
-          }
-        }
-        return testDatabase(commandName, op.getDatabase());
-      }
-      return testDatabase("unknown", op.getDatabase());
-    }
-
-    @Override
-    public Boolean visit(DbOplogOperation op, Void arg) {
-      return testDatabase("unknown", op.getDatabase());
-    }
-
-    @Override
-    public Boolean visit(DeleteOplogOperation op, Void arg) {
-      return collectionPredicate.test(op.getDatabase(), op.getCollection());
-    }
-
-    @Override
-    public Boolean visit(InsertOplogOperation op, Void arg) {
-      return collectionPredicate.test(op.getDatabase(), op.getCollection());
-    }
-
-    @Override
-    public Boolean visit(NoopOplogOperation op, Void arg) {
-      return true;
-    }
-
-    @Override
-    public Boolean visit(UpdateOplogOperation op, Void arg) {
-      return collectionPredicate.test(op.getDatabase(), op.getCollection());
-    }
-
-    private boolean testDatabase(String commandName, String database) {
-      if (databasePredicate.test(database)) {
-        return true;
-      }
-
-      LOGGER.info("Skipping operation {} for filtered database {}.", commandName, database);
-
-      return false;
-    }
-
-    private boolean testCollection(String commandName, String database, String collection) {
-      if (collectionPredicate.test(database, collection)) {
-        return true;
-      }
-
-      LOGGER.info("Skipping operation {} for filtered collection {}.{}.", commandName, database,
-          collection);
-
-      return false;
-    }
-
-    @Override
-    public boolean test(OplogOperation t) {
-      return t.accept(this, null);
-    }
-
   }
 
   public static class IndexPattern {
@@ -489,6 +350,44 @@ public class ReplicationFilters {
 
     public Pattern getType() {
       return type;
+    }
+  }
+
+  private <E> String filteredMessage(E e) {
+    return e + " does not fulfill the user filter";
+  }
+
+  private class UserDatabaseFilter implements DatabaseFilter {
+
+    @Override
+    public FilterResult<String> apply(String database) {
+      if (filterDatabase(database)) {
+        return FilterResult.success();
+      }
+      return FilterResult.failure(UserReplicationFilters.this::filteredMessage);
+    }
+
+  }
+
+  private class UserNamespaceFilter implements NamespaceFilter {
+
+    @Override
+    public FilterResult<Namespace> apply(String db, String col) {
+      if (filterNamespace(db, col)) {
+        return FilterResult.success();
+      }
+      return FilterResult.failure(UserReplicationFilters.this::filteredMessage);
+    }
+  }
+
+  private class UserIndexFilter implements IndexFilter {
+
+    @Override
+    public FilterResult<IndexOptions> apply(IndexOptions indexOptions) {
+      if (filterIndex(indexOptions)) {
+        return FilterResult.success();
+      }
+      return FilterResult.failure(UserReplicationFilters.this::filteredMessage);
     }
   }
 }

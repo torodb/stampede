@@ -47,6 +47,9 @@ import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer;
 import com.torodb.mongodb.repl.oplogreplier.batch.BatchAnalyzer.BatchAnalyzerFactory;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchChecker;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchFilter;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,12 +79,14 @@ public class DefaultOplogApplier implements OplogApplier {
   private final BatchAnalyzerFactory batchAnalyzerFactory;
   private final ActorSystem actorSystem;
   private final OplogApplierMetrics metrics;
+  private final OplogBatchFilter batchFilter;
+  private final OplogBatchChecker batchChecker;
 
   @Inject
   public DefaultOplogApplier(BatchLimits batchLimits, OplogManager oplogManager,
       AnalyzedOplogBatchExecutor batchExecutor, BatchAnalyzerFactory batchAnalyzerFactory,
       ConcurrentToolsFactory concurrentToolsFactory, Shutdowner shutdowner,
-      OplogApplierMetrics metrics) {
+      OplogApplierMetrics metrics, OplogBatchFilter batchFilter, OplogBatchChecker batchChecker) {
     this.batchExecutor = batchExecutor;
     this.batchLimits = batchLimits;
     this.oplogManager = oplogManager;
@@ -93,6 +98,8 @@ public class DefaultOplogApplier implements OplogApplier {
         )
     );
     this.metrics = metrics;
+    this.batchFilter = batchFilter;
+    this.batchChecker = batchChecker;
     shutdowner.addCloseShutdownListener(this);
   }
 
@@ -103,7 +110,8 @@ public class DefaultOplogApplier implements OplogApplier {
 
     RunnableGraph<Pair<UniqueKillSwitch, CompletionStage<Done>>> graph = createOplogSource(fetcher)
         .async()
-        .map(ComplexIdOperationFilter::filter)
+        .map(batchFilter)
+        .map(batchChecker)
         .via(createBatcherFlow(applierContext))
         .viaMat(KillSwitches.single(), Keep.right())
         .async()

@@ -19,6 +19,7 @@
 package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 
 public class ReplCoreExtInt {
 
@@ -26,13 +27,16 @@ public class ReplCoreExtInt {
   private final MongoClientFactory mongoClientFactory;
   private final OplogReaderProvider oplogReaderProvider;
   private final ReplMetrics replMetrics;
+  private final ToroDbReplicationFilters replicationFilters;
 
   public ReplCoreExtInt(OplogManager oplogManager, MongoClientFactory mongoClientFactory,
-      OplogReaderProvider oplogReaderProvider, ReplMetrics replMetrics) {
+      OplogReaderProvider oplogReaderProvider, ReplMetrics replMetrics,
+      ToroDbReplicationFilters replicationFilters) {
     this.oplogManager = oplogManager;
     this.mongoClientFactory = mongoClientFactory;
     this.oplogReaderProvider = oplogReaderProvider;
     this.replMetrics = replMetrics;
+    this.replicationFilters = replicationFilters;
   }
 
   public OplogManager getOplogManager() {
@@ -49,6 +53,10 @@ public class ReplCoreExtInt {
 
   public ReplMetrics getReplMetrics() {
     return replMetrics;
+  }
+
+  public ToroDbReplicationFilters getReplicationFilters() {
+    return replicationFilters;
   }
 
 }

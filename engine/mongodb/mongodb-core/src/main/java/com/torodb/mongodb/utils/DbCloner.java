@@ -24,10 +24,9 @@ import com.eightkdata.mongowp.exceptions.NotMasterException;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.exceptions.ToroRuntimeException;
-import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.filters.IndexFilter;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -59,13 +58,7 @@ public interface DbCloner extends Service {
     private final Set<String> collsToIgnore;
     private final Supplier<Boolean> writePermissionSupplier;
     private final Predicate<String> collectionFilter;
-    private final MyIndexPredicate indexFilter;
-
-    public interface MyIndexPredicate {
-
-      public boolean test(String collection, String indexName, boolean unique,
-          List<IndexOptions.Key> keys);
-    }
+    private final IndexFilter indexFilter;
 
     public CloneOptions(
         boolean cloneData,
@@ -76,7 +69,7 @@ public interface DbCloner extends Service {
         Set<String> collsToIgnore,
         Supplier<Boolean> writePermissionSupplier,
         Predicate<String> collectionFilter,
-        MyIndexPredicate indexFilter) {
+        IndexFilter indexFilter) {
       this.cloneData = cloneData;
       this.cloneIndexes = cloneIndexes;
       this.slaveOk = slaveOk;
@@ -148,7 +141,7 @@ public interface DbCloner extends Service {
       return collectionFilter;
     }
 
-    public MyIndexPredicate getIndexFilter() {
+    public IndexFilter getIndexFilter() {
       return indexFilter;
     }
   }

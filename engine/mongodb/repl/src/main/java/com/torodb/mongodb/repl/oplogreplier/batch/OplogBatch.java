@@ -16,13 +16,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.oplogreplier;
+package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.mongodb.repl.RecoveryService;
+import com.torodb.mongodb.repl.oplogreplier.NormalOplogBatch;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -85,4 +88,10 @@ public interface OplogBatch {
     return new NormalOplogBatch(newList, next.isReadyForMore());
   }
 
+  public default OplogBatch filter(Predicate<OplogOperation> filter) {
+    List<OplogOperation> newList = getOps().stream()
+        .filter(filter)
+        .collect(Collectors.toList());
+    return new NormalOplogBatch(newList, this.isReadyForMore());
+  }
 }

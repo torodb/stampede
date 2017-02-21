@@ -19,6 +19,7 @@
 package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 
 import java.util.Collections;
 import java.util.List;

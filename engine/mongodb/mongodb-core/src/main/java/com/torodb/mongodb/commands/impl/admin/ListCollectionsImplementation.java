@@ -31,7 +31,7 @@ import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListC
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsResult;
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsResult.Entry;
 import com.torodb.mongodb.core.MongodTransaction;
-import com.torodb.mongodb.language.utils.NamespaceUtil;
+import com.torodb.mongodb.utils.NamespaceUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

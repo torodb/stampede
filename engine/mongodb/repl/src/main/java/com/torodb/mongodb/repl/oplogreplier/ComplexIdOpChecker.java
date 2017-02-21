@@ -28,31 +28,24 @@ import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchChecker.OplogOperationChecker;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 
 /**
- * A utility class that controls that all executed {@link OplogOperation oplog operations} use a
- * scalar _id as filter.
+ * A {@link OplogOperationChecker} that controls that all executed
+ * {@link OplogOperation oplog operations} use a scalar _id as filter.
  *
  * <p/>ToroDB does only support queries where the operator is the equality and the value is a
  * scalar, so oplog operations that filter by a complex _id are not supported.
  */
-public class ComplexIdOperationFilter {
+public class ComplexIdOpChecker implements OplogOperationChecker {
 
   private static final FilterVisitor VISITOR = new FilterVisitor();
 
-  private ComplexIdOperationFilter() {}
-
-  public static OplogOperation filter(OplogOperation oplogOp)
-      throws UnexpectedOplogOperationException {
-    return oplogOp.accept(VISITOR, null);
-  }
-
-  public static OplogBatch filter(OplogBatch oplogBatch) throws UnexpectedOplogOperationException {
-    oplogBatch.getOps().stream()
-        .forEach(ComplexIdOperationFilter::filter);
-    return oplogBatch;
+  @Override
+  public void check(OplogOperation op) throws UnexpectedOplogOperationException {
+    op.accept(VISITOR, null);
   }
 
   private static class FilterVisitor implements OplogOperationVisitor<OplogOperation, Void> {

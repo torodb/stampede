@@ -25,7 +25,6 @@ import com.torodb.mongodb.repl.OplogApplierService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogReaderProvider;
 import com.torodb.mongodb.repl.ReplMetrics;
-import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
@@ -39,7 +38,6 @@ public class OplogApplierServiceModule extends PrivateModule {
 
     requireBinding(OplogManager.class);
     requireBinding(SyncSourceProvider.class);
-    requireBinding(ReplicationFilters.class);
     requireBinding(ReplMetrics.class);
     requireBinding(OplogReaderProvider.class);
     requireBinding(OplogApplier.class);

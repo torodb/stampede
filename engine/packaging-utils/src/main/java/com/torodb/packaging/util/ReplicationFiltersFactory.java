@@ -21,12 +21,12 @@ package com.torodb.packaging.util;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.torodb.mongodb.repl.ReplicationFilters;
-import com.torodb.mongodb.repl.ReplicationFilters.IndexPattern;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.util.SimpleRegExpDecoder;
+import com.torodb.packaging.util.UserReplicationFilters.IndexPattern;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,7 @@ public class ReplicationFiltersFactory {
   }
 
   public static ReplicationFilters getReplicationFilters(AbstractReplication replication) {
-    ReplicationFilters replicationFilters = new ReplicationFilters(
+    ReplicationFilters replicationFilters = new UserReplicationFilters(
         convertFilterList(replication.getInclude()),
         convertFilterList(replication.getExclude()));
     return replicationFilters;

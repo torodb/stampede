@@ -28,13 +28,18 @@ import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
+import javax.inject.Inject;
+
 public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArgument, Empty> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(DropCollectionReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(DropCollectionReplImpl.class);
+
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public DropCollectionReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<Empty> apply(
@@ -42,6 +47,10 @@ public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArg
       Command<? super CollectionCommandArgument, ? super Empty> command,
       CollectionCommandArgument arg,
       SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testNamespaceFilter(req.getDatabase(), arg.getCollection(), command)) {
+      return Status.ok();
+    }
 
     try {
       LOGGER.info("Dropping collection {}.{}", req.getDatabase(), arg.getCollection());

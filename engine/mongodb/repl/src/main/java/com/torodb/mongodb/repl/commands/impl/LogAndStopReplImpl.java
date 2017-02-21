@@ -35,15 +35,21 @@ import javax.inject.Inject;
 public class LogAndStopReplImpl extends ReplCommandImpl<String, Empty> {
 
   private final Supervisor supervisor;
+  private final CommandFilterUtil filterUtil;
 
   @Inject
-  public LogAndStopReplImpl(@MongoDbRepl Supervisor supervisor) {
+  public LogAndStopReplImpl(@MongoDbRepl Supervisor supervisor, CommandFilterUtil filterUtil) {
     this.supervisor = supervisor;
+    this.filterUtil = filterUtil;
   }
 
   @Override
   public Status<Empty> apply(Request req, Command<? super String, ? super Empty> command, 
       String arg, SharedWriteTorodTransaction trans) {
+    if (!filterUtil.testDbFilter(req.getDatabase(), command)) {
+      return Status.ok();
+    }
+
     UnsupportedOperationException ex = new UnsupportedOperationException(
         "Command " + arg + " is not supported yet");
     supervisor.onError(this, ex);

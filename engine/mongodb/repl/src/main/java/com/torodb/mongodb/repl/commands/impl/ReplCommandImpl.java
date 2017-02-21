@@ -30,5 +30,4 @@ public abstract class ReplCommandImpl<A, R>
     logger.warn(cmd.getCommandName() + " command execution failed. "
         + "Ignoring it", t);
   }
-
 }
