@@ -25,9 +25,6 @@ import com.torodb.torod.TorodConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
 public class MemoryTorodConnection implements TorodConnection {
 
   private static final Logger LOGGER = LogManager.getLogger(MemoryTorodConnection.class);
@@ -76,6 +73,11 @@ public class MemoryTorodConnection implements TorodConnection {
   @Override
   public MemoryTorodServer getServer() {
     return server;
+  }
+
+  @Override
+  public boolean isClosed() {
+    return closed;
   }
 
   @Override

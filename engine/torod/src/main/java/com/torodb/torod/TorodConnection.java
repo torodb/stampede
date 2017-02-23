@@ -36,6 +36,8 @@ public interface TorodConnection extends AutoCloseable {
 
   public TorodServer getServer();
 
+  public boolean isClosed();
+
   @Override
   public void close();
 }

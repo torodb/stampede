@@ -18,13 +18,15 @@
 
 package com.torodb.mongodb.repl.impl;
 
+import com.google.common.util.concurrent.AbstractService;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 
 /**
  * A {@link ConsistencyHandler} that behaves as the handled resource is always consistent.
  */
-public class AlwaysConsistentConsistencyHandler implements ConsistencyHandler {
+public class AlwaysConsistentConsistencyHandler extends AbstractService
+    implements ConsistencyHandler {
 
   @Override
   public boolean isConsistent() {
@@ -33,6 +35,14 @@ public class AlwaysConsistentConsistencyHandler implements ConsistencyHandler {
 
   @Override
   public void setConsistent(boolean newConsistency) throws RetrierGiveUpException {
+  }
+
+  @Override
+  protected void doStart() {
+  }
+
+  @Override
+  protected void doStop() {
   }
 
 }

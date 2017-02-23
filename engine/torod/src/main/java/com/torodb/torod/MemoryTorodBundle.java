@@ -33,7 +33,7 @@ import java.util.Collections;
  * A {@link TorodBundle torod bundle} that uses a memory backend, intended to be used on
  * testing.
  */
-public class MemoryTorodBundle extends TorodBundle {
+public class MemoryTorodBundle extends AbstractTorodBundle {
 
   private final TorodServer torodServer;
   private final ReservedIdGenerator reservedIdGenerator;

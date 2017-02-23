@@ -19,6 +19,7 @@
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.server.api.CommandLibrary;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.modules.BundleConfig;
@@ -48,6 +49,27 @@ public class MongoDbCoreConfig extends BundleConfigImpl {
     this.torodBundle = torodBundle;
     this.commandsLibrary = commandsLibrary;
     this.commandClassifier = commandClassifier;
+  }
+
+  @SuppressWarnings("checkstyle:LineLength")
+  /**
+   * Like {@link #simpleConfig(com.torodb.torod.TorodBundle, com.torodb.mongodb.core.MongodServerConfig, com.torodb.core.modules.BundleConfig)
+   * }, but focused on cores that will not be used as server and therefore provides a default
+   * {@link MongodServerConfig}
+   */
+  public static MongoDbCoreConfig simpleNonServerConfig(TorodBundle torodBundle,
+      BundleConfig bundleConfig) {
+    /*
+     * The following config file is used by command implementations like isMaster to return
+     * information about the server. That has no sense on Stampede and, in fact, that command is
+     * never executed. Ideally, implementations like that one should be implemented on the ToroDB
+     * Server layer, but right now almost all commands must be implemented on the mongodb core
+     * layer, which means we need to provide a value even if it is not used.
+     */
+    MongodServerConfig mongodServerConfig = new MongodServerConfig(
+        HostAndPort.fromParts("localhost", 27017)
+    );
+    return simpleConfig(torodBundle, mongodServerConfig, bundleConfig);
   }
 
   /**

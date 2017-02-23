@@ -90,6 +90,11 @@ public class SqlTorodConnection implements TorodConnection {
   }
 
   @Override
+  public boolean isClosed() {
+    return closed;
+  }
+
+  @Override
   public void close() {
     if (!closed) {
       closed = true;

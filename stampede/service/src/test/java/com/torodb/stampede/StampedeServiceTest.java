@@ -28,12 +28,16 @@ import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.engine.essential.EssentialModule;
-import com.torodb.mongodb.repl.MongoDbReplConfigBuilder;
+import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
+import com.torodb.mongodb.repl.ConsistencyHandler;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.time.Clock;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StampedeServiceTest {
 
@@ -45,26 +49,9 @@ public class StampedeServiceTest {
     stampedeConfig = new StampedeConfig(
         createEssentialInjector(),
         this::createBackendBundle,
-        this::createConfigBuilder);
-  }
-  
-  private Injector createEssentialInjector() {
-    return Guice.createInjector(new EssentialModule(() -> true, Clock.systemUTC()));
-  }
-
-  private BackendBundle createBackendBundle(BundleConfig bundleConfig) {
-    return new DerbyDbBackendBundle(new DerbyDbBackendConfigBuilder(bundleConfig)
-        .build()
+        ReplicationFilters.allowAll(),
+        createShards(1)
     );
-  }
-
-  private MongoDbReplConfigBuilder createConfigBuilder(BundleConfig bundleConfig) {
-    return new MongoDbReplConfigBuilder(bundleConfig)
-        .setMongoClientConfiguration(
-            MongoClientConfiguration.unsecure(
-                HostAndPort.fromParts("localhost", 27017)
-            )
-        );
   }
 
   @Test
@@ -82,5 +69,47 @@ public class StampedeServiceTest {
 
     stampedeService.stopAsync();
     stampedeService.awaitTerminated();
+  }
+
+  private Injector createEssentialInjector() {
+    return Guice.createInjector(new EssentialModule(() -> true, Clock.systemUTC()));
+  }
+
+  private BackendBundle createBackendBundle(BundleConfig bundleConfig) {
+    return new DerbyDbBackendBundle(new DerbyDbBackendConfigBuilder(bundleConfig)
+        .build()
+    );
+  }
+
+  private List<StampedeConfig.ShardConfigBuilder> createShards(int size) {
+    List<StampedeConfig.ShardConfigBuilder> result = new ArrayList<>(size);
+
+    for (int i = 0; i < size; i++) {
+      final int id = i;
+      final MongoClientConfiguration mcc = MongoClientConfiguration.unsecure(
+          HostAndPort.fromParts("localhost", 27017 + i)
+      );
+
+      StampedeConfig.ShardConfigBuilder scb = new StampedeConfig.ShardConfigBuilder() {
+        @Override
+        public String getShardId() {
+          return "shard_" + id;
+        }
+
+        @Override
+        public MongoDbShardingConfig.ShardConfig createConfig(
+            ConsistencyHandler consistencyHandler) {
+          return new MongoDbShardingConfig.ShardConfig(
+              getShardId(),
+              mcc,
+              "replSet",
+              consistencyHandler
+          );
+        }
+      };
+
+      result.add(scb);
+    }
+    return result;
   }
 }

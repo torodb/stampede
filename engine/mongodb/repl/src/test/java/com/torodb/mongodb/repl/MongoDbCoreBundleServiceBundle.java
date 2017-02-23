@@ -18,13 +18,11 @@
 
 package com.torodb.mongodb.repl;
 
-import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.modules.ServiceBundle;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
-import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.torod.MemoryTorodBundle;
 import com.torodb.torod.TorodBundle;
 
@@ -48,8 +46,7 @@ public class MongoDbCoreBundleServiceBundle extends ServiceBundle<MongoDbCoreBun
 
     torodBundle = new MemoryTorodBundle(generalConfig);
 
-    MongoDbCoreConfig mongoDbCoreConfig = MongoDbCoreConfig.simpleConfig(torodBundle,
-        new MongodServerConfig(HostAndPort.fromParts("localhost", 27017)),
+    MongoDbCoreConfig mongoDbCoreConfig = MongoDbCoreConfig.simpleNonServerConfig(torodBundle,
         generalConfig);
 
     mongoDbCoreBundle = new MongoDbCoreBundle(mongoDbCoreConfig);

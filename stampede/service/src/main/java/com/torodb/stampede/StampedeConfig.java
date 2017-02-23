@@ -21,26 +21,37 @@ package com.torodb.stampede;
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.modules.BundleConfig;
-import com.torodb.mongodb.repl.MongoDbReplConfigBuilder;
+import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
+import com.torodb.mongodb.repl.ConsistencyHandler;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Function;
 
 public class StampedeConfig {
 
   private final Injector essentialInjector;
   private final Function<BundleConfig, BackendBundle> backendBundleGenerator;
-  private final Function<BundleConfig, MongoDbReplConfigBuilder> replBundleConfigBuilderGenerator;
+  private final ReplicationFilters userReplFilters;
+  private final List<ShardConfigBuilder> shardConfigBuilders;
 
   public StampedeConfig(Injector essentialInjector,
       Function<BundleConfig, BackendBundle> backendBundleGenerator,
-      Function<BundleConfig, MongoDbReplConfigBuilder> replBundleConfigBuilder) {
+      ReplicationFilters userReplFilters, List<ShardConfigBuilder> shardConfigBuilders) {
     this.essentialInjector = essentialInjector;
     this.backendBundleGenerator = backendBundleGenerator;
-    this.replBundleConfigBuilderGenerator = replBundleConfigBuilder;
+    this.userReplFilters = userReplFilters;
+    this.shardConfigBuilders = shardConfigBuilders;
   }
 
   public Injector getEssentialInjector() {
     return essentialInjector;
+  }
+
+  public ThreadFactory getThreadFactory() {
+    return getEssentialInjector().getInstance(ThreadFactory.class);
   }
 
   /**
@@ -55,15 +66,17 @@ public class StampedeConfig {
     return backendBundleGenerator;
   }
 
-  /**
-   * Returns a function used to create a partial repl config builder given a generic bundle
-   * configuration.
-   *
-   * <p>This is an abstraction that disjoins specific configuration (usually specified on
-   * the main module by reading a config file) and the {@link StampedeService} that uses the
-   * bundle.
-   */
-  public Function<BundleConfig, MongoDbReplConfigBuilder> getReplBundleConfigBuilderGenerator() {
-    return replBundleConfigBuilderGenerator;
+  public ReplicationFilters getUserReplicationFilters() {
+    return userReplFilters;
+  }
+
+  public List<ShardConfigBuilder> getShardConfigBuilders() {
+    return Collections.unmodifiableList(shardConfigBuilders);
+  }
+
+  public static interface ShardConfigBuilder {
+    String getShardId();
+    
+    MongoDbShardingConfig.ShardConfig createConfig(ConsistencyHandler consistencyHandler);
   }
 }

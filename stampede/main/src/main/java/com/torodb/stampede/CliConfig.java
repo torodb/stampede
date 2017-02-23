@@ -313,50 +313,50 @@ public class CliConfig {
       addParam("/metricsEnabled", metricsEnabled ? "true" : "false");
     }
     if (replSetName != null) {
-      addParam("/replication/replSetName", replSetName);
+      addParam("/replications/0/replSetName", replSetName);
     }
     if (syncSource != null) {
-      addParam("/replication/syncSource", syncSource);
+      addParam("/replications/0/syncSource", syncSource);
     }
     if (sslEnabled != null) {
-      addParam("/replication/ssl/enabled", sslEnabled ? "true" : "false");
+      addParam("/replications/0/ssl/enabled", sslEnabled ? "true" : "false");
     }
     if (sslAllowInvalidHostnames != null) {
-      addParam("/replication/ssl/allowInvalidHostnames", 
+      addParam("/replications/0/ssl/allowInvalidHostnames",
           sslAllowInvalidHostnames ? "true" : "false");
     }
     if (sslFipsMode != null) {
-      addParam("/replication/ssl/fipsMode", sslFipsMode ? "true" : "false");
+      addParam("/replications/0/ssl/fipsMode", sslFipsMode ? "true" : "false");
     }
     if (sslCaFile != null) {
-      addParam("/replication/ssl/caFile", sslCaFile);
+      addParam("/replications/0/ssl/caFile", sslCaFile);
     }
     if (sslTrustStoreFile != null) {
-      addParam("/replication/ssl/trustStoreFile", sslTrustStoreFile);
+      addParam("/replications/0/ssl/trustStoreFile", sslTrustStoreFile);
     }
     if (sslTrustStorePassword != null) {
-      addParam("/replication/ssl/trustStorePassword", sslTrustStorePassword);
+      addParam("/replications/0/ssl/trustStorePassword", sslTrustStorePassword);
     }
     if (sslKeyStoreFile != null) {
-      addParam("/replication/ssl/keyStoreFile", sslKeyStoreFile);
+      addParam("/replications/0/ssl/keyStoreFile", sslKeyStoreFile);
     }
     if (sslKeyStorePassword != null) {
-      addParam("/replication/ssl/keyStorePassword", sslKeyStorePassword);
+      addParam("/replications/0/ssl/keyStorePassword", sslKeyStorePassword);
     }
     if (sslKeyPassword != null) {
-      addParam("/replication/ssl/keyPassword", sslKeyPassword);
+      addParam("/replications/0/ssl/keyPassword", sslKeyPassword);
     }
     if (authMode != null) {
-      addParam("/replication/auth/mode", authMode);
+      addParam("/replications/0/auth/mode", authMode);
     }
     if (authUser != null) {
-      addParam("/replication/auth/user", authUser);
+      addParam("/replications/0/auth/user", authUser);
     }
     if (authSource != null) {
-      addParam("/replication/auth/source", authSource);
+      addParam("/replications/0/auth/source", authSource);
     }
     if (mongopassFile != null) {
-      addParam("/replication/mongopassFile", mongopassFile);
+      addParam("/replications/0/mongopassFile", mongopassFile);
     }
     if (connectionPoolTimeout != null) {
       addParam("/backend/pool/connectionPoolTimeout", connectionPoolTimeout);

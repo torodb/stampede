@@ -19,11 +19,12 @@
 package com.torodb.mongodb.repl;
 
 import com.torodb.core.retrier.RetrierGiveUpException;
+import com.torodb.core.services.TorodbService;
 
 /**
  * An interface that manages the consistency of a generic resource.
  */
-public interface ConsistencyHandler {
+public interface ConsistencyHandler extends TorodbService {
 
   boolean isConsistent();
 

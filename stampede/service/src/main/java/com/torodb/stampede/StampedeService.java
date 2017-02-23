@@ -18,7 +18,6 @@
 
 package com.torodb.stampede;
 
-import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import com.torodb.core.Shutdowner;
@@ -31,19 +30,22 @@ import com.torodb.core.modules.Bundle;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.modules.BundleConfigImpl;
 import com.torodb.core.retrier.Retrier;
+import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.mongodb.core.MongoDbCoreBundle;
-import com.torodb.mongodb.core.MongoDbCoreConfig;
-import com.torodb.mongodb.core.MongodServerConfig;
+import com.torodb.engine.mongodb.sharding.MongoDbShardingBundle;
+import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
+import com.torodb.engine.mongodb.sharding.MongoDbShardingConfigBuilder;
 import com.torodb.mongodb.repl.ConsistencyHandler;
-import com.torodb.mongodb.repl.MongoDbReplBundle;
 import com.torodb.torod.SqlTorodBundle;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
@@ -96,21 +98,20 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     BackendBundle backendBundle = stampedeConfig.getBackendBundleGenerator()
         .apply(generalBundleConfig);
     startBundle(backendBundle);
-    
-    ConsistencyHandler consistencyHandler = createConsistencyHandler(backendBundle);
-    if (!consistencyHandler.isConsistent()) {
-      dropDatabase(backendBundle);
-    }
+
+    Map<String, ConsistencyHandler> consistencyHandlers = createConsistencyHandlers(
+        backendBundle,
+        stampedeConfig.getThreadFactory()
+    );
+
+    resolveInconsistencies(backendBundle, consistencyHandlers);
 
     TorodBundle torodBundle = createTorodBundle(backendBundle);
     startBundle(torodBundle);
 
-    MongoDbCoreBundle mongoCoreBundle = createMongoDbCoreBundle(torodBundle);
-    startBundle(mongoCoreBundle);
+    MongoDbShardingBundle shardingBundle = createShardingBundle(torodBundle, consistencyHandlers);
+    startBundle(shardingBundle);
 
-    MongoDbReplBundle replBundle = createMongoDbReplBundle(mongoCoreBundle, consistencyHandler);
-    startBundle(replBundle);
-    
     LOGGER.info("ToroDB Stampede is now running");
   }
 
@@ -124,12 +125,27 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     LOGGER.info("ToroDB Stampede has been shutted down");
   }
 
-  private ConsistencyHandler createConsistencyHandler(BackendBundle backendBundle) {
+  private Map<String, ConsistencyHandler> createConsistencyHandlers(BackendBundle backendBundle,
+      ThreadFactory threadFactory) {
     Retrier retrier = essentialInjector.getInstance(Retrier.class);
-    return new DefaultConsistencyHandler(
-        backendBundle.getExternalInterface().getBackendService(),
-        retrier
-    );
+    BackendService backendService = backendBundle.getExternalInterface().getBackendService();
+
+    Map<String, ConsistencyHandler> result = new HashMap<>();
+
+    stampedeConfig.getShardConfigBuilders().stream()
+        .map(StampedeConfig.ShardConfigBuilder::getShardId)
+        .forEachOrdered((shardId) -> {
+          ConsistencyHandler consistencyHandler = new ShardConsistencyHandler(
+              shardId, backendService, retrier, threadFactory
+          );
+
+          consistencyHandler.startAsync();
+          consistencyHandler.awaitRunning();
+          
+          result.put(shardId, consistencyHandler);
+        });
+
+    return result;
   }
 
   private TorodBundle createTorodBundle(BackendBundle backendBundle) {
@@ -140,34 +156,35 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     ));
   }
 
-  private MongoDbCoreBundle createMongoDbCoreBundle(TorodBundle torodBundle) {
-    /*
-     * The following config file is used by command implementations like isMaster to return
-     * information about the server. That has no sense on Stampede and, in fact, that command is
-     * never executed. Ideally, implementations like that one should be implemented on the ToroDB
-     * Server layer, but right now almost all commands must be implemented on the mongodb core
-     * layer, which means we need to provide a value even if it is not used.
-     */
-    MongodServerConfig mongodServerConfig = new MongodServerConfig(
-        HostAndPort.fromParts("localhost", 27017)
+  private MongoDbShardingBundle createShardingBundle(TorodBundle torodBundle,
+      Map<String, ConsistencyHandler> consistencyHandler) {
+
+    @SuppressWarnings("checkstyle:LineLength")
+    MongoDbShardingConfigBuilder configBuilder = new MongoDbShardingConfigBuilder(generalBundleConfig)
+        .setTorodBundle(torodBundle)
+        .setUserReplFilter(stampedeConfig.getUserReplicationFilters());
+
+    stampedeConfig.getShardConfigBuilders().forEach(shardConfBuilder ->
+        addShard(configBuilder, shardConfBuilder, consistencyHandler)
     );
-    return new MongoDbCoreBundle(
-        MongoDbCoreConfig.simpleConfig(torodBundle, mongodServerConfig, generalBundleConfig)
-    );
+
+    return new MongoDbShardingBundle(configBuilder.build());
   }
 
-  private MongoDbReplBundle createMongoDbReplBundle(MongoDbCoreBundle coreBundle,
-      ConsistencyHandler consistencyHandler) {
-    return new MongoDbReplBundle(
-        stampedeConfig.getReplBundleConfigBuilderGenerator()
-            .apply(generalBundleConfig)
-            .setConsistencyHandler(consistencyHandler)
-            .setCoreBundle(coreBundle)
-            .build()
-    );
+  private void addShard(
+      MongoDbShardingConfigBuilder shardingConfBuilder,
+      StampedeConfig.ShardConfigBuilder shardConfBuilder,
+      Map<String, ConsistencyHandler> consistencyHandlers) {
+
+    ConsistencyHandler consistencyHandler = consistencyHandlers.get(shardConfBuilder.getShardId());
+
+    MongoDbShardingConfig.ShardConfig shardConfig = shardConfBuilder.createConfig(
+        consistencyHandler);
+
+    shardingConfBuilder.addShard(shardConfig);
   }
 
-  private void dropDatabase(BackendBundle backendBundle) throws UserException {
+  private void dropUserData(BackendBundle backendBundle) throws UserException {
     BackendService backendService = backendBundle.getExternalInterface().getBackendService();
     try (BackendConnection conn = backendService.openConnection();
         ExclusiveWriteBackendTransaction trans = conn.openExclusiveWriteTransaction()) {
@@ -181,5 +198,30 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     bundle.awaitRunning();
 
     shutdowner.addStopShutdownListener(bundle);
+  }
+
+  private void resolveInconsistencies(BackendBundle backendBundle, 
+      Map<String, ConsistencyHandler> consistencyHandlers) throws UserException,
+      RetrierGiveUpException {
+
+    Optional<String> inconsistentShard = consistencyHandlers.entrySet().stream()
+        .filter(e -> !e.getValue().isConsistent())
+        .map(Map.Entry::getKey)
+        .findAny();
+
+    //TODO: Some improvements can be done so only the inconsistent shards are dropped
+    if (inconsistentShard.isPresent()) {
+      LOGGER.warn("Found that replication shard {} is not consistent.",
+          inconsistentShard.orElse("unknown")
+      );
+      LOGGER.warn("Dropping user data.");
+      dropUserData(backendBundle);
+
+      for (ConsistencyHandler consistencyHandler : consistencyHandlers.values()) {
+        consistencyHandler.setConsistent(false);
+      }
+    } else {
+      LOGGER.info("All replication shards are consistent");
+    }
   }
 }

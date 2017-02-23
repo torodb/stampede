@@ -18,14 +18,19 @@
 
 package com.torodb.stampede.config.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.collect.Lists;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.logging.Logging;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
+import org.hibernate.validator.constraints.NotEmpty;
+
+import java.util.List;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -42,10 +47,10 @@ public class Config implements MetricsConfig {
   @NotNull
   @JsonProperty(required = true)
   private Boolean metricsEnabled = false;
-  @NotNull
+  @NotEmpty
   @Valid
   @JsonProperty(required = true)
-  private Replication replication = new Replication();
+  private List<Replication> replications = Lists.newArrayList(new Replication());
   @Description("config.backend")
   @NotNull
   @Valid
@@ -72,12 +77,19 @@ public class Config implements MetricsConfig {
   }
 
   @DoNotChange
-  public Replication getReplication() {
-    return replication;
+  public List<Replication> getReplications() {
+    return replications;
   }
 
-  public void setReplication(Replication replication) {
-    this.replication = replication;
+  public void setReplications(List<Replication> replications) {
+    this.replications = replications;
+  }
+
+  //TODO: This is a patch that should be changed once TORODB-397 is completed
+  @DoNotChange
+  @JsonIgnore
+  public Replication getReplication() {
+    return replications.get(0);
   }
 
   public Backend getBackend() {

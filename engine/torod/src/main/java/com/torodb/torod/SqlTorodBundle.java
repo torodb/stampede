@@ -35,7 +35,7 @@ import java.util.Collections;
 /**
  * A {@link TorodBundle torod bundle} that uses a SQL backend.
  */
-public class SqlTorodBundle extends TorodBundle {
+public class SqlTorodBundle extends AbstractTorodBundle {
   private static final Logger LOGGER = LogManager.getLogger(SqlTorodBundle.class);
   private final TorodServer torodServer;
   private final BackendBundle backendBundle;

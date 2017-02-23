@@ -20,6 +20,7 @@ package com.torodb.stampede;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
+import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -32,6 +33,8 @@ import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.engine.essential.DefaultBuildProperties;
 import com.torodb.engine.essential.EssentialModule;
+import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
+import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
@@ -41,6 +44,8 @@ import com.torodb.packaging.config.util.BackendImplementationVisitor;
 import com.torodb.packaging.config.util.BundleFactory;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
+import com.torodb.packaging.util.MongoClientConfigurationFactory;
+import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
@@ -52,8 +57,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.time.Clock;
+import java.util.List;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * ToroDB Stampede entry point.
@@ -133,7 +142,7 @@ public class Main {
 
       parseToropassFile(config);
 
-      AbstractReplication replication = config.getReplication();
+      Replication replication = config.getReplication();
       if (replication.getAuth().getUser() != null) {
         HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
             .withDefaultPort(27017);
@@ -161,7 +170,7 @@ public class Main {
 
           @Override
           public String getMongopassFile() {
-            return config.getReplication().getMongopassFile();
+            return replication.getMongopassFile();
           }
 
           @Override
@@ -250,7 +259,7 @@ public class Main {
 
     MetricsConfig metricsConfig = config::getMetricsEnabled;
     Backend backendConfig = config.getBackend();
-    Replication replicationConfig = config.getReplication();
+    List<Replication> replicationConfig = config.getReplications();
 
     return new StampedeConfig(
         Guice.createInjector(new EssentialModule(metricsConfig, clock)),
@@ -258,10 +267,9 @@ public class Main {
             backendConfig,
             generalConfig
         ),
-        generalConfig -> BundleFactory.createMongoDbReplConfigBundle(
-            replicationConfig,
-            generalConfig
-        )
+        //TODO: This is a patch that should be changed once TORODB-397 is completed
+        ReplicationFiltersFactory.getReplicationFilters(config.getReplication()),
+        createShardConfigBuilders(replicationConfig)
     );
   }
 
@@ -330,5 +338,40 @@ public class Main {
     };
 
     config.getBackend().getBackendImplementation().accept(visitor, null);
+  }
+
+  private static List<StampedeConfig.ShardConfigBuilder> createShardConfigBuilders(
+      List<? extends AbstractReplication> replicationConfigs) {
+
+    AtomicInteger counter = new AtomicInteger();
+    Supplier<String> shardIdProvider = () -> "s" + counter.incrementAndGet();
+
+    return replicationConfigs.stream()
+        .map(shardConfig -> translateShardConfig(shardConfig, shardIdProvider))
+        .collect(Collectors.toList());
+  }
+
+  private static StampedeConfig.ShardConfigBuilder translateShardConfig(
+      AbstractReplication replicationConfig,
+      Supplier<String> shardIdProvider) {
+    MongoClientConfiguration clientConf =
+          MongoClientConfigurationFactory.getMongoClientConfiguration(replicationConfig);
+    String shardId = shardIdProvider.get();
+    return new StampedeConfig.ShardConfigBuilder() {
+      @Override
+      public String getShardId() {
+        return shardId;
+      }
+
+      @Override
+      public MongoDbShardingConfig.ShardConfig createConfig(
+          ConsistencyHandler consistencyHandler) {
+        return new MongoDbShardingConfig.ShardConfig(
+            shardId,
+            clientConf,
+            replicationConfig.getReplSetName(),
+            consistencyHandler);
+      }
+    };
   }
 }

@@ -61,6 +61,7 @@ public class OplogBatchFilter implements akka.japi.function.Function<OplogBatch,
     LOGGER.debug("Filtered operation {}. Reason: {}", op, filterResult
         .getReason()
         .orElse(unknownReasonFun)
+        .apply(op)
     );
     return false;
   }

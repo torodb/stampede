@@ -87,7 +87,7 @@ public class SqlTorodBundleTest {
   @Test
   public void testStartAndStop() {
     torodBundle.start()
-        .thenCompose((o) -> torodBundle.stop())
+        .thenCompose((Object ignore) -> torodBundle.stop())
         .join();
     assertThat(torodBundle.state(), is(Service.State.TERMINATED));
   }
