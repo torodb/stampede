@@ -6,25 +6,25 @@ ToroDB Stampede's correct operation depends on a number of known dependencies, i
 
 | | Description | External links |
 |-|-------------|----------------|
-| MongoDB | It is the NoSQL system where the original data is stored and the replication data source. | [more info](https://docs.mongodb.com/manual/installation/) |
-| Replica set configuration | ToroDB Stampede is designed to replicate from a MongoDB replica set, so it should be previously configured. | [more info](https://docs.mongodb.com/manual/tutorial/deploy-replica-set/) | 
-| PostgreSQL | ToroDB Stampede correct operation relies on the existence of a backend, right now it should be PostgreSQL. | [more info](https://wiki.postgresql.org/wiki/Detailed_installation_guides) |
-| Java | ToroDB Stampede has been written in Java so a Java Virtual Machine is required for it's execution. | [more info](https://java.com/en/download/help/index_installing.xml) |
+| MongoDB | To act as replication source. | [more info](https://docs.mongodb.com/manual/installation/) |
+| Replica set configuration | ToroDB Stampede receives data from a MongoDB replica set. A single-node replica set is sufficient. | [more info](https://docs.mongodb.com/manual/tutorial/deploy-replica-set/) | 
+| PostgreSQL | The relational backend to store the normalized data in. | [more info](https://wiki.postgresql.org/wiki/Detailed_installation_guides) |
+| Java | ToroDB Stampede is written in Java so a Java Runtime Environmen (JRE) required to run it. | [more info](https://java.com/en/download/help/index_installing.xml) |
 
 ## Build Dependencies
 
 | | Description | External links |
 |-|-------------|----------------|
-| Git | It is the distributed version control system (DVCS) used to keep ToroDB Stampede source code up to date and synchronized between its committers. | [more info](https://git-scm.com/downloads) |
-| Maven | Dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
-| Docker | An open-source project that automates the deployment of Linux applications inside software containers. It allow to run a ToroDB Stampede and to test it in a controlled environment. | [more info](https://docs.docker.com/) | 
+| Git | It is the distributed version control system (DVCS) used to mange ToroDB Stampede source code. | [more info](https://git-scm.com/downloads) |
+| Apache Maven | The build tool used by ToroDB Stampede. | [more info](http://maven.apache.org/install.html) | 
+| Docker | A container management tool for Linux. It is used to test ToroDB Stampede. | [more info](https://docs.docker.com/) | 
 | Docker Compose | A tool for defining and running multi-container Docker applications. It allow to run test scenarios like a ToroDB Stampede replicating from a MongoDB and connected to a PostgreSQL. | [more info](https://docs.docker.com/compose/install/) | 
 
-## Backend setup
+## Backend Setup
 
 ### PostgreSQL Configuration
 
-To work properly, the default installation of ToroDB Stampede requires a new user and a new database. User and database can be custom and specified in the configuration, but here we will explain how to create the user and database to work with default configuration.
+The ToroDB Stampede default configuration expects a new PostgreSQL user named `torodb` and a new PostgreSQL database named `torod`. You can [configure other names](/configuration/postgresql-connectivity.md), of course. The following examples demo creating a user and database that matches the ToroDB Stampede default configuration.
 
 #### Linux
 
@@ -46,7 +46,9 @@ CREATE DATABASE torod OWNER torodb;
 
 ### Create .toropass File
 
-The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. The example assumes local connection with default port is being used, but it can be changed by the user too.
+ToroDB Stampede reads the database credentials (user name and password) from the file `.toropass` in the home directory ([configurable](/configuration/postgresql-connectivity.md)). 
+
+The following example configures ToroDB Stampede to connect to a PostgreSQL database running on the same machine (localhost) at the default port 5432. The remaining settings are the database, username and password respectively.
 
 #### Linux/macOS/Windows
 
