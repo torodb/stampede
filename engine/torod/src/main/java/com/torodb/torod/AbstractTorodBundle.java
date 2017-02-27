@@ -18,9 +18,9 @@
 
 package com.torodb.torod;
 
+import com.torodb.core.bundle.AbstractBundle;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.d2r.ReservedIdGenerator;
-import com.torodb.core.modules.AbstractBundle;
-import com.torodb.core.modules.BundleConfig;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

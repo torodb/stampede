@@ -26,9 +26,6 @@ import com.torodb.core.metrics.ToroMetricRegistry;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
-/**
- *
- */
 @ThreadSafe
 public class OplogApplierMetrics {
 
@@ -38,8 +35,8 @@ public class OplogApplierMetrics {
   private final Histogram applicationCost;
 
   @Inject
-  public OplogApplierMetrics(ToroMetricRegistry registry) {
-    MetricNameFactory factory = new MetricNameFactory("OplogApplier");
+  public OplogApplierMetrics(ToroMetricRegistry registry, MetricNameFactory parentFactory) {
+    MetricNameFactory factory = parentFactory.createSubFactory("OplogApplier");
 
     maxDelay = registry.histogram(factory.createMetricName("maxDelay"));
     registry.gauge(factory.createMetricName("maxDelayUnits")).setValue("milliseconds");

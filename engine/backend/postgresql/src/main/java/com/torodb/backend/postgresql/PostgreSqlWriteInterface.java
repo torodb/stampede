@@ -99,15 +99,15 @@ public class PostgreSqlWriteInterface extends AbstractWriteInterface {
   @Override
   public void insertDocPartData(DSLContext dsl, String schemaName, DocPartData docPartData) throws
       UserException {
-    metrics.insertRows.mark(docPartData.rowCount());
-    metrics.insertFields.mark(docPartData.rowCount() * (docPartData.fieldColumnsCount()
+    metrics.getInsertRows().mark(docPartData.rowCount());
+    metrics.getInsertFields().mark(docPartData.rowCount() * (docPartData.fieldColumnsCount()
         + docPartData.scalarColumnsCount()));
 
     if (docPartData.rowCount() == 0) {
       return;
     }
 
-    try (Timer.Context ctx = metrics.insertDocPartDataTimer.time()) {
+    try (Timer.Context ctx = metrics.getInsertDocPartDataTimer().time()) {
 
       int maxCappedSize = 10;
       int cappedSize = Math.min(docPartData.rowCount(), maxCappedSize);
@@ -120,7 +120,7 @@ public class PostgreSqlWriteInterface extends AbstractWriteInterface {
               cappedSize);
         }
 
-        metrics.insertDefault.mark();
+        metrics.getInsertDefault().mark();
 
         super.insertDocPartData(dsl, schemaName, docPartData);
       } else {
@@ -130,11 +130,11 @@ public class PostgreSqlWriteInterface extends AbstractWriteInterface {
             LOGGER.warn("It was impossible to use the PostgreSQL way to "
                 + "insert documents. Inserting using the standard "
                 + "implementation");
-            metrics.insertDefault.mark();
+            metrics.getInsertDefault().mark();
             super.insertDocPartData(dsl, schemaName, docPartData);
           } else {
             try {
-              metrics.insertCopy.mark();
+              metrics.getInsertCopy().mark();
               copyInsertDocPartData(
                   connection.unwrap(PGConnection.class),
                   schemaName,

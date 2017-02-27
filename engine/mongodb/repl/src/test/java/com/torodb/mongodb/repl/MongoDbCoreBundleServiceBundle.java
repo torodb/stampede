@@ -19,8 +19,8 @@
 package com.torodb.mongodb.repl;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.ServiceBundle;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.ServiceBundle;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
 import com.torodb.torod.MemoryTorodBundle;

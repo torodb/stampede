@@ -28,8 +28,8 @@ import com.torodb.backend.derby.DerbyDbBackendBundle;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.EssentialModule;

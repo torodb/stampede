@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.modules;
+package com.torodb.core.bundle;
 
 import com.google.common.base.Preconditions;
 import com.torodb.core.services.IdleTorodbService;

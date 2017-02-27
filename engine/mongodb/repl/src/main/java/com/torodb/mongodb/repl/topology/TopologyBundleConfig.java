@@ -20,7 +20,7 @@ package com.torodb.mongodb.repl.topology;
 
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
 import com.google.common.net.HostAndPort;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.mongodb.repl.impl.FollowerSyncSourceProviderConfig;
 
 public class TopologyBundleConfig extends FollowerSyncSourceProviderConfig {

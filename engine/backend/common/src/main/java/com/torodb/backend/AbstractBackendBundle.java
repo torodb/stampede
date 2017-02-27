@@ -23,7 +23,7 @@ import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendExtInt;
 import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

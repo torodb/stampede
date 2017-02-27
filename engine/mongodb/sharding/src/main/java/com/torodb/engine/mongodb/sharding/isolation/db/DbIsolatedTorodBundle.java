@@ -19,8 +19,8 @@
 package com.torodb.engine.mongodb.sharding.isolation.db;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.AbstractBundle;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.AbstractBundle;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.torod.TorodBundle;
 import com.torodb.torod.TorodExtInt;
 import com.torodb.torod.TorodServer;

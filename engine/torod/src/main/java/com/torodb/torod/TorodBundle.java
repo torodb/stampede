@@ -18,7 +18,7 @@
 
 package com.torodb.torod;
 
-import com.torodb.core.modules.Bundle;
+import com.torodb.core.bundle.Bundle;
 
 public interface TorodBundle extends Bundle<TorodExtInt> {
 

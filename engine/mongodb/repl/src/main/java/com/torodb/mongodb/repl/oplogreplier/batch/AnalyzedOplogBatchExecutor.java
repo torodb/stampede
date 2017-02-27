@@ -57,29 +57,30 @@ public interface AnalyzedOplogBatchExecutor extends Service,
 
   public static class AnalyzedOplogBatchExecutorMetrics {
 
-    protected static final MetricNameFactory NAME_FACTORY =
-        new MetricNameFactory("OplogBatchExecutor");
+    private final MetricNameFactory nameFactory;
     private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
-    private final ToroMetricRegistry metricRegistry;
+    private final ToroMetricRegistry registry;
     private final Histogram cudBatchSize;
     private final Timer cudBatchTimer;
     private final Timer namespaceBatchTimer;
 
     @Inject
-    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
-      this.metricRegistry = metricRegistry;
-      this.cudBatchSize = metricRegistry.histogram(NAME_FACTORY.createMetricName("batchSize"));
-      this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudTimer"));
-      this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY
-          .createMetricName("namespaceTimer"));
+    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry registry,
+        MetricNameFactory parentNameFactory) {
+      this.registry = registry;
+      this.nameFactory = parentNameFactory.createSubFactory("OplogBatchExecutor");
+      this.cudBatchSize = registry.histogram(nameFactory.createMetricName("batchSize"));
+      this.cudBatchTimer = registry.timer(nameFactory.createMetricName("cudTimer"));
+      this.namespaceBatchTimer = registry.timer(nameFactory.createMetricName("namespaceTimer"));
+    }
+
+    protected final MetricNameFactory getNameFactory() {
+      return nameFactory;
     }
 
     /**
      * Returns the timer associated with {@link SingleOpAnalyzedOplogBatch} that contains the given
      * operation.
-     *
-     * @param singleOplogOp
-     * @return
      */
     public Timer getSingleOpTimer(OplogOperation singleOplogOp) {
       String mapKey = getMapKey(singleOplogOp);
@@ -113,9 +114,14 @@ public interface AnalyzedOplogBatchExecutor extends Service,
     private Timer createSingleTimer(OplogOperation oplogOp, String mapKey) {
       String prefix = "single-";
       if (oplogOp instanceof DbCmdOplogOperation) {
-        return metricRegistry.timer(NAME_FACTORY.createMetricName(prefix + mapKey));
+        return registry.timer(nameFactory.createMetricName(prefix + mapKey));
+      } else {
+        return registry.timer(
+            nameFactory.createMetricName(
+                prefix + mapKey.toLowerCase(Locale.ENGLISH)
+            )
+        );
       }
-      return metricRegistry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
     }
   }
 

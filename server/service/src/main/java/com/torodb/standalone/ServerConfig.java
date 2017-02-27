@@ -21,7 +21,7 @@ package com.torodb.standalone;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 

@@ -52,6 +52,7 @@ import com.eightkdata.mongowp.server.wp.RequestMessageObjectHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.mongodb.commands.CommandClassifier;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreExtInt;
@@ -76,7 +77,9 @@ public class MongoDbWpModule extends PrivateModule {
   protected void configure() {
     expose(NettyMongoServer.class);
     expose(MongoServerConfig.class);
-  
+
+    install(new EssentialToDefaultModule());
+
     bindCore();
 
     bind(NettyMongoServer.class)

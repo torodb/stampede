@@ -23,12 +23,25 @@ import com.codahale.metrics.MetricRegistry;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-public class MetricName {
+final class DefaultMetricName implements MetricName {
 
-  private String group;
-  private String type;
-  private String name;
-  private String mBeanName;
+  private final String group;
+  private final String type;
+  private final String name;
+  private final String mBeanName;
+
+  public DefaultMetricName(String group, String type, String name) {
+    if (group == null || type == null) {
+      throw new IllegalArgumentException("Both group and type must be specified");
+    }
+    if (name == null) {
+      throw new IllegalArgumentException("Name must be specified");
+    }
+    this.mBeanName = createMBeanName(group, type, name);
+    this.group = group;
+    this.type = type;
+    this.name = name;
+  }
 
   public String getGroup() {
     return group;
@@ -42,76 +55,33 @@ public class MetricName {
     return name;
   }
 
-  public MetricName(Class<?> clasz, String name) {
-    String group = "";
-    if (clasz.getPackage() != null) {
-      group = clasz.getPackage().getName();
-    }
-    String type = removeTailDollar(clasz.getSimpleName());
-    build(group, type, name);
-  }
-
-  public MetricName(String group, String type, String name) {
-    build(group, type, name);
-  }
-
-  public MetricName(String group, String type, String name, String mBeanName) {
-    build(group, type, name, mBeanName);
-  }
-
-  private void build(String group, String type, String name) {
-    String mBeanName = createMBeanName(group, type, name);
-    build(group, type, name, mBeanName);
-  }
-
-  private void build(String group, String type, String name, String mBeanName) {
-    if (group == null || type == null) {
-      throw new IllegalArgumentException("Both group and type must be specified");
-    }
-    if (name == null) {
-      throw new IllegalArgumentException("Name must be specified");
-    }
-    this.group = group;
-    this.type = type;
-    this.name = name;
-    this.mBeanName = mBeanName;
-  }
-
+  @Override
   public String getMetricName() {
     return MetricRegistry.name(group, type, name);
   }
 
+  @Override
   public ObjectName getMBeanName() {
     String mname = mBeanName;
-    if (mname == null) {
-      mname = getMetricName();
-    }
     try {
       return new ObjectName(mname);
-    } catch (MalformedObjectNameException e) {
+    } catch (MalformedObjectNameException ex) {
       try {
         return new ObjectName(ObjectName.quote(mname));
-      } catch (MalformedObjectNameException e1) {
-        throw new RuntimeException(e1);
+      } catch (MalformedObjectNameException ex2) {
+        throw new RuntimeException(ex2);
       }
     }
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    MetricName other = (MetricName) o;
-    return mBeanName.equals(other.mBeanName);
+  public boolean equals(Object other) {
+    return defaultEquals(other);
   }
 
   @Override
   public int hashCode() {
-    return mBeanName.hashCode();
+    return defaultHashCode();
   }
 
   @Override
@@ -129,13 +99,6 @@ public class MetricName {
       nameBuilder.append(name);
     }
     return nameBuilder.toString();
-  }
-
-  private static String removeTailDollar(String s) {
-    if (s.endsWith("$")) {
-      return s.substring(0, s.length() - 1);
-    }
-    return s;
   }
 
 }

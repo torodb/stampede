@@ -22,7 +22,7 @@ package com.torodb.mongodb.repl.topology;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.AbstractReplBundleTest;
 import com.torodb.mongodb.repl.MongoDbCoreBundleServiceBundle;

@@ -16,33 +16,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.impl;
+package com.torodb.core.bundle;
 
-import com.google.common.net.HostAndPort;
-import com.google.inject.Injector;
-import com.torodb.core.bundle.BundleConfig;
-import com.torodb.core.supervision.Supervisor;
+import com.google.common.util.concurrent.Service;
 
-public class FollowerSyncSourceProviderConfig implements BundleConfig {
-  private final HostAndPort seed;
-  private final BundleConfig delegate;
+/**
+ * A {@link DependenciesBundle} whose external interface is a service managed by this bundle.
+ */
+public abstract class ServiceBundle<S extends Service> extends DependenciesBundle<S> {
 
-  public FollowerSyncSourceProviderConfig(HostAndPort seed, BundleConfig delegate) {
-    this.seed = seed;
-    this.delegate = delegate;
-  }
-
-  public HostAndPort getSeed() {
-    return seed;
+  public ServiceBundle(BundleConfig bundleConfig) {
+    super(bundleConfig);
   }
 
   @Override
-  public Injector getEssentialInjector() {
-    return delegate.getEssentialInjector();
+  protected void postDependenciesStartUp() throws Exception {
+    super.postDependenciesStartUp();
+
+    getExternalInterface().startAsync();
+    getExternalInterface().awaitRunning();
   }
 
   @Override
-  public Supervisor getSupervisor() {
-    return delegate.getSupervisor();
+  protected void preDependenciesShutDown() throws Exception {
+    getExternalInterface().stopAsync();
+    getExternalInterface().awaitTerminated();
+
+    super.preDependenciesShutDown();
   }
+
 }

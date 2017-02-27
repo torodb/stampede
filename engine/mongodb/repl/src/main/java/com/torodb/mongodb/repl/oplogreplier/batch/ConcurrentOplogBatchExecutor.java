@@ -25,6 +25,7 @@ import com.google.common.base.Supplier;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.transaction.RollbackException;
@@ -44,6 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnegative;
 import javax.inject.Inject;
 
 public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecutor {
@@ -156,11 +158,12 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
     private final Histogram subBatchSizeHistogram;
 
     @Inject
-    public ConcurrentOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
-      super(metricRegistry);
-      this.subBatchSizeMeter = metricRegistry.meter(NAME_FACTORY.createMetricName(
+    public ConcurrentOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry,
+        MetricNameFactory parentNameFactory) {
+      super(metricRegistry, parentNameFactory);
+      this.subBatchSizeMeter = metricRegistry.meter(getNameFactory().createMetricName(
           "subBatchSizeMeter"));
-      this.subBatchSizeHistogram = metricRegistry.histogram(NAME_FACTORY.createMetricName(
+      this.subBatchSizeHistogram = metricRegistry.histogram(getNameFactory().createMetricName(
           "subBatchSizeHistogram"));
     }
 
@@ -179,9 +182,9 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
      * Given some metrics, this heuristic returns number of {@link AnalyzedOp ops} that each sub
      * batch should have.
      *
-     * @param metrics
      * @return a positive integer
      */
+    @Nonnegative
     public int getSubBatchSize(ConcurrentOplogBatchExecutorMetrics metrics);
   }
 

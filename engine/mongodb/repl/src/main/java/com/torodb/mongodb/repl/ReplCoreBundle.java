@@ -22,7 +22,7 @@ import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.torodb.mongodb.repl.guice.ReplCoreModule;
 import org.apache.logging.log4j.LogManager;

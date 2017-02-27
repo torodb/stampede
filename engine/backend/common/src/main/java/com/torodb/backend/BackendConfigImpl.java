@@ -19,7 +19,7 @@
 package com.torodb.backend;
 
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 
 import java.util.concurrent.ThreadFactory;

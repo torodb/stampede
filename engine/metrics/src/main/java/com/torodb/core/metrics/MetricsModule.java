@@ -16,18 +16,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.metrics.guice;
+package com.torodb.core.metrics;
 
-import com.google.inject.PrivateModule;
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Singleton;
-import com.torodb.core.metrics.DisabledMetricRegistry;
-import com.torodb.core.metrics.MetricsConfig;
-import com.torodb.core.metrics.ToroMetricRegistry;
+import com.torodb.core.guice.EssentialToroModule;
 
 /**
- * A module that binds metrics related stuff (specially {@link ToroMetricRegistry}).
+ * A module that binds metrics related stuff (specially {@link AdaptorMetricRegistry}).
  */
-public class MetricsModule extends PrivateModule {
+public class MetricsModule extends EssentialToroModule {
 
   private MetricsConfig config;
 
@@ -37,17 +35,26 @@ public class MetricsModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    exposeEssential(MetricNameFactory.class);
+    exposeEssential(ToroMetricRegistry.class);
 
     if (!config.getMetricsEnabled()) {
       bind(DisabledMetricRegistry.class)
           .in(Singleton.class);
-      bind(ToroMetricRegistry.class)
+      bindEssential(ToroMetricRegistry.class)
           .to(DisabledMetricRegistry.class);
     } else {
-      bind(ToroMetricRegistry.class)
+      bind(MetricRegistry.class)
+          .toInstance(new MetricRegistry());
+      bind(AdaptorMetricRegistry.class)
           .in(Singleton.class);
+      bindEssential(ToroMetricRegistry.class)
+          .to(AdaptorMetricRegistry.class);
     }
-    expose(ToroMetricRegistry.class);
+
+    bindEssential(MetricNameFactory.class)
+        .to(RootMetricNameFactory.class)
+        .in(Singleton.class);
   }
 
 }

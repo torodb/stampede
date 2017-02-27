@@ -28,6 +28,7 @@ import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.d2r.guice.D2RModule;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodServer;
@@ -49,7 +50,12 @@ public class SqlTorodModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    expose(TorodServer.class);
+    expose(InsertPipelineFactory.class);
+
     bindConfig();
+
+    install(new EssentialToDefaultModule());
 
     install(new D2RModule());
 
@@ -64,9 +70,6 @@ public class SqlTorodModule extends PrivateModule {
     bind(TorodServer.class)
         .to(SqlTorodServer.class)
         .in(Singleton.class);
-    expose(TorodServer.class);
-
-    expose(InsertPipelineFactory.class);
   }
 
   private void bindConfig() {

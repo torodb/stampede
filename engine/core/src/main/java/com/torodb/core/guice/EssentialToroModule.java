@@ -16,33 +16,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.impl;
+package com.torodb.core.guice;
 
-import com.google.common.net.HostAndPort;
-import com.google.inject.Injector;
-import com.torodb.core.bundle.BundleConfig;
-import com.torodb.core.supervision.Supervisor;
+import com.google.inject.Key;
+import com.google.inject.PrivateModule;
+import com.google.inject.binder.LinkedBindingBuilder;
 
-public class FollowerSyncSourceProviderConfig implements BundleConfig {
-  private final HostAndPort seed;
-  private final BundleConfig delegate;
+/**
+ * The {@link PrivateModule} extended by that essential ToroDB modules.
+ *
+ * <p/>It contains some syntacthic sugar methods designed to make it easy to create essential
+ * bindings.
+ */
+public abstract class EssentialToroModule extends PrivateModule {
 
-  public FollowerSyncSourceProviderConfig(HostAndPort seed, BundleConfig delegate) {
-    this.seed = seed;
-    this.delegate = delegate;
+  protected final <T> void exposeEssential(Class<T> clazz) {
+    expose(Key.get(clazz, Essential.class));
   }
 
-  public HostAndPort getSeed() {
-    return seed;
+  protected final <T> LinkedBindingBuilder<T> bindEssential(Class<T> clazz) {
+    return bind(clazz)
+        .annotatedWith(Essential.class);
   }
 
-  @Override
-  public Injector getEssentialInjector() {
-    return delegate.getEssentialInjector();
-  }
-
-  @Override
-  public Supervisor getSupervisor() {
-    return delegate.getSupervisor();
-  }
 }

@@ -34,7 +34,7 @@ import javax.inject.Singleton;
 @Singleton
 public class MongodMetrics {
 
-  private static final MetricNameFactory factory = new MetricNameFactory("Mongod");
+  private final MetricNameFactory factory;
   private final ToroMetricRegistry registry;
   private final Map<Command<?, ?>, Timer> commandsTimerMap = new ConcurrentHashMap<>();
   private final Meter commands;
@@ -45,8 +45,11 @@ public class MongodMetrics {
   private final Meter updateUpserted;
 
   @Inject
-  public MongodMetrics(ToroMetricRegistry registry) {
+  public MongodMetrics(ToroMetricRegistry registry, MetricNameFactory metricNameFactory) {
     this.registry = registry;
+
+    factory = metricNameFactory.createSubFactory("Mongod");
+
     commands = registry.meter(factory.createMetricName("commands"));
     inserts = registry.meter(factory.createMetricName("inserts"));
     deletes = registry.meter(factory.createMetricName("deletes"));

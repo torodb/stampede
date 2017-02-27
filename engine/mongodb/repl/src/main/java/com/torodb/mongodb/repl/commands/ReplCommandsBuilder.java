@@ -20,7 +20,8 @@ package com.torodb.mongodb.repl.commands;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.filters.DatabaseFilter;
 import com.torodb.mongodb.filters.IndexFilter;
@@ -77,6 +78,8 @@ public class ReplCommandsBuilder {
       bind(Supervisor.class)
           .annotatedWith(MongoDbRepl.class)
           .toInstance(generalConfig.getSupervisor());
+
+      install(new EssentialToDefaultModule());
     }
   }
 

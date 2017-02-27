@@ -16,23 +16,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.modules;
+package com.torodb.core.metrics;
 
-import com.google.common.util.concurrent.Service;
-import com.torodb.core.services.TorodbService;
-import com.torodb.core.supervision.SupervisedService;
+import javax.management.ObjectName;
 
-import java.util.Collection;
-import java.util.function.Function;
+public interface MetricName {
 
-public interface Bundle<ExtIntT> extends TorodbService, SupervisedService {
+  public String getMetricName();
 
-  public abstract Collection<Service> getDependencies();
-  
-  public abstract ExtIntT getExternalInterface();
+  public ObjectName getMBeanName();
 
-  public default <O> Bundle<O> map(Function<ExtIntT, O> transformationFunction) {
-    return new TransformationBundle<>(this, transformationFunction);
+  public default boolean defaultEquals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (other == null || !(other instanceof MetricName)) {
+      return false;
+    }
+    return this.getMBeanName().equals(((MetricName) other).getMBeanName());
+  }
+
+  public default int defaultHashCode() {
+    return getMBeanName().hashCode();
   }
 
 }

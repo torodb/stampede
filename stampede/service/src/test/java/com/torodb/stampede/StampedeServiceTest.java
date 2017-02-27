@@ -26,7 +26,7 @@ import com.google.inject.Injector;
 import com.torodb.backend.derby.DerbyDbBackendBundle;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.engine.essential.EssentialModule;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;

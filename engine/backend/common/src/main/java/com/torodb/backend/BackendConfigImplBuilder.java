@@ -18,7 +18,7 @@
 
 package com.torodb.backend;
 
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 
 public class BackendConfigImplBuilder implements BackendConfigBuilder {
 

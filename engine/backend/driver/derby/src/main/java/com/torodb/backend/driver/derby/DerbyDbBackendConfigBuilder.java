@@ -20,7 +20,7 @@ package com.torodb.backend.driver.derby;
 
 import com.torodb.backend.BackendConfigBuilder;
 import com.torodb.backend.BackendConfigImplBuilder;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 
 public class DerbyDbBackendConfigBuilder implements BackendConfigBuilder {
   private boolean inMemory = true;

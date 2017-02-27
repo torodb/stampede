@@ -16,33 +16,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.modules;
+package com.torodb.core.bundle;
 
-import com.google.common.util.concurrent.Service;
+import com.google.inject.Injector;
+import com.torodb.core.supervision.Supervisor;
 
-/**
- * A {@link DependenciesBundle} whose external interface is a service managed by this bundle.
- */
-public abstract class ServiceBundle<S extends Service> extends DependenciesBundle<S> {
 
-  public ServiceBundle(BundleConfig bundleConfig) {
-    super(bundleConfig);
+public class BundleConfigImpl implements BundleConfig {
+  private final Injector essentialInjector;
+  private final Supervisor supervisor;
+
+  public BundleConfigImpl(Injector essentialInjector, Supervisor supervisor) {
+    this.essentialInjector = essentialInjector;
+    this.supervisor = supervisor;
   }
 
   @Override
-  protected void postDependenciesStartUp() throws Exception {
-    super.postDependenciesStartUp();
-
-    getExternalInterface().startAsync();
-    getExternalInterface().awaitRunning();
+  public Injector getEssentialInjector() {
+    return essentialInjector;
   }
 
   @Override
-  protected void preDependenciesShutDown() throws Exception {
-    getExternalInterface().stopAsync();
-    getExternalInterface().awaitTerminated();
-
-    super.preDependenciesShutDown();
+  public Supervisor getSupervisor() {
+    return supervisor;
   }
-
 }

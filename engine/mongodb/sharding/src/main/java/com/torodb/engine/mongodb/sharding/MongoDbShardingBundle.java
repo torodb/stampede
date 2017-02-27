@@ -19,7 +19,7 @@
 package com.torodb.engine.mongodb.sharding;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;

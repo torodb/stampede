@@ -34,11 +34,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jool</artifactId>
         </dependency>
@@ -91,6 +86,12 @@
         <dependency>
             <groupId>com.torodb.engine</groupId>
             <artifactId>essential</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>metrics</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

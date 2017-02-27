@@ -19,7 +19,7 @@
 package com.torodb.backend.driver.derby;
 
 import com.google.inject.Guice;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.supervision.SupervisorDecision;
 import org.junit.Assert;
 import org.junit.Before;

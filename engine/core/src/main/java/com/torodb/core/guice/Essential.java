@@ -16,24 +16,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.metrics;
+package com.torodb.core.guice;
 
-public class MetricNameFactory {
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-  public static final String GROUP_NAME = "com.torodb.metrics";
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-  private final String type;
+import javax.inject.Qualifier;
 
-  public MetricNameFactory(String type) {
-    this.type = type;
-  }
-
-  public MetricName createMetricName(String metricName) {
-    return createMetricName(GROUP_NAME, type, metricName);
-  }
-
-  public static MetricName createMetricName(String group, String type, String metricName) {
-    return new MetricName(group, type, metricName);
-  }
+/**
+ * This annotation is used to qualify resources as the essential or default values.
+ */
+@Qualifier
+@Target({FIELD, PARAMETER, METHOD, TYPE})
+@Retention(RUNTIME)
+@Documented
+public @interface Essential {
 
 }

@@ -27,9 +27,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provides;
-import com.torodb.core.modules.AbstractBundle;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.AbstractBundle;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongodServer;
@@ -221,6 +222,8 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
 
     @Override
     protected void configure() {
+      install(new EssentialToDefaultModule());
+
       bindFilters();
 
       bindConfig();

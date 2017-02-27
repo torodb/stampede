@@ -19,7 +19,7 @@
 package com.torodb.mongodb.repl.impl;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 
 import java.util.Collection;

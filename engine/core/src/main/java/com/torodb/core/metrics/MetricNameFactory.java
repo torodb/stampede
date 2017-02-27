@@ -16,33 +16,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.mongodb.repl.impl;
+package com.torodb.core.metrics;
 
-import com.google.common.net.HostAndPort;
-import com.google.inject.Injector;
-import com.torodb.core.bundle.BundleConfig;
-import com.torodb.core.supervision.Supervisor;
+import java.util.stream.Stream;
 
-public class FollowerSyncSourceProviderConfig implements BundleConfig {
-  private final HostAndPort seed;
-  private final BundleConfig delegate;
+public interface MetricNameFactory {
 
-  public FollowerSyncSourceProviderConfig(HostAndPort seed, BundleConfig delegate) {
-    this.seed = seed;
-    this.delegate = delegate;
+  public MetricNameFactory createSubFactory(String middleName);
+
+  public MetricName createMetricName(Stream<String> names);
+
+  public default MetricName createMetricName(String name) {
+    return createMetricName(Stream.of(name));
   }
 
-  public HostAndPort getSeed() {
-    return seed;
+  public default MetricName createMetricName(String... names) {
+    return createMetricName(Stream.of(names));
   }
 
-  @Override
-  public Injector getEssentialInjector() {
-    return delegate.getEssentialInjector();
-  }
-
-  @Override
-  public Supervisor getSupervisor() {
-    return delegate.getSupervisor();
-  }
 }

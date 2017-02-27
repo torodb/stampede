@@ -24,6 +24,7 @@ import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
@@ -47,6 +48,8 @@ public class TopologyGuiceModule extends PrivateModule {
   protected void configure() {
     expose(SyncSourceProvider.class);
     expose(TopologyService.class);
+
+    install(new EssentialToDefaultModule());
 
     bindConfig();
 

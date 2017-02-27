@@ -16,28 +16,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.modules;
+package com.torodb.core.metrics;
 
-import com.google.inject.Injector;
-import com.torodb.core.supervision.Supervisor;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+public class TypeMetricNameFactory implements MetricNameFactory {
 
-public class BundleConfigImpl implements BundleConfig {
-  private final Injector essentialInjector;
-  private final Supervisor supervisor;
+  public static final String GROUP_NAME = "com.torodb.metrics";
 
-  public BundleConfigImpl(Injector essentialInjector, Supervisor supervisor) {
-    this.essentialInjector = essentialInjector;
-    this.supervisor = supervisor;
+  private final String type;
+
+  public TypeMetricNameFactory(String type) {
+    this.type = type;
+  }
+  
+  @Override
+  public MetricNameFactory createSubFactory(String middleName) {
+    return new SubMetricNameFactory(middleName, this);
   }
 
   @Override
-  public Injector getEssentialInjector() {
-    return essentialInjector;
-  }
-
-  @Override
-  public Supervisor getSupervisor() {
-    return supervisor;
+  public MetricName createMetricName(Stream<String> names) {
+    return new DefaultMetricName(
+        GROUP_NAME,
+        type,
+        names.collect(Collectors.joining("."))
+    );
   }
 }

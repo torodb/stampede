@@ -27,22 +27,42 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PostgreSqlMetrics {
+public final class PostgreSqlMetrics {
 
-  private static final MetricNameFactory factory = new MetricNameFactory("PostgreSQLWrite");
-  public final Timer insertDocPartDataTimer;
-  public final Meter insertRows;
-  public final Meter insertFields;
-  public final Meter insertDefault;
-  public final Meter insertCopy;
+  private final Timer insertDocPartDataTimer;
+  private final Meter insertRows;
+  private final Meter insertFields;
+  private final Meter insertDefault;
+  private final Meter insertCopy;
 
   @Inject
-  public PostgreSqlMetrics(ToroMetricRegistry registry) {
-    insertDocPartDataTimer = registry.timer(factory.createMetricName("insertDocPartDataTimer"));
-    insertRows = registry.meter(factory.createMetricName("insertRows"));
-    insertFields = registry.meter(factory.createMetricName("insertFields"));
-    insertDefault = registry.meter(factory.createMetricName("insertDefault"));
-    insertCopy = registry.meter(factory.createMetricName("insertCopy"));
+  public PostgreSqlMetrics(ToroMetricRegistry registry, MetricNameFactory nameFactory) {
+    MetricNameFactory myFactory = nameFactory.createSubFactory("PostgreSQLWrite");
+    insertDocPartDataTimer = registry.timer(myFactory.createMetricName("insertDocPartDataTimer"));
+    insertRows = registry.meter(myFactory.createMetricName("insertRows"));
+    insertFields = registry.meter(myFactory.createMetricName("insertFields"));
+    insertDefault = registry.meter(myFactory.createMetricName("insertDefault"));
+    insertCopy = registry.meter(myFactory.createMetricName("insertCopy"));
+  }
+
+  public Timer getInsertDocPartDataTimer() {
+    return insertDocPartDataTimer;
+  }
+
+  public Meter getInsertRows() {
+    return insertRows;
+  }
+
+  public Meter getInsertFields() {
+    return insertFields;
+  }
+
+  public Meter getInsertDefault() {
+    return insertDefault;
+  }
+
+  public Meter getInsertCopy() {
+    return insertCopy;
   }
 
 }
