@@ -23,9 +23,9 @@ import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
-import com.torodb.mongodb.language.utils.NamespaceUtil;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
+import com.torodb.mongodb.utils.NamespaceUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

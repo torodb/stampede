@@ -20,9 +20,11 @@
 
 [ "$DEBUG" == "true" ] && set -x
 [ "$DEBUG" == "true" ] && set -v
+set -e
 
 # resolve links - $0 may be a softlink
 PRG="$0"
+PRG=`which $PRG`
 
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`
@@ -38,8 +40,7 @@ PRGDIR=`dirname "$PRG"`
 BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
 
 # Reset the LIBDIR variable. If you need to influence this use the environment setup file.
-LIBDIR=
-
+LIBDIR=@{assembler.libdir}
 
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false;
@@ -97,6 +98,13 @@ fi
 if [ -z "$LIBDIR" ]
 then
   LIBDIR="$BASEDIR"/lib
+else
+  LIBDIR="$BASEDIR/$LIBDIR"
+fi
+
+if [ ! -z "$TORO_LIBDIR" ]
+then
+	LIBDIR="$BASEDIR/$TORO_LIBDIR"
 fi
 
 if [ -z "$TOROCONFIG" ]

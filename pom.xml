@@ -85,6 +85,7 @@
         <jmh.version>1.17</jmh.version>
         <metrics.version>3.1.2</metrics.version>
         <maven.version>3.2.2</maven.version>
+        <flexy-pool.version>1.2.7</flexy-pool.version>
         <torodb.buildtools.version>0.50.1-SNAPSHOT</torodb.buildtools.version>
         <license.header.file>com/torodb/buildtools/torodb-license.txt</license.header.file>
         
@@ -231,6 +232,28 @@
                 <groupId>com.zaxxer</groupId>
                 <artifactId>HikariCP</artifactId>
                 <version>2.5.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea.flexy-pool</groupId>
+                <artifactId>flexy-pool-core-java7</artifactId>
+                <version>${flexy-pool.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.vladmihalcea.flexy-pool</groupId>
+                <artifactId>flexy-hikaricp</artifactId>
+                <version>${flexy-pool.version}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -613,7 +636,12 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.18.1</version>
+                    <version>0.19.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>properties-maven-plugin</artifactId>
+                    <version>1.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -624,6 +652,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>2.2-beta-5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>1.12</version>
                 </plugin>
             </plugins>
         </pluginManagement>

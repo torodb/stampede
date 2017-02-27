@@ -26,7 +26,7 @@ import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.inject.Inject;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.mongodb.commands.signatures.admin.RenameCollectionCommand.RenameCollectionArgument;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,11 +37,11 @@ public class RenameCollectionReplImpl
   private static final Logger LOGGER =
       LogManager.getLogger(RenameCollectionReplImpl.class);
 
-  private final ReplicationFilters replicationFilters;
+  private final NamespaceFilter namespaceFilter;
 
   @Inject
-  public RenameCollectionReplImpl(ReplicationFilters replicationFilters) {
-    this.replicationFilters = replicationFilters;
+  public RenameCollectionReplImpl(NamespaceFilter namespaceFilter) {
+    this.namespaceFilter = namespaceFilter;
   }
 
   @Override
@@ -49,10 +49,8 @@ public class RenameCollectionReplImpl
       Command<? super RenameCollectionArgument, ? super Empty> command,
       RenameCollectionArgument arg, ExclusiveWriteTorodTransaction trans) {
     try {
-      if (!replicationFilters.getCollectionPredicate().test(arg.getToDatabase(), arg
-          .getToCollection())) {
-        if (!replicationFilters.getCollectionPredicate().test(arg.getFromDatabase(), arg
-            .getFromCollection())) {
+      if (!namespaceFilter.filter(arg.getToDatabase(), arg.getToCollection())) {
+        if (!namespaceFilter.filter(arg.getFromDatabase(), arg.getFromCollection())) {
           LOGGER.info("Skipping rename operation for filtered source collection {}.{} "
               + "and filtered target collection {}.{}.",
               arg.getFromDatabase(), arg.getFromCollection(),
@@ -70,7 +68,7 @@ public class RenameCollectionReplImpl
           LOGGER.info("Trying to drop collection {}.{} but it has not been found. "
               + "This is normal when reapplying oplog during a recovery. Ignoring operation",
               arg.getFromDatabase(), arg.getFromCollection());
-          return Status.ok();
+          return Status.ok(Empty.getInstance());
         }
         return Status.ok();
       }
@@ -85,8 +83,7 @@ public class RenameCollectionReplImpl
         }
       }
 
-      if (!replicationFilters.getCollectionPredicate().test(arg.getFromDatabase(), arg
-          .getFromCollection())) {
+      if (!namespaceFilter.filter(arg.getFromDatabase(), arg.getFromCollection())) {
         LOGGER.info("Skipping rename operation for filtered source collection {}.{}.",
             arg.getFromDatabase(), arg.getFromCollection());
         return Status.ok();

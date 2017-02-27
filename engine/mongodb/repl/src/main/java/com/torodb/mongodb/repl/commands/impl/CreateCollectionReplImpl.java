@@ -29,7 +29,7 @@ import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.CreateCollectionArgument;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import org.apache.logging.log4j.LogManager;
@@ -37,10 +37,17 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 
+import javax.inject.Inject;
+
 public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionArgument, Empty> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(CreateCollectionReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(CreateCollectionReplImpl.class);
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public CreateCollectionReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<Empty> apply(
@@ -48,6 +55,10 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
       Command<? super CreateCollectionArgument, ? super Empty> command,
       CreateCollectionArgument arg,
       SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testNamespaceFilter(req.getDatabase(), arg.getCollection(), command)) {
+      return Status.ok();
+    }
 
     try {
       LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
@@ -61,12 +72,12 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
         trans.createIndex(
             req.getDatabase(),
             arg.getCollection(),
-            Constants.ID_INDEX,
+            DefaultIdUtils.ID_INDEX,
             ImmutableList.of(
                 new IndexFieldInfo(
                     new AttributeReference(
                         Arrays.asList(new Key[]{
-                          new ObjectKey(Constants.ID)})),
+                          new ObjectKey(DefaultIdUtils.ID_KEY)})),
                     FieldIndexOrdering.ASC.isAscending()
                 )
             ), true

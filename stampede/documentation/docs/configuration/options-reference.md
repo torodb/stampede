@@ -41,7 +41,7 @@ Usage: `torodb-stampede [options]`
 | --ssl-key-store-password | The password of the Java Key Store file containing and private key used to authenticate client. |
 | --ssl-trust-store-file | The path to the Java Key Store file containing the Certification Authority. If CAFile is specified it will be used instead. |
 | --ssl-trust-store-password | The password of the Java Key Store file containing the Certification Authority. |
-| --sync-source | The host and port (<host>:<port>) of the node from ToroDB has to replicate. |
+| --sync-source | The host and port (<host>:<port>) of the MongoDB node from ToroDB has to replicate. |
 | --toropass-file | You can specify a file that use .pgpass syntax: `<host>:<port>:<database>:<user>:<password>` (can have multiple lines) |
 | --version | Prints the version. |
 | -x, --xml-conf | Configuration file in XML format. |

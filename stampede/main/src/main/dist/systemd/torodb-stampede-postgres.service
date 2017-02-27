@@ -1,0 +1,19 @@
+[Unit]
+Description=@{assembler.fullName}
+Requires=postgresql.service
+Wants=network.service
+After=network.service postgresql.service
+
+[Service]
+Type=simple
+User=torodb
+ExecStart=/usr/bin/@{assembler.name}
+PrivateTmp=true
+LimitNOFILE=64000
+TimeoutStartSec=180
+RestartSec=30
+Restart=always
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

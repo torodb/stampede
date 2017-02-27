@@ -51,6 +51,8 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public class MemoryData {
 
+  private static final String _ID = "_id";
+  
   private Table<String, String, Map<Integer, KvDocument>> data = HashBasedTable.create();
   private Table<String, String, Map<String, IndexInfo>> indexes = HashBasedTable.create();
   private final AtomicInteger idGenerator = new AtomicInteger();
@@ -198,10 +200,10 @@ public class MemoryData {
 
       Optional<KvDocument> repeatedDoc = docList.stream()
           .filter(doc -> {
-            KvValue<?> mongoId = doc.get("_id");
+            KvValue<?> mongoId = doc.get(_ID);
             if (mongoId != null) {
               Optional<KvDocument> withSameId = map.values().stream()
-                  .filter(otherDoc -> mongoId.equals(otherDoc.get("_id")))
+                  .filter(otherDoc -> mongoId.equals(otherDoc.get(_ID)))
                   .findAny();
               return withSameId.isPresent();
             }
@@ -209,7 +211,7 @@ public class MemoryData {
           })
           .findAny();
       if (repeatedDoc.isPresent()) {
-        throw new UniqueIndexViolationException("_id", repeatedDoc.get());
+        throw new UniqueIndexViolationException(_ID, repeatedDoc.get());
       }
 
       docList.forEach(doc -> {

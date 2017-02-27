@@ -25,7 +25,7 @@ ln -s "$TOROHOME/bin/torodb-stampede" /usr/bin/.
 
 useradd -M -d "$TOROHOME" torodb
 
-cp "$TOROHOME/systemd/torodb-stampede.service.sample" /lib/systed/system/.
+cp "$TOROHOME/systemd/torodb-stampede.service.sample" /lib/systed/system/torodb-stampede.service
 ```
 
 Enable and start the newly created ToroDB Stampede service:

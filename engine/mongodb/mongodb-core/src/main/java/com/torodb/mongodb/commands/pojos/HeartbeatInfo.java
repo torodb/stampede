@@ -103,7 +103,7 @@ public class HeartbeatInfo {
     if (bson.containsKey(CHECK_EMPTY_FIELD_NAME.getFieldName())) {
       checkEmpty = BsonReaderTool.getBoolean(bson, CHECK_EMPTY_FIELD_NAME);
     }
-    long protocolVersion = BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD_NAME);
+    long protocolVersion = BsonReaderTool.getLong(bson, PROTOCOL_VERSION_FIELD_NAME, 0);
     long configVersion = BsonReaderTool.getLong(bson, CONFIG_VERSION_FIELD_NAME);
     Long senderId = null;
     if (bson.containsKey(SENDER_ID_FIELD_NAME.getFieldName())) {

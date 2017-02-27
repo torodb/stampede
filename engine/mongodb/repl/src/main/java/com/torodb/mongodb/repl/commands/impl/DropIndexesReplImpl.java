@@ -26,7 +26,7 @@ import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
 import com.torodb.mongodb.commands.signatures.admin.DropIndexesCommand.DropIndexesArgument;
 import com.torodb.mongodb.commands.signatures.admin.DropIndexesCommand.DropIndexesResult;
-import com.torodb.mongodb.language.Constants;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
@@ -38,13 +38,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- *
- */
+import javax.inject.Inject;
+
 public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, DropIndexesResult> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(DropIndexesReplImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(DropIndexesReplImpl.class);
+  private final CommandFilterUtil filterUtil;
+
+  @Inject
+  public DropIndexesReplImpl(CommandFilterUtil filterUtil) {
+    this.filterUtil = filterUtil;
+  }
 
   @Override
   public Status<DropIndexesResult> apply(
@@ -52,13 +56,18 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
       Command<? super DropIndexesArgument, ? super DropIndexesResult> command,
       DropIndexesArgument arg,
       SharedWriteTorodTransaction trans) {
+
+    if (!filterUtil.testNamespaceFilter(req.getDatabase(), arg.getCollection(), command)) {
+      return Status.ok(new DropIndexesResult(0));
+    }
+    
     int indexesBefore = (int) trans.getIndexesInfo(req.getDatabase(), arg.getCollection()).count();
 
     List<String> indexesToDrop;
 
     if (!arg.isDropAllIndexes()) {
       if (!arg.isDropByKeys()) {
-        if (Constants.ID_INDEX.equals(arg.getIndexToDrop())) {
+        if (DefaultIdUtils.ID_INDEX.equals(arg.getIndexToDrop())) {
           LOGGER.warn("Trying to drop index {}. Ignoring the whole request",
               arg.getIndexToDrop());
           return Status.ok(new DropIndexesResult(indexesBefore));
@@ -83,7 +92,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
       }
     } else {
       indexesToDrop = trans.getIndexesInfo(req.getDatabase(), arg.getCollection())
-          .filter(indexInfo -> !Constants.ID_INDEX.equals(indexInfo.getName()))
+          .filter(indexInfo -> !DefaultIdUtils.ID_INDEX.equals(indexInfo.getName()))
           .map(indexInfo -> indexInfo.getName())
           .collect(Collectors.toList());
     }

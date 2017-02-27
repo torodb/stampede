@@ -26,9 +26,9 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor.DeadCursorException;
 import com.torodb.mongodb.repl.oplogreplier.FinishedOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.NormalOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.NotReadyForMoreOplogBatch;
-import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 
 public class LimitedOplogFetcher implements OplogFetcher {
 

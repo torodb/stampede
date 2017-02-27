@@ -36,6 +36,7 @@ import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
 import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
+import com.torodb.mongodb.utils.DefaultIdUtils;
 
 import java.time.Duration;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class MemberConfig {
   public static final DocField TAGS_FIELD = new DocField("tags");
   public static final LongField SLAVE_DELAY_FIELD = new LongField("slaveDelay");
   public static final IntField VOTES_FIELD = new IntField("votes");
-  public static final IntField ID_FIELD = new IntField("_id");
+  public static final IntField ID_FIELD = new IntField(DefaultIdUtils.ID_KEY);
 
   private static final long MAX_SLAVE_DELAY = 3600 * 24 * 366;
   private static final int DEFAULT_VOTES = 1;
@@ -145,7 +146,7 @@ public class MemberConfig {
 
   public static MemberConfig fromDocument(BsonDocument bson) throws
       TypesMismatchException, NoSuchKeyException, BadValueException {
-    int id = BsonReaderTool.getNumeric(bson, "_id").intValue();
+    int id = BsonReaderTool.getNumeric(bson, DefaultIdUtils.ID_KEY).intValue();
     HostAndPort host = BsonReaderTool.getHostAndPort(bson, "host");
     Builder builder = new Builder(id, host)
         .setVotes(BsonReaderTool.getInteger(bson, "votes", DEFAULT_VOTES))

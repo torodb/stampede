@@ -37,10 +37,12 @@ import com.torodb.mongodb.repl.ReplMetrics;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.oplogreplier.OpTimeFactory;
-import com.torodb.mongodb.repl.oplogreplier.OplogBatch;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
+import com.torodb.mongodb.utils.DefaultIdUtils;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
@@ -215,7 +217,7 @@ public class ContinuousOplogFetcherTest {
 
   private OplogOperation createSimpleInsert(int i) {
     return new InsertOplogOperation(
-        DefaultBsonValues.newDocument("_id", DefaultBsonValues.newInt(i)),
+        DefaultBsonValues.newDocument(DefaultIdUtils.ID_KEY, DefaultBsonValues.newInt(i)),
         "aDb",
         "aCol",
         opTimeFactory.newOpTime(i),

@@ -18,6 +18,8 @@
 
 package com.torodb.mongodb.utils;
 
+import com.torodb.torod.CollectionInfo.Type;
+
 public class NamespaceUtil {
 
   public static final String NAMESPACES_COLLECTION = "system.namespaces";
@@ -88,10 +90,6 @@ public class NamespaceUtil {
   /**
    * Returns true iff the namespace corresponds with a system collection on which users can write,
    * like <em>system.users</em>.
-   *
-   * @param database
-   * @param collection
-   * @return
    */
   public static boolean isSystemAndUserWritable(String database, String collection) {
     if (!isSystem(collection)) {
@@ -125,5 +123,9 @@ public class NamespaceUtil {
 
   public static boolean isTorodbCollection(String collection) {
     return collection.equals("torodb");
+  }
+  
+  public static boolean isViewCollection(String type) {
+    return type.equals(Type.VIEW.getValue());
   }
 }

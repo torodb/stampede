@@ -1,0 +1,68 @@
+{
+    "comment": "Verifies that system and ignored collections are not dropped",
+    "initialState": {
+        "test": {
+            "system.aCol": [
+                {
+                    "_id": 1
+                }
+            ],
+            "ignoredCol": [
+                {
+                    "_id": 1
+                }
+            ]
+        },
+        "ignoredDb": {
+            "aCol": [
+                {
+                    "_id" : 1
+                }
+            ]
+        }
+    },
+    "expectedState": {
+        "test": {
+            "system.aCol": [
+                {
+                    "_id": 1
+                }
+            ],
+            "ignoredCol": [
+                {
+                    "_id": 1
+                }
+            ]
+        },
+        "ignoredDb": {
+            "aCol": [
+                {
+                    "_id" : 1
+                }
+            ]
+        }
+    },
+    "oplog": [
+        {
+            "op": "c",
+            "ns": "test.$cmd",
+            "o": {
+                "drop": "system.aCol"
+            }
+        },
+        {
+            "op": "c",
+            "ns": "ignoredDb.$cmd",
+            "o": {
+                "drop": "aCol"
+            }
+        },
+        {
+            "op": "c",
+            "ns": "test.$cmd",
+            "o": {
+                "drop": "ignoredCol"
+            }
+        }
+    ]
+}

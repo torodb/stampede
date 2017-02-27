@@ -213,13 +213,13 @@ public class OplogOperationApplier {
     //TODO: Inserts must be executed as upserts to be idempotent
     //TODO: This implementation works iff this connection is the only one that is writing
     BsonDocument query;
-    if (!DefaultIdUtils.containsDefaultId(docToInsert)) {
+    if (!DefaultIdUtils.containsIdKey(docToInsert)) {
       //as we dont have _id, we need the whole document to be sure selector is correct
       query = docToInsert;
     } else {
       query = newDocument(
-          DefaultIdUtils.DEFAULT_ID_KEY,
-          DefaultIdUtils.getDefaultId(docToInsert)
+          DefaultIdUtils.ID_KEY,
+          DefaultIdUtils.getIdKey(docToInsert)
       );
     }
     while (true) {

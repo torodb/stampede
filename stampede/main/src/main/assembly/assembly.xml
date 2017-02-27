@@ -8,7 +8,7 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>target/dist/run</directory>
+            <directory>${project.build.directory}/dist/run</directory>
             <outputDirectory>bin</outputDirectory>
             <excludes>
                 <exclude>*.bat</exclude>
@@ -17,7 +17,7 @@
             <fileMode>0755</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/run</directory>
+            <directory>${project.build.directory}/dist/run</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -26,19 +26,7 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/conf</directory>
-            <outputDirectory>conf</outputDirectory>
-            <directoryMode>0755</directoryMode>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>target/dist/systemd</directory>
-            <outputDirectory>conf</outputDirectory>
-            <directoryMode>0755</directoryMode>
-            <fileMode>0644</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>target/dist/doc/</directory>
+            <directory>${project.build.directory}/dist/doc/</directory>
             <outputDirectory>.</outputDirectory>
             <includes>
                 <include>README.md</include>
@@ -48,10 +36,38 @@
             <fileMode>0644</fileMode>
         </fileSet>
         <fileSet>
-            <directory>target/dist/lib</directory>
+            <directory>${project.build.directory}/dist/lib</directory>
             <outputDirectory>lib</outputDirectory>
             <directoryMode>0755</directoryMode>
             <fileMode>0644</fileMode>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}</directory>
+            <outputDirectory>conf</outputDirectory>
+            <directoryMode>0755</directoryMode>
+            <excludes>
+                <exclude>*/**</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
+    <files>
+        <file>
+            <source>${project.build.directory}/dist/conf/${assembler.name}.yml</source>
+            <outputDirectory>conf</outputDirectory>
+            <destName>${assembler.name}.yml.sample</destName>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${project.build.directory}/dist/systemd/${assembler.name}.service</source>
+            <outputDirectory>conf</outputDirectory>
+            <destName>${assembler.name}.service.sample</destName>
+            <fileMode>0644</fileMode>
+        </file>
+        <file>
+            <source>${project.build.directory}/dist/systemd/${assembler.name}-postgres.service</source>
+            <outputDirectory>conf</outputDirectory>
+            <destName>${assembler.name}-postgres.service.sample</destName>
+            <fileMode>0644</fileMode>
+        </file>
+    </files>
 </assembly>

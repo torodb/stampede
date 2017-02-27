@@ -135,10 +135,10 @@ public abstract class BddOplogTest implements OplogTest {
           assert id != null : "The test is incorrect, as " + expectedDoc + " does not have _id";
 
           KvDocument storedDoc = storedDocs.get(id);
-          assertTrue("It was expected to have a document with _id " + id,
-              storedDoc != null);
-          assertEquals("The found document is different than expected",
-              expectedDoc, storedDoc);
+          assertTrue("It was expected that " + db.getName() + "." + col.getName() + " contains a "
+              + "document with _id " + id, storedDoc != null);
+          assertEquals("The document on "+ db.getName() + "." + col.getName() + " whose id is " + id
+              + " is different than expected", expectedDoc, storedDoc);
         }
 
         assertEquals("Unexpected size on " + dbName + "." + colName,

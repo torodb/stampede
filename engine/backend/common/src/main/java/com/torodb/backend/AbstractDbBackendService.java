@@ -22,9 +22,15 @@ import com.google.common.base.Preconditions;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.services.IdleTorodbService;
+import com.vladmihalcea.flexypool.FlexyPoolDataSource;
+import com.vladmihalcea.flexypool.adaptor.HikariCPPoolAdapter;
+import com.vladmihalcea.flexypool.config.Configuration;
+import com.vladmihalcea.flexypool.strategy.RetryConnectionAcquiringStrategy;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,12 +52,17 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   public static final int MIN_CONNECTIONS_DATABASE = SYSTEM_DATABASE_CONNECTIONS
       + MIN_READ_CONNECTIONS_DATABASE
       + MIN_SESSION_CONNECTIONS_DATABASE;
-
+  public static final int MAX_RETRY_ATTEMPS = 5;
+  
   private final ConfigurationT configuration;
   private final ErrorHandler errorHandler;
-  private HikariDataSource writeDataSource;
-  private HikariDataSource systemDataSource;
-  private HikariDataSource readOnlyDataSource;
+
+  private HikariDataSource embeddableWriteDataSource;
+  private HikariDataSource embeddableSystemDataSource;
+  private HikariDataSource embeddableReadOnlyDataSource;
+  private FlexyPoolDataSource<HikariDataSource> writeDataSource;
+  private FlexyPoolDataSource<HikariDataSource> systemDataSource;
+  private FlexyPoolDataSource<HikariDataSource> readOnlyDataSource;
   /**
    * Global state variable for data import mode. If true data import mode is enabled, data import
    * mode is otherwise disabled. Indexes will not be created while data import mode is enabled. When
@@ -69,7 +80,7 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
    *                      threads
    */
   public AbstractDbBackendService(@TorodbIdleService ThreadFactory threadFactory,
-      ConfigurationT configuration, ErrorHandler errorHandler) {
+                                  ConfigurationT configuration, ErrorHandler errorHandler) {
     super(threadFactory);
     this.configuration = configuration;
     this.errorHandler = errorHandler;
@@ -80,7 +91,7 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     Preconditions.checkState(
         connectionPoolSize >= MIN_CONNECTIONS_DATABASE,
         "At least " + MIN_CONNECTIONS_DATABASE
-        + " total connections with the backend SQL database are required"
+            + " total connections with the backend SQL database are required"
     );
     Preconditions.checkState(
         reservedReadPoolSize >= MIN_READ_CONNECTIONS_DATABASE,
@@ -89,7 +100,7 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     Preconditions.checkState(
         connectionPoolSize - reservedReadPoolSize >= MIN_SESSION_CONNECTIONS_DATABASE,
         "Reserved read connections must be lower than total connections minus "
-        + MIN_SESSION_CONNECTIONS_DATABASE
+            + MIN_SESSION_CONNECTIONS_DATABASE
     );
   }
 
@@ -97,32 +108,44 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   protected void startUp() throws Exception {
     int reservedReadPoolSize = configuration.getReservedReadPoolSize();
 
-    writeDataSource = createPooledDataSource(
+    embeddableWriteDataSource = createPooledDataSource(
         configuration, "session",
         configuration.getConnectionPoolSize() - reservedReadPoolSize - SYSTEM_DATABASE_CONNECTIONS,
         getCommonTransactionIsolation(),
         false
     );
-    systemDataSource = createPooledDataSource(
+    embeddableSystemDataSource = createPooledDataSource(
         configuration, "system",
         SYSTEM_DATABASE_CONNECTIONS,
         getSystemTransactionIsolation(),
         false);
-    readOnlyDataSource = createPooledDataSource(
+    embeddableReadOnlyDataSource = createPooledDataSource(
         configuration, "cursors",
         reservedReadPoolSize,
         getGlobalCursorTransactionIsolation(),
         true);
+
+    writeDataSource = wrapObservableDataSource(embeddableWriteDataSource);
+    systemDataSource = wrapObservableDataSource(embeddableSystemDataSource);
+    readOnlyDataSource = wrapObservableDataSource(embeddableReadOnlyDataSource);
+
+    writeDataSource.start();
+    systemDataSource.start();
+    readOnlyDataSource.start();
   }
 
   @Override
   @SuppressFBWarnings(value = "UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR",
       justification =
-      "Object lifecyle is managed as a Service. Datasources are initialized in setup method")
+          "Object lifecyle is managed as a Service. Datasources are initialized in setup method")
   protected void shutDown() throws Exception {
-    writeDataSource.close();
-    systemDataSource.close();
-    readOnlyDataSource.close();
+    writeDataSource.stop();
+    systemDataSource.stop();
+    readOnlyDataSource.stop();
+
+    embeddableWriteDataSource.close();
+    embeddableSystemDataSource.close();
+    embeddableReadOnlyDataSource.close();
   }
 
   @Nonnull
@@ -135,9 +158,9 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   protected abstract TransactionIsolationLevel getGlobalCursorTransactionIsolation();
 
   private HikariDataSource createPooledDataSource(
-      ConfigurationT configuration, String poolName, int poolSize,
-      TransactionIsolationLevel transactionIsolationLevel,
-      boolean readOnly
+          ConfigurationT configuration, String poolName, int poolSize,
+          TransactionIsolationLevel transactionIsolationLevel,
+          boolean readOnly
   ) {
     HikariConfig hikariConfig = new HikariConfig();
 
@@ -150,20 +173,34 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     hikariConfig.setMaximumPoolSize(poolSize);
     hikariConfig.setTransactionIsolation(transactionIsolationLevel.name());
     hikariConfig.setReadOnly(readOnly);
-    /*
-     * TODO: implement to add metric support. See
-     * https://github.com/brettwooldridge/HikariCP/wiki/Codahale-Metrics
-     * hikariConfig.setMetricRegistry(...);
-     */
 
     LOGGER.info("Created pool {} with size {} and level {}", poolName, poolSize,
-        transactionIsolationLevel.name());
+            transactionIsolationLevel.name());
 
     return new HikariDataSource(hikariConfig);
   }
 
+  private FlexyPoolDataSource<HikariDataSource> wrapObservableDataSource(
+      HikariDataSource dataSource
+  ) {
+    Configuration<HikariDataSource> hikariConfiguration =
+            createPooledObservableDataSourceConfiguration(dataSource);
+
+    return new FlexyPoolDataSource<>(hikariConfiguration,
+        new RetryConnectionAcquiringStrategy.Factory(MAX_RETRY_ATTEMPS));
+  }
+
+  private Configuration<HikariDataSource> createPooledObservableDataSourceConfiguration(
+      HikariDataSource poolingDataSource
+  ) {
+    return new Configuration.Builder<>(
+        poolingDataSource.getPoolName(),
+        poolingDataSource,
+        HikariCPPoolAdapter.FACTORY).build();
+  }
+
   protected abstract DataSource getConfiguredDataSource(ConfigurationT configuration,
-      String poolName);
+                                                        String poolName);
 
   @Override
   public void disableDataInsertMode() {

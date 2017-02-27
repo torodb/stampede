@@ -43,6 +43,9 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand;
 import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand.ListDatabasesReply;
 import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.filters.IndexFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
+import com.torodb.mongodb.language.Namespace;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
@@ -73,9 +76,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
-/**
- *
- */
 public class RecoveryService extends RunnableTorodbService {
 
   private static final int MAX_ATTEMPTS = 10;
@@ -88,7 +88,8 @@ public class RecoveryService extends RunnableTorodbService {
   private final MongoClientFactory remoteClientFactory;
   private final MongodServer server;
   private final OplogApplier oplogApplier;
-  private final ReplicationFilters replFilters;
+  private final NamespaceFilter namespaceFilter;
+  private final IndexFilter indexFilter;
 
   @Inject
   public RecoveryService(
@@ -101,7 +102,8 @@ public class RecoveryService extends RunnableTorodbService {
       MongoClientFactory remoteClientFactory,
       MongodServer server,
       OplogApplier oplogApplier,
-      ReplicationFilters replFilters) {
+      NamespaceFilter namespaceFilter,
+      IndexFilter indexFilter) {
     super(callback, threadFactory);
     this.callback = callback;
     this.oplogManager = oplogManager;
@@ -111,7 +113,8 @@ public class RecoveryService extends RunnableTorodbService {
     this.remoteClientFactory = remoteClientFactory;
     this.server = server;
     this.oplogApplier = oplogApplier;
-    this.replFilters = replFilters;
+    this.namespaceFilter = namespaceFilter;
+    this.indexFilter = indexFilter;
   }
 
   @Override
@@ -350,9 +353,8 @@ public class RecoveryService extends RunnableTorodbService {
                 databaseName,
                 Collections.<String>emptySet(),
                 writePermissionSupplier,
-                (colName) -> replFilters.getCollectionPredicate().test(databaseName, colName),
-                (collection, indexName, unique, keys) -> replFilters.getIndexPredicate().test(
-                    databaseName, collection, indexName, unique, keys)
+                (colName) -> namespaceFilter.filter(new Namespace(databaseName, colName)),
+                indexFilter
             );
 
             try {

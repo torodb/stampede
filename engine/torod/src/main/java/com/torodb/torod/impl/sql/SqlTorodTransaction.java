@@ -40,6 +40,7 @@ import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.torod.CollectionInfo;
+import com.torodb.torod.CollectionInfo.Type;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.TorodTransaction;
 import com.torodb.torod.cursors.EmptyTorodCursor;
@@ -324,8 +325,8 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction>
       return Stream.empty();
     }
 
-    return db.streamMetaCollections()
-        .map(metaCol -> new CollectionInfo(metaCol.getName(), Json.createObjectBuilder().build()));
+    return db.streamMetaCollections().map(metaCol -> new CollectionInfo(metaCol.getName(),
+        Type.COLLECTION, Json.createObjectBuilder().build()));
   }
 
   @Override
@@ -340,7 +341,7 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction>
       throw new CollectionNotFoundException(dbName, colName);
     }
 
-    return new CollectionInfo(db.getMetaCollectionByName(colName).getName(), Json
+    return new CollectionInfo(db.getMetaCollectionByName(colName).getName(), Type.COLLECTION, Json
         .createObjectBuilder().build());
   }
 

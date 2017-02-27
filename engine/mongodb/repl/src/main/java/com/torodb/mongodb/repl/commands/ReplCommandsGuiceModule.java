@@ -22,7 +22,9 @@ import com.google.inject.Key;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
 import com.torodb.core.supervision.Supervisor;
-import com.torodb.mongodb.repl.ReplicationFilters;
+import com.torodb.mongodb.filters.IndexFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
+import com.torodb.mongodb.repl.commands.impl.CommandFilterUtil;
 import com.torodb.mongodb.repl.commands.impl.CreateCollectionReplImpl;
 import com.torodb.mongodb.repl.commands.impl.CreateIndexesReplImpl;
 import com.torodb.mongodb.repl.commands.impl.DropCollectionReplImpl;
@@ -38,7 +40,9 @@ public class ReplCommandsGuiceModule extends PrivateModule {
   @Override
   protected void configure() {
     requireBinding(Key.get(Supervisor.class, MongoDbRepl.class));
-    requireBinding(ReplicationFilters.class);
+    requireBinding(NamespaceFilter.class);
+    requireBinding(IndexFilter.class);
+    requireBinding(CommandFilterUtil.class);
 
     expose(ReplCommandLibrary.class);
     expose(ReplCommandExecutor.class);

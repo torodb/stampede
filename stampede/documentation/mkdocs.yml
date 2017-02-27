@@ -19,6 +19,7 @@ pages:
     - 'JVM Configuration Tips': configuration/jvm-configuration-tips.md
   - 'The Relational Schema': relational-schema.md
   - 'Trouble Shooting': trouble-shooting.md
+  - 'Metrics': metrics.md
   - 'FAQ': faq.md
   - 'Glossary': glossary.md
 extra_css:

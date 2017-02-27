@@ -33,7 +33,11 @@ import com.torodb.core.modules.BundleConfigImpl;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongodServer;
+import com.torodb.mongodb.filters.DatabaseFilter;
+import com.torodb.mongodb.filters.IndexFilter;
+import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.repl.commands.ReplCommandsBuilder;
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.guice.MongoDbReplModule;
 import com.torodb.mongodb.repl.guice.OplogApplierServiceModule;
@@ -61,16 +65,18 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
   private final TopologyBundle topologyBundle;
   private final DefaultOplogApplierBundle oplogApplierBundle;
   private final DbCloner dbCloner;
+  private final ToroDbReplicationFilters toroDbReplicationFilters;
 
   @SuppressWarnings("checkstyle:JavadocMethod")
   public MongoDbReplBundle(MongoDbReplConfig config) {
     super(config);
+    this.config = config;
+    this.toroDbReplicationFilters = new ToroDbReplicationFilters(config.getUserReplicationFilter());
 
     replBundleConfig = new BundleConfigImpl(
         config.getEssentialInjector(),
         new ReplSupervisor(config.getSupervisor())
     );
-    this.config = config;
 
     replCoreBundle = new ReplCoreBundle(
         createReplCoreConfig(replBundleConfig)
@@ -153,7 +159,7 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
   private ReplCoreConfig createReplCoreConfig(BundleConfig replBundleConfig) {
     return new ReplCoreConfig(
         config.getMongoClientConfiguration(),
-        config.getReplicationFilters(),
+        toroDbReplicationFilters,
         config.getMongoDbCoreBundle(),
         config.getEssentialInjector(),
         replBundleConfig.getSupervisor()
@@ -173,7 +179,10 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
   private DefaultOplogApplierBundleConfig createOplogApplierServiceBundleConfig(
       BundleConfig replBundleConfig, ReplCoreBundle replCoreBundle) {
     
-    ReplCommandsBuilder replCommandsBuilder = new ReplCommandsBuilder(replBundleConfig);
+    ReplCommandsBuilder replCommandsBuilder = new ReplCommandsBuilder(
+        replBundleConfig,
+        toroDbReplicationFilters
+    );
 
     return new DefaultOplogApplierBundleConfig(
         replCoreBundle,
@@ -212,6 +221,8 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
 
     @Override
     protected void configure() {
+      bindFilters();
+
       bindConfig();
 
       bindReplCoreBundle();
@@ -220,6 +231,17 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
           .toInstance(oplogApplierBundle.getExternalInterface().getOplogApplier());
       bind(SyncSourceProvider.class)
           .toInstance(topologyBundle.getExternalInterface());
+    }
+
+    private void bindFilters() {
+      bind(ToroDbReplicationFilters.class)
+          .toInstance(toroDbReplicationFilters);
+      bind(DatabaseFilter.class)
+          .toInstance(toroDbReplicationFilters.getDatabaseFilter());
+      bind(NamespaceFilter.class)
+          .toInstance(toroDbReplicationFilters.getNamespaceFilter());
+      bind(IndexFilter.class)
+          .toInstance(toroDbReplicationFilters.getIndexFilter());
     }
 
     private void bindReplCoreBundle() {
@@ -241,8 +263,6 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
           .toInstance(config.getConsistencyHandler());
       bind(MongoClientConfiguration.class)
           .toInstance(config.getMongoClientConfiguration());
-      bind(ReplicationFilters.class)
-          .toInstance(config.getReplicationFilters());
       bind(String.class)
           .annotatedWith(ReplSetName.class)
           .toInstance(config.getReplSetName());

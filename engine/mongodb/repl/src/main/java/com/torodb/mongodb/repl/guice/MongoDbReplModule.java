@@ -24,7 +24,6 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.torodb.mongodb.repl.RecoveryService;
 import com.torodb.mongodb.repl.ReplCoordinator;
 import com.torodb.mongodb.repl.ReplCoordinatorStateMachine;
-import com.torodb.mongodb.repl.commands.ReplCommandsGuiceModule;
 import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.cloner.CommitHeuristic;
 
@@ -59,8 +58,6 @@ public class MongoDbReplModule extends PrivateModule {
     bind(Integer.class)
         .annotatedWith(DocsPerTransaction.class)
         .toInstance(1000);
-
-    install(new ReplCommandsGuiceModule());
   }
 
   public static class DefaultCommitHeuristic implements CommitHeuristic {

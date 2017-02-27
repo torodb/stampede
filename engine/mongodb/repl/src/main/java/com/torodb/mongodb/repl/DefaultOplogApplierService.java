@@ -24,7 +24,6 @@ import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
-import com.torodb.mongodb.repl.ReplicationFilters;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier;
 import com.torodb.mongodb.repl.oplogreplier.OplogApplier.ApplyingJob;
@@ -58,7 +57,6 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
   private volatile boolean stopping;
   private OplogFetcher fetcher;
   private ApplyingJob applyJob;
-  private final ReplicationFilters replFilters;
   private final ExecutorService selfExecutor;
   private CompletableFuture<Void> onFinishFuture;
 
@@ -66,14 +64,12 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
   public DefaultOplogApplierService(ThreadFactory threadFactory,
       OplogApplier oplogApplier, OplogManager oplogManager,
       ContinuousOplogFetcherFactory oplogFetcherFactory,
-      @Assisted Callback callback, ReplicationFilters replFilters,
-      ConcurrentToolsFactory concurrentToolsFactory) {
+      @Assisted Callback callback, ConcurrentToolsFactory concurrentToolsFactory) {
     super(threadFactory);
     this.oplogApplier = oplogApplier;
     this.oplogFetcherFactory = oplogFetcherFactory;
     this.oplogManager = oplogManager;
     this.callback = callback;
-    this.replFilters = replFilters;
     this.selfExecutor = concurrentToolsFactory.createExecutorService(
         "oplog-applier-service",
         true,
@@ -162,8 +158,6 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
       lastAppliedHash = oplogReadTrans.getLastAppliedHash();
     }
 
-    return replFilters.filterOplogFetcher(
-        oplogFetcherFactory.createFetcher(lastAppliedHash, lastAppliedOptime)
-    );
+    return oplogFetcherFactory.createFetcher(lastAppliedHash, lastAppliedOptime);
   }
 }
