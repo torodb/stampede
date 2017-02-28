@@ -23,50 +23,47 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
+import com.torodb.core.metrics.SettableGauge;
 
 import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * A class where metrics are registered.
+ *
+ * <p/>It is simmilar to {@link MetricRegistry Codahale Metric Registry}, but recives
+ * {@link Name metric names} instead of plain strings as argument.
+ */
 @ThreadSafe
-public interface ToroMetricRegistry {
+public interface SafeRegistry {
 
-  public ToroMetricRegistry createSubRegistry(String key, String midleName);
+  public Counter counter(Name name);
 
-  /**
-   * Creates a new {@link ToroMetricRegistry} with a default key.
-   *
-   * <p/>It is the same as to call {@link #createSubRegistry(java.lang.String, java.lang.String) }
-   * with a default key name defined by this object.
-   */
-  public ToroMetricRegistry createSubRegistry(String middleName);
+  public Meter meter(Name name);
 
-  public Counter counter(String finalName);
-
-  public Meter meter(String finalName);
-
-  public default Histogram histogram(String finalName) {
-    return histogram(finalName, false);
+  public default Histogram histogram(Name name) {
+    return histogram(name, false);
   }
 
   /**
    * @param resetOnSnapshot This is usually true if you're using snapshots as a means of defining
    *                        the window in which you want to calculate, say, the 99.9th percentile
    */
-  public Histogram histogram(String finalName, boolean resetOnSnapshot);
+  public Histogram histogram(Name name, boolean resetOnSnapshot);
 
-  public default Timer timer(String finalName) {
-    return timer(finalName, false);
+  public default Timer timer(Name name) {
+    return timer(name, false);
   }
 
   /**
    * @param resetOnSnapshot This is usually true if you're using snapshots as a means of defining
    *                        the window in which you want to calculate, say, the 99.9th percentile
    */
-  public Timer timer(String finalName, boolean resetOnSnapshot);
+  public Timer timer(Name name, boolean resetOnSnapshot);
 
-  public <T> SettableGauge<T> gauge(String finalName);
+  public <T> SettableGauge<T> gauge(Name name);
 
-  public <T extends Metric> T register(String finalName, T metric);
+  public <T extends Metric> T register(Name name, T metric);
 
-  public boolean remove(String finalName);
+  public boolean remove(Name name);
 
 }

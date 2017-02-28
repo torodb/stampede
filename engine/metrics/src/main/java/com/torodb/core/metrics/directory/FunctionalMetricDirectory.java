@@ -16,32 +16,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.metrics;
+package com.torodb.core.metrics.directory;
 
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.torodb.core.metrics.Hierarchy;
 
-public class TypeMetricNameFactory implements MetricNameFactory {
+import java.util.function.Function;
 
-  public static final String GROUP_NAME = "com.torodb.metrics";
+public class FunctionalMetricDirectory extends AbstractHierarchyMetricDirectory {
 
-  private final String type;
+  private final Function<Hierarchy, String> defaultKeyFunction;
 
-  public TypeMetricNameFactory(String type) {
-    this.type = type;
-  }
-  
-  @Override
-  public MetricNameFactory createSubFactory(String middleName) {
-    return new SubMetricNameFactory(middleName, this);
+  public FunctionalMetricDirectory(Function<Hierarchy, String> defaultKeyFunction,
+      Hierarchy hierarchy) {
+    super(hierarchy);
+    this.defaultKeyFunction = defaultKeyFunction;
   }
 
   @Override
-  public MetricName createMetricName(Stream<String> names) {
-    return new DefaultMetricName(
-        GROUP_NAME,
-        type,
-        names.collect(Collectors.joining("."))
-    );
+  protected String getDefaultKey() {
+    String defaultKey = defaultKeyFunction.apply(getHierarchy());
+    Hierarchy.checkName(defaultKey);
+    return defaultKey;
+  }
+
+  @Override
+  protected Directory createDirectory(Hierarchy childHierarchy) {
+    return new FunctionalMetricDirectory(defaultKeyFunction, childHierarchy);
   }
 }

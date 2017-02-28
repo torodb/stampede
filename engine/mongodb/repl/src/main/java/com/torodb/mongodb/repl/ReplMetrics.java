@@ -21,7 +21,6 @@ package com.torodb.mongodb.repl;
 import com.codahale.metrics.Counter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.SettableGauge;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.mongodb.commands.pojos.MemberState;
@@ -40,19 +39,22 @@ public class ReplMetrics {
   private final SettableGauge<String> lastOpTimeApplied;
 
   @Inject
-  public ReplMetrics(ToroMetricRegistry registry, MetricNameFactory parentNameFactory) {
-    MetricNameFactory myFactory = parentNameFactory.createSubFactory("Repl");
-    memberState = registry.gauge(myFactory.createMetricName("currentMemberState"));
+  public ReplMetrics(ToroMetricRegistry parentRegistry) {
+    ToroMetricRegistry registry = parentRegistry.createSubRegistry("Repl");
+    memberState = registry.gauge("currentMemberState");
     ImmutableMap.Builder<MemberState, Counter> memberStateCountersBuilder =
         ImmutableMap.builder();
     for (MemberState memberState : MemberState.values()) {
-      memberStateCountersBuilder.put(memberState,
-          registry.counter(myFactory.createMetricName(
-              memberState.name().substring(3).toLowerCase(Locale.US) + "Count")));
+      memberStateCountersBuilder.put(
+          memberState,
+          registry.counter(
+              memberState.name().substring(3).toLowerCase(Locale.US) + "Count"
+          )
+      );
     }
     memberStateCounters = Maps.immutableEnumMap(memberStateCountersBuilder.build());
-    lastOpTimeFetched = registry.gauge(myFactory.createMetricName("lastOpTimeFetched"));
-    lastOpTimeApplied = registry.gauge(myFactory.createMetricName("lastOpTimeApplied"));
+    lastOpTimeFetched = registry.gauge("lastOpTimeFetched");
+    lastOpTimeApplied = registry.gauge("lastOpTimeApplied");
   }
 
   public SettableGauge<String> getMemberState() {

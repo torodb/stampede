@@ -22,7 +22,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.filters.ByNamespaceOplogOperationFilter;
 import com.torodb.mongodb.filters.DatabaseFilter;
@@ -55,8 +54,6 @@ public class DefaultOplogApplierGuiceModule extends PrivateModule {
     expose(AnalyzedOplogBatchExecutor.class);
 
     bindConfig();
-
-    install(new EssentialToDefaultModule());
 
     bind(OplogApplier.class)
         .to(DefaultOplogApplier.class)

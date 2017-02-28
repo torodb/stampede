@@ -37,7 +37,7 @@ import javax.inject.Singleton;
 /**
  * First iteration of Disabled Metric Registry.
  *
- * Only metrics created using AdaptorMetricRegistry class are disabled. Metrics are mocked, but
+ * Only metrics created using {@link ToroMetricRegistry} class are disabled. Metrics are mocked, but
  * Timer needs an instance of Context that is private.
  */
 @Singleton
@@ -52,38 +52,48 @@ public class DisabledMetricRegistry implements ToroMetricRegistry {
   private static final SettableGauge MOCKED_GAUGE = new MockedGauge();
 
   @Override
-  public Counter counter(MetricName name) {
+  public ToroMetricRegistry createSubRegistry(String key, String midleName) {
+    return this;
+  }
+
+  @Override
+  public ToroMetricRegistry createSubRegistry(String middleName) {
+    return this;
+  }
+
+  @Override
+  public Counter counter(String name) {
     return MOCKED_COUNTER;
   }
 
   @Override
-  public Meter meter(MetricName name) {
+  public Meter meter(String name) {
     return MOCKED_METER;
   }
 
   @Override
-  public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
+  public Histogram histogram(String name, boolean resetOnSnapshot) {
     return MOCKED_HISTOGRAM;
   }
 
   @Override
-  public Timer timer(MetricName name, boolean resetOnSnapshot) {
+  public Timer timer(String name, boolean resetOnSnapshot) {
     return MOCKED_TIMER;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> SettableGauge<T> gauge(MetricName name) {
+  public <T> SettableGauge<T> gauge(String name) {
     return MOCKED_GAUGE;
   }
 
   @Override
-  public boolean remove(MetricName name) {
+  public boolean remove(String name) {
     return true;
   }
 
   @Override
-  public <T extends Metric> T register(MetricName name, T metric) {
+  public <T extends Metric> T register(String name, T metric) {
     return metric;
   }
 

@@ -33,6 +33,7 @@ public class TopologyBundle extends AbstractBundle<SyncSourceProvider> {
   public TopologyBundle(TopologyBundleConfig config) {
     super(config);
     Injector injector = config.getEssentialInjector().createChildInjector(
+        config.getEssentialOverrideModule(),
         new TopologyGuiceModule(config)
     );
     topologyService = injector.getInstance(TopologyService.class);

@@ -20,63 +20,46 @@ package com.torodb.core.metrics;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
-import com.codahale.metrics.ObjectNameFactory;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Timer;
 import com.google.inject.Inject;
 import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramReservoir;
 import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramResetOnSnapshotReservoir;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.management.ObjectName;
 
 /**
- * An adaptor whose external interface is a {@link ToroMetricRegistry ToroDB Metric Registry} and
+ * An adaptor whose external interface is a {@link SafeRegistry} and
  * the internal is a {@link com.codahale.metrics.MetricRegistry Codahale Metric Registry}.
  */
-class AdaptorMetricRegistry implements ToroMetricRegistry {
+class AdaptorSafeRegistry implements SafeRegistry {
 
   private final com.codahale.metrics.MetricRegistry adapted;
-  private final MbeanNameFactory mbeanNameFactory = new MbeanNameFactory();
 
   @Inject
-  public AdaptorMetricRegistry(com.codahale.metrics.MetricRegistry adapted) {
+  public AdaptorSafeRegistry(com.codahale.metrics.MetricRegistry adapted) {
     this.adapted = adapted;
-    final JmxReporter reporter = JmxReporter
-        .forRegistry(adapted)
-        .createsObjectNamesWith(mbeanNameFactory)
-        .build();
-    reporter.start();
   }
 
   @Override
-  public Counter counter(MetricName name) {
-    mbeanNameFactory.registerName(name);
-    Counter counter = adapted.counter(name.getMetricName());
+  public Counter counter(Name name) {
+    Counter counter = adapted.counter(name.getQualifiedName());
     return counter;
   }
 
   @Override
-  public Meter meter(MetricName name) {
-    mbeanNameFactory.registerName(name);
-    Meter meter = adapted.meter(name.getMetricName());
+  public Meter meter(Name name) {
+    Meter meter = adapted.meter(name.getQualifiedName());
     return meter;
   }
 
   /**
-   *
-   * @param name
    * @param resetOnSnapshot This is usually true if you're using snapshots as a means of defining
    *                        the window in which you want to calculate, say, the 99.9th percentile
-   * @return
    */
   @Override
-  public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
+  public Histogram histogram(Name name, boolean resetOnSnapshot) {
     Reservoir reservoir;
     if (resetOnSnapshot) {
       reservoir = new HdrHistogramResetOnSnapshotReservoir();
@@ -88,14 +71,11 @@ class AdaptorMetricRegistry implements ToroMetricRegistry {
   }
 
   /**
-   *
-   * @param name
    * @param resetOnSnapshot This is usually true if you're using snapshots as a means of defining
    *                        the window in which you want to calculate, say, the 99.9th percentile
-   * @return
    */
   @Override
-  public Timer timer(MetricName name, boolean resetOnSnapshot) {
+  public Timer timer(Name name, boolean resetOnSnapshot) {
     Reservoir reservoir;
     if (resetOnSnapshot) {
       reservoir = new HdrHistogramResetOnSnapshotReservoir();
@@ -107,48 +87,27 @@ class AdaptorMetricRegistry implements ToroMetricRegistry {
   }
 
   @Override
-  public <T> SettableGauge<T> gauge(MetricName name) {
+  public <T> SettableGauge<T> gauge(Name name) {
     SettableGauge<T> gauge = register(name, new SettableGauge<T>());
     return gauge;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T extends Metric> T register(MetricName name, T metric) {
-    mbeanNameFactory.registerName(name);
+  public <T extends Metric> T register(Name name, T metric) {
     try {
-      adapted.register(name.getMetricName(), metric);
+      adapted.register(name.getQualifiedName(), metric);
       return metric;
     } catch (IllegalArgumentException e) {
-      Metric existing = adapted.getMetrics().get(name.getMetricName());
+      Metric existing = adapted.getMetrics().get(name.getQualifiedName());
       return (T) existing;
     }
   }
 
   @Override
-  public boolean remove(MetricName name) {
-    boolean removed = adapted.remove(name.getMetricName());
+  public boolean remove(Name name) {
+    boolean removed = adapted.remove(name.getQualifiedName());
     return removed;
-  }
-
-  private static class MbeanNameFactory implements ObjectNameFactory {
-
-    private Map<String, ObjectName> names = new ConcurrentHashMap<>();
-
-    private void registerName(MetricName name) {
-      names.put(name.getMetricName(), name.getMBeanName());
-    }
-
-    @Override
-    public ObjectName createName(String type, String domain, String mbeanName) {
-      return names.computeIfAbsent(mbeanName, n -> {
-        try {
-          return new ObjectName(domain, type, mbeanName);
-        } catch (Exception e) {
-          return null;
-        }
-      });
-    }
   }
 
 }

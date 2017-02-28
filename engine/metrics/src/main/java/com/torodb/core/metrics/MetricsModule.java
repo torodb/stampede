@@ -21,13 +21,15 @@ package com.torodb.core.metrics;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Singleton;
 import com.torodb.core.guice.EssentialToroModule;
+import com.torodb.core.metrics.directory.Directory;
+import com.torodb.core.metrics.directory.RootMetricDirectory;
 
 /**
  * A module that binds metrics related stuff (specially {@link AdaptorMetricRegistry}).
  */
 public class MetricsModule extends EssentialToroModule {
 
-  private MetricsConfig config;
+  private final MetricsConfig config;
 
   public MetricsModule(MetricsConfig config) {
     this.config = config;
@@ -35,7 +37,6 @@ public class MetricsModule extends EssentialToroModule {
 
   @Override
   protected void configure() {
-    exposeEssential(MetricNameFactory.class);
     exposeEssential(ToroMetricRegistry.class);
 
     if (!config.getMetricsEnabled()) {
@@ -44,17 +45,13 @@ public class MetricsModule extends EssentialToroModule {
       bindEssential(ToroMetricRegistry.class)
           .to(DisabledMetricRegistry.class);
     } else {
-      bind(MetricRegistry.class)
-          .toInstance(new MetricRegistry());
-      bind(AdaptorMetricRegistry.class)
-          .in(Singleton.class);
-      bindEssential(ToroMetricRegistry.class)
-          .to(AdaptorMetricRegistry.class);
-    }
+      MetricRegistry registry = new MetricRegistry();
+      SafeRegistry sameMetricRegistry = new MBeanSafeRegistry(registry);
+      Directory rootDirectory = new RootMetricDirectory();
 
-    bindEssential(MetricNameFactory.class)
-        .to(RootMetricNameFactory.class)
-        .in(Singleton.class);
+      bindEssential(ToroMetricRegistry.class)
+          .toInstance(new DirectoryToroMetricRegistry(rootDirectory, sameMetricRegistry));
+    }
   }
 
 }

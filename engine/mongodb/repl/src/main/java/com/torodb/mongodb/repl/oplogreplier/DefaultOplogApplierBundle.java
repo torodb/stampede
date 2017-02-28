@@ -36,6 +36,7 @@ public class DefaultOplogApplierBundle extends AbstractBundle<DefaultOplogApplie
     super(config);
     this.config = config;
     Injector injector = config.getEssentialInjector().createChildInjector(
+        config.getEssentialOverrideModule(),
         new DefaultOplogApplierGuiceModule(config)
     );
     oplogApplier = injector.getInstance(OplogApplier.class);

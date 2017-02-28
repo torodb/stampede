@@ -25,7 +25,6 @@ import com.google.common.base.Supplier;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.transaction.RollbackException;
@@ -158,13 +157,10 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
     private final Histogram subBatchSizeHistogram;
 
     @Inject
-    public ConcurrentOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry,
-        MetricNameFactory parentNameFactory) {
-      super(metricRegistry, parentNameFactory);
-      this.subBatchSizeMeter = metricRegistry.meter(getNameFactory().createMetricName(
-          "subBatchSizeMeter"));
-      this.subBatchSizeHistogram = metricRegistry.histogram(getNameFactory().createMetricName(
-          "subBatchSizeHistogram"));
+    public ConcurrentOplogBatchExecutorMetrics(ToroMetricRegistry parentRegistry) {
+      super(parentRegistry);
+      this.subBatchSizeMeter = getRegistry().meter("subBatchSizeMeter");
+      this.subBatchSizeHistogram = getRegistry().histogram("subBatchSizeHistogram");
     }
 
     public Meter getSubBatchSizeMeter() {

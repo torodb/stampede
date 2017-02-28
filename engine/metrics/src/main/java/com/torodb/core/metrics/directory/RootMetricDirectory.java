@@ -16,31 +16,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.metrics;
+package com.torodb.core.metrics.directory;
 
-import com.google.common.collect.Streams;
+import com.torodb.core.metrics.Hierarchy;
+import com.torodb.core.metrics.Name;
 
-import java.util.stream.Stream;
+public final class RootMetricDirectory implements Directory {
 
-public class SubMetricNameFactory implements MetricNameFactory {
-
-  private final String middleName;
-  private final MetricNameFactory parent;
-
-  public SubMetricNameFactory(String middleName, MetricNameFactory parent) {
-    this.middleName = middleName;
-    this.parent = parent;
+  @Override
+  public Directory createDirectory(String key, String name) {
+    return new DefaultMetricDirectory(new Hierarchy(key, name));
   }
 
   @Override
-  public MetricNameFactory createSubFactory(String middleName) {
-    return new SubMetricNameFactory(middleName, this);
+  public Directory createDirectory(String name) {
+    return new DefaultMetricDirectory(new Hierarchy("type", name));
   }
 
   @Override
-  public MetricName createMetricName(Stream<String> names) {
-    Stream<String> newStream = Streams.concat(Stream.of(middleName), names);
-    return parent.createMetricName(newStream);
+  public Name createName(String key, String name) {
+    return new Name(new Hierarchy(key, name));
+  }
+
+  @Override
+  public Name createName(String name) {
+    return new Name(new Hierarchy("type", name));
   }
 
 }

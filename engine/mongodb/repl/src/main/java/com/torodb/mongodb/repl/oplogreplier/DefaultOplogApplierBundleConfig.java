@@ -25,6 +25,7 @@ import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
 import com.torodb.mongodb.repl.commands.ReplCommandExecutor;
 import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 
 public class DefaultOplogApplierBundleConfig implements BundleConfig {
 
@@ -32,15 +33,18 @@ public class DefaultOplogApplierBundleConfig implements BundleConfig {
   private final MongoDbCoreBundle mongoDbCorebundle;
   private final ReplCommandLibrary replCommandsLibrary;
   private final ReplCommandExecutor replCommandsExecutor;
+  private final ReplEssentialOverrideModule essentialOverrideModule;
   private final BundleConfig delegate;
 
   public DefaultOplogApplierBundleConfig(ReplCoreBundle replCoreBundle,
       MongoDbCoreBundle mongoDbCorebundle, ReplCommandLibrary replCommandsLibrary,
-      ReplCommandExecutor replCommandsExecutor, BundleConfig delegate) {
+      ReplCommandExecutor replCommandsExecutor, ReplEssentialOverrideModule essentialOverrideModule,
+      BundleConfig delegate) {
     this.replCoreBundle = replCoreBundle;
     this.mongoDbCorebundle = mongoDbCorebundle;
     this.replCommandsLibrary = replCommandsLibrary;
     this.replCommandsExecutor = replCommandsExecutor;
+    this.essentialOverrideModule = essentialOverrideModule;
     this.delegate = delegate;
   }
 
@@ -58,6 +62,10 @@ public class DefaultOplogApplierBundleConfig implements BundleConfig {
 
   public ReplCommandExecutor getReplCommandsExecutor() {
     return replCommandsExecutor;
+  }
+
+  public ReplEssentialOverrideModule getEssentialOverrideModule() {
+    return essentialOverrideModule;
   }
 
   @Override

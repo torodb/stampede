@@ -20,7 +20,6 @@ package com.torodb.core.guice;
 
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import org.apache.logging.log4j.Logger;
 
@@ -37,11 +36,9 @@ public class EssentialToDefaultModule extends PrivateModule {
   @Override
   protected void configure() {
     expose(ToroMetricRegistry.class);
-    expose(MetricNameFactory.class);
     expose(Logger.class);
 
     bindToroMetricRegistry();
-    bindMetricNameFactory();
     bindLogger();
   }
 
@@ -54,15 +51,11 @@ public class EssentialToDefaultModule extends PrivateModule {
         .to(getEssentialKey(clazz));
   }
 
-  protected void bindMetricNameFactory() {
-    bindEssentialAsDefault(MetricNameFactory.class);
-  }
-
   protected void bindLogger() {
     bindEssentialAsDefault(Logger.class);
   }
 
-  private void bindToroMetricRegistry() {
+  protected void bindToroMetricRegistry() {
     bindEssentialAsDefault(ToroMetricRegistry.class);
   }
 }

@@ -20,7 +20,6 @@ package com.torodb.backend.postgresql;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 
 import javax.inject.Inject;
@@ -36,13 +35,13 @@ public final class PostgreSqlMetrics {
   private final Meter insertCopy;
 
   @Inject
-  public PostgreSqlMetrics(ToroMetricRegistry registry, MetricNameFactory nameFactory) {
-    MetricNameFactory myFactory = nameFactory.createSubFactory("PostgreSQLWrite");
-    insertDocPartDataTimer = registry.timer(myFactory.createMetricName("insertDocPartDataTimer"));
-    insertRows = registry.meter(myFactory.createMetricName("insertRows"));
-    insertFields = registry.meter(myFactory.createMetricName("insertFields"));
-    insertDefault = registry.meter(myFactory.createMetricName("insertDefault"));
-    insertCopy = registry.meter(myFactory.createMetricName("insertCopy"));
+  public PostgreSqlMetrics(ToroMetricRegistry parentRegistry) {
+    ToroMetricRegistry registry = parentRegistry.createSubRegistry("PostgreSQLWrite");
+    insertDocPartDataTimer = registry.timer("insertDocPartDataTimer");
+    insertRows = registry.meter("insertRows");
+    insertFields = registry.meter("insertFields");
+    insertDefault = registry.meter("insertDefault");
+    insertCopy = registry.meter("insertCopy");
   }
 
   public Timer getInsertDocPartDataTimer() {

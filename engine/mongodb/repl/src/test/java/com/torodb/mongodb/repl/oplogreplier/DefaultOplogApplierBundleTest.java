@@ -27,8 +27,10 @@ import com.torodb.mongodb.repl.MongoDbCoreBundleServiceBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundleTest;
 import com.torodb.mongodb.repl.TestBundleConfig;
+import com.torodb.mongodb.repl.TestReplEssentialOverrideModule;
 import com.torodb.mongodb.repl.commands.ReplCommandsBuilder;
 import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 import org.junit.Before;
 
 import java.util.List;
@@ -70,13 +72,23 @@ public class DefaultOplogApplierBundleTest extends AbstractReplBundleTest<Defaul
   public static DefaultOplogApplierBundle createBundle(BundleConfig generalConfig,
       ReplCoreBundle replCoreBundle, MongoDbCoreBundle mongoDbCoreBundle,
       ToroDbReplicationFilters replFilters) {
-    ReplCommandsBuilder testReplCommandsUtil = new ReplCommandsBuilder(generalConfig, replFilters);
+
+    ReplEssentialOverrideModule essentialOverrideModule = new TestReplEssentialOverrideModule(
+        generalConfig.getEssentialInjector()
+    );
+
+    ReplCommandsBuilder testReplCommandsUtil = new ReplCommandsBuilder(
+        generalConfig,
+        replFilters,
+        essentialOverrideModule
+    );
     
     return new DefaultOplogApplierBundle(new DefaultOplogApplierBundleConfig(
         replCoreBundle,
         mongoDbCoreBundle,
         testReplCommandsUtil.getReplCommandsLibrary(),
         testReplCommandsUtil.getReplCommandsExecutor(),
+        essentialOverrideModule,
         generalConfig)
     );
   }

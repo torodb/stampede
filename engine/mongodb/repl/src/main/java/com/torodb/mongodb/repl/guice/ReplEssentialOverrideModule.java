@@ -16,28 +16,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.metrics;
+package com.torodb.mongodb.repl.guice;
 
-import javax.management.ObjectName;
+import com.torodb.core.guice.EssentialToDefaultModule;
+import com.torodb.core.metrics.ToroMetricRegistry;
 
-public interface MetricName {
+public class ReplEssentialOverrideModule extends EssentialToDefaultModule {
 
-  public String getMetricName();
+  private final ToroMetricRegistry toroMetricRegistry;
 
-  public ObjectName getMBeanName();
-
-  public default boolean defaultEquals(Object other) {
-    if (this == other) {
-      return true;
-    }
-    if (other == null || !(other instanceof MetricName)) {
-      return false;
-    }
-    return this.getMBeanName().equals(((MetricName) other).getMBeanName());
+  public ReplEssentialOverrideModule(ToroMetricRegistry toroMetricRegistry) {
+    this.toroMetricRegistry = toroMetricRegistry;
   }
 
-  public default int defaultHashCode() {
-    return getMBeanName().hashCode();
+  @Override
+  protected void bindToroMetricRegistry() {
+    bind(ToroMetricRegistry.class)
+        .toInstance(toroMetricRegistry);
   }
 
 }

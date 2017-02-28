@@ -24,7 +24,6 @@ import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.retrier.RetrierAbortException;
 import com.torodb.core.retrier.RetrierGiveUpException;
@@ -57,7 +56,6 @@ public interface AnalyzedOplogBatchExecutor extends Service,
 
   public static class AnalyzedOplogBatchExecutorMetrics {
 
-    private final MetricNameFactory nameFactory;
     private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
     private final ToroMetricRegistry registry;
     private final Histogram cudBatchSize;
@@ -65,17 +63,15 @@ public interface AnalyzedOplogBatchExecutor extends Service,
     private final Timer namespaceBatchTimer;
 
     @Inject
-    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry registry,
-        MetricNameFactory parentNameFactory) {
-      this.registry = registry;
-      this.nameFactory = parentNameFactory.createSubFactory("OplogBatchExecutor");
-      this.cudBatchSize = registry.histogram(nameFactory.createMetricName("batchSize"));
-      this.cudBatchTimer = registry.timer(nameFactory.createMetricName("cudTimer"));
-      this.namespaceBatchTimer = registry.timer(nameFactory.createMetricName("namespaceTimer"));
+    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry parentRegistry) {
+      this.registry = parentRegistry.createSubRegistry("OplogBatchExecutor");
+      this.cudBatchSize = registry.histogram("batchSize");
+      this.cudBatchTimer = registry.timer("cudTimer");
+      this.namespaceBatchTimer = registry.timer("namespaceTimer");
     }
 
-    protected final MetricNameFactory getNameFactory() {
-      return nameFactory;
+    protected ToroMetricRegistry getRegistry() {
+      return registry;
     }
 
     /**
@@ -112,15 +108,11 @@ public interface AnalyzedOplogBatchExecutor extends Service,
     }
 
     private Timer createSingleTimer(OplogOperation oplogOp, String mapKey) {
-      String prefix = "single-";
+      String prefix = "single.";
       if (oplogOp instanceof DbCmdOplogOperation) {
-        return registry.timer(nameFactory.createMetricName(prefix + mapKey));
+        return registry.timer(prefix + mapKey);
       } else {
-        return registry.timer(
-            nameFactory.createMetricName(
-                prefix + mapKey.toLowerCase(Locale.ENGLISH)
-            )
-        );
+        return registry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
       }
     }
   }

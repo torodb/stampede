@@ -44,8 +44,10 @@ public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
     super(replCoreConfig);
     this.replCoreConfig = replCoreConfig;
 
-    Injector injector = replCoreConfig.getEssentialInjector()
-        .createChildInjector(new ReplCoreModule(replCoreConfig));
+    Injector injector = replCoreConfig.getEssentialInjector().createChildInjector(
+            replCoreConfig.getEssentialOverrideModule(),
+            new ReplCoreModule(replCoreConfig)
+        );
     oplogManager = injector.getInstance(OplogManager.class);
     mongoClientFactory = injector.getInstance(CachedMongoClientFactory.class);
     oplogReaderProvider = injector.getInstance(OplogReaderProvider.class);

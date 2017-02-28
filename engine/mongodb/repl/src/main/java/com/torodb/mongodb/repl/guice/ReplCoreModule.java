@@ -26,7 +26,6 @@ import com.eightkdata.mongowp.client.wrapper.MongoClientWrapperFactory;
 import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
-import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.repl.OplogManager;
@@ -54,8 +53,6 @@ public class ReplCoreModule extends PrivateModule {
     expose(CachedMongoClientFactory.class);
     expose(OplogReaderProvider.class);
     expose(ReplMetrics.class);
-
-    install(new EssentialToDefaultModule());
 
     bind(Supervisor.class)
         .annotatedWith(MongoDbRepl.class)

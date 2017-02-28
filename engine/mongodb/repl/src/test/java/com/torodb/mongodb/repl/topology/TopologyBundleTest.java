@@ -29,6 +29,8 @@ import com.torodb.mongodb.repl.MongoDbCoreBundleServiceBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundleTest;
 import com.torodb.mongodb.repl.TestBundleConfig;
+import com.torodb.mongodb.repl.TestReplEssentialOverrideModule;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -75,10 +77,15 @@ public class TopologyBundleTest extends AbstractReplBundleTest<TopologyBundle> {
   public static TopologyBundle createBundle(BundleConfig generalConfig,
       ReplCoreBundle replCoreBundle, HostAndPort seed) {
 
+    ReplEssentialOverrideModule essentialOverrideModule = new TestReplEssentialOverrideModule(
+        generalConfig.getEssentialInjector()
+    );
+
     return new TopologyBundle(new TopologyBundleConfig(
         replCoreBundle.getExternalInterface().getMongoClientFactory(),
         "replSetName1",
         seed,
+        essentialOverrideModule,
         generalConfig)
     );
   }

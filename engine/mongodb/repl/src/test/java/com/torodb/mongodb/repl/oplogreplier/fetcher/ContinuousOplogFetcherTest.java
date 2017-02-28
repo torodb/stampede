@@ -28,7 +28,6 @@ import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogVersion;
 import com.google.common.net.HostAndPort;
-import com.torodb.core.metrics.TypeMetricNameFactory;
 import com.torodb.core.metrics.DisabledMetricRegistry;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
@@ -74,10 +73,7 @@ public class ContinuousOplogFetcherTest {
       i -> i > 10,
       (a, m) -> (1 + m) * a
   );
-  private ReplMetrics metrics = new ReplMetrics(
-      new DisabledMetricRegistry(),
-      new TypeMetricNameFactory("test")
-  );
+  private ReplMetrics metrics = new ReplMetrics(new DisabledMetricRegistry());
   private final ContinuousOplogFetcherFactory factory = new ContinuousOplogFetcherFactory() {
     @Override
     public ContinuousOplogFetcher createFetcher(long lastFetchedHash, OpTime lastFetchedOptime) {
