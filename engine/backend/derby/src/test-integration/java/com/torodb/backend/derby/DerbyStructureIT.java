@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class DerbyStructureIT extends AbstractStructureIntegrationSuite {
 
-  private Map<FieldType, String> typesDictionary = new HashMap();
+  private Map<FieldType, String> typesDictionary = new HashMap<>();
 
   public DerbyStructureIT() {
     typesDictionary.put(FieldType.STRING, "VARCHAR");
