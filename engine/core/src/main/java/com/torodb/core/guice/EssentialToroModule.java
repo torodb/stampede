@@ -16,24 +16,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.metrics;
+package com.torodb.core.guice;
 
-public class MetricNameFactory {
+import com.google.inject.Key;
+import com.google.inject.PrivateModule;
+import com.google.inject.binder.LinkedBindingBuilder;
 
-  public static final String GROUP_NAME = "com.torodb.metrics";
+/**
+ * The {@link PrivateModule} extended by that essential ToroDB modules.
+ *
+ * <p/>It contains some syntacthic sugar methods designed to make it easy to create essential
+ * bindings.
+ */
+public abstract class EssentialToroModule extends PrivateModule {
 
-  private final String type;
-
-  public MetricNameFactory(String type) {
-    this.type = type;
+  protected final <T> void exposeEssential(Class<T> clazz) {
+    expose(Key.get(clazz, Essential.class));
   }
 
-  public MetricName createMetricName(String metricName) {
-    return createMetricName(GROUP_NAME, type, metricName);
-  }
-
-  public static MetricName createMetricName(String group, String type, String metricName) {
-    return new MetricName(group, type, metricName);
+  protected final <T> LinkedBindingBuilder<T> bindEssential(Class<T> clazz) {
+    return bind(clazz)
+        .annotatedWith(Essential.class);
   }
 
 }

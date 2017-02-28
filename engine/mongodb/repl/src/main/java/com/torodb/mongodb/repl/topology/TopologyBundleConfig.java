@@ -20,19 +20,23 @@ package com.torodb.mongodb.repl.topology;
 
 import com.eightkdata.mongowp.client.core.MongoClientFactory;
 import com.google.common.net.HostAndPort;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 import com.torodb.mongodb.repl.impl.FollowerSyncSourceProviderConfig;
 
 public class TopologyBundleConfig extends FollowerSyncSourceProviderConfig {
 
   private final MongoClientFactory clientFactory;
   private final String replSetName;
+  private final ReplEssentialOverrideModule replEssentialOverrideModule;
 
-  public TopologyBundleConfig(MongoClientFactory clientFactory, String replSetName, 
-      HostAndPort seed, BundleConfig delegate) {
+  public TopologyBundleConfig(MongoClientFactory clientFactory, String replSetName,
+      HostAndPort seed, ReplEssentialOverrideModule replEssentialOverrideModule,
+      BundleConfig delegate) {
     super(seed, delegate);
     this.clientFactory = clientFactory;
     this.replSetName = replSetName;
+    this.replEssentialOverrideModule = replEssentialOverrideModule;
   }
 
   public MongoClientFactory getClientFactory() {
@@ -41,6 +45,10 @@ public class TopologyBundleConfig extends FollowerSyncSourceProviderConfig {
 
   public String getReplSetName() {
     return replSetName;
+  }
+
+  public ReplEssentialOverrideModule getEssentialOverrideModule() {
+    return replEssentialOverrideModule;
   }
 
 }

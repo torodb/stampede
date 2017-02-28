@@ -37,28 +37,27 @@ import com.torodb.mongodb.repl.ReplMetrics;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
 import com.torodb.mongodb.repl.oplogreplier.OpTimeFactory;
-import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
+import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
 import com.torodb.mongodb.utils.DefaultIdUtils;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-/**
- *
- * @author gortiz
- */
 public class ContinuousOplogFetcherTest {
 
   private Supplier<Collection<OplogOperation>> oplogSupplier;
@@ -67,8 +66,13 @@ public class ContinuousOplogFetcherTest {
   @Spy
   private SyncSourceProvider syncSourceProvider = new MockedSyncSourceProvider();
   @Spy
-  private Retrier retrier = new SmartRetrier(i -> i > 10, i -> i > 10, i -> i > 10, i -> i
-      > 10, (a, m) -> (1 + m) * a);
+  private Retrier retrier = new SmartRetrier(
+      i -> i > 10,
+      i -> i > 10,
+      i -> i > 10,
+      i -> i > 10,
+      (a, m) -> (1 + m) * a
+  );
   private ReplMetrics metrics = new ReplMetrics(new DisabledMetricRegistry());
   private final ContinuousOplogFetcherFactory factory = new ContinuousOplogFetcherFactory() {
     @Override

@@ -21,7 +21,7 @@ package com.torodb.mongodb.wp;
 import com.eightkdata.mongowp.server.wp.NettyMongoServer;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.guice.MongoDbWpModule;
 import org.apache.logging.log4j.LogManager;

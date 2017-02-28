@@ -22,13 +22,15 @@ package com.torodb.mongodb.repl.topology;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.AbstractReplBundleTest;
 import com.torodb.mongodb.repl.MongoDbCoreBundleServiceBundle;
 import com.torodb.mongodb.repl.ReplCoreBundle;
 import com.torodb.mongodb.repl.ReplCoreBundleTest;
 import com.torodb.mongodb.repl.TestBundleConfig;
+import com.torodb.mongodb.repl.TestReplEssentialOverrideModule;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -75,10 +77,15 @@ public class TopologyBundleTest extends AbstractReplBundleTest<TopologyBundle> {
   public static TopologyBundle createBundle(BundleConfig generalConfig,
       ReplCoreBundle replCoreBundle, HostAndPort seed) {
 
+    ReplEssentialOverrideModule essentialOverrideModule = new TestReplEssentialOverrideModule(
+        generalConfig.getEssentialInjector()
+    );
+
     return new TopologyBundle(new TopologyBundleConfig(
         replCoreBundle.getExternalInterface().getMongoClientFactory(),
         "replSetName1",
         seed,
+        essentialOverrideModule,
         generalConfig)
     );
   }

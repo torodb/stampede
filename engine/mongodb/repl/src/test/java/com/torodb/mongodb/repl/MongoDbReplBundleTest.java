@@ -25,8 +25,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.metrics.DisabledMetricRegistry;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.EssentialModule;
@@ -95,6 +96,7 @@ public class MongoDbReplBundleTest {
         .setReplSetName("replTest")
         .setReplicationFilters(createReplicationFilters())
         .setCoreBundle(coreBundle)
+        .setMetricRegistry(new DisabledMetricRegistry())
         .build()
     );
     assert !replBundle.isRunning();

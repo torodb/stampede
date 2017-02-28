@@ -16,23 +16,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.modules;
+package com.torodb.core.guice;
 
-import com.google.common.util.concurrent.Service;
-import com.torodb.core.services.TorodbService;
-import com.torodb.core.supervision.SupervisedService;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import java.util.Collection;
-import java.util.function.Function;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public interface Bundle<ExtIntT> extends TorodbService, SupervisedService {
+import javax.inject.Qualifier;
 
-  public abstract Collection<Service> getDependencies();
-  
-  public abstract ExtIntT getExternalInterface();
-
-  public default <O> Bundle<O> map(Function<ExtIntT, O> transformationFunction) {
-    return new TransformationBundle<>(this, transformationFunction);
-  }
+/**
+ * This annotation is used to qualify resources as the essential or default values.
+ */
+@Qualifier
+@Target({FIELD, PARAMETER, METHOD, TYPE})
+@Retention(RUNTIME)
+@Documented
+public @interface Essential {
 
 }

@@ -28,7 +28,7 @@ import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.tests.common.DatabaseTestContext;
 import com.torodb.backend.tests.common.IntegrationTestBundleConfig;
 import com.torodb.core.backend.IdentifierConstraints;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;

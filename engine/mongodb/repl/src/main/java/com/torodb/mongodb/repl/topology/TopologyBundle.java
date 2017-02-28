@@ -20,7 +20,7 @@ package com.torodb.mongodb.repl.topology;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 
 import java.util.Collection;
@@ -33,6 +33,7 @@ public class TopologyBundle extends AbstractBundle<SyncSourceProvider> {
   public TopologyBundle(TopologyBundleConfig config) {
     super(config);
     Injector injector = config.getEssentialInjector().createChildInjector(
+        config.getEssentialOverrideModule(),
         new TopologyGuiceModule(config)
     );
     topologyService = injector.getInstance(TopologyService.class);

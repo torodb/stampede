@@ -21,7 +21,6 @@ package com.torodb.mongodb.repl;
 import com.codahale.metrics.Counter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.SettableGauge;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.mongodb.commands.pojos.MemberState;
@@ -34,25 +33,28 @@ import javax.inject.Inject;
 @ThreadSafe
 public class ReplMetrics {
 
-  private static final MetricNameFactory factory = new MetricNameFactory("Repl");
   private final SettableGauge<String> memberState;
   private final ImmutableMap<MemberState, Counter> memberStateCounters;
   private final SettableGauge<String> lastOpTimeFetched;
   private final SettableGauge<String> lastOpTimeApplied;
 
   @Inject
-  public ReplMetrics(ToroMetricRegistry registry) {
-    memberState = registry.gauge(factory.createMetricName("currentMemberState"));
+  public ReplMetrics(ToroMetricRegistry parentRegistry) {
+    ToroMetricRegistry registry = parentRegistry.createSubRegistry("Repl");
+    memberState = registry.gauge("currentMemberState");
     ImmutableMap.Builder<MemberState, Counter> memberStateCountersBuilder =
         ImmutableMap.builder();
     for (MemberState memberState : MemberState.values()) {
-      memberStateCountersBuilder.put(memberState,
-          registry.counter(factory.createMetricName(
-              memberState.name().substring(3).toLowerCase(Locale.US) + "Count")));
+      memberStateCountersBuilder.put(
+          memberState,
+          registry.counter(
+              memberState.name().substring(3).toLowerCase(Locale.US) + "Count"
+          )
+      );
     }
     memberStateCounters = Maps.immutableEnumMap(memberStateCountersBuilder.build());
-    lastOpTimeFetched = registry.gauge(factory.createMetricName("lastOpTimeFetched"));
-    lastOpTimeApplied = registry.gauge(factory.createMetricName("lastOpTimeApplied"));
+    lastOpTimeFetched = registry.gauge("lastOpTimeFetched");
+    lastOpTimeApplied = registry.gauge("lastOpTimeApplied");
   }
 
   public SettableGauge<String> getMemberState() {

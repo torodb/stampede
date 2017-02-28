@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class PostgreSqlStructureIT extends AbstractStructureIntegrationSuite {
 
-  private Map<FieldType, String> typesDictionary = new HashMap();
+  private Map<FieldType, String> typesDictionary = new HashMap<>();
 
   public PostgreSqlStructureIT() {
     typesDictionary.put(FieldType.STRING, "varchar");

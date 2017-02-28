@@ -19,7 +19,7 @@
 package com.torodb.core.backend;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.Bundle;
+import com.torodb.core.bundle.Bundle;
 
 import java.util.Collection;
 import java.util.Collections;

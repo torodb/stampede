@@ -50,6 +50,7 @@ import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.guice.EssentialToDefaultModule;
 
 import javax.inject.Singleton;
 
@@ -63,11 +64,14 @@ public class DerbyBackendModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    install(new BackendModule());
     expose(BackendService.class);
     expose(ReservedIdGenerator.class);
     expose(SnapshotUpdater.class);
     expose(BackendTransactionJobFactory.class);
+
+    install(new BackendModule());
+
+    install(new EssentialToDefaultModule());
 
     bind(BackendConfig.class)
         .toInstance(config);

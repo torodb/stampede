@@ -20,7 +20,7 @@ package com.torodb.mongodb.repl.commands;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.filters.DatabaseFilter;
 import com.torodb.mongodb.filters.IndexFilter;
@@ -28,6 +28,7 @@ import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.repl.commands.impl.CommandFilterUtil;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 
 /**
  * A utility class used to generate {@link ReplCommandExecutor} and {@link ReplCommandLibrary}.
@@ -37,9 +38,11 @@ public class ReplCommandsBuilder {
   private final ReplCommandLibrary replCommandsLibrary;
   private final ReplCommandExecutor replCommandsExecutor;
 
-  public ReplCommandsBuilder(BundleConfig generalConfig, ReplicationFilters replFilters) {
+  public ReplCommandsBuilder(BundleConfig generalConfig, ReplicationFilters replFilters,
+      ReplEssentialOverrideModule essentialOverrideModule) {
     Injector replCommandsInjector = generalConfig.getEssentialInjector()
         .createChildInjector(
+            essentialOverrideModule,
             new ExtraModule(generalConfig, replFilters),
             new ReplCommandsGuiceModule()
         );

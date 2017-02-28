@@ -19,7 +19,10 @@
 package com.torodb.engine.mongodb.sharding;
 
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.AbstractBundle;
+import com.google.inject.Key;
+import com.torodb.core.bundle.AbstractBundle;
+import com.torodb.core.guice.Essential;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.engine.mongodb.sharding.isolation.db.DbIsolatedTorodBundle;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
@@ -104,7 +107,18 @@ public class ShardBundle extends AbstractBundle<ShardBundle> {
         .setMongoClientConfiguration(config.getClientConfig())
         .setReplSetName(config.getReplSetName())
         .setReplicationFilters(config.getUserReplFilter())
+        .setMetricRegistry(createToroMetricRegistry(config))
         .build();
+  }
+
+  private static ToroMetricRegistry createToroMetricRegistry(ShardBundleConfig config) {
+    ToroMetricRegistry parentRegistry = config.getEssentialInjector().getInstance(
+        Key.get(ToroMetricRegistry.class, Essential.class)
+    );
+
+    return parentRegistry
+        .createSubRegistry("replication")
+        .createSubRegistry("shard", config.getShardId());
   }
 
 }

@@ -16,28 +16,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.modules;
+package com.torodb.core.bundle;
 
-import com.google.inject.Injector;
-import com.torodb.core.supervision.Supervisor;
+import com.google.common.util.concurrent.Service;
+import com.torodb.core.services.TorodbService;
+import com.torodb.core.supervision.SupervisedService;
 
+import java.util.Collection;
+import java.util.function.Function;
 
-public class BundleConfigImpl implements BundleConfig {
-  private final Injector essentialInjector;
-  private final Supervisor supervisor;
+public interface Bundle<ExtIntT> extends TorodbService, SupervisedService {
 
-  public BundleConfigImpl(Injector essentialInjector, Supervisor supervisor) {
-    this.essentialInjector = essentialInjector;
-    this.supervisor = supervisor;
+  public abstract Collection<Service> getDependencies();
+  
+  public abstract ExtIntT getExternalInterface();
+
+  public default <O> Bundle<O> map(Function<ExtIntT, O> transformationFunction) {
+    return new TransformationBundle<>(this, transformationFunction);
   }
 
-  @Override
-  public Injector getEssentialInjector() {
-    return essentialInjector;
-  }
-
-  @Override
-  public Supervisor getSupervisor() {
-    return supervisor;
-  }
 }

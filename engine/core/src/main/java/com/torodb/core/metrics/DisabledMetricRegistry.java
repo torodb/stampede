@@ -23,6 +23,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
@@ -34,66 +35,83 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Singleton;
 
 /**
- * First iteration of Disabled Metric Registry. Only metrics created using ToroMetricRegistry class
- * are disabled. Metrics are mocked, but Timer needs an instance of Context that is private.
+ * First iteration of Disabled Metric Registry.
  *
+ * Only metrics created using {@link ToroMetricRegistry} class are disabled. Metrics are mocked, but
+ * Timer needs an instance of Context that is private.
  */
 @Singleton
-public class DisabledMetricRegistry extends ToroMetricRegistry {
+public class DisabledMetricRegistry implements ToroMetricRegistry {
 
-  private static final Counter mockedCounter = new MockedCounter();
-  private static final Meter mockedMeter = new MockedMeter();
-  private static final Histogram mockedHistogram = new MockedHistogram(
+  private static final Counter MOCKED_COUNTER = new MockedCounter();
+  private static final Meter MOCKED_METER = new MockedMeter();
+  private static final Histogram MOCKED_HISTOGRAM = new MockedHistogram(
       new ExponentiallyDecayingReservoir());
-  private static final Timer mockedTimer = new MockedTimer();
+  private static final Timer MOCKED_TIMER = new MockedTimer();
   @SuppressWarnings("rawtypes")
-  private static final SettableGauge mockedGauge = new MockedGauge();
+  private static final SettableGauge MOCKED_GAUGE = new MockedGauge();
 
-  public Counter counter(MetricName name) {
-    return mockedCounter;
+  @Override
+  public ToroMetricRegistry createSubRegistry(String key, String midleName) {
+    return this;
   }
 
-  public Meter meter(MetricName name) {
-    return mockedMeter;
+  @Override
+  public ToroMetricRegistry createSubRegistry(String middleName) {
+    return this;
   }
 
-  public Histogram histogram(MetricName name) {
-    return mockedHistogram;
+  @Override
+  public Counter counter(String name) {
+    return MOCKED_COUNTER;
   }
 
-  public Histogram histogram(MetricName name, boolean resetOnSnapshot) {
-    return histogram(name);
+  @Override
+  public Meter meter(String name) {
+    return MOCKED_METER;
   }
 
-  public Timer timer(MetricName name) {
-    return mockedTimer;
+  @Override
+  public Histogram histogram(String name, boolean resetOnSnapshot) {
+    return MOCKED_HISTOGRAM;
   }
 
-  public Timer timer(MetricName name, boolean resetOnSnapshot) {
-    return timer(name);
+  @Override
+  public Timer timer(String name, boolean resetOnSnapshot) {
+    return MOCKED_TIMER;
   }
 
   @SuppressWarnings("unchecked")
-  public <T> SettableGauge<T> gauge(MetricName name) {
-    return mockedGauge;
+  @Override
+  public <T> SettableGauge<T> gauge(String name) {
+    return MOCKED_GAUGE;
   }
 
-  public boolean remove(MetricName name) {
-    boolean removed = remove(name.getMetricName());
-    return removed;
+  @Override
+  public boolean remove(String name) {
+    return true;
   }
 
-  public static class MockedCounter extends Counter {
+  @Override
+  public <T extends Metric> T register(String name, T metric) {
+    return metric;
+  }
 
+  private static class MockedCounter extends Counter {
+
+    @Override
     public void inc() {
     }
 
+    @Override
     public void inc(long n) {
     }
 
+    @Override
     public void dec() {
     }
 
+    @Override
     public void dec(long n) {
     }
 
@@ -103,11 +121,13 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
     }
   }
 
-  public static class MockedMeter extends Meter {
+  private static class MockedMeter extends Meter {
 
+    @Override
     public void mark() {
     }
 
+    @Override
     public void mark(long n) {
     }
 
@@ -137,15 +157,17 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
     }
   }
 
-  public static class MockedHistogram extends Histogram {
+  private static class MockedHistogram extends Histogram {
 
     public MockedHistogram(Reservoir reservoir) {
       super(reservoir);
     }
 
+    @Override
     public void update(int value) {
     }
 
+    @Override
     public void update(long value) {
     }
 
@@ -160,9 +182,9 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
     }
   }
 
-  public static class MockedTimer extends Timer {
+  private static class MockedTimer extends Timer {
 
-    private static final Timer shared = new Timer();
+    private static final Timer SHARED = new Timer();
 
     public MockedTimer() {
     }
@@ -173,15 +195,18 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
     public MockedTimer(Reservoir reservoir, Clock clock) {
     }
 
+    @Override
     public void update(long duration, TimeUnit unit) {
     }
 
+    @Override
     public <T> T time(Callable<T> event) throws Exception {
       return event.call();
     }
 
+    @Override
     public Context time() {
-      return shared.time();
+      return SHARED.time();
     }
 
     @Override
@@ -215,7 +240,7 @@ public class DisabledMetricRegistry extends ToroMetricRegistry {
     }
   }
 
-  public static class MockedGauge<T> extends SettableGauge<T> {
+  private static class MockedGauge<T> extends SettableGauge<T> {
 
     @Override
     public T getValue() {

@@ -20,7 +20,7 @@ package com.torodb.mongodb.repl.impl;
 
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 
 public class FollowerSyncSourceProviderConfig implements BundleConfig {

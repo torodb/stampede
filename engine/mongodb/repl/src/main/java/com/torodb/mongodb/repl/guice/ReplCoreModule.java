@@ -53,7 +53,7 @@ public class ReplCoreModule extends PrivateModule {
     expose(CachedMongoClientFactory.class);
     expose(OplogReaderProvider.class);
     expose(ReplMetrics.class);
-    
+
     bind(Supervisor.class)
         .annotatedWith(MongoDbRepl.class)
         .toInstance(config.getSupervisor());

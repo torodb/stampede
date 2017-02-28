@@ -20,7 +20,7 @@ package com.torodb.stampede;
 
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;

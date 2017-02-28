@@ -25,6 +25,7 @@ import com.torodb.core.backend.WriteBackendTransaction;
 import com.torodb.core.d2r.D2RTranslatorFactory;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.dsl.backend.impl.BackendConnectionJobFactoryImpl;
+import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.torod.TorodServer;
@@ -39,17 +40,20 @@ public class MemoryTorodModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    expose(TorodServer.class);
+    expose(InsertPipelineFactory.class);
+
+    install(new EssentialToDefaultModule());
+
     bind(MemoryTorodServer.class)
         .in(Singleton.class);
 
     bind(TorodServer.class)
         .to(MemoryTorodServer.class);
-    expose(TorodServer.class);
 
     bind(InsertPipelineFactory.class)
         .to(MemoryInsertPipelineFactory.class)
         .in(Singleton.class);
-    expose(InsertPipelineFactory.class);
 
     bind(BackendTransactionJobFactory.class)
         .to(BackendConnectionJobFactoryImpl.class);

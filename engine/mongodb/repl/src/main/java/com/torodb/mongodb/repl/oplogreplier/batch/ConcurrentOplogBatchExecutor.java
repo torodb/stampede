@@ -44,6 +44,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnegative;
 import javax.inject.Inject;
 
 public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecutor {
@@ -156,12 +157,10 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
     private final Histogram subBatchSizeHistogram;
 
     @Inject
-    public ConcurrentOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
-      super(metricRegistry);
-      this.subBatchSizeMeter = metricRegistry.meter(NAME_FACTORY.createMetricName(
-          "subBatchSizeMeter"));
-      this.subBatchSizeHistogram = metricRegistry.histogram(NAME_FACTORY.createMetricName(
-          "subBatchSizeHistogram"));
+    public ConcurrentOplogBatchExecutorMetrics(ToroMetricRegistry parentRegistry) {
+      super(parentRegistry);
+      this.subBatchSizeMeter = getRegistry().meter("subBatchSizeMeter");
+      this.subBatchSizeHistogram = getRegistry().histogram("subBatchSizeHistogram");
     }
 
     public Meter getSubBatchSizeMeter() {
@@ -179,9 +178,9 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
      * Given some metrics, this heuristic returns number of {@link AnalyzedOp ops} that each sub
      * batch should have.
      *
-     * @param metrics
      * @return a positive integer
      */
+    @Nonnegative
     public int getSubBatchSize(ConcurrentOplogBatchExecutorMetrics metrics);
   }
 

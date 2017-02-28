@@ -20,7 +20,8 @@ package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.base.Preconditions;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 
@@ -31,6 +32,7 @@ public class MongoDbReplConfigBuilder {
   private ReplicationFilters replicationFilters;
   private String replSetName;
   private ConsistencyHandler consistencyHandler;
+  private ToroMetricRegistry metricRegistry;
   private final BundleConfig generalConfig;
 
   public MongoDbReplConfigBuilder(BundleConfig generalConfig) {
@@ -63,6 +65,11 @@ public class MongoDbReplConfigBuilder {
     return this;
   }
 
+  public MongoDbReplConfigBuilder setMetricRegistry(ToroMetricRegistry metricRegistry) {
+    this.metricRegistry = metricRegistry;
+    return this;
+  }
+
   public MongoDbReplConfig build() {
     Preconditions.checkNotNull(coreBundle, "core bundle must be not null");
     Preconditions.checkNotNull(mongoClientConfiguration, "mongo client configuration must be not "
@@ -71,8 +78,10 @@ public class MongoDbReplConfigBuilder {
     Preconditions.checkNotNull(replSetName, "replSetName must be not null");
     Preconditions.checkNotNull(consistencyHandler, "consistency handler must be not null");
     Preconditions.checkNotNull(generalConfig, "general config must be not null");
+    Preconditions.checkNotNull(metricRegistry, "metric registry must be not null");
+
     return new MongoDbReplConfig(coreBundle, mongoClientConfiguration, replicationFilters,
-        replSetName, consistencyHandler, generalConfig);
+        replSetName, consistencyHandler, metricRegistry, generalConfig);
   }
 
 }
