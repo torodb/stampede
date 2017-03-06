@@ -17,12 +17,13 @@ Usage: `torodb-stampede [options]`
 | --backend-database | The database that will be used. |
 | --backend-host | The host or ip that will be used to connect. |
 | --backend-port | The port that will be used to connect. |
+| --backend-ssl | Enable SSL for backend connection. |
 | --backend-user | The user that will be used to connect. |
 | -c, --conf | Configuration file in YAML format. |
 | --connection-pool-size | Maximum number of connections to establish to the database. It must be higher or equal than 3. |
 | --connection-pool-timeout | The timeout in milliseconds after which retrieve a connection from the pool will fail. |
 | --enable-metrics | Enable metrics system. |
-| --enable-ssl | Enable SSL/TLS layer. |
+| --enable-ssl | Enable SSL/TLS for replication layer. |
 | -h, --help | Print help and exit. |
 | -hp, --help-param | Print help for all available parameters and exit. | 
 | --log-level | Level of log emitted (will overwrite default log4j2 configuration) |
