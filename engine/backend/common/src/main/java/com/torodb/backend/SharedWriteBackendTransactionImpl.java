@@ -41,7 +41,6 @@ import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 import com.torodb.kvdocument.values.KvValue;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -55,7 +54,8 @@ public class SharedWriteBackendTransactionImpl extends BackendTransactionImpl im
     SharedWriteBackendTransaction {
 
   @SuppressWarnings("checkstyle:LineLength")
-  private static final Logger LOGGER = LogManager.getLogger(SharedWriteBackendTransactionImpl.class);
+  private static final Logger LOGGER
+      = BackendLoggerFactory.get(SharedWriteBackendTransactionImpl.class);
 
   private final TableRefFactory tableRefFactory;
   private final IdentifierFactory identifierFactory;

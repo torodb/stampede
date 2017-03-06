@@ -19,7 +19,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.d2r.D2RLoggerFactory;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -28,12 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
 
-  private static final Logger LOGGER = LogManager.getLogger(WrapperMutableMetaSnapshot.class);
+  private static final Logger LOGGER = D2RLoggerFactory.get(WrapperMutableMetaSnapshot.class);
   private final ImmutableMetaSnapshot wrapped;
   private final HashMap<String, Tuple2<MutableMetaDatabase, MetaElementState>> dbsByName;
   private final Map<String, Tuple2<MutableMetaDatabase, MetaElementState>> aliveMap;

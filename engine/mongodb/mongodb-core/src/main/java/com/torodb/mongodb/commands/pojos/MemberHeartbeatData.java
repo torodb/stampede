@@ -24,7 +24,6 @@ import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.google.common.net.HostAndPort;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatReply;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatReplyBuilder;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
@@ -38,7 +37,6 @@ import javax.annotation.Nullable;
 //TODO(gortiz): this class generates some extra optionals that can be optimized
 public class MemberHeartbeatData {
 
-  private static final Logger LOGGER = LogManager.getLogger(MemberHeartbeatData.class);
   private Health health;
   @Nullable
   private Instant upSince;
@@ -155,7 +153,7 @@ public class MemberHeartbeatData {
   }
 
   public void setUpValues(@Nonnull Instant now, @Nonnull HostAndPort host,
-      @Nonnull ReplSetHeartbeatReply hbResponse) {
+      @Nonnull ReplSetHeartbeatReply hbResponse, Logger logger) {
     health = Health.UP;
     if (upSince.equals(Instant.EPOCH)) {
       upSince = now;
@@ -168,7 +166,7 @@ public class MemberHeartbeatData {
 
     // Log if the state changes
     if (!lastResponse.getState().get().equals(hbResponse.getState().get())) {
-      LOGGER.info("Member {} is now in state {}", host, hbResponse.getState().get());
+      logger.info("Member {} is now in state {}", host, hbResponse.getState().get());
     }
 
     lastResponse = lastResponseBuilder.build();

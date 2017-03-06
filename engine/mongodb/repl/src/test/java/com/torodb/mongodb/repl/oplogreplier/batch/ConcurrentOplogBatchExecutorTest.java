@@ -26,6 +26,7 @@ import com.codahale.metrics.Meter;
 import com.google.common.collect.Lists;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.kvdocument.values.KvInteger;
 import com.torodb.mongodb.core.MongodConnection;
@@ -37,6 +38,7 @@ import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOp;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.DebuggingAnalyzedOp;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.ConcurrentOplogBatchExecutorMetrics;
 import com.torodb.mongodb.repl.oplogreplier.batch.ConcurrentOplogBatchExecutor.SubBatchHeuristic;
+import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -81,13 +83,17 @@ public class ConcurrentOplogBatchExecutorTest {
     MockitoAnnotations.initMocks(this);
     concurrentToolsFactory = mock(ConcurrentToolsFactory.class);
     when(concurrentToolsFactory.getDefaultMaxThreads()).thenReturn(4);
-    when(concurrentToolsFactory.createStreamExecutor(any(String.class), any(Boolean.class)))
-        .thenReturn(streamExecutor);
+    when(concurrentToolsFactory.createStreamExecutor(
+        any(Logger.class),
+        any(String.class),
+        any(Boolean.class))
+    ).thenReturn(streamExecutor);
 
     doNothing().when(streamExecutor).awaitRunning();
 
     ConcurrentOplogBatchExecutor realExecutor = new ConcurrentOplogBatchExecutor(applier, server,
-        retrier, concurrentToolsFactory, namespaceJobExecutor, metrics, subBatchHeuristic);
+        retrier, concurrentToolsFactory, namespaceJobExecutor, DefaultLoggerFactory.getInstance(),
+        metrics, subBatchHeuristic);
     realExecutor.startAsync();
     realExecutor.awaitRunning();
 

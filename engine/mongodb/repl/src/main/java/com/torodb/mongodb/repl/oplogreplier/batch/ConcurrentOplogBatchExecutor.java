@@ -25,6 +25,7 @@ import com.google.common.base.Supplier;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.transaction.RollbackException;
@@ -56,11 +57,11 @@ public class ConcurrentOplogBatchExecutor extends SimpleAnalyzedOplogBatchExecut
   @Inject
   public ConcurrentOplogBatchExecutor(OplogOperationApplier oplogOperationApplier,
       MongodServer server, Retrier retrier, ConcurrentToolsFactory concurrentToolsFactory,
-      NamespaceJobExecutor namespaceJobExecutor,
+      NamespaceJobExecutor namespaceJobExecutor, LoggerFactory lf,
       ConcurrentOplogBatchExecutorMetrics concurrentMetrics, SubBatchHeuristic subBatchHeuristic) {
     super(concurrentMetrics, oplogOperationApplier, server, retrier, namespaceJobExecutor);
     this.streamExecutor = concurrentToolsFactory.createStreamExecutor(
-        "concurrent-oplog-batch-executor", true);
+        lf.apply(this.getClass()), "concurrent-oplog-batch-executor", true);
     this.concurrentMetrics = concurrentMetrics;
     this.subBatchHeuristic = subBatchHeuristic;
   }

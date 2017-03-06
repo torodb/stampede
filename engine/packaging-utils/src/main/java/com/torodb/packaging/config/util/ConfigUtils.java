@@ -40,7 +40,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Charsets;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -64,8 +63,6 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
 public class ConfigUtils {
-
-  private static final Logger LOGGER = LogManager.getLogger(ConfigUtils.class);
 
   public static final String getUserHomePath() {
     return System.getProperty("user.home", ".");
@@ -142,12 +139,8 @@ public class ConfigUtils {
 
   private static IllegalArgumentException transformJsonMappingException(JsonPointer jsonPointer,
       String message, JsonMappingException jsonMappingException) {
-    if (LOGGER.isDebugEnabled()) {
-      return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + message,
-          jsonMappingException);
-    }
-
-    return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + message);
+    return new IllegalArgumentException("Validation error at " + jsonPointer + ": " + message,
+        jsonMappingException);
   }
 
   public static <T> T readConfigFromYaml(Class<T> configClass, String yamlString) throws
@@ -178,29 +171,37 @@ public class ConfigUtils {
     return config;
   }
 
-  public static void parseToropassFile(final BackendPasswordConfig backendPasswordConfig) throws
-      FileNotFoundException, IOException {
+  public static void parseToropassFile(final BackendPasswordConfig backendPasswordConfig,
+      Logger logger) throws FileNotFoundException, IOException {
     backendPasswordConfig.setPassword(getPasswordFromPassFile(
         backendPasswordConfig.getToropassFile(),
         backendPasswordConfig.getHost(),
         backendPasswordConfig.getPort(),
         backendPasswordConfig.getDatabase(),
-        backendPasswordConfig.getUser()));
+        backendPasswordConfig.getUser(),
+        logger
+    ));
   }
 
-  public static void parseMongopassFile(final MongoPasswordConfig mongoPasswordConfig) throws
-      FileNotFoundException, IOException {
+  public static void parseMongopassFile(final MongoPasswordConfig mongoPasswordConfig, 
+      Logger logger) throws FileNotFoundException, IOException {
     mongoPasswordConfig.setPassword(getPasswordFromPassFile(
         mongoPasswordConfig.getMongopassFile(),
         mongoPasswordConfig.getHost(),
         mongoPasswordConfig.getPort(),
         mongoPasswordConfig.getDatabase(),
-        mongoPasswordConfig.getUser()));
+        mongoPasswordConfig.getUser(),
+        logger
+    ));
   }
 
-  private static String getPasswordFromPassFile(String passFile, String host, int port,
+  private static String getPasswordFromPassFile(
+      String passFile,
+      String host,
+      int port,
       String database,
-      String user) throws FileNotFoundException, IOException {
+      String user,
+      Logger logger) throws FileNotFoundException, IOException {
     File pass = new File(passFile);
     if (pass.exists() && pass.canRead() && pass.isFile()) {
       BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(pass),
@@ -212,7 +213,7 @@ public class ConfigUtils {
           index++;
           String[] passChunks = line.split(":");
           if (passChunks.length != 5) {
-            LOGGER.warn("Wrong format at line " + index + " of file " + passFile);
+            logger.warn("Wrong format at line " + index + " of file " + passFile);
             continue;
           }
 

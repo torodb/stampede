@@ -25,12 +25,9 @@ import com.torodb.core.services.IdleTorodbService;
 import com.vladmihalcea.flexypool.FlexyPoolDataSource;
 import com.vladmihalcea.flexypool.adaptor.HikariCPPoolAdapter;
 import com.vladmihalcea.flexypool.config.Configuration;
-import com.vladmihalcea.flexypool.strategy.IncrementPoolOnTimeoutConnectionAcquiringStrategy;
-import com.vladmihalcea.flexypool.strategy.RetryConnectionAcquiringStrategy;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
@@ -43,7 +40,7 @@ import javax.sql.DataSource;
 public abstract class AbstractDbBackendService<ConfigurationT extends BackendConfig>
     extends IdleTorodbService implements DbBackendService {
 
-  private static final Logger LOGGER = LogManager.getLogger(AbstractDbBackendService.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(AbstractDbBackendService.class);
 
   public static final int SYSTEM_DATABASE_CONNECTIONS = 1;
   public static final int MIN_READ_CONNECTIONS_DATABASE = 1;

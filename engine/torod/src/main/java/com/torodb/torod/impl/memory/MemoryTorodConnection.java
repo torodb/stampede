@@ -22,12 +22,12 @@ import com.google.common.base.Preconditions;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.ReadOnlyTorodTransaction;
 import com.torodb.torod.TorodConnection;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.torod.TorodLoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 public class MemoryTorodConnection implements TorodConnection {
 
-  private static final Logger LOGGER = LogManager.getLogger(MemoryTorodConnection.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(MemoryTorodConnection.class);
   private final MemoryTorodServer server;
   private final int connectionId;
   private boolean closed = false;

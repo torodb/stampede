@@ -20,26 +20,26 @@ package com.torodb.core.guice;
 
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
-import org.apache.logging.log4j.Logger;
 
 /**
  * A {@link PrivateModule} on which common (aka non essential) ToroDB modules delegates the binding
  * of essential classes.
  *
  * <p/>It can be subclassed so some classes are bound as desired. For example, if a bundle decides
- * to use a different logger, it can subclass this class overriding {@link #bindLogger() } to what
- * is required.
+ * to use a different logger, it can subclass this class overriding {@link #bindLoggerFactory() } 
+ * to what is required.
  */
 public class EssentialToDefaultModule extends PrivateModule {
 
   @Override
   protected void configure() {
     expose(ToroMetricRegistry.class);
-    expose(Logger.class);
+    expose(LoggerFactory.class);
 
     bindToroMetricRegistry();
-    bindLogger();
+    bindLoggerFactory();
   }
 
   protected <T> Key<T> getEssentialKey(Class<T> clazz) {
@@ -51,8 +51,8 @@ public class EssentialToDefaultModule extends PrivateModule {
         .to(getEssentialKey(clazz));
   }
 
-  protected void bindLogger() {
-    bindEssentialAsDefault(Logger.class);
+  protected void bindLoggerFactory() {
+    bindEssentialAsDefault(LoggerFactory.class);
   }
 
   protected void bindToroMetricRegistry() {

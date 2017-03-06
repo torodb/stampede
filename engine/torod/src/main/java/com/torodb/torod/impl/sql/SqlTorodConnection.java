@@ -21,7 +21,7 @@ package com.torodb.torod.impl.sql;
 import com.google.common.base.Preconditions;
 import com.torodb.core.backend.BackendConnection;
 import com.torodb.torod.TorodConnection;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.torod.TorodLoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.concurrent.NotThreadSafe;
@@ -32,7 +32,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public class SqlTorodConnection implements TorodConnection {
 
-  private static final Logger LOGGER = LogManager.getLogger(SqlTorodConnection.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(SqlTorodConnection.class);
 
   private final SqlTorodServer server;
   private final int connectionid;

@@ -19,8 +19,8 @@
 package com.torodb.backend.driver.postgresql;
 
 import com.torodb.backend.BackendConfig;
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.core.exceptions.SystemException;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.postgresql.Driver;
 import org.postgresql.ds.PGSimpleDataSource;
@@ -43,9 +43,7 @@ import javax.sql.DataSource;
  */
 public class OfficialPostgreSqlDriver implements PostgreSqlDriverProvider {
 
-  private static final Logger JDBC_LOGGER = LogManager.getLogger(
-      PGSimpleDataSource.class
-  );
+  private static final Logger JDBC_LOGGER = BackendLoggerFactory.get(PGSimpleDataSource.class);
   private static final PrintWriter LOGGER_WRITER = new PrintWriter(new LoggerWriter());
 
   {

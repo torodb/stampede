@@ -34,7 +34,7 @@ import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.torod.TorodLoggerFactory;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -56,7 +56,7 @@ public class BatchMetaCollection implements MutableMetaCollection {
   private final ArrayList<BatchMetaDocPart> changesOnBatch = new ArrayList<>();
   private final HashSet<BatchMetaDocPart> modifiedDocParts = new HashSet<>();
 
-  private static final Logger LOGGER = LogManager.getLogger(BatchMetaCollection.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(BatchMetaCollection.class);
 
   public BatchMetaCollection(MutableMetaCollection delegate) {
     this.delegate = delegate;

@@ -37,6 +37,7 @@ import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.base.Preconditions;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
@@ -56,7 +57,6 @@ import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Closeable;
@@ -68,18 +68,18 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
+@ThreadSafe
 public class OplogManager extends IdleTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(OplogManager.class);
   private static final String KEY = "lastAppliedOplogEntry";
   private static final BsonDocument DOC_QUERY = EMPTY_DOC;
   private static final String OPLOG_DB = "torodb";
   private static final String OPLOG_COL = "oplog.replication";
 
+  private final Logger logger;
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
   private long lastAppliedHash;
   private OpTime lastAppliedOpTime;
@@ -88,9 +88,10 @@ public class OplogManager extends IdleTorodbService {
   private final ReplMetrics metrics;
 
   @Inject
-  public OplogManager(@TorodbIdleService ThreadFactory threadFactory,
+  public OplogManager(@TorodbIdleService ThreadFactory threadFactory, LoggerFactory lf,
       MongodServer mongodServer, Retrier retrier, ReplMetrics metrics) {
     super(threadFactory);
+    this.logger = lf.apply(this.getClass());
     this.connection = mongodServer.openConnection();
     this.retrier = retrier;
     this.metrics = metrics;
@@ -112,7 +113,7 @@ public class OplogManager extends IdleTorodbService {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.debug("Starting OplogManager");
+    logger.debug("Starting OplogManager");
     Lock mutex = lock.writeLock();
     mutex.lock();
     try {
@@ -120,12 +121,12 @@ public class OplogManager extends IdleTorodbService {
     } finally {
       mutex.unlock();
     }
-    LOGGER.debug("Started OplogManager");
+    logger.debug("Started OplogManager");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.debug("Stopping OplogManager");
+    logger.debug("Stopping OplogManager");
     connection.close();
   }
 

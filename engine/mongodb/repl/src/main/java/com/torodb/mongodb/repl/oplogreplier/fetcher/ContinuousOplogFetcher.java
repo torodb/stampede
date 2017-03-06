@@ -31,6 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
 import com.mongodb.MongoServerException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
@@ -46,7 +47,6 @@ import com.torodb.mongodb.repl.oplogreplier.NotReadyForMoreOplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.StopReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
@@ -59,7 +59,7 @@ import javax.inject.Inject;
 @NotThreadSafe
 public class ContinuousOplogFetcher implements OplogFetcher {
 
-  private static final Logger LOGGER = LogManager.getLogger(ContinuousOplogFetcher.class);
+  private final Logger logger;
 
   private final OplogReaderProvider readerProvider;
   private final SyncSourceProvider syncSourceProvider;
@@ -71,7 +71,8 @@ public class ContinuousOplogFetcher implements OplogFetcher {
   public ContinuousOplogFetcher(OplogReaderProvider readerProvider,
       SyncSourceProvider syncSourceProvider,
       Retrier retrier, @Assisted long lastFetchedHash, @Assisted OpTime lastFetchedOptime,
-      ReplMetrics metrics) {
+      ReplMetrics metrics, LoggerFactory lf) {
+    this.logger = lf.apply(this.getClass());
     this.readerProvider = readerProvider;
     this.syncSourceProvider = syncSourceProvider;
     this.retrier = retrier;
@@ -147,11 +148,11 @@ public class ContinuousOplogFetcher implements OplogFetcher {
         } catch (StopReplicationException | RollbackReplicationException ex) { //a business error
           throw new RetrierAbortException(ex); //do not try again
         } catch (MongoServerException ex) { //TODO: Fix this violation on the abstraction!
-          LOGGER.debug("Found an unwrapped MongodbServerException");
+          logger.debug("Found an unwrapped MongodbServerException");
           state.discardReader(); //lets choose a new reader
           throw new RollbackException(ex); //rollback and hopefully use another member
         } catch (MongoException | MongoRuntimeException ex) {
-          LOGGER.warn("Catched an error while reading the remote "
+          logger.warn("Catched an error while reading the remote "
               + "oplog: {}", ex.getLocalizedMessage());
           state.discardReader(); //lets choose a new reader
           throw new RollbackException(ex); //rollback and hopefully use another member
@@ -249,7 +250,7 @@ public class ContinuousOplogFetcher implements OplogFetcher {
       if (oplogReader == null) {
         calculateOplogReader();
       } else if (syncSourceProvider.shouldChangeSyncSource()) {
-        LOGGER.info("A better sync source has been detected");
+        logger.info("A better sync source has been detected");
         discardReader();
         calculateOplogReader();
       }
@@ -268,12 +269,12 @@ public class ContinuousOplogFetcher implements OplogFetcher {
     private OplogReader calculateOplogReader() throws StopReplicationException {
       if (oplogReader == null) {
         try {
-          LOGGER.debug("Looking for a sync source");
+          logger.debug("Looking for a sync source");
           oplogReader = retrier.retry(() -> {
             HostAndPort syncSource = syncSourceProvider.newSyncSource(lastFetchedOpTime);
             return readerProvider.newReader(syncSource);
           }, Hint.TIME_SENSIBLE, Hint.CRITICAL);
-          LOGGER.info("Reading from {}", state.oplogReader.getSyncSource());
+          logger.info("Reading from {}", state.oplogReader.getSyncSource());
         } catch (RetrierGiveUpException ex) {
           throw new StopReplicationException("It was impossible find a reachable sync source", ex);
         }

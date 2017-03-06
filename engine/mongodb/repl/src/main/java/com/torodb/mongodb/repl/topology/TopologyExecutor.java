@@ -24,8 +24,8 @@ import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
@@ -43,16 +43,16 @@ import java.util.function.Function;
 import java.util.function.IntSupplier;
 
 import javax.annotation.concurrent.GuardedBy;
-import javax.inject.Singleton;
+import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * This class wrappes the single thread {@link ListeningScheduledExecutorService} that controls the
  * access to {@link TopologyCoordinator} methods.
  */
-@Singleton
+@ThreadSafe
 public class TopologyExecutor {
 
-  private static final Logger LOGGER = LogManager.getLogger(TopologyExecutor.class);
+  private final Logger logger;
   private final TopologyCoordinator coord;
   private final ListeningScheduledExecutorService executor;
   private final OnAnyVersion onAnyVersion;
@@ -62,12 +62,13 @@ public class TopologyExecutor {
       new WeakHashMap<>());
   private volatile int version = -1;
 
-  public TopologyExecutor(ConcurrentToolsFactory concurrentToolsFactory,
+  public TopologyExecutor(ConcurrentToolsFactory concurrentToolsFactory, LoggerFactory lf,
       Duration maxSyncSourceLag, Duration slaveDelay) {
+    this.logger = lf.apply(this.getClass());
     this.executor = MoreExecutors.listeningDecorator(
         concurrentToolsFactory.createScheduledExecutorServiceWithMaxThreads("topology-executor", 1)
     );
-    this.coord = new TopologyCoordinator(maxSyncSourceLag, slaveDelay);
+    this.coord = new TopologyCoordinator(maxSyncSourceLag, slaveDelay, lf);
     this.versionChangeListener = this::onVersionChange;
     this.coord.addVersionChangeListener(versionChangeListener);
     this.onAnyVersion = new OnAnyVersion(executor, coord);
@@ -84,7 +85,7 @@ public class TopologyExecutor {
 
   @GuardedBy("executor")
   private void onVersionChange(TopologyCoordinator coord, ReplicaSetConfig oldConfig) {
-    LOGGER.debug("Changing version from {} to {}", version,
+    logger.debug("Changing version from {} to {}", version,
         coord.getRsConfig().getConfigVersion());
     version = coord.getRsConfig().getConfigVersion();
     versionListeners.forEach(listener -> listener.onVersionChange(coord, oldConfig));

@@ -21,6 +21,7 @@ package com.torodb.mongodb.repl;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.ServiceBundle;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
 import com.torodb.torod.MemoryTorodBundle;
@@ -29,6 +30,7 @@ import com.torodb.torod.TorodBundle;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 
 public class MongoDbCoreBundleServiceBundle extends ServiceBundle<MongoDbCoreBundle>{
@@ -47,6 +49,8 @@ public class MongoDbCoreBundleServiceBundle extends ServiceBundle<MongoDbCoreBun
     torodBundle = new MemoryTorodBundle(generalConfig);
 
     MongoDbCoreConfig mongoDbCoreConfig = MongoDbCoreConfig.simpleNonServerConfig(torodBundle,
+        DefaultLoggerFactory.getInstance(),
+        Optional.empty(),
         generalConfig);
 
     mongoDbCoreBundle = new MongoDbCoreBundle(mongoDbCoreConfig);

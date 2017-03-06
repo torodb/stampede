@@ -22,7 +22,6 @@ import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
@@ -30,7 +29,7 @@ import org.apache.logging.log4j.Logger;
 public abstract class AbstractTorodBundle extends AbstractBundle<TorodExtInt> 
     implements TorodBundle {
 
-  private static final Logger LOGGER = LogManager.getLogger(AbstractTorodBundle.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(AbstractTorodBundle.class);
   
   protected AbstractTorodBundle(BundleConfig config) {
     super(config);

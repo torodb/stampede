@@ -32,7 +32,6 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
@@ -56,8 +55,7 @@ import javax.inject.Singleton;
 @Singleton
 public abstract class AbstractStructureInterface implements StructureInterface {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(AbstractStructureInterface.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(AbstractStructureInterface.class);
 
   private final DbBackendService dbBackend;
   private final MetaDataReadInterface metaDataReadInterface;

@@ -42,7 +42,6 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaSnapshot;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple2;
@@ -61,7 +60,7 @@ import javax.inject.Inject;
 
 public class BackendServiceImpl extends IdleTorodbService implements BackendService {
 
-  private static final Logger LOGGER = LogManager.getLogger(BackendServiceImpl.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(BackendServiceImpl.class);
 
   private final DbBackendService dbBackendService;
   private final SqlInterface sqlInterface;
@@ -90,7 +89,8 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
     this.sqlInterface = sqlInterface;
     this.ridGenerator = ridGenerator;
     this.retrier = retrier;
-    this.streamExecutor = concurrentToolsFactory.createStreamExecutor("backend-inner-jobs", true);
+    this.streamExecutor = concurrentToolsFactory.createStreamExecutor(
+        LOGGER, "backend-inner-jobs", true);
     this.metainfoHandler = metainfoHandler;
     this.tableRefFactory = tableRefFactory;
     this.identifierFactory = identifierFactory;

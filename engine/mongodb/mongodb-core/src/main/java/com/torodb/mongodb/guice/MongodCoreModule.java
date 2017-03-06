@@ -21,7 +21,6 @@ package com.torodb.mongodb.guice;
 import com.eightkdata.mongowp.server.api.CommandLibrary;
 import com.google.inject.PrivateModule;
 import com.google.inject.Singleton;
-import com.torodb.core.guice.EssentialToDefaultModule;
 import com.torodb.mongodb.commands.CommandClassifier;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
 import com.torodb.mongodb.core.MongodMetrics;
@@ -40,8 +39,6 @@ public class MongodCoreModule extends PrivateModule {
   @Override
   protected void configure() {
     expose(MongodServer.class);
-
-    install(new EssentialToDefaultModule());
     
     bind(MongodServer.class)
         .in(Singleton.class);

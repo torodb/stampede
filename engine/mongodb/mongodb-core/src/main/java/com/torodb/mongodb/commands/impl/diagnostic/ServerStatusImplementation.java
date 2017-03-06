@@ -23,6 +23,7 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
 import com.torodb.mongodb.commands.signatures.diagnostic.ServerStatusCommand.Asserts;
 import com.torodb.mongodb.commands.signatures.diagnostic.ServerStatusCommand.BackgroundFlushing;
@@ -44,7 +45,6 @@ import com.torodb.mongodb.commands.signatures.diagnostic.ServerStatusCommand.Sto
 import com.torodb.mongodb.core.MongoLayerConstants;
 import com.torodb.mongodb.core.MongodConnection;
 import com.torodb.mongodb.core.MongodServerConfig;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.management.ManagementFactory;
@@ -59,13 +59,14 @@ import javax.inject.Inject;
 public class ServerStatusImplementation
     extends ConnectionTorodbCommandImpl<ServerStatusArgument, ServerStatusReply> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(ServerStatusImplementation.class);
+  private final Logger logger;
 
   private final HostAndPort selfHostAndPort;
 
   @Inject
-  public ServerStatusImplementation(MongodServerConfig mongoServerConfig) {
+  public ServerStatusImplementation(MongodServerConfig mongoServerConfig,
+      LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
     selfHostAndPort = mongoServerConfig.getHostAndPort();
   }
 
@@ -96,7 +97,7 @@ public class ServerStatusImplementation
         replyBuilder.setPid(Integer.valueOf(ManagementFactory.getRuntimeMXBean().getName()
             .split("@")[0]));
       } catch (Throwable throwable) {
-        LOGGER.warn("Cannot get PID: " + throwable.getMessage());
+        logger.warn("Cannot get PID: " + throwable.getMessage());
       }
     }
     if (arg.isUptime()) {

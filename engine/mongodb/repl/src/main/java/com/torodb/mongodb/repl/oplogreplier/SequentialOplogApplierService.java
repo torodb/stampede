@@ -25,6 +25,7 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.assistedinject.Assisted;
 import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongodServer;
@@ -33,7 +34,6 @@ import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
@@ -59,7 +59,8 @@ public class SequentialOplogApplierService extends IdleTorodbService
    * The maximum capacity of the {@linkplain #fetchQueue}.
    */
   private static final int BUFFER_CAPACITY = 1024;
-  private static final Logger LOGGER = LogManager.getLogger(SequentialOplogApplierService.class);
+  private final Logger logger;
+  private final LoggerFactory loggerFactory;
 
   private final ReentrantLock mutex = new ReentrantLock();
   /**
@@ -78,7 +79,6 @@ public class SequentialOplogApplierService extends IdleTorodbService
 
   private boolean paused;
   private boolean pauseRequested;
-  private boolean fetcherIsPaused;
   private final Condition fetcherPausedCond;
   private final Condition fetcherCanContinueCond;
 
@@ -89,11 +89,14 @@ public class SequentialOplogApplierService extends IdleTorodbService
   SequentialOplogApplierService(
       @TorodbIdleService ThreadFactory threadFactory,
       @Assisted Callback callback,
+      LoggerFactory loggerFactory,
       OplogManager oplogManager,
       OplogOperationApplier oplogOpApplier,
       MongodServer server,
       ContinuousOplogFetcherFactory oplogFetcherFactory) {
     super(threadFactory);
+    this.loggerFactory = loggerFactory;
+    this.logger = loggerFactory.apply(this.getClass());
     this.callback = callback;
     this.fetchQueue = new MyQueue();
     this.oplogManager = oplogManager;
@@ -116,9 +119,8 @@ public class SequentialOplogApplierService extends IdleTorodbService
   @Override
   protected void startUp() {
     callback.waitUntilStartPermision();
-    LOGGER.info("Starting SECONDARY service");
+    logger.info("Starting SECONDARY service");
     paused = false;
-    fetcherIsPaused = false;
     pauseRequested = false;
 
     long lastAppliedHash;
@@ -131,7 +133,8 @@ public class SequentialOplogApplierService extends IdleTorodbService
     fetcherService = new ReplSyncFetcher(
         threadFactory,
         new FetcherView(),
-        oplogFetcherFactory.createFetcher(lastAppliedHash, lastAppliedOptime)
+        oplogFetcherFactory.createFetcher(lastAppliedHash, lastAppliedOptime),
+        loggerFactory
     );
     fetcherService.startAsync();
     applierService = new ReplSyncApplier(
@@ -139,14 +142,15 @@ public class SequentialOplogApplierService extends IdleTorodbService
         oplogOpApplier,
         server,
         oplogManager,
-        new ApplierView()
+        new ApplierView(),
+        loggerFactory
     );
     applierService.startAsync();
 
     fetcherService.awaitRunning();
     applierService.awaitRunning();
 
-    LOGGER.info("Started SECONDARY service");
+    logger.info("Started SECONDARY service");
   }
 
   @Override
@@ -183,7 +187,6 @@ public class SequentialOplogApplierService extends IdleTorodbService
     public void awaitUntilUnpaused() throws InterruptedException {
       mutex.lock();
       try {
-        fetcherIsPaused = true;
         fetcherPausedCond.signalAll();
         fetcherCanContinueCond.await();
       } finally {
@@ -241,7 +244,7 @@ public class SequentialOplogApplierService extends IdleTorodbService
     @Override
     public boolean failedToApply(OplogOperation oplogOperation, Status<?> status) {
       executor.execute(() -> {
-        LOGGER.error("Secondary state failed to apply an operation: {}", status);
+        logger.error("Secondary state failed to apply an operation: {}", status);
         callback.onError(SequentialOplogApplierService.this, new MongoException(status));
       });
       return false;
@@ -250,7 +253,7 @@ public class SequentialOplogApplierService extends IdleTorodbService
     @Override
     public boolean failedToApply(OplogOperation oplogOperation, final Throwable t) {
       executor.execute(() -> {
-        LOGGER.error("Secondary state failed to apply an operation", t);
+        logger.error("Secondary state failed to apply an operation", t);
         callback.onError(SequentialOplogApplierService.this, t);
       });
       return false;
@@ -260,7 +263,7 @@ public class SequentialOplogApplierService extends IdleTorodbService
     public boolean failedToApply(OplogOperation oplogOperation,
         final OplogManagerPersistException t) {
       executor.execute(() -> {
-        LOGGER.error("Secondary state failed to apply an operation", t);
+        logger.error("Secondary state failed to apply an operation", t);
         callback.onError(SequentialOplogApplierService.this, t);
       });
       return false;
@@ -269,7 +272,7 @@ public class SequentialOplogApplierService extends IdleTorodbService
     @Override
     public SupervisorDecision onError(Object supervised, Throwable t) {
       executor.execute(() -> {
-        LOGGER.error("Secondary state failed", t);
+        logger.error("Secondary state failed", t);
         callback.onError(SequentialOplogApplierService.this, t);
       });
       return SupervisorDecision.STOP;

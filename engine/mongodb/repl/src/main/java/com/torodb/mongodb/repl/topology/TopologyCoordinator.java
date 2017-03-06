@@ -30,6 +30,7 @@ import com.eightkdata.mongowp.exceptions.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.net.HostAndPort;
 import com.google.common.primitives.UnsignedInteger;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.pojos.MemberConfig;
 import com.torodb.mongodb.commands.pojos.MemberHeartbeatData;
 import com.torodb.mongodb.commands.pojos.MemberHeartbeatData.Health;
@@ -39,7 +40,6 @@ import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatReply;
 import com.torodb.mongodb.commands.signatures.repl.ReplSetSyncFromCommand.ReplSetSyncFromReply;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Duration;
@@ -65,13 +65,13 @@ import javax.annotation.concurrent.NotThreadSafe;
  * Objects of this class are responsible for managing the topology of the cluster when the node is
  * not member of the replica set.
  *
- * Methods of this class should be non-blocking.
+ * <p>Methods of this class should be non-blocking.
  */
 @NotThreadSafe
 @SuppressWarnings("checkstyle:MemberName")
 class TopologyCoordinator {
 
-  private static final Logger LOGGER = LogManager.getLogger(TopologyCoordinator.class);
+  private final Logger logger;
 
   /**
    * Maximum number of retries for a failed heartbeat.
@@ -85,27 +85,27 @@ class TopologyCoordinator {
   private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(2);
 
   /**
-   * the index of the member we currently believe is primary, if one exists, otherwise -1
+   * the index of the member we currently believe is primary, if one exists, otherwise -1.
    */
   private int _currentPrimaryIndex;
 
   /**
    * the hostandport we are currently syncing from or {@link Optional#empty()} if no sync source (we
-   * are cannot connect to anyone yet)
+   * are cannot connect to anyone yet).
    */
   @Nonnull
   private Optional<HostAndPort> _syncSource;
   /**
    * These members are not chosen as sync sources for a period of time, due to connection issues
-   * with them
+   * with them.
    */
   private final Map<HostAndPort, Instant> _syncSourceBlacklist;
   /**
-   * The next sync source to be chosen, requested via a replSetSyncFrom command
+   * The next sync source to be chosen, requested via a replSetSyncFrom command.
    */
   private int _forceSyncSourceIndex;
   /**
-   * How far this node must fall behind before considering switching sync sources
+   * How far this node must fall behind before considering switching sync sources.
    */
   private final int _maxSyncSourceLagSecs;
 
@@ -122,7 +122,7 @@ class TopologyCoordinator {
   private List<MemberHeartbeatData> _hbdata;
 
   /**
-   * Ping stats for each member by HostAndPort;
+   * Ping stats for each member by HostAndPort.
    */
   private final Map<HostAndPort, PingStats> _pings;
   private final long slaveDelaySecs;
@@ -131,10 +131,10 @@ class TopologyCoordinator {
 
   /**
    *
-   * @param maxSyncSourceLagSecs
    * @param slaveDelay           our delay. It is rounded to seconds and must be non negative.
    */
-  public TopologyCoordinator(Duration maxSyncSourceLag, Duration slaveDelay) {
+  public TopologyCoordinator(Duration maxSyncSourceLag, Duration slaveDelay, LoggerFactory lf) {
+    this.logger = lf.apply(this.getClass());
     this._currentPrimaryIndex = -1;
     this._syncSource = Optional.empty();
     this._syncSourceBlacklist = new HashMap<>();
@@ -217,7 +217,7 @@ class TopologyCoordinator {
       _syncSource = Optional.of(syncSource);
       _forceSyncSourceIndex = -1;
       String msg = "syncing from: " + syncSource + " by request";
-      LOGGER.info(msg);
+      logger.info(msg);
       return _syncSource;
     }
 
@@ -229,7 +229,7 @@ class TopologyCoordinator {
     int needMorePings = _hbdata.size() * 2 - getTotalPings();
 
     if (needMorePings > 0) {
-      LOGGER.info("Waiting for {}  pings from other members before syncing", needMorePings);
+      logger.info("Waiting for {}  pings from other members before syncing", needMorePings);
       _syncSource = Optional.empty();
       return _syncSource;
     }
@@ -237,12 +237,12 @@ class TopologyCoordinator {
     // If we are only allowed to sync from the primary, set that
     if (!_rsConfig.isChainingAllowed()) {
       if (_currentPrimaryIndex == -1) {
-        LOGGER.warn("Cannot select sync source because chaining is not allowed and primary "
+        logger.warn("Cannot select sync source because chaining is not allowed and primary "
             + "is unknown/down");
         _syncSource = Optional.empty();
         return _syncSource;
       } else if (isBlacklistedMember(getCurrentPrimaryMember(), now)) {
-        LOGGER.warn("Cannot select sync source because chaining is not allowed and "
+        logger.warn("Cannot select sync source because chaining is not allowed and "
             + "primary is not currently accepting our updates");
         _syncSource = Optional.empty();
         return _syncSource;
@@ -250,7 +250,7 @@ class TopologyCoordinator {
         HostAndPort syncSource = _rsConfig.getMembers().get(_currentPrimaryIndex).getHostAndPort();
         _syncSource = Optional.of(syncSource);
         String msg = "syncing from primary: " + syncSource;
-        LOGGER.info(msg);
+        logger.info(msg);
         return _syncSource;
       }
     }
@@ -286,14 +286,14 @@ class TopologyCoordinator {
       String msg = "could not find member to sync from";
       // Only log when we had a valid sync source before
       if (_syncSource.isPresent()) {
-        LOGGER.info(msg);
+        logger.info(msg);
       }
 
       _syncSource = Optional.empty();
       return _syncSource;
     } else {
       _syncSource = Optional.of(newSyncSourceMember.get().getHostAndPort());
-      LOGGER.info("syncing from: {}", _syncSource.get());
+      logger.info("syncing from: {}", _syncSource.get());
       return _syncSource;
     }
   }
@@ -363,7 +363,7 @@ class TopologyCoordinator {
    * Suppresses selecting "host" as sync source until "until".
    */
   void blacklistSyncSource(HostAndPort host, Instant until) {
-    LOGGER.debug("blacklisting {} until {}", host, until);
+    logger.debug("blacklisting {} until {}", host, until);
     _syncSourceBlacklist.put(host, until);
   }
 
@@ -378,7 +378,7 @@ class TopologyCoordinator {
   void unblacklistSyncSource(HostAndPort host, Instant now) {
     Instant oldInstant = _syncSourceBlacklist.get(host);
     if (oldInstant != null && !now.isBefore(oldInstant)) {
-      LOGGER.debug("unblacklisting {}", host);
+      logger.debug("unblacklisting {}", host);
       _syncSourceBlacklist.remove(host);
     }
   }
@@ -437,7 +437,7 @@ class TopologyCoordinator {
       if (itOpTime != null && it.isUp()
           && it.getState().isReadable() && !isBlacklistedMember(candidateConfig, now)
           && goalSecs < itOpTime.getSecs()) {
-        LOGGER.info("changing sync target because current sync target's most recent OpTime "
+        logger.info("changing sync target because current sync target's most recent OpTime "
             + "is {}  which is more than {} seconds behind member {} whose most recent "
             + "OpTime is {} ", currentOpTime, _maxSyncSourceLagSecs,
             candidateConfig.getHostAndPort(), itOpTime);
@@ -485,7 +485,7 @@ class TopologyCoordinator {
     }
     assert hbdata.getOpTime() != null;
     if (hbdata.getOpTime().getSecs() + 10 < lastOpApplied.getSecs()) {
-      LOGGER.warn("attempting to sync from {}, but its latest opTime is {} and ours is {} "
+      logger.warn("attempting to sync from {}, but its latest opTime is {} and ours is {} "
           + "so this may not work", target, hbdata.getOpTime().getSecs(), lastOpApplied.getSecs());
 
       warning = "requested member \"" + target + "\" is more than 10 seconds behind us";
@@ -673,10 +673,10 @@ class TopologyCoordinator {
         // Could be we got the newer version before we got the response, or the
         // target erroneously sent us one, even through it isn't newer.
         if (newConfig.getConfigVersion() < currentConfigVersion) {
-          LOGGER.debug("Config version from heartbeat was older than ours.");
-          LOGGER.trace("Current config: {}. Config from heartbeat: {}", _rsConfig, newConfig);
+          logger.debug("Config version from heartbeat was older than ours.");
+          logger.trace("Current config: {}. Config from heartbeat: {}", _rsConfig, newConfig);
         } else {
-          LOGGER.trace("Config from heartbeat response was same as ours.");
+          logger.trace("Config from heartbeat response was same as ours.");
         }
       }
     }
@@ -690,7 +690,7 @@ class TopologyCoordinator {
     }
     OptionalInt memberIndexOpt = _rsConfig.findMemberIndexByHostAndPort(target);
     if (!memberIndexOpt.isPresent()) {
-      LOGGER.debug("replset: Could not find {} in current config so ignoring --"
+      logger.debug("replset: Could not find {} in current config so ignoring --"
           + " current config: {}", target, _rsConfig);
       HeartbeatResponseAction nextAction = HeartbeatResponseAction.makeNoAction();
       nextAction.setNextHeartbeatDelay(nextHeartbeatDelay);
@@ -704,17 +704,17 @@ class TopologyCoordinator {
     MemberConfig member = _rsConfig.getMembers().get(memberIndex);
     if (!hbResponse.isOk()) {
       if (isUnauthorized) {
-        LOGGER.debug("setAuthIssue: heartbeat response failed due to authentication"
+        logger.debug("setAuthIssue: heartbeat response failed due to authentication"
             + " issue for member _id: {}", member.getId());
         hbData.setAuthIssue(now);
       } else if (hbStats.getNumFailuresSinceLastStart() > MAX_HEARTBEAT_RETRIES || alreadyElapsed
           .toMillis() >= _rsConfig.getHeartbeatTimeoutPeriod()) {
-        LOGGER.debug("setDownValues: heartbeat response failed for member _id:{}"
+        logger.debug("setDownValues: heartbeat response failed for member _id:{}"
             + ", msg: {}", member.getId(), hbResponse.getErrorDesc());
 
         hbData.setDownValues(now, hbResponse.getErrorDesc());
       } else {
-        LOGGER.trace("Bad heartbeat response from {}; trying again; Retries left: {}; "
+        logger.trace("Bad heartbeat response from {}; trying again; Retries left: {}; "
             + "{} ms have already elapsed",
             target,
             MAX_HEARTBEAT_RETRIES - hbStats.getNumFailuresSinceLastStart(),
@@ -723,9 +723,9 @@ class TopologyCoordinator {
       }
     } else {
       ReplSetHeartbeatReply nonNullReply = commandReply.get();
-      LOGGER.trace("setUpValues: heartbeat response good for member _id:{}, msg:  {}",
+      logger.trace("setUpValues: heartbeat response good for member _id:{}, msg:  {}",
           member.getId(), nonNullReply.getHbmsg());
-      hbData.setUpValues(now, member.getHostAndPort(), nonNullReply);
+      hbData.setUpValues(now, member.getHostAndPort(), nonNullReply, logger);
     }
     HeartbeatResponseAction nextAction = updateHeartbeatDataImpl(memberIndex, now);
 
@@ -789,7 +789,7 @@ class TopologyCoordinator {
         if (remotePrimaryIndex != -1) {
           // two other nodes think they are primary (asynchronously polled)
           // -- wait for things to settle down.
-          LOGGER.info("replSet info two remote primaries (transiently)");
+          logger.info("replSet info two remote primaries (transiently)");
           return HeartbeatResponseAction.makeNoAction();
         }
         remotePrimaryIndex = itIndex;

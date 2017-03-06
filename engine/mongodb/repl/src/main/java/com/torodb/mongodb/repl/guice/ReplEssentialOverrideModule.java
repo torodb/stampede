@@ -19,20 +19,36 @@
 package com.torodb.mongodb.repl.guice;
 
 import com.torodb.core.guice.EssentialToDefaultModule;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
+
+import java.util.Optional;
 
 public class ReplEssentialOverrideModule extends EssentialToDefaultModule {
 
-  private final ToroMetricRegistry toroMetricRegistry;
+  private final Optional<ToroMetricRegistry> toroMetricRegistry;
+  private final LoggerFactory loggerFactory;
 
-  public ReplEssentialOverrideModule(ToroMetricRegistry toroMetricRegistry) {
+  public ReplEssentialOverrideModule(Optional<ToroMetricRegistry> toroMetricRegistry,
+      LoggerFactory loggerFactory) {
     this.toroMetricRegistry = toroMetricRegistry;
+    this.loggerFactory = loggerFactory;
   }
 
   @Override
   protected void bindToroMetricRegistry() {
-    bind(ToroMetricRegistry.class)
-        .toInstance(toroMetricRegistry);
+    if (toroMetricRegistry.isPresent()) {
+      bind(ToroMetricRegistry.class)
+          .toInstance(toroMetricRegistry.get());
+    } else {
+      super.bindToroMetricRegistry();
+    }
+  }
+
+  @Override
+  protected void bindLoggerFactory() {
+    bind(LoggerFactory.class)
+        .toInstance(loggerFactory);
   }
 
 }

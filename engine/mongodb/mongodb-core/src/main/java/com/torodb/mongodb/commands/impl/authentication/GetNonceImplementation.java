@@ -22,16 +22,26 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.impl.ConnectionTorodbCommandImpl;
 import com.torodb.mongodb.core.MongodConnection;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Random;
 
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
+
+@ThreadSafe
 public class GetNonceImplementation extends ConnectionTorodbCommandImpl<Empty, String> {
 
-  private static final Logger LOGGER = LogManager.getLogger(GetNonceImplementation.class);
+  private final Logger logger;
+  private final Random random = new Random();
+
+  @Inject
+  public GetNonceImplementation(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   public Status<String> apply(
@@ -39,11 +49,10 @@ public class GetNonceImplementation extends ConnectionTorodbCommandImpl<Empty, S
       Command<? super Empty, ? super String> command,
       Empty arg,
       MongodConnection context) {
-    LOGGER.warn(
-        "Authentication not supported. Operation 'getnonce' called. A fake value is returned");
+    logger.warn("Authentication not supported. Operation 'getnonce' called. A fake value is "
+        + "returned");
 
-    Random r = new Random();
-    String nonce = Long.toHexString(r.nextLong());
+    String nonce = Long.toHexString(random.nextLong());
 
     return Status.ok(nonce);
   }

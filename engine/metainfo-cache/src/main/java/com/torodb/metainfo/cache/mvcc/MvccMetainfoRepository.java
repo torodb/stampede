@@ -19,6 +19,7 @@
 package com.torodb.metainfo.cache.mvcc;
 
 import com.google.common.base.Preconditions;
+import com.torodb.core.d2r.D2RLoggerFactory;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.core.transaction.metainf.MetainfoRepository.MergerStage;
@@ -27,7 +28,6 @@ import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
 import com.torodb.core.transaction.metainf.WrapperMutableMetaSnapshot;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -39,7 +39,7 @@ import javax.inject.Inject;
 
 public class MvccMetainfoRepository implements MetainfoRepository {
 
-  private static final Logger LOGGER = LogManager.getLogger(MvccMetainfoRepository.class);
+  private static final Logger LOGGER = D2RLoggerFactory.get(MvccMetainfoRepository.class);
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
   private ImmutableMetaSnapshot currentSnapshot;
   private NoChangeMergeStage noChangeMergeStage = new NoChangeMergeStage();

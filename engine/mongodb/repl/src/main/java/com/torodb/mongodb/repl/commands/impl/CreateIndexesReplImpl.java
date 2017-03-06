@@ -29,6 +29,7 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
@@ -42,7 +43,6 @@ import com.torodb.mongodb.filters.IndexFilter;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
@@ -55,16 +55,17 @@ import javax.inject.Inject;
 public class CreateIndexesReplImpl
     extends ReplCommandImpl<CreateIndexesArgument, CreateIndexesResult> {
 
-  private static final Logger LOGGER = LogManager.getLogger(CreateIndexesReplImpl.class);
-
   @SuppressWarnings("checkstyle:LineLength")
   private static final FieldIndexOrderingConverterIndexTypeVisitor fieldIndexOrderingConverterVisitor =
       new FieldIndexOrderingConverterIndexTypeVisitor();
+  private final Logger logger;
   private final CommandFilterUtil filterUtil;
   private final IndexFilter indexFilter;
 
   @Inject
-  public CreateIndexesReplImpl(CommandFilterUtil filterUtil, IndexFilter indexFilter) {
+  public CreateIndexesReplImpl(CommandFilterUtil filterUtil, IndexFilter indexFilter,
+      LoggerFactory lf) {
+    this.logger = lf.apply(this.getClass());
     this.filterUtil = filterUtil;
     this.indexFilter = indexFilter;
   }
@@ -86,7 +87,7 @@ public class CreateIndexesReplImpl
       final boolean createdCollectionAutomatically = !existsCollection;
 
       if (!existsCollection) {
-        LOGGER.info("Creating collection {} on {}.{}", req.getDatabase(), arg.getCollection());
+        logger.info("Creating collection {} on {}.{}", req.getDatabase(), arg.getCollection());
 
         trans.createIndex(req.getDatabase(), arg.getCollection(), DefaultIdUtils.ID_INDEX,
             ImmutableList.<IndexFieldInfo>of(new IndexFieldInfo(new AttributeReference(Arrays
@@ -102,7 +103,7 @@ public class CreateIndexesReplImpl
             + "the request (" + arg.getCollection() + ") is different than the one specified on "
             + "index " + indexOptions.getName();
         if (!indexFilter.filter(indexOptions)) {
-          LOGGER.info("Skipping filtered index {}.{}.{}.",
+          logger.info("Skipping filtered index {}.{}.{}.",
               indexOptions.getDatabase(), indexOptions.getCollection(), indexOptions.getName());
           continue;
         }
@@ -112,11 +113,11 @@ public class CreateIndexesReplImpl
         }
 
         if (indexOptions.isBackground()) {
-          LOGGER.info("Building index in background is not supported. Ignoring option");
+          logger.info("Building index in background is not supported. Ignoring option");
         }
 
         if (indexOptions.isSparse()) {
-          LOGGER.info("Sparse index are not supported. Ignoring option");
+          logger.info("Sparse index are not supported. Ignoring option");
         }
 
         boolean skipIndex = false;
@@ -132,7 +133,7 @@ public class CreateIndexesReplImpl
           if (!KnownType.contains(indexType)) {
             String note = "Bad index key pattern: Unknown index type '"
                 + indexKey.getType().getName() + "'. Skipping index.";
-            LOGGER.info(note);
+            logger.info(note);
             skipIndex = true;
             break;
           }
@@ -142,7 +143,7 @@ public class CreateIndexesReplImpl
           if (!ordering.isPresent()) {
             String note = "Index of type " + indexType.getName()
                 + " is not supported. Skipping index.";
-            LOGGER.info(note);
+            logger.info(note);
             skipIndex = true;
             break;
           }
@@ -155,7 +156,7 @@ public class CreateIndexesReplImpl
         }
 
         try {
-          LOGGER.info("Creating index {} on collection {}.{}", 
+          logger.info("Creating index {} on collection {}.{}",
               indexOptions.getName(), req.getDatabase(), arg.getCollection());
 
           if (trans.createIndex(req.getDatabase(), arg.getCollection(), indexOptions.getName(),
@@ -165,12 +166,12 @@ public class CreateIndexesReplImpl
         } catch (UnsupportedCompoundIndexException ex) {
           String note =
               "Compound indexes are not supported. Skipping index.";
-          LOGGER.info(note);
+          logger.info(note);
           continue;
         } catch (UnsupportedUniqueIndexException ex) {
           String note =
               "Unique index with keys on distinct subdocuments is not supported. Skipping index.";
-          LOGGER.info(note);
+          logger.info(note);
           continue;
         }
       }

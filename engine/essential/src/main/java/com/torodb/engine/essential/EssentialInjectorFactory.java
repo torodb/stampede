@@ -21,6 +21,7 @@ package com.torodb.engine.essential;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Stage;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
 
 import java.time.Clock;
@@ -29,19 +30,28 @@ public class EssentialInjectorFactory {
 
   private EssentialInjectorFactory() {}
 
-  public static Injector createEssentialInjector() {
-    return createEssentialInjector(() -> true, Clock.systemUTC());
+  public static Injector createEssentialInjector(LoggerFactory lifecycleLoggerFactory) {
+    return createEssentialInjector(lifecycleLoggerFactory, () -> true, Clock.systemUTC());
   }
 
-  public static Injector createEssentialInjector(MetricsConfig metricsConfig, Clock clock) {
-    return createEssentialInjector(metricsConfig, clock, Stage.PRODUCTION);
+  public static Injector createEssentialInjector(LoggerFactory lifecycleLoggerFactory,
+      MetricsConfig metricsConfig, Clock clock) {
+    return createEssentialInjector(lifecycleLoggerFactory, metricsConfig, clock, Stage.PRODUCTION);
   }
 
   public static Injector createEssentialInjector(
+      LoggerFactory lifecycleLoggerFactory,
       MetricsConfig metricsConfig,
       Clock clock,
       Stage stage) {
-    return Guice.createInjector(stage, new EssentialModule(metricsConfig, clock));
+    return Guice.createInjector(
+        stage,
+        new EssentialModule(
+            lifecycleLoggerFactory,
+            metricsConfig,
+            clock
+        )
+    );
   }
 
 }

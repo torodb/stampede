@@ -23,7 +23,7 @@ import com.eightkdata.mongowp.bson.impl.IntBasedBsonObjectId;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.UnsignedInteger;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.management.ManagementFactory;
@@ -35,14 +35,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.concurrent.ThreadSafe;
 
-/**
- *
- */
 @ThreadSafe
 public class ObjectIdFactory {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(ObjectIdFactory.class);
+  /*
+   * TODO: The static part of this class should be changed to fit with Guice.
+   */
+  private static final Logger LOGGER = DefaultLoggerFactory.get(ObjectIdFactory.class);
 
   private static final int MACHINE_ID = createMachineId();
   private static final int PROCESS_ID = createProcessId();

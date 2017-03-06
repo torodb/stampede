@@ -22,6 +22,7 @@ import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.inject.Injector;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
@@ -36,12 +37,15 @@ public class MongoDbShardingConfig implements BundleConfig  {
   private final List<ShardConfig> shardConfigs;
   private final ReplicationFilters userReplFilter;
   private final BundleConfig generalConfig;
+  private final LoggerFactory lifecycleLoggingFactory;
 
   MongoDbShardingConfig(TorodBundle torodBundle, List<ShardConfig> shardConfigs,
-      ReplicationFilters userReplFilter, BundleConfig generalConfig) {
+      ReplicationFilters userReplFilter, LoggerFactory lifecycleLoggingFactory,
+      BundleConfig generalConfig) {
     this.torodBundle = torodBundle;
     this.shardConfigs = shardConfigs;
     this.userReplFilter = userReplFilter;
+    this.lifecycleLoggingFactory = lifecycleLoggingFactory;
     this.generalConfig = generalConfig;
   }
 
@@ -56,6 +60,10 @@ public class MongoDbShardingConfig implements BundleConfig  {
 
   public ReplicationFilters getUserReplFilter() {
     return userReplFilter;
+  }
+
+  public LoggerFactory getLifecycleLoggingFactory() {
+    return lifecycleLoggingFactory;
   }
 
   @Override

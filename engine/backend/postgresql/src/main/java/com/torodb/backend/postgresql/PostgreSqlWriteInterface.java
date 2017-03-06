@@ -20,6 +20,7 @@ package com.torodb.backend.postgresql;
 
 import com.codahale.metrics.Timer;
 import com.torodb.backend.AbstractWriteInterface;
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.ErrorHandler;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.InternalField;
@@ -35,7 +36,6 @@ import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.kvdocument.values.KvValue;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
@@ -57,7 +57,7 @@ import javax.inject.Singleton;
 @Singleton
 public class PostgreSqlWriteInterface extends AbstractWriteInterface {
 
-  private static final Logger LOGGER = LogManager.getLogger(PostgreSqlWriteInterface.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(PostgreSqlWriteInterface.class);
 
   private final PostgreSqlMetaDataReadInterface postgreSqlMetaDataReadInterface;
   private final ErrorHandler errorHandler;

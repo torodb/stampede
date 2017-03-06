@@ -51,7 +51,6 @@ import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import io.netty.util.AttributeKey;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.Callable;
@@ -62,7 +61,7 @@ import javax.inject.Inject;
 @ThreadSafe
 public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodConnection> {
 
-  private static final Logger LOGGER = LogManager.getLogger(TorodbSafeRequestProcessor.class);
+  private final Logger logger;
   private final MongodServer server;
   public static final AttributeKey<MongodConnection> MONGOD_CONNECTION_KEY = AttributeKey
       .newInstance("mongod.connection");
@@ -80,13 +79,14 @@ public class TorodbSafeRequestProcessor implements SafeRequestProcessor<MongodCo
     this.commandLibrary = commandLibrary;
     this.commandClassifier = commandClassifier;
     this.mongodMetrics = mongodMetrics;
+    this.logger = server.getLoggerFactory().apply(this.getClass());
   }
 
   @Override
   public MongodConnection openConnection() {
     MongodConnection connection = server.openConnection();
 
-    LOGGER.info("Accepted connection {}", connection.getConnectionId());
+    logger.info("Accepted connection {}", connection.getConnectionId());
 
     return connection;
   }

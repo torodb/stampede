@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+    <Properties>
+        <Property name="component">default</Property>
+    </Properties>
     <Appenders>
-        <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %-5level '%t' %logger{1.} - %msg%n"/>
+        <Console name="3RDPARTY" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{hh:mm:ss.SSS} 3RDPARTY   %-5level %-30.-30replace{'%t'}{\s}{-} %-30.30logger{1.} - %msg%n"/>
         </Console>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{hh:mm:ss.SSS} %-10.-10map{component} %-5level %-30.-30replace{'%t'}{\s}{-} %-30.30logger{1.} - %msg%n"/>
+        </Console>
+<!--        <Console name="3RDPARTY" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} 3RDPARTY   %-5level %-30.-30replace{'%t'}{\s}{-} - %msg%n%throwable{none}"/>
+        </Console>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %-10.-10map{component} %-5level %-30.-30replace{'%t'}{\s}{-} - %msg%n%throwable{none}"/>
+        </Console>-->
         <Async name="ASYNC">
-            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="router"/>
         </Async>
+        <Routing name="router">
+            <Routes pattern="$${map:component}">
+                <Route key="default" ref="3RDPARTY"/>
+                <Route ref="CONSOLE"/>
+            </Routes>
+        </Routing>
     </Appenders>
     <Loggers>
         <!-- 8kData & ToroDB code -->
@@ -39,7 +57,7 @@
 
         <!-- Root -->
 
-        <Root level="INFO">
+        <Root level="WARN">
             <AppenderRef ref="ASYNC"/>
         </Root>
     </Loggers>

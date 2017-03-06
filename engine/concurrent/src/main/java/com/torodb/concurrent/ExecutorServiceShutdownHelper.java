@@ -20,7 +20,7 @@ package com.torodb.concurrent;
 
 import com.torodb.core.Shutdowner;
 import com.torodb.core.Shutdowner.ShutdownListener;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.logging.LoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Clock;
@@ -29,19 +29,15 @@ import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
 
-/**
- *
- */
 public class ExecutorServiceShutdownHelper {
 
-  private static final Logger LOGGER = LogManager.getLogger(ExecutorServiceShutdownHelper.class);
+  private final Logger logger;
   private final Shutdowner shutdowner;
   private final Clock clock;
 
-  @Inject
-  public ExecutorServiceShutdownHelper(Shutdowner shutdowner, Clock clock) {
+  public ExecutorServiceShutdownHelper(Shutdowner shutdowner, Clock clock, LoggerFactory lf) {
+    this.logger = lf.apply(this.getClass());
     this.shutdowner = shutdowner;
     this.clock = clock;
   }
@@ -60,7 +56,7 @@ public class ExecutorServiceShutdownHelper {
     while (!terminated) {
       terminated = executorService.awaitTermination(waitTime, TimeUnit.SECONDS);
       if (!terminated) {
-        LOGGER.info("ExecutorService {} did not finished in {}",
+        logger.info("ExecutorService {} did not finished in {}",
             executorService,
             Duration.between(start, clock.instant()));
       }

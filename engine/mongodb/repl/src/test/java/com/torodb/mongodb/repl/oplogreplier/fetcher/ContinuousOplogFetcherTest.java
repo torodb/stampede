@@ -28,6 +28,7 @@ import com.eightkdata.mongowp.server.api.oplog.InsertOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogVersion;
 import com.google.common.net.HostAndPort;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.metrics.DisabledMetricRegistry;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
@@ -78,7 +79,7 @@ public class ContinuousOplogFetcherTest {
     @Override
     public ContinuousOplogFetcher createFetcher(long lastFetchedHash, OpTime lastFetchedOptime) {
       return new ContinuousOplogFetcher(oplogReaderProvider, syncSourceProvider, retrier,
-          lastFetchedHash, lastFetchedOptime, metrics);
+          lastFetchedHash, lastFetchedOptime, metrics, DefaultLoggerFactory.getInstance());
     }
   };
   private static final OpTimeFactory opTimeFactory = new OpTimeFactory();
