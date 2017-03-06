@@ -39,11 +39,11 @@ import com.torodb.core.transaction.RollbackException;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.torod.TorodLoggerFactory;
 import com.torodb.torod.pipeline.D2RTranslationBatchFunction;
 import com.torodb.torod.pipeline.DefaultToBackendFunction;
 import com.torodb.torod.pipeline.InsertPipeline;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
@@ -61,8 +61,7 @@ import javax.inject.Inject;
 public class AkkaInsertPipelineFactory extends IdleTorodbService
     implements InsertPipelineFactory {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(AkkaInsertPipelineFactory.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(AkkaInsertPipelineFactory.class);
   private final ConcurrentToolsFactory concurrentToolsFactory;
   private ActorSystem actorSystem;
   private Materializer materializer;

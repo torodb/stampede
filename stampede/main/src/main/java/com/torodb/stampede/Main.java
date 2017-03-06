@@ -30,6 +30,8 @@ import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.logging.ComponentLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.engine.essential.DefaultBuildProperties;
 import com.torodb.engine.essential.EssentialModule;
@@ -69,7 +71,8 @@ import java.util.stream.Collectors;
  */
 public class Main {
 
-  private static final Logger LOGGER = LogManager.getLogger(Main.class);
+  private static final LoggerFactory LOGGER_FACTORY = new ComponentLoggerFactory("LIFECYCLE");
+  private static final Logger LOGGER = LOGGER_FACTORY.apply(Main.class);
 
   /**
    * The main method that runs ToroDB Stampede.
@@ -182,7 +185,7 @@ public class Main {
           public String getDatabase() {
             return replication.getAuth().getSource();
           }
-        });
+        }, LOGGER);
       }
 
       if (config.getBackend().isLike(AbstractPostgres.class)) {
@@ -262,14 +265,19 @@ public class Main {
     List<Replication> replicationConfig = config.getReplications();
 
     return new StampedeConfig(
-        Guice.createInjector(new EssentialModule(metricsConfig, clock)),
+        Guice.createInjector(new EssentialModule(
+            new ComponentLoggerFactory("LIFECYCLE"),
+            metricsConfig,
+            clock)
+        ),
         generalConfig -> BundleFactory.createBackendBundle(
             backendConfig,
             generalConfig
         ),
         //TODO: This is a patch that should be changed once TORODB-397 is completed
         ReplicationFiltersFactory.getReplicationFilters(config.getReplication()),
-        createShardConfigBuilders(replicationConfig)
+        createShardConfigBuilders(replicationConfig),
+        LOGGER_FACTORY
     );
   }
 
@@ -330,7 +338,7 @@ public class Main {
 
       public void parseToropassFile(BackendPasswordConfig value) {
         try {
-          ConfigUtils.parseToropassFile(value);
+          ConfigUtils.parseToropassFile(value, LOGGER);
         } catch (Exception ex) {
           throw new SystemException(ex);
         }

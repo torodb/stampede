@@ -19,10 +19,10 @@
 package com.torodb.mongodb.repl.oplogreplier.batch;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.filters.FilterResult;
 import com.torodb.mongodb.filters.OplogOperationFilter;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.function.Function;
@@ -37,12 +37,13 @@ import javax.inject.Inject;
 @SuppressWarnings("serial")
 @SuppressFBWarnings({"SE_BAD_FIELD", "SE_NO_SERIALVERSIONID"})
 public class OplogBatchFilter implements akka.japi.function.Function<OplogBatch, OplogBatch> {
-  private static final Logger LOGGER = LogManager.getLogger(OplogBatchFilter.class);
+  private final Logger logger;
   private final Predicate<OplogOperation> opPredicate;
   private final Function<OplogOperation, String> unknownReasonFun;
 
   @Inject
-  public OplogBatchFilter(OplogOperationFilter opFilter) {
+  public OplogBatchFilter(OplogOperationFilter opFilter, LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
     this.opPredicate = op -> filterAndLog(opFilter, op);
     this.unknownReasonFun = (op) -> "unknown";
   }
@@ -58,7 +59,7 @@ public class OplogBatchFilter implements akka.japi.function.Function<OplogBatch,
       return true;
     }
 
-    LOGGER.debug("Filtered operation {}. Reason: {}", op, filterResult
+    logger.debug("Filtered operation {}. Reason: {}", op, filterResult
         .getReason()
         .orElse(unknownReasonFun)
         .apply(op)

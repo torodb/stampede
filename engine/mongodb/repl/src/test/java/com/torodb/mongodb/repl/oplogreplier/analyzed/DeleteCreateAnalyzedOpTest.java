@@ -19,19 +19,16 @@
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
 public class DeleteCreateAnalyzedOpTest extends AbstractAnalyzedOpTest<DeleteCreateAnalyzedOp> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DeleteCreateAnalyzedOpTest.class);
+  private static final Logger LOGGER = DefaultLoggerFactory.get(DeleteCreateAnalyzedOpTest.class);
 
   @Override
   DeleteCreateAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {

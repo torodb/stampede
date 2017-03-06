@@ -19,6 +19,7 @@
 package com.torodb.backend.meta;
 
 import com.google.common.io.CharStreams;
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
@@ -26,7 +27,6 @@ import com.torodb.core.exceptions.InvalidDatabaseException;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.exceptions.ToroRuntimeException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
@@ -45,7 +45,7 @@ import javax.inject.Singleton;
 @Singleton
 public abstract class AbstractSchemaUpdater implements SchemaUpdater {
 
-  private static final Logger LOGGER = LogManager.getLogger(AbstractSchemaUpdater.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(AbstractSchemaUpdater.class);
 
   private final SqlInterface sqlInterface;
   private final SqlHelper sqlHelper;

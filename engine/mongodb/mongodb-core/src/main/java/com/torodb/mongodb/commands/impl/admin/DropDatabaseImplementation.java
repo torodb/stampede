@@ -24,20 +24,27 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.inject.Inject;
 
 public class DropDatabaseImplementation implements WriteTorodbCommandImpl<Empty, Empty> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DropDatabaseImplementation.class);
+  private final Logger logger;
+
+  @Inject
+  public DropDatabaseImplementation(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   public Status<Empty> apply(Request req, Command<? super Empty, ? super Empty> command,
       Empty arg, WriteMongodTransaction context) {
     try {
-      LOGGER.info("Drop database {}", req.getDatabase());
+      logger.info("Drop database {}", req.getDatabase());
 
       context.getTorodTransaction().dropDatabase(req.getDatabase());
     } catch (UserException ex) {

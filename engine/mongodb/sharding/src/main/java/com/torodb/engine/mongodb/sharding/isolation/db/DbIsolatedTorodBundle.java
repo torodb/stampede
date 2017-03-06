@@ -21,6 +21,7 @@ package com.torodb.engine.mongodb.sharding.isolation.db;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.torod.TorodBundle;
 import com.torodb.torod.TorodExtInt;
 import com.torodb.torod.TorodServer;
@@ -32,9 +33,11 @@ public class DbIsolatedTorodBundle extends AbstractBundle<TorodExtInt> implement
 
   private final TorodServer torodServer;
 
-  public DbIsolatedTorodBundle(String shardId, TorodServer realServer, BundleConfig bundleConfig) {
+  public DbIsolatedTorodBundle(String shardId, TorodServer realServer, LoggerFactory loggerFactory,
+      BundleConfig bundleConfig) {
     super(bundleConfig);
-    this.torodServer = new DbIsolatorServer(shardId, realServer, bundleConfig.getThreadFactory());
+    this.torodServer = new DbIsolatorServer(shardId, realServer, bundleConfig.getThreadFactory(),
+        loggerFactory);
   }
 
   @Override

@@ -50,7 +50,6 @@ import com.torodb.mongodb.repl.topology.RemoteSeed;
 import com.torodb.mongodb.repl.topology.TopologyBundle;
 import com.torodb.mongodb.repl.topology.TopologyBundleConfig;
 import com.torodb.mongodb.utils.DbCloner;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
@@ -58,7 +57,7 @@ import java.util.Collections;
 
 public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
 
-  private static final Logger LOGGER = LogManager.getLogger(MongoDbReplBundle.class);
+  private final Logger logger;
   private final BundleConfigImpl replBundleConfig;
   private final MongoDbReplConfig config;
   private final ReplCoordinator replCoordinator;
@@ -71,6 +70,7 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
   @SuppressWarnings("checkstyle:JavadocMethod")
   public MongoDbReplBundle(MongoDbReplConfig config) {
     super(config);
+    this.logger = config.getLoggerFactory().apply(this.getClass());
     this.config = config;
     this.toroDbReplicationFilters = new ToroDbReplicationFilters(config.getUserReplicationFilter());
 
@@ -80,7 +80,8 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
     );
 
     ReplEssentialOverrideModule essentialOverrideModule = new ReplEssentialOverrideModule(
-        config.getMetricRegistry()
+        config.getMetricRegistry(),
+        config.getLoggerFactory()
     );
 
     replCoreBundle = new ReplCoreBundle(
@@ -109,7 +110,7 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
 
   @Override
   protected void postDependenciesStartUp() throws Exception {
-    LOGGER.info("Starting replication service");
+    logger.info("Starting replication service");
 
     replCoreBundle.startAsync();
     replCoreBundle.awaitRunning();
@@ -126,12 +127,12 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
     replCoordinator.startAsync();
     replCoordinator.awaitRunning();
 
-    LOGGER.info("Replication service started");
+    logger.info("Replication service started");
   }
 
   @Override
   protected void preDependenciesShutDown() throws Exception {
-    LOGGER.info("Shutting down replication service");
+    logger.info("Shutting down replication service");
 
     try {
       replCoordinator.stopAsync();
@@ -153,7 +154,7 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
     replCoreBundle.stopAsync();
     replCoreBundle.awaitTerminated();
 
-    LOGGER.info("Replication service shutted down");
+    logger.info("Replication service shutted down");
   }
 
   @Override
@@ -219,7 +220,7 @@ public class MongoDbReplBundle extends AbstractBundle<MongoDbReplExtInt> {
 
     @Override
     public SupervisorDecision onError(Object supervised, Throwable error) {
-      LOGGER.error("Catched an error on the replication layer. Escalating it");
+      logger.error("Catched an error on the replication layer. Escalating it");
       SupervisorDecision decision = supervisor.onError(this, error);
       if (decision == SupervisorDecision.STOP) {
         MongoDbReplBundle.this.stopAsync();

@@ -23,31 +23,25 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.Request;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.logging.LoggerFactory;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
+import javax.inject.Inject;
+
 public final class NotImplementedCommandImplementation<A, R, ContextT> implements
     CommandImplementation<A, R, ContextT> {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(NotImplementedCommandImplementation.class);
-  private static final NotImplementedCommandImplementation INSTANCE =
-      new NotImplementedCommandImplementation();
+  private final Logger logger;
 
-  private NotImplementedCommandImplementation() {
-  }
-
-  public static <A, R, ContextT> NotImplementedCommandImplementation<A, R, ContextT> build() {
-    return INSTANCE;
+  @Inject
+  public NotImplementedCommandImplementation(LoggerFactory loggerFactory) {
+    logger = loggerFactory.apply(this.getClass());
   }
 
   @Override
   public Status<R> apply(Request req, Command<? super A, ? super R> command, A arg,
       ContextT context) {
-    LOGGER.warn("Command {} was called, but it is not supported", command.getCommandName());
+    logger.warn("Command {} was called, but it is not supported", command.getCommandName());
     return Status.from(ErrorCode.COMMAND_NOT_SUPPORTED, "Command not supported: " + command
         .getCommandName());
   }

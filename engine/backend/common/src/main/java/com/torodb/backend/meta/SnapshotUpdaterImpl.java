@@ -18,6 +18,7 @@
 
 package com.torodb.backend.meta;
 
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.SqlHelper;
 import com.torodb.backend.SqlInterface;
@@ -59,7 +60,6 @@ import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
@@ -74,7 +74,7 @@ import javax.inject.Inject;
 
 public class SnapshotUpdaterImpl implements SnapshotUpdater {
 
-  private static final Logger LOGGER = LogManager.getLogger(SnapshotUpdaterImpl.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(SnapshotUpdaterImpl.class);
 
   private final SqlInterface sqlInterface;
   private final SqlHelper sqlHelper;

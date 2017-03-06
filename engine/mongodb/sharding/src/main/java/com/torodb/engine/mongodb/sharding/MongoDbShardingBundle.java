@@ -88,6 +88,7 @@ public class MongoDbShardingBundle extends AbstractBundle<MongoDbShardingExtInt>
         shardConfig.getReplSetName(),
         generalConf.getUserReplFilter(),
         shardConfig.getConsistencyHandler(),
+        generalConf.getLifecycleLoggingFactory(),
         generalConf.getEssentialInjector(),
         generalConf.getSupervisor()
     );

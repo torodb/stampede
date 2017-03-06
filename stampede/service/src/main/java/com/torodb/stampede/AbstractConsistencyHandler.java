@@ -34,7 +34,6 @@ import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.values.KvBoolean;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.mongodb.repl.ConsistencyHandler;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Optional;
@@ -43,8 +42,6 @@ import java.util.concurrent.ThreadFactory;
 public abstract class AbstractConsistencyHandler extends IdleTorodbService
     implements ConsistencyHandler {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(AbstractConsistencyHandler.class);
   private boolean consistent;
   private final BackendService backendService;
   private final Retrier retrier;
@@ -74,11 +71,11 @@ public abstract class AbstractConsistencyHandler extends IdleTorodbService
   }
 
   @Override
-  public void setConsistent(boolean consistency) throws RetrierGiveUpException {
+  public void setConsistent(Logger logger, boolean consistency) throws RetrierGiveUpException {
     Preconditions.checkState(isRunning(), "The consistency handler service is not running");
     this.consistent = consistency;
     flushConsistentState();
-    LOGGER.info("Consistent state has been set to '" + consistent + "'");
+    logger.info("Consistent state has been set to '" + consistent + "'");
   }
 
   private void loadConsistent() {

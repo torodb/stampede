@@ -28,7 +28,6 @@ import com.torodb.core.backend.ReadOnlyBackendTransaction;
 import com.torodb.core.backend.SharedWriteBackendTransaction;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
@@ -36,7 +35,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class BackendConnectionImpl implements BackendConnection {
 
-  private static final Logger LOGGER = LogManager.getLogger(BackendConnectionImpl.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(BackendConnectionImpl.class);
   private final BackendServiceImpl backend;
   private final SqlInterface sqlInterface;
   private boolean closed = false;

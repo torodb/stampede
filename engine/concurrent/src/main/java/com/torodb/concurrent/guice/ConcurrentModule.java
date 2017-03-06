@@ -18,11 +18,17 @@
 
 package com.torodb.concurrent.guice;
 
+import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.concurrent.DefaultConcurrentToolsFactory;
 import com.torodb.concurrent.ExecutorServiceShutdownHelper;
+import com.torodb.core.Shutdowner;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.logging.LoggerFactory;
+
+import java.time.Clock;
 
 /**
  * A module that binds concurrent utility classes (like {@link ConcurrentToolsFactory} and
@@ -30,15 +36,25 @@ import com.torodb.core.concurrent.ConcurrentToolsFactory;
  */
 public class ConcurrentModule extends PrivateModule {
 
+  private final LoggerFactory lifecycleLoggingFactory;
+
+  public ConcurrentModule(LoggerFactory lifecycleLoggingFactory) {
+    this.lifecycleLoggingFactory = lifecycleLoggingFactory;
+  }
+
   @Override
   protected void configure() {
     bind(ConcurrentToolsFactory.class)
         .to(DefaultConcurrentToolsFactory.class)
         .in(Singleton.class);
     expose(ConcurrentToolsFactory.class);
+  }
 
-    bind(ExecutorServiceShutdownHelper.class);
-    expose(ExecutorServiceShutdownHelper.class);
+  @Provides
+  @Exposed
+  protected ExecutorServiceShutdownHelper createExecutorServiceShutdownHelper(
+      Shutdowner shutdowner, Clock clock) {
+    return new ExecutorServiceShutdownHelper(shutdowner, clock, lifecycleLoggingFactory);
   }
 
 }

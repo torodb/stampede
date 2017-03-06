@@ -21,6 +21,7 @@ package com.torodb.engine.mongodb.sharding;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.inject.Injector;
 import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
@@ -33,10 +34,12 @@ public class ShardBundleConfig extends BundleConfigImpl {
   private final String replSetName;
   private final ReplicationFilters userReplFilter;
   private final ConsistencyHandler consistencyHandler;
+  private final LoggerFactory lifecycleLoggingFactory;
 
-  public ShardBundleConfig(String shardId, TorodBundle torodBundle, 
+  public ShardBundleConfig(String shardId, TorodBundle torodBundle,
       MongoClientConfiguration clientConfig, String replSetName, ReplicationFilters userReplFilter,
-      ConsistencyHandler consistencyHandler, Injector essentialInjector, Supervisor supervisor) {
+      ConsistencyHandler consistencyHandler, LoggerFactory lifecycleLoggingFactory,
+      Injector essentialInjector, Supervisor supervisor) {
     super(essentialInjector, supervisor);
     this.shardId = shardId;
     this.torodBundle = torodBundle;
@@ -44,6 +47,7 @@ public class ShardBundleConfig extends BundleConfigImpl {
     this.replSetName = replSetName;
     this.userReplFilter = userReplFilter;
     this.consistencyHandler = consistencyHandler;
+    this.lifecycleLoggingFactory = lifecycleLoggingFactory;
   }
 
   public String getShardId() {
@@ -68,6 +72,10 @@ public class ShardBundleConfig extends BundleConfigImpl {
 
   public ReplicationFilters getUserReplFilter() {
     return userReplFilter;
+  }
+
+  public LoggerFactory getLifecycleLoggingFactory() {
+    return lifecycleLoggingFactory;
   }
 
 

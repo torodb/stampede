@@ -20,18 +20,15 @@ package com.torodb.mongodb.repl;
 
 
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
-import com.eightkdata.mongowp.server.api.impl.NameBasedCommandLibrary;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
-import com.torodb.core.metrics.DisabledMetricRegistry;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.EssentialModule;
-import com.torodb.mongodb.commands.impl.EmptyCommandClassifier;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
@@ -42,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Clock;
+import java.util.Optional;
 
 public class MongoDbReplBundleTest {
 
@@ -59,6 +57,7 @@ public class MongoDbReplBundleTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )
@@ -70,9 +69,12 @@ public class MongoDbReplBundleTest {
     torodBundle.startAsync();
     torodBundle.awaitRunning();
 
-    MongoDbCoreConfig config = new MongoDbCoreConfig(torodBundle,
-        new NameBasedCommandLibrary("test", ImmutableMap.of()),
-        new EmptyCommandClassifier(), essentialInjector, supervisor);
+    MongoDbCoreConfig config = MongoDbCoreConfig.simpleNonServerConfig(
+        torodBundle,
+        DefaultLoggerFactory.getInstance(),
+        Optional.empty(),
+        generalConfig
+    );
     coreBundle = new MongoDbCoreBundle(config);
 
     coreBundle.startAsync();
@@ -96,7 +98,8 @@ public class MongoDbReplBundleTest {
         .setReplSetName("replTest")
         .setReplicationFilters(createReplicationFilters())
         .setCoreBundle(coreBundle)
-        .setMetricRegistry(new DisabledMetricRegistry())
+        .setMetricRegistry(Optional.empty())
+        .setLoggerFactory(DefaultLoggerFactory.getInstance())
         .build()
     );
     assert !replBundle.isRunning();

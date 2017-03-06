@@ -24,6 +24,8 @@ import com.google.inject.Injector;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.LoggerFactory;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.commands.CommandClassifier;
 import com.torodb.mongodb.commands.TorodbCommandsLibraryFactory;
@@ -31,8 +33,8 @@ import com.torodb.mongodb.commands.impl.CommandClassifierImpl;
 import com.torodb.torod.TorodBundle;
 
 import java.time.Clock;
+import java.util.Optional;
 
-import javax.inject.Inject;
 
 /**
  * The configuration used by {@link MongoDbCoreBundle}.
@@ -41,24 +43,28 @@ public class MongoDbCoreConfig extends BundleConfigImpl {
   private final TorodBundle torodBundle;
   private final CommandLibrary commandsLibrary;
   private final CommandClassifier commandClassifier;
+  private final Optional<ToroMetricRegistry> metricRegistry;
+  private final LoggerFactory loggerFactory;
 
-  @Inject
   public MongoDbCoreConfig(TorodBundle torodBundle, CommandLibrary commandsLibrary,
-      CommandClassifier commandClassifier, Injector essentialInjector, Supervisor supervisor) {
+      CommandClassifier commandClassifier, Optional<ToroMetricRegistry> metricRegistry,
+      LoggerFactory loggerFactory, Injector essentialInjector, Supervisor supervisor) {
     super(essentialInjector, supervisor);
     this.torodBundle = torodBundle;
     this.commandsLibrary = commandsLibrary;
     this.commandClassifier = commandClassifier;
+    this.metricRegistry = metricRegistry;
+    this.loggerFactory = loggerFactory;
   }
 
   @SuppressWarnings("checkstyle:LineLength")
   /**
    * Like {@link #simpleConfig(com.torodb.torod.TorodBundle, com.torodb.mongodb.core.MongodServerConfig, com.torodb.core.modules.BundleConfig)
-   * }, but focused on cores that will not be used as server and therefore provides a default
-   * {@link MongodServerConfig}
+   * }, but focused on cores that will not be used as ToroDB Server and therefore provides a
+   * default{@link MongodServerConfig}
    */
-  public static MongoDbCoreConfig simpleNonServerConfig(TorodBundle torodBundle,
-      BundleConfig bundleConfig) {
+  public static MongoDbCoreConfig simpleNonServerConfig(TorodBundle torodBundle, LoggerFactory lf,
+      Optional<ToroMetricRegistry> metricRegistry, BundleConfig bundleConfig) {
     /*
      * The following config file is used by command implementations like isMaster to return
      * information about the server. That has no sense on Stampede and, in fact, that command is
@@ -69,25 +75,28 @@ public class MongoDbCoreConfig extends BundleConfigImpl {
     MongodServerConfig mongodServerConfig = new MongodServerConfig(
         HostAndPort.fromParts("localhost", 27017)
     );
-    return simpleConfig(torodBundle, mongodServerConfig, bundleConfig);
+    return simpleConfig(torodBundle, lf, mongodServerConfig, metricRegistry, bundleConfig);
   }
 
   /**
    * Creates a configuration that uses several default values.
    */
-  public static MongoDbCoreConfig simpleConfig(TorodBundle torodBundle,
-      MongodServerConfig mongodServerConfig, BundleConfig bundleConfig) {
+  public static MongoDbCoreConfig simpleConfig(TorodBundle torodBundle, LoggerFactory lf,
+      MongodServerConfig mongodServerConfig, Optional<ToroMetricRegistry> metricRegistry,
+      BundleConfig bundleConfig) {
     Clock clock = bundleConfig.getEssentialInjector()
         .getInstance(Clock.class);
     BuildProperties buildProp = bundleConfig.getEssentialInjector()
         .getInstance(BuildProperties.class);
-    CommandClassifier commandClassifier = CommandClassifierImpl.createDefault(clock, buildProp,
+    CommandClassifier commandClassifier = CommandClassifierImpl.createDefault(lf, clock, buildProp,
         mongodServerConfig);
     
     return new MongoDbCoreConfig(
         torodBundle,
         TorodbCommandsLibraryFactory.get(buildProp, commandClassifier),
         commandClassifier,
+        metricRegistry,
+        lf,
         bundleConfig.getEssentialInjector(),
         bundleConfig.getSupervisor()
     );
@@ -103,6 +112,14 @@ public class MongoDbCoreConfig extends BundleConfigImpl {
 
   public CommandClassifier getCommandClassifier() {
     return commandClassifier;
+  }
+
+  public Optional<ToroMetricRegistry> getMetricRegistry() {
+    return metricRegistry;
+  }
+
+  public LoggerFactory getLoggerFactory() {
+    return loggerFactory;
   }
 
 }

@@ -34,6 +34,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.AbstractService;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.pojos.CollectionOptions;
 import com.torodb.mongodb.commands.pojos.CursorResult;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
@@ -53,7 +54,6 @@ import com.torodb.mongodb.utils.DbCloner;
 import com.torodb.mongodb.utils.ListCollectionsRequester;
 import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.EnumSet;
@@ -62,15 +62,18 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Nonnull;
-import javax.inject.Singleton;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
 
-/**
- *
- */
-@Singleton
+@ThreadSafe
 public class TransactionalDbCloner extends AbstractService implements DbCloner {
 
-  private static final Logger LOGGER = LogManager.getLogger(DbCloner.class);
+  private final Logger logger;
+
+  @Inject
+  public TransactionalDbCloner(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   protected void doStart() {
@@ -96,11 +99,6 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
 
   /**
    *
-   * @param dstDb
-   * @param remoteConnection
-   * @param transaction
-   * @param opts
-   * @throws CloningException
    * @throws NotMasterException if {@link CloneOptions#getWritePermissionSupplier()
    *                            opts.getWritePermissionSupplier().get()} is evaluated to false
    */
@@ -111,7 +109,7 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
       @Nonnull CloneOptions opts
   ) throws CloningException, NotMasterException, MongoException {
     if (!remoteConnection.isRemote() && opts.getDbToClone().equals(dstDb)) {
-      LOGGER.warn("Trying to clone a database to itself! Ignoring it");
+      logger.warn("Trying to clone a database to itself! Ignoring it");
       return;
     }
     String fromDb = opts.getDbToClone();
@@ -140,31 +138,31 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
       String collName = collEntry.getCollectionName();
 
       if (opts.getCollsToIgnore().contains(collName)) {
-        LOGGER.debug("Not cloning {} because is marked as an ignored collection", collName);
+        logger.debug("Not cloning {} because is marked as an ignored collection", collName);
         continue;
       }
 
       if (!NamespaceUtil.isUserWritable(fromDb, collName)) {
-        LOGGER.info("Not cloning {} because is a not user writable", collName);
+        logger.info("Not cloning {} because is a not user writable", collName);
         continue;
       }
       
       if (NamespaceUtil.isNormal(fromDb, collName)) {
-        LOGGER.info("Not cloning {} because it is not normal", collName);
+        logger.info("Not cloning {} because it is not normal", collName);
         continue;
       }
       
       if (!opts.getCollectionFilter().test(collName)) {
-        LOGGER.info("Not cloning {} because it didn't pass the given filter predicate", collName);
+        logger.info("Not cloning {} because it didn't pass the given filter predicate", collName);
         continue;
       }
       
       if (NamespaceUtil.isViewCollection(collEntry.getType())) {
-        LOGGER.info("Not cloning {} because it is a view", collName);
+        logger.info("Not cloning {} because it is a view", collName);
         continue;
       }
       
-      LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
+      logger.info("Collection {}.{} will be cloned", fromDb, collName);
       collsToClone.put(collName, collEntry.getCollectionOptions());
     }
 
@@ -198,7 +196,7 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
       String collection,
       CollectionOptions collOptions) throws MongoException, CloningException {
     String fromDb = opts.getDbToClone();
-    LOGGER.info("Cloning {}.{} into {}.{}", fromDb, collection, toDb, collection);
+    logger.info("Cloning {}.{} into {}.{}", fromDb, collection, toDb, collection);
 
     //TODO: enable exhaust?
     EnumSet<QueryOption> queryFlags = EnumSet.of(QueryOption.NO_CURSOR_TIMEOUT);
@@ -244,7 +242,7 @@ public class TransactionalDbCloner extends AbstractService implements DbCloner {
       String fromDb = opts.getDbToClone();
       HostAndPort remoteAddress = remoteConnection.getClientOwner().getAddress();
       String remoteAddressString = remoteAddress != null ? remoteAddress.toString() : "local";
-      LOGGER.info("copying indexes from {}.{} on {} to {}.{} on local server",
+      logger.info("copying indexes from {}.{} on {} to {}.{} on local server",
           fromDb,
           fromCol,
           remoteAddressString,

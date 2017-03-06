@@ -27,6 +27,7 @@ import com.torodb.backend.derby.DerbyDbBackendBundle;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.engine.essential.EssentialModule;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
@@ -50,7 +51,8 @@ public class StampedeServiceTest {
         createEssentialInjector(),
         this::createBackendBundle,
         ReplicationFilters.allowAll(),
-        createShards(1)
+        createShards(1),
+        DefaultLoggerFactory.getInstance()
     );
   }
 
@@ -72,7 +74,11 @@ public class StampedeServiceTest {
   }
 
   private Injector createEssentialInjector() {
-    return Guice.createInjector(new EssentialModule(() -> true, Clock.systemUTC()));
+    return Guice.createInjector(new EssentialModule(
+        DefaultLoggerFactory.getInstance(),
+        () -> true,
+        Clock.systemUTC())
+    );
   }
 
   private BackendBundle createBackendBundle(BundleConfig bundleConfig) {

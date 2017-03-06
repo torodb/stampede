@@ -23,15 +23,11 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.google.common.base.Preconditions;
 import com.torodb.core.transaction.RollbackException;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
 abstract class MongodTransactionImpl implements MongodTransaction {
 
-  private static final Logger LOGGER = LogManager.getLogger(MongodTransactionImpl.class);
+  private final Logger logger;
 
   private final MongodConnection connection;
   private Request currentRequest;
@@ -39,6 +35,7 @@ abstract class MongodTransactionImpl implements MongodTransaction {
 
   MongodTransactionImpl(MongodConnection connection) {
     this.connection = connection;
+    this.logger = connection.getLoggerFactory().apply(this.getClass());
   }
 
   protected abstract <A, R> Status<R> executeProtected(Request req,
@@ -90,7 +87,7 @@ abstract class MongodTransactionImpl implements MongodTransaction {
   @Override
   protected void finalize() throws Throwable {
     if (!closed) {
-      LOGGER.warn(this.getClass() + " finalized without being closed");
+      logger.warn(this.getClass() + " finalized without being closed");
       close();
     }
   }

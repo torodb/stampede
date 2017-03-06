@@ -23,10 +23,10 @@ import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.assistedinject.Assisted;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.repl.oplogreplier.ApplierContext;
 import com.torodb.mongodb.repl.oplogreplier.analyzed.AnalyzedOpReducer;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
@@ -35,12 +35,9 @@ import java.util.function.Function;
 
 import javax.inject.Inject;
 
-/**
- *
- */
 public class BatchAnalyzer implements Function<List<OplogOperation>, List<AnalyzedOplogBatch>> {
 
-  private static final Logger LOGGER = LogManager.getLogger(BatchAnalyzer.class);
+  private final Logger logger;
   private final ApplierContext context;
   private final AnalyzedOpReducer analyzedOpReducer;
   private static final ImmutableSet<String> SYSTEM_COLLECTIONS = ImmutableSet.<String>builder()
@@ -51,7 +48,9 @@ public class BatchAnalyzer implements Function<List<OplogOperation>, List<Analyz
       .build();
 
   @Inject
-  public BatchAnalyzer(@Assisted ApplierContext context, AnalyzedOpReducer analyzedOpReducer) {
+  public BatchAnalyzer(@Assisted ApplierContext context, LoggerFactory lf,
+      AnalyzedOpReducer analyzedOpReducer) {
+    this.logger = lf.apply(this.getClass());
     this.context = context;
     this.analyzedOpReducer = analyzedOpReducer;
   }
@@ -67,7 +66,7 @@ public class BatchAnalyzer implements Function<List<OplogOperation>, List<Analyz
       switch (op.getType()) {
         case DB:
         case NOOP:
-          LOGGER.debug("Ignoring operation {}", op);
+          logger.debug("Ignoring operation {}", op);
           break;
         case DB_CMD:
           addParallelToBatch(oplogOps, fromExcluded, i, result);

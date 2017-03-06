@@ -18,10 +18,10 @@
 
 package com.torodb.engine.mongodb.sharding.isolation.db;
 
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
@@ -29,12 +29,14 @@ import java.util.concurrent.ThreadFactory;
 
 public class DbIsolatorServer extends IdleTorodbService implements TorodServer {
 
-  private static final Logger LOGGER = LogManager.getLogger(DbIsolatorServer.class);
+  private final Logger logger;
   private final String shardId;
   private final TorodServer decorated;
 
-  public DbIsolatorServer(String shardId, TorodServer decorated, ThreadFactory threadFactory) {
+  public DbIsolatorServer(String shardId, TorodServer decorated, ThreadFactory threadFactory,
+      LoggerFactory lf) {
     super(threadFactory);
+    this.logger = lf.apply(this.getClass());
     assert decorated.isRunning() : "The decorated torod server must be running";
     this.decorated = decorated;
     this.shardId = shardId;
@@ -59,12 +61,12 @@ public class DbIsolatorServer extends IdleTorodbService implements TorodServer {
 
   @Override
   public void disableDataImportMode() {
-    LOGGER.warn("Data import mode is ignored on isolated databases");
+    logger.warn("Data import mode is ignored on isolated databases");
   }
 
   @Override
   public void enableDataImportMode() {
-    LOGGER.warn("Data import mode is ignored on isolated databases");
+    logger.warn("Data import mode is ignored on isolated databases");
   }
 
   @Override

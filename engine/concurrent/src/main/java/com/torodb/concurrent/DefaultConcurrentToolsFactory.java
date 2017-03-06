@@ -22,6 +22,7 @@ import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.concurrent.StreamExecutor;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -62,13 +63,14 @@ public class DefaultConcurrentToolsFactory implements ConcurrentToolsFactory {
   }
 
   @Override
-  public StreamExecutor createStreamExecutor(String prefix,
-      boolean blockerTasks, int maxThreads) {
+  public StreamExecutor createStreamExecutor(Logger logger, String prefix, boolean blockerTasks,
+      int maxThreads) {
     return new AkkaStreamExecutor(
         blockerThreadFactoryFunction.apply(prefix),
         maxThreads,
         createExecutorService(prefix, blockerTasks, maxThreads),
-        prefix
+        prefix,
+        logger
     );
   }
 

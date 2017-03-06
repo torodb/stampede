@@ -29,6 +29,7 @@ import com.torodb.core.bundle.Bundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.ComponentLoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.supervision.Supervisor;
@@ -40,7 +41,6 @@ import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.torod.SqlTorodBundle;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
@@ -57,7 +57,7 @@ import java.util.concurrent.ThreadFactory;
  */
 public class StampedeService extends AbstractIdleService implements Supervisor {
 
-  private static final Logger LOGGER = LogManager.getLogger(StampedeService.class);
+  private final Logger logger;
   private final ThreadFactory threadFactory;
   private final StampedeConfig stampedeConfig;
   private final Injector essentialInjector;
@@ -65,6 +65,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
   private final Shutdowner shutdowner;
 
   public StampedeService(StampedeConfig stampedeConfig) {
+    this.logger = stampedeConfig.getLifecycleLoggerFactory().apply(this.getClass());
     this.stampedeConfig = stampedeConfig;
 
     this.essentialInjector = stampedeConfig.getEssentialInjector();
@@ -83,14 +84,14 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
 
   @Override
   public SupervisorDecision onError(Object supervised, Throwable error) {
-    LOGGER.error("Error reported by " + supervised + ". Stopping ToroDB Stampede", error);
+    logger.error("Error reported by " + supervised + ". Stopping ToroDB Stampede", error);
     this.stopAsync();
     return SupervisorDecision.IGNORE;
   }
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.info("Starting up ToroDB Stampede");
+    logger.info("Starting up ToroDB Stampede");
 
     shutdowner.startAsync();
     shutdowner.awaitRunning();
@@ -112,17 +113,17 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     MongoDbShardingBundle shardingBundle = createShardingBundle(torodBundle, consistencyHandlers);
     startBundle(shardingBundle);
 
-    LOGGER.info("ToroDB Stampede is now running");
+    logger.info("ToroDB Stampede is now running");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.info("Shutting down ToroDB Stampede");
+    logger.info("Shutting down ToroDB Stampede");
     if (shutdowner != null) {
       shutdowner.stopAsync();
       shutdowner.awaitTerminated();
     }
-    LOGGER.info("ToroDB Stampede has been shutted down");
+    logger.info("ToroDB Stampede has been shutted down");
   }
 
   private Map<String, ConsistencyHandler> createConsistencyHandlers(BackendBundle backendBundle,
@@ -162,7 +163,8 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     @SuppressWarnings("checkstyle:LineLength")
     MongoDbShardingConfigBuilder configBuilder = new MongoDbShardingConfigBuilder(generalBundleConfig)
         .setTorodBundle(torodBundle)
-        .setUserReplFilter(stampedeConfig.getUserReplicationFilters());
+        .setUserReplFilter(stampedeConfig.getUserReplicationFilters())
+        .setLifecycleLoggerFactory(stampedeConfig.getLifecycleLoggerFactory());
 
     stampedeConfig.getShardConfigBuilders().forEach(shardConfBuilder ->
         addShard(configBuilder, shardConfBuilder, consistencyHandler)
@@ -211,17 +213,21 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
 
     //TODO: Some improvements can be done so only the inconsistent shards are dropped
     if (inconsistentShard.isPresent()) {
-      LOGGER.warn("Found that replication shard {} is not consistent.",
+      logger.warn("Found that replication shard {} is not consistent.",
           inconsistentShard.orElse("unknown")
       );
-      LOGGER.warn("Dropping user data.");
+      logger.warn("Dropping user data.");
       dropUserData(backendBundle);
 
-      for (ConsistencyHandler consistencyHandler : consistencyHandlers.values()) {
-        consistencyHandler.setConsistent(false);
+      for (Map.Entry<String, ConsistencyHandler> entry : consistencyHandlers.entrySet()) {
+        String shardId = entry.getKey();
+        ConsistencyHandler consistencyHandler = entry.getValue();
+        Logger logger = new ComponentLoggerFactory("REPL-" + shardId)
+            .apply(this.getClass());
+        consistencyHandler.setConsistent(logger, false);
       }
     } else {
-      LOGGER.info("All replication shards are consistent");
+      logger.info("All replication shards are consistent");
     }
   }
 }

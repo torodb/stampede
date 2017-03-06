@@ -20,24 +20,23 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.RunnableTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
 
-import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
 class ReplSyncFetcher extends RunnableTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(ReplSyncFetcher.class);
+  private final Logger logger;
 
   private final SyncServiceView callback;
   private final OplogFetcher fetcher;
@@ -46,16 +45,18 @@ class ReplSyncFetcher extends RunnableTorodbService {
 
   ReplSyncFetcher(
       @TorodbRunnableService ThreadFactory threadFactory,
-      @Nonnull SyncServiceView callback,
-      @Nonnull OplogFetcher fetcher) {
+      SyncServiceView callback,
+      OplogFetcher fetcher,
+      LoggerFactory lf) {
     super(callback, threadFactory);
+    this.logger = lf.apply(this.getClass());
     this.callback = callback;
     this.fetcher = fetcher;
   }
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    return logger;
   }
 
   @Override
@@ -103,16 +104,16 @@ class ReplSyncFetcher extends RunnableTorodbService {
           });
 
           if (!oplogBatch.isReadyForMore()) {
-            LOGGER.warn("There is no source to sync from");
+            logger.warn("There is no source to sync from");
             Thread.sleep(1000);
           }
         } catch (InterruptedException ex) {
           Thread.interrupted();
-          LOGGER.info("Restarting fetch process", ex);
+          logger.info("Restarting fetch process", ex);
         } catch (RollbackReplicationException ex) {
           rollbackEx = ex;
         } catch (RollbackException ignore) {
-          LOGGER.info("Retrying after a rollback exception");
+          logger.info("Retrying after a rollback exception");
         } catch (StopReplicationException ex) {
           throw ex;
         } catch (Throwable ex) {
@@ -120,26 +121,26 @@ class ReplSyncFetcher extends RunnableTorodbService {
         }
       }
       if (rollbackEx != null) {
-        LOGGER.debug("Requesting rollback");
+        logger.debug("Requesting rollback");
         callback.rollback(rollbackEx);
       } else {
         if (oplogFinished) {
-          LOGGER.info("Remote oplog finished");
+          logger.info("Remote oplog finished");
         } else {
-          LOGGER.info(serviceName() + " ending by external request");
+          logger.info(serviceName() + " ending by external request");
         }
         callback.fetchFinished();
       }
     } catch (StopReplicationException ex) {
-      LOGGER.info(serviceName() + " stopped by self request");
+      logger.info(serviceName() + " stopped by self request");
       callback.fetchAborted(ex);
     }
-    LOGGER.info(serviceName() + " stopped");
+    logger.info(serviceName() + " stopped");
   }
 
   public static interface SyncServiceView extends Supervisor {
 
-    void deliver(@Nonnull OplogOperation oplogOp) throws InterruptedException;
+    void deliver(OplogOperation oplogOp) throws InterruptedException;
 
     void rollback(RollbackReplicationException ex);
 

@@ -24,6 +24,7 @@ import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.SyncSourceProvider;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
@@ -83,16 +84,20 @@ public class TopologyGuiceModule extends PrivateModule {
   @Exposed
   public TopologyService createTopologyService(ThreadFactory threadFactory,
       TopologyHeartbeatHandler heartbeatHandler, TopologyExecutor executor,
-      Clock clock) {
-    return new TopologyService(heartbeatHandler, threadFactory, executor, clock);
+      Clock clock, LoggerFactory lf) {
+    return new TopologyService(heartbeatHandler, threadFactory, executor, clock, lf);
   }
 
   @Provides
   @Singleton
   TopologyExecutor createTopologyExecutor(
+      LoggerFactory lf,
       ConcurrentToolsFactory concurrentToolsFactory) {
     //TODO: Being able to configure max sync source lag and replication delay
-    return new TopologyExecutor(concurrentToolsFactory, Duration.ofMinutes(1),
+    return new TopologyExecutor(
+        concurrentToolsFactory,
+        lf,
+        Duration.ofMinutes(1),
         Duration.ZERO);
   }
 

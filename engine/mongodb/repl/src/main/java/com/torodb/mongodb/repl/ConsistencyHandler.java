@@ -20,6 +20,7 @@ package com.torodb.mongodb.repl;
 
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.services.TorodbService;
+import org.apache.logging.log4j.Logger;
 
 /**
  * An interface that manages the consistency of a generic resource.
@@ -28,6 +29,6 @@ public interface ConsistencyHandler extends TorodbService {
 
   boolean isConsistent();
 
-  void setConsistent(boolean newConsistency) throws RetrierGiveUpException;
+  void setConsistent(Logger logger, boolean newConsistency) throws RetrierGiveUpException;
 
 }

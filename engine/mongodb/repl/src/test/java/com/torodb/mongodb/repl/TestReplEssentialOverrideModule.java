@@ -19,21 +19,15 @@
 package com.torodb.mongodb.repl;
 
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.torodb.core.guice.Essential;
-import com.torodb.core.metrics.ToroMetricRegistry;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
+
+import java.util.Optional;
 
 public class TestReplEssentialOverrideModule extends ReplEssentialOverrideModule {
 
   public TestReplEssentialOverrideModule(Injector essentialInjector) {
-    super(createToroMetricRegistry(essentialInjector));
-  }
-
-  private static ToroMetricRegistry createToroMetricRegistry(Injector essentialInjector) {
-    return essentialInjector.getInstance(
-        Key.get(ToroMetricRegistry.class, Essential.class)
-    );
+    super(Optional.empty(), DefaultLoggerFactory.getInstance());
   }
 
 }

@@ -21,9 +21,9 @@ package com.torodb.core;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.ExecutorTorodbService;
 import com.torodb.core.services.IdleTorodbService;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
@@ -36,22 +36,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
-import javax.inject.Inject;
 
 @ThreadSafe
 public class Shutdowner extends IdleTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(Shutdowner.class);
+  private final Logger logger;
   private boolean shuttingDown;
   private final ExecutorTorodbService<ExecutorService> executor;
 
   @SuppressWarnings("rawtypes")
   private final List<ShutdownCallback> closeCallbacks = new ArrayList<>();
 
-  @Inject
-  @SuppressWarnings("checkstyle:Indentation")
-  public Shutdowner(ThreadFactory threadFactory) {
+  public Shutdowner(ThreadFactory threadFactory, LoggerFactory lf) {
     super(threadFactory);
+    this.logger = lf.apply(this.getClass());
     executor = new ExecutorTorodbService<>(threadFactory, Shutdowner::createExecutorService);
     executor.startAsync();
     executor.awaitRunning();
@@ -141,10 +139,10 @@ public class Shutdowner extends IdleTorodbService {
 
   private void executeCloseCallback(ShutdownCallback<?> callback) {
     try {
-      LOGGER.debug("Shutting down {}", callback::describeResource);
+      logger.debug("Shutting down {}", callback::describeResource);
       callback.onShutdown();
     } catch (Throwable t) {
-      LOGGER.error("Error while trying to shutdown the resource "
+      logger.error("Error while trying to shutdown the resource "
           + callback.getResource(), t);
     }
   }
@@ -196,7 +194,7 @@ public class Shutdowner extends IdleTorodbService {
     }
   }
 
-  private static class ServiceShutdownCallback extends ShutdownCallback<Service> {
+  private class ServiceShutdownCallback extends ShutdownCallback<Service> {
 
     public ServiceShutdownCallback(Service resource) {
       super(resource);
@@ -213,7 +211,7 @@ public class Shutdowner extends IdleTorodbService {
       try {
         getResource().awaitTerminated();
       } catch (IllegalStateException ex) {
-        LOGGER.warn(getResource() + " failed before it can be stopped", ex);
+        logger.warn(getResource() + " failed before it can be stopped", ex);
       }
     }
   }

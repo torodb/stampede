@@ -30,6 +30,7 @@ import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.EssentialModule;
@@ -54,6 +55,7 @@ public class SqlTorodBundleTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )

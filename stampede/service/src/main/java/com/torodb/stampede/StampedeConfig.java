@@ -21,6 +21,7 @@ package com.torodb.stampede;
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
@@ -36,14 +37,17 @@ public class StampedeConfig {
   private final Function<BundleConfig, BackendBundle> backendBundleGenerator;
   private final ReplicationFilters userReplFilters;
   private final List<ShardConfigBuilder> shardConfigBuilders;
+  private final LoggerFactory lifecycleLoggerFactory;
 
   public StampedeConfig(Injector essentialInjector,
       Function<BundleConfig, BackendBundle> backendBundleGenerator,
-      ReplicationFilters userReplFilters, List<ShardConfigBuilder> shardConfigBuilders) {
+      ReplicationFilters userReplFilters, List<ShardConfigBuilder> shardConfigBuilders,
+      LoggerFactory lf) {
     this.essentialInjector = essentialInjector;
     this.backendBundleGenerator = backendBundleGenerator;
     this.userReplFilters = userReplFilters;
     this.shardConfigBuilders = shardConfigBuilders;
+    this.lifecycleLoggerFactory = lf;
   }
 
   public Injector getEssentialInjector() {
@@ -72,6 +76,10 @@ public class StampedeConfig {
 
   public List<ShardConfigBuilder> getShardConfigBuilders() {
     return Collections.unmodifiableList(shardConfigBuilders);
+  }
+
+  public LoggerFactory getLifecycleLoggerFactory() {
+    return lifecycleLoggerFactory;
   }
 
   public static interface ShardConfigBuilder {

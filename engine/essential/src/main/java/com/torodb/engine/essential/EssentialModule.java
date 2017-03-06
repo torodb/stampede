@@ -23,6 +23,7 @@ import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.guice.CoreModule;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.core.metrics.MetricsModule;
 import com.torodb.metainfo.guice.MetainfModule;
@@ -35,10 +36,13 @@ import java.time.Clock;
  */
 public class EssentialModule extends AbstractModule {
 
+  private final LoggerFactory lifecycleLoggerFactory;
   private final MetricsConfig metricsConfig;
   private final Clock clock;
 
-  public EssentialModule(MetricsConfig metricsConfig, Clock clock) {
+  public EssentialModule(LoggerFactory lifecycleLoggerFactory, MetricsConfig metricsConfig,
+      Clock clock) {
+    this.lifecycleLoggerFactory = lifecycleLoggerFactory;
     this.metricsConfig = metricsConfig;
     this.clock = clock;
   }
@@ -50,9 +54,9 @@ public class EssentialModule extends AbstractModule {
     bind(Clock.class)
         .toInstance(clock);
 
-    install(new CoreModule());
+    install(new CoreModule(lifecycleLoggerFactory));
     install(new ExecutorServicesModule());
-    install(new ConcurrentModule());
+    install(new ConcurrentModule(lifecycleLoggerFactory));
     install(new MetainfModule());
     install(new MetricsModule(metricsConfig));
 

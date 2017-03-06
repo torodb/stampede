@@ -18,16 +18,13 @@
 
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.kvdocument.values.KvValue;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
 public class UpdateDeleteAnalyzedOpTest extends AbstractAnalyzedOpTest<UpdateDeleteAnalyzedOp> {
 
-  private static final Logger LOGGER = LogManager.getLogger(UpdateDeleteAnalyzedOpTest.class);
+  private static final Logger LOGGER = DefaultLoggerFactory.get(UpdateDeleteAnalyzedOpTest.class);
 
   @Override
   UpdateDeleteAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {

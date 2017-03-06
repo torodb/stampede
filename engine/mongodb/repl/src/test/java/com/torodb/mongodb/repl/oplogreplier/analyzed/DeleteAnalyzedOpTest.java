@@ -18,16 +18,13 @@
 
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.kvdocument.values.KvValue;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
 public class DeleteAnalyzedOpTest extends AbstractAnalyzedOpTest<DeleteAnalyzedOp> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DeleteAnalyzedOpTest.class);
+  private final Logger logger = DefaultLoggerFactory.get(DeleteAnalyzedOpTest.class);
 
   @Override
   public DeleteAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {
@@ -36,7 +33,7 @@ public class DeleteAnalyzedOpTest extends AbstractAnalyzedOpTest<DeleteAnalyzedO
 
   @Override
   Logger getLogger() {
-    return LOGGER;
+    return logger;
   }
 
   //TODO: Callback checks can be improved

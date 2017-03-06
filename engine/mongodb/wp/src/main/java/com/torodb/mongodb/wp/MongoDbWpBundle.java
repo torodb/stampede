@@ -24,15 +24,11 @@ import com.google.inject.Injector;
 import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.guice.MongoDbWpModule;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public class MongoDbWpBundle extends AbstractBundle<MongoDbWpExtInt> {
-  private static final Logger LOGGER = LogManager.getLogger(MongoDbWpBundle.class);
-
   private final MongoDbCoreBundle coreBundle;
   private final NettyMongoServer nettyMongoServer;
 

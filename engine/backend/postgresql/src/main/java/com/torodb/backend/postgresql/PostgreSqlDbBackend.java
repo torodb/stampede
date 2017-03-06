@@ -20,10 +20,10 @@ package com.torodb.backend.postgresql;
 
 import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.BackendConfig;
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
 import com.torodb.core.annotations.TorodbIdleService;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
@@ -37,7 +37,7 @@ import javax.sql.DataSource;
  */
 public class PostgreSqlDbBackend extends AbstractDbBackendService<BackendConfig> {
 
-  private static final Logger LOGGER = LogManager.getLogger(PostgreSqlDbBackend.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(PostgreSqlDbBackend.class);
 
   private final PostgreSqlDriverProvider driverProvider;
 

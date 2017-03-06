@@ -22,11 +22,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.commands.CommandClassifier;
 import com.torodb.mongodb.language.ObjectIdFactory;
 import com.torodb.torod.TorodServer;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
@@ -37,7 +37,8 @@ import javax.inject.Singleton;
 @Singleton
 public class MongodServer extends IdleTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(MongodServer.class);
+  private final LoggerFactory loggerFactory;
+  private final Logger logger;
   private final TorodServer torodServer;
   private final Cache<Integer, MongodConnection> openConnections;
   private final CommandClassifier commandsExecutorClassifier;
@@ -46,11 +47,14 @@ public class MongodServer extends IdleTorodbService {
 
   @Inject
   public MongodServer(@TorodbIdleService ThreadFactory threadFactory,
+      LoggerFactory loggerFactory,
       TorodServer torodServer,
       CommandClassifier commandsExecutorClassifier,
       MongodMetrics metrics,
       ObjectIdFactory objectIdFactory) {
     super(threadFactory);
+    this.loggerFactory = loggerFactory;
+    this.logger = loggerFactory.apply(this.getClass());
     this.torodServer = torodServer;
     openConnections = CacheBuilder.newBuilder()
         .weakValues()
@@ -82,9 +86,9 @@ public class MongodServer extends IdleTorodbService {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.debug("Waiting for Torod server to be running");
+    logger.debug("Waiting for Torod server to be running");
     torodServer.awaitRunning();
-    LOGGER.debug("MongodServer ready to run");
+    logger.debug("MongodServer ready to run");
   }
 
   @Override
@@ -106,6 +110,10 @@ public class MongodServer extends IdleTorodbService {
     if (value != null) {
       value.close();
     }
+  }
+
+  public LoggerFactory getLoggerFactory() {
+    return loggerFactory;
   }
 
 }

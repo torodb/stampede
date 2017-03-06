@@ -21,6 +21,7 @@ package com.torodb.engine.mongodb.sharding;
 import com.google.inject.Injector;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig.ShardConfig;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
@@ -36,6 +37,7 @@ public class MongoDbShardingConfigBuilder {
   private TorodBundle torodBundle;
   private final Map<String, MongoDbShardingConfig.ShardConfig> shardConfigs = new HashMap<>();
   private ReplicationFilters userReplFilter;
+  private LoggerFactory lifecycleLoggerFactory;
   private final BundleConfig generalConfig;
 
   public MongoDbShardingConfigBuilder(BundleConfig generalConfig) {
@@ -56,6 +58,12 @@ public class MongoDbShardingConfigBuilder {
     return this;
   }
 
+  public MongoDbShardingConfigBuilder setLifecycleLoggerFactory(
+      LoggerFactory lifecycleLoggerFactory) {
+    this.lifecycleLoggerFactory = lifecycleLoggerFactory;
+    return this;
+  }
+
   public MongoDbShardingConfigBuilder addShard(ShardConfig config) {
     if (shardConfigs.containsKey(config.getShardId())) {
       throw new IllegalArgumentException("The shard " + config.getShardId() + " has been already"
@@ -68,6 +76,7 @@ public class MongoDbShardingConfigBuilder {
   public MongoDbShardingConfig build() {
     Objects.requireNonNull(torodBundle, "The torod bundle must be not null");
     Objects.requireNonNull(userReplFilter, "The user filter must be not null");
+    Objects.requireNonNull(lifecycleLoggerFactory, "The lifecycle logger factory must be not null");
     if (shardConfigs.isEmpty()) {
       throw new IllegalArgumentException("At least one shard is required");
     }
@@ -76,6 +85,7 @@ public class MongoDbShardingConfigBuilder {
         torodBundle,
         new ArrayList<>(shardConfigs.values()),
         userReplFilter,
+        lifecycleLoggerFactory,
         generalConfig
     );
   }

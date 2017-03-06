@@ -24,11 +24,11 @@ import com.google.inject.Singleton;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
 import com.torodb.core.transaction.InternalTransactionManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
 
@@ -38,14 +38,18 @@ import java.util.concurrent.ThreadFactory;
  */
 public class CoreModule extends EssentialToroModule {
 
-  private static final Logger LOGGER = LogManager.getLogger("torodb");
+  private final LoggerFactory lifecycleLoggerFactory;
 
+  public CoreModule(LoggerFactory lifecycleLoggerFactory) {
+    this.lifecycleLoggerFactory = lifecycleLoggerFactory;
+  }
+ 
   @Override
   protected void configure() {
     expose(TableRefFactory.class);
     expose(Retrier.class);
     expose(InternalTransactionManager.class);
-    exposeEssential(Logger.class);
+    exposeEssential(LoggerFactory.class);
 
     bind(TableRefFactory.class)
         .to(TableRefFactoryImpl.class)
@@ -68,8 +72,8 @@ public class CoreModule extends EssentialToroModule {
     bind(InternalTransactionManager.class)
         .in(Singleton.class);
 
-    bindEssential(Logger.class)
-        .toInstance(LOGGER);
+    bindEssential(LoggerFactory.class)
+        .toInstance(DefaultLoggerFactory.getInstance());
   }
 
   private static int millisToWait(int attempts, int millis) {
@@ -88,7 +92,7 @@ public class CoreModule extends EssentialToroModule {
   @Exposed
   @Singleton
   protected Shutdowner createShutdowner(ThreadFactory threadFactory) {
-    Shutdowner s = new Shutdowner(threadFactory);
+    Shutdowner s = new Shutdowner(threadFactory, lifecycleLoggerFactory);
 
     return s;
   }

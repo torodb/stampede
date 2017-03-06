@@ -19,21 +19,17 @@
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
 import com.torodb.core.language.AttributeReference;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.kvdocument.values.KvInteger;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.mongodb.language.update.SetFieldUpdateAction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
 
-/**
- *
- * @author gortiz
- */
 public class UpdateSetAnalyzedOpTest extends AbstractAnalyzedOpTest<UpdateSetAnalyzedOp> {
 
-  private static final Logger LOGGER = LogManager.getLogger(UpdateSetAnalyzedOpTest.class);
+  private static final Logger LOGGER = DefaultLoggerFactory.get(UpdateSetAnalyzedOpTest.class);
 
   @Override
   UpdateSetAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {
