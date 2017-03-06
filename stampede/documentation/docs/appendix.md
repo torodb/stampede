@@ -102,6 +102,7 @@ Another way to configure the system is through configuration file or setting con
 | /backend/postgres/user | The user that will be used to connect. |
 | /backend/postgres/toropassFile | Path to the file with PostgreSQL access configuration in  `.pgpass` syntax. |
 | /backend/postgres/applicationName | The application name used by driver to connect. |
+| /backend/postgres/ssl | If `true` Enabled the SSL connection with PostgreSQL server, if `false` is disabled. |
 
 ### ToroDB Stampede pool configuration
 

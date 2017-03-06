@@ -20,6 +20,7 @@ package com.torodb.backend.postgresql;
 
 import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.BackendConfig;
+import com.torodb.backend.BackendConfigImpl;
 import com.torodb.backend.TransactionIsolationLevel;
 import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
 import com.torodb.core.annotations.TorodbIdleService;
@@ -56,7 +57,7 @@ public class PostgreSqlDbBackend extends AbstractDbBackendService<BackendConfig>
 
   @Override
   protected DataSource getConfiguredDataSource(BackendConfig configuration, String poolName) {
-    return driverProvider.getConfiguredDataSource(configuration, poolName);
+    return driverProvider.getConfiguredDataSource((BackendConfigImpl) configuration, poolName);
   }
 
   @Override

@@ -28,9 +28,13 @@ backend:
     port: 5432
     database: torod
     user: torodb
+    toropassFile: "~/.toropass"
+    applicationName: "toro"
+    ssl: false
 ```
 
 You may change this configuration depending on your requisites.
+You can enabled SSL connection setting `ssl: true` in configuration file.  
 To provide the PostgreSQL user's password that ToroDB Stampede will use to connect to PostgreSQL 
 you can specify parameter `--ask-for-password` to make ToroDB Stampede prompt for the password while starting up  
 or you create a PostgreSQL credentials configuration file `~/.toropass`, using the `.pgpass` file format. 
@@ -51,6 +55,8 @@ backend:
     database: torod
     user: torodb
     toropassFile: /secret/mytoropass
+    applicationName: "toro"
+    ssl: false
 ```
 
 ## Custom MongoDB connection

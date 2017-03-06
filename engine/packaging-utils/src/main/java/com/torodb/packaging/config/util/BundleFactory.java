@@ -21,6 +21,7 @@ package com.torodb.packaging.config.util;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.inject.Injector;
 import com.torodb.backend.BackendConfig;
+import com.torodb.backend.BackendConfigImpl;
 import com.torodb.backend.BackendConfigImplBuilder;
 import com.torodb.backend.derby.DerbyDbBackendBundle;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
@@ -56,7 +57,8 @@ public class BundleFactory {
         .accept(new BackendImplementationVisitor<BackendBundle, Void>() {
           @Override
           public BackendBundle visit(AbstractPostgres value, Void arg) {
-            BackendConfig config = new BackendConfigImplBuilder(generalConfig)
+            BackendConfigImpl config = 
+                (BackendConfigImpl) new BackendConfigImplBuilder(generalConfig)
                 .setConnectionPoolSize(connPoolConf.getConnectionPoolSize())
                 .setConnectionPoolTimeout(connPoolConf.getConnectionPoolTimeout())
                 .setDbHost(value.getHost())
@@ -66,6 +68,7 @@ public class BundleFactory {
                 .setPassword(value.getPassword())
                 .setReservedReadPoolSize(connPoolConf.getReservedReadPoolSize())
                 .setUsername(value.getUser())
+                .setSslEnabled(value.getSsl())
                 .build();
             return new PostgreSqlBackendBundle(config);
           }
