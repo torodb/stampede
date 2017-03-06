@@ -22,8 +22,6 @@ import com.google.inject.Injector;
 import com.torodb.core.modules.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 
-import org.jooq.util.postgres.PostgresDSL;
-
 import java.util.concurrent.ThreadFactory;
 
 
