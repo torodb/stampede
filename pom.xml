@@ -485,7 +485,6 @@
                         </goals>
                         <configuration>
                             <trimStackTrace>false</trimStackTrace>
-                            <excludedGroups>com.torodb.core.test.IntegrationTest</excludedGroups>
                         </configuration>
                     </execution>
                 </executions>
@@ -724,13 +723,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <includes>
-                                <include>**/*IT.java</include>
-                                <include>**/*Test.java</include>
-                            </includes>
-                            <groups>com.torodb.core.test.IntegrationTest</groups>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

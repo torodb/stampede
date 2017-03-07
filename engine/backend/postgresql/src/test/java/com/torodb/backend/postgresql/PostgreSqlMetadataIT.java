@@ -21,10 +21,7 @@ package com.torodb.backend.postgresql;
 
 import com.torodb.backend.tests.common.AbstractMetaDataIntegrationSuite;
 import com.torodb.backend.tests.common.DatabaseTestContext;
-import com.torodb.core.test.IntegrationTest;
-import org.junit.experimental.categories.Category;
 
-@Category(IntegrationTest.class)
 public class PostgreSqlMetadataIT extends AbstractMetaDataIntegrationSuite {
 
   @Override

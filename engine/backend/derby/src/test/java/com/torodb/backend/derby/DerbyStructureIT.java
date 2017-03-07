@@ -20,14 +20,11 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.tests.common.AbstractStructureIntegrationSuite;
 import com.torodb.backend.tests.common.DatabaseTestContext;
-import com.torodb.core.test.IntegrationTest;
 import com.torodb.core.transaction.metainf.FieldType;
-import org.junit.experimental.categories.Category;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Category(IntegrationTest.class)
 public class DerbyStructureIT extends AbstractStructureIntegrationSuite {
 
   private Map<FieldType, String> typesDictionary = new HashMap<>();
