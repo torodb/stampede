@@ -32,6 +32,7 @@ public class BackendConfigImplBuilder implements BackendConfigBuilder {
   private int dbPort;
   private boolean includeForeignKeys = true;
   private final BundleConfig generalConfig;
+  private boolean sslEnabled = false;
 
   public BackendConfigImplBuilder(BundleConfig generalConfig) {
     this.generalConfig = generalConfig;
@@ -90,11 +91,16 @@ public class BackendConfigImplBuilder implements BackendConfigBuilder {
     this.includeForeignKeys = includeForeignKeys;
     return this;
   }
+  
+  public BackendConfigImplBuilder setSslEnabled(boolean sslEnabled) {
+    this.sslEnabled = sslEnabled;
+    return this;
+  }
 
   @Override
   public BackendConfig build() {
     return new BackendConfigImpl(connectionPoolTimeout, connectionPoolSize, reservedReadPoolSize,
-        username, password, dbHost, dbName, dbPort, includeForeignKeys, generalConfig);
+        username, password, dbHost, dbName, dbPort, includeForeignKeys, generalConfig, sslEnabled);
   }
 
 }

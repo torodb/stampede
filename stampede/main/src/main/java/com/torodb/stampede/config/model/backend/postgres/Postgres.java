@@ -32,7 +32,7 @@ import javax.validation.constraints.NotNull;
 
 @Description("config.backend.postgres")
 @JsonPropertyOrder({"host", "port", "database", "user", "password", "toropassFile",
-    "applicationName", "includeForeignKeys"})
+    "applicationName", "includeForeignKeys", "ssl"})
 @ExistsAnyPassword
 public class Postgres extends AbstractPostgres {
 
@@ -45,6 +45,7 @@ public class Postgres extends AbstractPostgres {
         null,
         ConfigUtils.getUserHomeFilePath(".toropass"),
         "toro",
+        false, 
         false
     );
   }
@@ -109,5 +110,13 @@ public class Postgres extends AbstractPostgres {
   @Override
   public Boolean getIncludeForeignKeys() {
     return super.getIncludeForeignKeys();
+  }
+  
+  @Description("config.backend.postgres.ssl")
+  @JsonProperty(required = false)
+  @NotNull
+  @Override
+  public Boolean getSsl() {
+    return super.getSsl();
   }
 }

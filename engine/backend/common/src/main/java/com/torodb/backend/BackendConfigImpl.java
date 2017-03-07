@@ -41,10 +41,11 @@ public class BackendConfigImpl implements BackendConfig {
   private final int dbPort;
   private final boolean includeForeignKeys;
   private final BundleConfig delegate;
+  private final boolean sslEnabled;
 
   protected BackendConfigImpl(long connectionPoolTimeout, int connectionPoolSize,
       int reservedReadPoolSize, String username, String password, String dbHost, String dbName,
-      int dbPort, boolean includeForeignKeys, BundleConfig delegate) {
+      int dbPort, boolean includeForeignKeys, BundleConfig delegate, boolean sslEnabled) {
     this.connectionPoolTimeout = connectionPoolTimeout;
     this.connectionPoolSize = connectionPoolSize;
     this.reservedReadPoolSize = reservedReadPoolSize;
@@ -55,6 +56,7 @@ public class BackendConfigImpl implements BackendConfig {
     this.dbPort = dbPort;
     this.includeForeignKeys = includeForeignKeys;
     this.delegate = delegate;
+    this.sslEnabled = sslEnabled;
   }
 
   @Override
@@ -115,5 +117,9 @@ public class BackendConfigImpl implements BackendConfig {
   @Override
   public boolean includeForeignKeys() {
     return includeForeignKeys;
+  }
+  
+  public boolean getSslEnabled() {
+    return sslEnabled;
   }
 }
