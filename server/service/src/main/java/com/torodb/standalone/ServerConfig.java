@@ -21,9 +21,11 @@ package com.torodb.standalone;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
+import org.apache.logging.log4j.Logger;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -35,18 +37,25 @@ public class ServerConfig {
   private final HostAndPort selfHostAndPort;
   @SuppressWarnings("checkstyle:LineLength")
   private final BiFunction<BundleConfig, MongoDbCoreBundle, MongoDbWpBundle> mongoDbWpBundleGenerator;
+  private final Logger logger;
 
   public ServerConfig(Injector essentialInjector,
       Function<BundleConfig, BackendBundle> backendBundleGenerator, HostAndPort selfHostAndPort,
-      BiFunction<BundleConfig, MongoDbCoreBundle, MongoDbWpBundle> mongoDbWpBundleGenerator) {
+      BiFunction<BundleConfig, MongoDbCoreBundle, MongoDbWpBundle> mongoDbWpBundleGenerator,
+      LoggerFactory loggerFactory) {
     this.essentialInjector = essentialInjector;
     this.backendBundleGenerator = backendBundleGenerator;
     this.selfHostAndPort = selfHostAndPort;
     this.mongoDbWpBundleGenerator = mongoDbWpBundleGenerator;
+    this.logger = loggerFactory.apply(ServerService.class);
   }
  
   public Injector getEssentialInjector() {
     return essentialInjector;
+  }
+
+  public Logger getLifecycleLogger() {
+    return logger;
   }
 
   public Function<BundleConfig, BackendBundle> getBackendBundleGenerator() {

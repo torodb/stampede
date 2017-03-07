@@ -18,8 +18,8 @@
 
 package com.torodb.mongodb.repl.oplogreplier;
 
-import com.torodb.core.modules.Bundle;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.Bundle;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongoDbCoreBundle;

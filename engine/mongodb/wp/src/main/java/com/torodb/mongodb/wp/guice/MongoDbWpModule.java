@@ -52,6 +52,9 @@ import com.eightkdata.mongowp.server.wp.RequestMessageObjectHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.torodb.core.guice.EssentialToDefaultModule;
+import com.torodb.core.logging.ComponentLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.CommandClassifier;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreExtInt;
@@ -76,7 +79,9 @@ public class MongoDbWpModule extends PrivateModule {
   protected void configure() {
     expose(NettyMongoServer.class);
     expose(MongoServerConfig.class);
-  
+
+    install(new WpToDefaultModule());
+
     bindCore();
 
     bind(NettyMongoServer.class)
@@ -178,6 +183,16 @@ public class MongoDbWpModule extends PrivateModule {
         .toInstance(coreExtInt.getMongodServer().getCommandsExecutorClassifier());
     bind(MongodServer.class)
         .toInstance(coreExtInt.getMongodServer());
+  }
+
+  private static class WpToDefaultModule extends EssentialToDefaultModule {
+
+    @Override
+    protected void bindLoggerFactory() {
+      bind(LoggerFactory.class)
+          .toInstance(new ComponentLoggerFactory("WP"));
+    }
+
   }
 
 }

@@ -21,9 +21,9 @@ package com.torodb.mongodb.repl.topology;
 import com.eightkdata.mongowp.OpTime;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Clock;
@@ -39,8 +39,7 @@ import javax.inject.Singleton;
 @Singleton
 class TopologyService extends IdleTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(TopologyService.class);
-
+  private final Logger logger;
   private final TopologyHeartbeatHandler heartbeatHandler;
   private final TopologyExecutor executor;
   private final Clock clock;
@@ -48,11 +47,12 @@ class TopologyService extends IdleTorodbService {
   @Inject
   public TopologyService(TopologyHeartbeatHandler heartbeatHandler,
       ThreadFactory threadFactory, TopologyExecutor executor,
-      Clock clock) {
+      Clock clock, LoggerFactory lf) {
     super(threadFactory);
     this.heartbeatHandler = heartbeatHandler;
     this.executor = executor;
     this.clock = clock;
+    this.logger = lf.apply(this.getClass());
   }
 
   public CompletableFuture<Empty> initiate(ReplicaSetConfig rsConfig) {
@@ -99,7 +99,7 @@ class TopologyService extends IdleTorodbService {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.debug("Starting topology service");
+    logger.debug("Starting topology service");
 
     heartbeatHandler.startAsync();
     heartbeatHandler.awaitRunning();
@@ -109,7 +109,7 @@ class TopologyService extends IdleTorodbService {
     do {
       topologyReady = calculateTopologyReady();
       if (!topologyReady) {
-        LOGGER.debug("Waiting until topology is ready");
+        logger.debug("Waiting until topology is ready");
         Thread.sleep(1000);
       }
       attempts++;
@@ -120,12 +120,12 @@ class TopologyService extends IdleTorodbService {
           + "after " + attempts + " attempts");
     }
 
-    LOGGER.info("Topology service started");
+    logger.info("Topology service started");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.info("Topology service shutted down");
+    logger.info("Topology service shutted down");
 
     heartbeatHandler.stopAsync();
     heartbeatHandler.awaitTerminated();

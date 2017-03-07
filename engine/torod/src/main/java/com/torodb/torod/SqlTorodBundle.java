@@ -26,7 +26,6 @@ import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.transaction.metainf.MetainfoRepository;
 import com.torodb.torod.guice.SqlTorodModule;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
@@ -35,8 +34,8 @@ import java.util.Collections;
 /**
  * A {@link TorodBundle torod bundle} that uses a SQL backend.
  */
-public class SqlTorodBundle extends TorodBundle {
-  private static final Logger LOGGER = LogManager.getLogger(SqlTorodBundle.class);
+public class SqlTorodBundle extends AbstractTorodBundle {
+  private static final Logger LOGGER = TorodLoggerFactory.get(SqlTorodBundle.class);
   private final TorodServer torodServer;
   private final BackendBundle backendBundle;
   private final SnapshotUpdater snapshotUpdater;

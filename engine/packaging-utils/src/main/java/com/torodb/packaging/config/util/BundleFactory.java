@@ -18,7 +18,6 @@
 
 package com.torodb.packaging.config.util;
 
-import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.inject.Injector;
 import com.torodb.backend.BackendConfig;
 import com.torodb.backend.BackendConfigImpl;
@@ -28,16 +27,11 @@ import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 import com.torodb.backend.postgresql.PostgreSqlBackendBundle;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.mongodb.repl.MongoDbReplConfigBuilder;
-import com.torodb.mongodb.repl.filters.ReplicationFilters;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.packaging.config.model.backend.AbstractBackend;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
-import com.torodb.packaging.util.MongoClientConfigurationFactory;
-import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.torod.SqlTorodBundle;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
@@ -107,19 +101,5 @@ public class BundleFactory {
         essentialInjector, 
         generalConfig.getSupervisor()
     ));
-  }
-
-  public static MongoDbReplConfigBuilder createMongoDbReplConfigBundle(
-      AbstractReplication replicationConfig,
-      BundleConfig generalConfig) {
-    @SuppressWarnings("checkstyle:LineLength")
-    MongoClientConfiguration mongoClientConfiguration = MongoClientConfigurationFactory.getMongoClientConfiguration(replicationConfig);
-    ReplicationFilters replFilters = ReplicationFiltersFactory.getReplicationFilters(
-        replicationConfig);
-    return new MongoDbReplConfigBuilder(generalConfig)
-        .setMongoClientConfiguration(mongoClientConfiguration)
-        .setReplicationFilters(replFilters)
-        .setReplSetName(replicationConfig.getReplSetName()
-        );
   }
 }

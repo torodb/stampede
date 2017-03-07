@@ -18,13 +18,14 @@
 
 package com.torodb.engine.essential;
 
+import com.torodb.core.logging.DefaultLoggerFactory;
 import org.junit.Test;
 
 public class EssentialInjectorFactoryTest {
 
   @Test
   public void testCreateEssentialInjector() {
-    EssentialInjectorFactory.createEssentialInjector();
+    EssentialInjectorFactory.createEssentialInjector(DefaultLoggerFactory.getInstance());
   }
 
 }

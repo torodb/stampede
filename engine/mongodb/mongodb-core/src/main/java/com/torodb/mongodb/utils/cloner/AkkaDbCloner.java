@@ -55,6 +55,8 @@ import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.concurrent.ActorSystemTorodbService;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.DefaultLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
@@ -82,7 +84,6 @@ import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Clock;
@@ -114,9 +115,9 @@ import java.util.function.Function;
 @Beta
 public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
 
-  private static final Logger LOGGER = LogManager.getLogger(AkkaDbCloner.class);
+  private final Logger logger;
   /**
-   * The number of parallel task that can be used to clone each collection
+   * The number of parallel task that can be used to clone each collection.
    */
   private final int maxParallelInsertTasks;
   /**
@@ -131,12 +132,13 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
   public AkkaDbCloner(ThreadFactory threadFactory,
       ConcurrentToolsFactory concurrentToolsFactory,
       int maxParallelInsertTasks, int cursorBatchBufferSize,
-      CommitHeuristic commitHeuristic, Clock clock, Retrier retrier) {
+      CommitHeuristic commitHeuristic, Clock clock, Retrier retrier, LoggerFactory loggerFactory) {
     super(threadFactory,
         () -> concurrentToolsFactory.createExecutorService(
             "db-cloner", false),
         "akka-db-cloner"
     );
+    this.logger = loggerFactory.apply(this.getClass());
 
     this.maxParallelInsertTasks = maxParallelInsertTasks;
     Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
@@ -151,7 +153,10 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    if (logger == null) { //just in case it is called by the super constructor
+      return DefaultLoggerFactory.get(this.getClass());
+    }
+    return logger;
   }
 
   @Override
@@ -161,7 +166,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     Preconditions.checkState(isRunning(), "This db cloner is not running");
 
     if (!remoteClient.isRemote() && opts.getDbToClone().equals(dstDb)) {
-      LOGGER.warn("Trying to clone a database to itself! Ignoring it");
+      logger.warn("Trying to clone a database to itself! Ignoring it");
       return;
     }
     String fromDb = opts.getDbToClone();
@@ -204,7 +209,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     try (MongoConnection remoteConnection = remoteClient.openConnection()) {
       if (opts.isCloneData()) {
         for (Entry entry : collsToClone) {
-          LOGGER.info("Cloning collection data {}.{} into {}.{}",
+          logger.info("Cloning collection data {}.{} into {}.{}",
               fromDb, entry.getCollectionName(), dstDb,
               entry.getCollectionName());
 
@@ -223,7 +228,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       }
       if (opts.isCloneIndexes()) {
         for (Entry entry : collsToClone) {
-          LOGGER.info("Cloning collection indexes {}.{} into {}.{}",
+          logger.info("Cloning collection indexes {}.{} into {}.{}",
               fromDb, entry.getCollectionName(), dstDb,
               entry.getCollectionName());
 
@@ -330,7 +335,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       throw new AssertionError("Detected an inconsistency between inserted documents ( "
           + insertedDocs + ") andrequested documents to insert (" + requestedDocs + ")");
     }
-    LOGGER.info("{} documents have been cloned to {}.{}", insertedDocs, toDb, toCol);
+    logger.info("{} documents have been cloned to {}.{}", insertedDocs, toDb, toCol);
   }
 
   private Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> createCloneDocsWorker(
@@ -418,28 +423,28 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       String collName = collEntry.getCollectionName();
 
       if (opts.getCollsToIgnore().contains(collName)) {
-        LOGGER.debug("Not cloning {} because is marked as an ignored collection", collName);
+        logger.debug("Not cloning {} because is marked as an ignored collection", collName);
         continue;
       }
 
       if (!NamespaceUtil.isUserWritable(fromDb, collName)) {
-        LOGGER.info("Not cloning {} because is a not user writable", collName);
+        logger.info("Not cloning {} because is a not user writable", collName);
         continue;
       }
       if (NamespaceUtil.isNormal(fromDb, collName)) {
-        LOGGER.info("Not cloning {} because it is not normal", collName);
+        logger.info("Not cloning {} because it is not normal", collName);
         continue;
       }
       if (!opts.getCollectionFilter().test(collName)) {
-        LOGGER.info("Not cloning {} because it didn't pass the given filter predicate", collName);
+        logger.info("Not cloning {} because it didn't pass the given filter predicate", collName);
         continue;
       }
       if (NamespaceUtil.isViewCollection(collEntry.getType())) {
-        LOGGER.info("Not cloning {} because it is a view", collName);
+        logger.info("Not cloning {} because it is a view", collName);
         continue;
       }
       
-      LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
+      logger.info("Collection {}.{} will be cloned", fromDb, collName);
       collsToClone.add(collEntry);
     }
     return collsToClone;
@@ -514,11 +519,11 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
           .getReason();
 
       if (reason.isPresent()) {
-        LOGGER.info("Index {}.{} didn't pass the index filter. {}", toCol, indexEntry.getName(),
+        logger.info("Index {}.{} didn't pass the index filter. {}", toCol, indexEntry.getName(),
             reason.get().apply(indexEntry));
         continue;
       }
-      LOGGER.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
+      logger.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
       indexesToClone.add(indexEntry);
     }
     return indexesToClone;

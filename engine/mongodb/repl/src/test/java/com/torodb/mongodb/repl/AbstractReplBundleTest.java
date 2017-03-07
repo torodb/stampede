@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.Bundle;
+import com.torodb.core.bundle.Bundle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

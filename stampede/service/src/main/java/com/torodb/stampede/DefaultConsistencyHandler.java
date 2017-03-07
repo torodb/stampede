@@ -18,89 +18,27 @@
 
 package com.torodb.stampede;
 
-import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendService;
-import com.torodb.core.backend.BackendTransaction;
 import com.torodb.core.backend.MetaInfoKey;
-import com.torodb.core.backend.WriteBackendTransaction;
-import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
-import com.torodb.core.retrier.RetrierAbortException;
-import com.torodb.core.retrier.RetrierGiveUpException;
-import com.torodb.core.transaction.RollbackException;
-import com.torodb.kvdocument.types.BooleanType;
-import com.torodb.kvdocument.values.KvBoolean;
-import com.torodb.kvdocument.values.KvValue;
-import com.torodb.mongodb.repl.ConsistencyHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.util.Optional;
+import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class DefaultConsistencyHandler implements ConsistencyHandler {
+public class DefaultConsistencyHandler extends AbstractConsistencyHandler {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(DefaultConsistencyHandler.class);
-  private boolean consistent;
   private static final MetaInfoKey CONSISTENCY_KEY = () -> "repl.consistent";
-  private final BackendService backendService;
-  private final Retrier retrier;
 
-  DefaultConsistencyHandler(BackendService backendService, Retrier retrier) {
-    this.backendService = backendService;
-    this.retrier = retrier;
-
-    loadConsistent();
+  public DefaultConsistencyHandler(BackendService backendService, Retrier retrier,
+      ThreadFactory threadFactory) {
+    super(backendService, retrier, threadFactory);
   }
 
   @Override
-  public boolean isConsistent() {
-    return consistent;
-  }
-
-  @Override
-  public void setConsistent(boolean consistency) throws RetrierGiveUpException {
-    this.consistent = consistency;
-    flushConsistentState();
-    LOGGER.info("Consistent state has been set to '" + consistent + "'");
-  }
-
-  private void loadConsistent() {
-    try (BackendConnection conn = backendService.openConnection();
-        BackendTransaction trans = conn.openReadOnlyTransaction()) {
-      Optional<KvValue<?>> valueOpt = trans.readMetaInfo(CONSISTENCY_KEY);
-      if (!valueOpt.isPresent()) {
-        consistent = false;
-        return;
-      }
-      KvValue<?> value = valueOpt.get();
-      if (!value.getType().equals(BooleanType.INSTANCE)) {
-        throw new IllegalStateException("Unexpected consistency value "
-            + "found. Expected a boolean but " + valueOpt + " was "
-            + "found");
-      }
-      consistent = ((KvBoolean) value).getPrimitiveValue();
-    }
-  }
-
-  private void flushConsistentState() throws RollbackException, RetrierGiveUpException {
-    try (BackendConnection conn = backendService.openConnection()) {
-      retrier.retry(() -> flushConsistentState(conn));
-    }
-  }
-
-  private Object flushConsistentState(BackendConnection conn) throws RetrierAbortException {
-    try (WriteBackendTransaction trans = conn.openSharedWriteTransaction()) {
-
-      trans.writeMetaInfo(CONSISTENCY_KEY, KvBoolean.from(consistent));
-      trans.commit();
-    } catch (UserException ex) {
-      throw new RetrierAbortException(ex);
-    }
-    return null;
+  public MetaInfoKey getConsistencyKey() {
+    return CONSISTENCY_KEY;
   }
 
 }

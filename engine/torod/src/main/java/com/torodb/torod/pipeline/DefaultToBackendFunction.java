@@ -26,7 +26,7 @@ import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.torod.TorodLoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ import java.util.function.Function;
 public class DefaultToBackendFunction implements
     Function<CollectionData, Iterable<BackendTransactionJob>> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DefaultToBackendFunction.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(DefaultToBackendFunction.class);
 
   private final BackendTransactionJobFactory factory;
   private final MetaDatabase database;

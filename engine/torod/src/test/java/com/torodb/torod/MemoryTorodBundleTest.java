@@ -24,8 +24,9 @@ import static org.junit.Assert.assertThat;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.EssentialModule;
@@ -48,6 +49,7 @@ public class MemoryTorodBundleTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )
@@ -61,7 +63,7 @@ public class MemoryTorodBundleTest {
   @Test
   public void testStartAndStop() {
     torodBundle.start()
-        .thenCompose((o) -> torodBundle.stop())
+        .thenCompose((Object ignore) -> torodBundle.stop())
         .join();
     assertThat(torodBundle.state(), is(Service.State.TERMINATED));
   }

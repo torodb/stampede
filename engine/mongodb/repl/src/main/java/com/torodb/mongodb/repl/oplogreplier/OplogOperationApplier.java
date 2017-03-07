@@ -37,6 +37,7 @@ import com.eightkdata.mongowp.server.api.oplog.NoopOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperationVisitor;
 import com.eightkdata.mongowp.server.api.oplog.UpdateOplogOperation;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand;
 import com.torodb.mongodb.commands.signatures.admin.CreateIndexesCommand.CreateIndexesArgument;
@@ -55,7 +56,6 @@ import com.torodb.mongodb.repl.commands.ReplCommandLibrary;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
@@ -67,13 +67,15 @@ import javax.inject.Inject;
 @ThreadSafe
 public class OplogOperationApplier {
 
-  private static final Logger LOGGER = LogManager.getLogger(OplogOperationApplier.class);
+  private final Logger logger;
   private final Visitor visitor = new Visitor();
   private final ReplCommandLibrary library;
   private final ReplCommandExecutor executor;
 
   @Inject
-  public OplogOperationApplier(ReplCommandLibrary library, ReplCommandExecutor executor) {
+  public OplogOperationApplier(ReplCommandLibrary library, ReplCommandExecutor executor,
+      LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
     this.library = library;
     this.executor = executor;
   }
@@ -81,12 +83,7 @@ public class OplogOperationApplier {
   /**
    * Applies the given {@link OplogOperation} on the database.
    *
-   * This method <b>DO NOT</b> modify the {@link OplogManager} state.
-   *
-   * @param op
-   * @param transaction
-   * @param applierContext
-   * @throws com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException
+   * <p>This method <b>DO NOT</b> modify the {@link OplogManager} state.
    */
   @SuppressWarnings("unchecked")
   public void apply(OplogOperation op,
@@ -139,7 +136,7 @@ public class OplogOperationApplier {
     @Override
     public OplogOperationApplierFunction visit(DbOplogOperation op, Void arg) {
       return (operation, con, applierContext) -> {
-        LOGGER.debug("Ignoring a db operation");
+        logger.debug("Ignoring a db operation");
       };
     }
 
@@ -158,7 +155,7 @@ public class OplogOperationApplier {
     @Override
     public OplogOperationApplierFunction visit(NoopOplogOperation op, Void arg) {
       return (operation, con, applierContext) -> {
-        LOGGER.debug("Ignoring a noop operation");
+        logger.debug("Ignoring a noop operation");
       };
     }
 
@@ -283,12 +280,12 @@ public class OplogOperationApplier {
     }
 
     if (!upsert && updateResult.getModifiedCounter() != 0) {
-      LOGGER.info("Oplog update operation with optime {} and hash {} did not find the doc to "
+      logger.info("Oplog update operation with optime {} and hash {} did not find the doc to "
           + "modify. Filter is {}", op.getOpTime(), op.getHash(), op.getFilter());
     }
 
     if (upsert && !updateResult.getUpserts().isEmpty()) {
-      LOGGER.warn("Replication couldn't find doc for op " + op);
+      logger.warn("Replication couldn't find doc for op " + op);
     }
   }
 
@@ -315,7 +312,7 @@ public class OplogOperationApplier {
         throw new OplogApplyingException(new MongoException(status));
       }
       if (status.getResult() == 0 && applierContext.treatUpdateAsUpsert()) {
-        LOGGER.info("Oplog delete operation with optime {} and hash {} did not find the "
+        logger.info("Oplog delete operation with optime {} and hash {} did not find the "
             + "doc to delete. Filter is {}", op.getOpTime(), op.getHash(), op.getFilter());
       }
     } catch (MongoException ex) {

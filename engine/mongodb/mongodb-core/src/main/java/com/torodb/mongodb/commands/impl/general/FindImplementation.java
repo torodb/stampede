@@ -27,6 +27,7 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.kvdocument.conversion.mongowp.ToBsonDocumentTranslator;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvValue;
@@ -36,21 +37,23 @@ import com.torodb.mongodb.commands.signatures.general.FindCommand.FindArgument;
 import com.torodb.mongodb.commands.signatures.general.FindCommand.FindResult;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.torod.TorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.OptionalLong;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- *
- */
 @Singleton
 public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, FindResult> {
 
-  private static final Logger LOGGER = LogManager.getLogger(FindImplementation.class);
+  private final Logger logger;
+
+  @Inject
+  public FindImplementation(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   public Status<FindResult> apply(Request req,
@@ -112,12 +115,7 @@ public class FindImplementation implements ReadTorodbCommandImpl<FindArgument, F
   }
 
   private void logFindCommand(FindArgument arg) {
-    if (LOGGER.isTraceEnabled()) {
-      String collection = arg.getCollection();
-      String filter = arg.getFilter().toString();
-
-      LOGGER.trace("Find into {} filter {}", collection, filter);
-    }
+    logger.trace("Find into {} filter {}", arg.getCollection(), arg.getFilter());
   }
 
 }

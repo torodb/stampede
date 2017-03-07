@@ -26,9 +26,11 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.logging.ComponentLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
-import com.torodb.core.modules.BundleConfig;
 import com.torodb.engine.essential.EssentialModule;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
@@ -45,7 +47,6 @@ import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.standalone.config.model.backend.Backend;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
@@ -59,7 +60,8 @@ import java.util.ResourceBundle;
  */
 public class Main {
 
-  private static final Logger LOGGER = LogManager.getLogger(Main.class);
+  private static final LoggerFactory LOGGER_FACTORY = new ComponentLoggerFactory("SERVER");
+  private static final Logger LOGGER = LOGGER_FACTORY.apply(Main.class);
 
   /**
    * The main method that runs ToroDB Server.
@@ -144,7 +146,7 @@ public class Main {
             public String getDatabase() {
               return replication.getAuth().getSource();
             }
-          });
+          }, LOGGER);
         }
       }
     }
@@ -211,13 +213,18 @@ public class Main {
     backendConfig.setConnectionPoolConfig(config.getGeneric());
 
     return new ServerConfig(
-        Guice.createInjector(new EssentialModule(metricsConfig, clock)),
+        Guice.createInjector(new EssentialModule(
+            new ComponentLoggerFactory("LIFECYCLE"),
+            metricsConfig,
+            clock)
+        ),
         generalConfig -> BundleFactory.createBackendBundle(
             backendConfig,
             generalConfig
         ),
         getSelfHostAndPort(config),
-        (generalConfig, coreBundle) -> createMongoDbWpBundle(config, coreBundle, generalConfig)
+        (generalConfig, coreBundle) -> createMongoDbWpBundle(config, coreBundle, generalConfig),
+        LOGGER_FACTORY
     );
   }
 
@@ -286,7 +293,7 @@ public class Main {
 
       public void parseToropassFile(BackendPasswordConfig value) {
         try {
-          ConfigUtils.parseToropassFile(value);
+          ConfigUtils.parseToropassFile(value, LOGGER);
         } catch (Exception ex) {
           throw new SystemException(ex);
         }

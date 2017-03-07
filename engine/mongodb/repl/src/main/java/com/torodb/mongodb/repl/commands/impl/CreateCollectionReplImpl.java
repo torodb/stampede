@@ -27,12 +27,12 @@ import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Key;
 import com.torodb.core.language.AttributeReference.ObjectKey;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.transaction.metainf.FieldIndexOrdering;
 import com.torodb.mongodb.commands.signatures.admin.CreateCollectionCommand.CreateCollectionArgument;
 import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
@@ -41,12 +41,13 @@ import javax.inject.Inject;
 
 public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionArgument, Empty> {
 
-  private static final Logger LOGGER = LogManager.getLogger(CreateCollectionReplImpl.class);
+  private final Logger logger;
   private final CommandFilterUtil filterUtil;
 
   @Inject
-  public CreateCollectionReplImpl(CommandFilterUtil filterUtil) {
+  public CreateCollectionReplImpl(CommandFilterUtil filterUtil, LoggerFactory loggerFactory) {
     this.filterUtil = filterUtil;
+    this.logger = loggerFactory.apply(this.getClass());
   }
 
   @Override
@@ -61,10 +62,10 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
     }
 
     try {
-      LOGGER.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
+      logger.info("Creating collection {}.{}", req.getDatabase(), arg.getCollection());
 
       if (arg.getOptions().isCapped()) {
-        LOGGER.info("Ignoring capped flag for collection {}.{}", req.getDatabase(), arg
+        logger.info("Ignoring capped flag for collection {}.{}", req.getDatabase(), arg
             .getCollection());
       }
 
@@ -86,7 +87,7 @@ public class CreateCollectionReplImpl extends ReplCommandImpl<CreateCollectionAr
 
       trans.createCollection(req.getDatabase(), arg.getCollection());
     } catch (UserException ex) {
-      reportErrorIgnored(LOGGER, command, ex);
+      reportErrorIgnored(logger, command, ex);
     }
     return Status.ok();
   }

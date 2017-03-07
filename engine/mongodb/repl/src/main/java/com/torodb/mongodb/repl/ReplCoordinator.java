@@ -20,13 +20,13 @@ package com.torodb.mongodb.repl;
 
 import com.google.common.base.Throwables;
 import com.torodb.core.annotations.TorodbIdleService;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.EscalatingException;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
 import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
@@ -34,14 +34,10 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
-/**
- *
- */
 @ThreadSafe
 public class ReplCoordinator extends IdleTorodbService implements Supervisor {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(ReplCoordinator.class);
+  private final Logger logger;
   private final ConsistencyHandler consistencyHandler;
   private final Supervisor replSupervisor;
   private final ReplCoordinatorStateMachine stateMachine;
@@ -49,10 +45,12 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
   @Inject
   public ReplCoordinator(
       @TorodbIdleService ThreadFactory threadFactory,
+      LoggerFactory loggerFactory,
       ConsistencyHandler consistencyHandler,
       @MongoDbRepl Supervisor replSupervisor,
       ReplCoordinatorStateMachine stateMachine) {
     super(threadFactory);
+    this.logger = loggerFactory.apply(this.getClass());
     this.consistencyHandler = consistencyHandler;
     this.replSupervisor = replSupervisor;
     this.stateMachine = stateMachine;
@@ -60,28 +58,28 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.debug("Starting replication coordinator");
+    logger.debug("Starting replication coordinator");
     stateMachine.startAsync();
     stateMachine.awaitRunning();
 
     loadStoredConfig();
 
     if (!consistencyHandler.isConsistent()) {
-      LOGGER.info("Database is not consistent.");
+      logger.info("Database is not consistent.");
       stateMachine.startRecoveryMode(new RecoveryServiceCallback());
     } else {
-      LOGGER.info("Database is consistent.");
+      logger.info("Database is consistent.");
       stateMachine.startSecondaryMode(new OplogReplierServiceCallback());
     }
-    LOGGER.debug("Replication coordinator started");
+    logger.debug("Replication coordinator started");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.debug("Shutting down replication coordinator");
+    logger.debug("Shutting down replication coordinator");
     stateMachine.stopAsync();
     stateMachine.awaitTerminated();
-    LOGGER.debug("Replication coordinator shutted down");
+    logger.debug("Replication coordinator shutted down");
   }
 
   @Override
@@ -97,7 +95,7 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
   }
 
   private void loadStoredConfig() {
-    LOGGER.warn("loadStoredConfig() is not implemented yet");
+    logger.debug("loadStoredConfig() is not implemented yet");
   }
 
   private class RecoveryServiceCallback implements RecoveryService.Callback {
@@ -109,7 +107,7 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
 
     @Override
     public void recoveryFinished(RecoveryService service) {
-      LOGGER.debug("Recovery finishes");
+      logger.debug("Recovery finishes");
       stateMachine.fromRecoveryToSecondary(
           new OplogReplierServiceCallback()
       );
@@ -118,14 +116,14 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
     @Override
     public void recoveryFailed(RecoveryService service, Throwable ex) {
       Throwable cause = Throwables.getRootCause(ex);
-      LOGGER
+      logger
           .error("Fatal error while starting recovery mode: " + cause.getLocalizedMessage(), cause);
       ReplCoordinator.this.onError(service, ex);
     }
 
     @Override
     public void recoveryFailed(RecoveryService service) {
-      LOGGER.error("Fatal error while starting recovery mode");
+      logger.error("Fatal error while starting recovery mode");
       ReplCoordinator.this.onError(service, new AssertionError(
           "Recovery finished before it was expected"));
     }
@@ -133,7 +131,7 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
     @Override
     public void setConsistentState(boolean consistent) {
       try {
-        consistencyHandler.setConsistent(consistent);
+        consistencyHandler.setConsistent(logger, consistent);
       } catch (Throwable ex) {
         throw new AssertionError("Fatal error: It was impossible to "
             + "store the consistent state", ex);
@@ -158,8 +156,8 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
     @Override
     public void rollback(OplogApplierService oplogApplierService,
         RollbackReplicationException t) {
-      LOGGER.debug("Secondary request a rollback with an exception", t);
-      LOGGER.debug("ROLLBACK state is ignored, delegating on RECOVERY");
+      logger.debug("Secondary request a rollback with an exception", t);
+      logger.debug("ROLLBACK state is ignored, delegating on RECOVERY");
       shuttingUp = true;
       stateMachine.fromSecondaryToRecovery(new RecoveryServiceCallback());
     }

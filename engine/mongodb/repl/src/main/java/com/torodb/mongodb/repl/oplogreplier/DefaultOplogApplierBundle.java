@@ -21,7 +21,7 @@ package com.torodb.mongodb.repl.oplogreplier;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
 import com.torodb.mongodb.repl.oplogreplier.batch.AnalyzedOplogBatchExecutor;
 
 import java.util.Collection;
@@ -36,6 +36,7 @@ public class DefaultOplogApplierBundle extends AbstractBundle<DefaultOplogApplie
     super(config);
     this.config = config;
     Injector injector = config.getEssentialInjector().createChildInjector(
+        config.getEssentialOverrideModule(),
         new DefaultOplogApplierGuiceModule(config)
     );
     oplogApplier = injector.getInstance(OplogApplier.class);

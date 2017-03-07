@@ -28,10 +28,10 @@ import com.eightkdata.mongowp.server.api.pojos.MongoCursor;
 import com.eightkdata.mongowp.server.api.pojos.MongoCursor.Batch;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.RunnableTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.exceptions.NoSyncSourceFoundException;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ThreadFactory;
@@ -39,16 +39,13 @@ import java.util.concurrent.ThreadFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 
-/**
- *
- */
 @NotThreadSafe
 class ReplSyncFetcher extends RunnableTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(ReplSyncFetcher.class);
   private static final int MIN_BATCH_SIZE = 5;
   private static final long SLEEP_TO_BATCH_MILLIS = 2;
 
+  private final Logger logger;
   private final SyncServiceView callback;
   private final OplogReaderProvider readerProvider;
   private final SyncSourceProvider syncSourceProvider;
@@ -67,8 +64,10 @@ class ReplSyncFetcher extends RunnableTorodbService {
       @Nonnull OplogReaderProvider readerProvider,
       long lastAppliedHash,
       OpTime lastAppliedOpTime,
-      ReplMetrics metrics) {
+      ReplMetrics metrics,
+      LoggerFactory loggerFactory) {
     super(supervisor, threadFactory);
+    this.logger = loggerFactory.apply(this.getClass());
     this.callback = callback;
     this.readerProvider = readerProvider;
     this.lastFetchedHash = 0;
@@ -120,21 +119,21 @@ class ReplSyncFetcher extends RunnableTorodbService {
             syncSource = syncSourceProvider.newSyncSource(lastFetchedOpTime);
             oplogReader = readerProvider.newReader(syncSource);
           } catch (NoSyncSourceFoundException ex) {
-            LOGGER.warn("There is no source to sync from");
+            logger.warn("There is no source to sync from");
             Thread.sleep(1000);
             continue;
           } catch (UnreachableMongoServerException ex) {
             assert syncSource != null;
-            LOGGER.warn("It was impossible to reach the sync source " + syncSource);
+            logger.warn("It was impossible to reach the sync source " + syncSource);
             Thread.sleep(1000);
             continue;
           }
 
           rollbackNeeded = fetch(oplogReader);
         } catch (InterruptedException ex) {
-          LOGGER.info("Interrupted fetch process", ex);
+          logger.info("Interrupted fetch process", ex);
         } catch (RestartFetchException ex) {
-          LOGGER.info("Restarting fetch process", ex);
+          logger.info("Restarting fetch process", ex);
         } catch (Throwable ex) {
           throw new StopFetchException(ex);
         } finally {
@@ -144,22 +143,22 @@ class ReplSyncFetcher extends RunnableTorodbService {
         }
       }
       if (rollbackNeeded) {
-        LOGGER.info("Requesting rollback");
+        logger.info("Requesting rollback");
         callback.rollback(oplogReader);
       } else {
-        LOGGER.info(serviceName() + " ending by external request");
+        logger.info(serviceName() + " ending by external request");
         callback.fetchFinished();
       }
     } catch (StopFetchException ex) {
-      LOGGER.info(serviceName() + " stopped by self request");
+      logger.info(serviceName() + " stopped by self request");
       callback.fetchAborted(ex);
     }
-    LOGGER.info(serviceName() + " stopped");
+    logger.info(serviceName() + " stopped");
   }
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    return logger;
   }
 
   public boolean fetchIterationCanContinue() {
@@ -200,12 +199,12 @@ class ReplSyncFetcher extends RunnableTorodbService {
             boolean delivered = false;
             while (!delivered) {
               try {
-                LOGGER.debug("Delivered op: {}", nextOp);
+                logger.debug("Delivered op: {}", nextOp);
                 callback.deliver(nextOp);
                 delivered = true;
                 opsReadCounter++;
               } catch (InterruptedException ex) {
-                LOGGER.warn(serviceName() + " interrupted while a "
+                logger.warn(serviceName() + " interrupted while a "
                     + "message was being to deliver. Retrying", ex);
               }
             }
@@ -235,7 +234,7 @@ class ReplSyncFetcher extends RunnableTorodbService {
       long elapsedTime = currentTime - oldBatch.getFetchTime();
       if (elapsedTime < SLEEP_TO_BATCH_MILLIS) {
         try {
-          LOGGER.debug("Batch size is very small. Waiting {} millis for more...",
+          logger.debug("Batch size is very small. Waiting {} millis for more...",
               SLEEP_TO_BATCH_MILLIS);
           Thread.sleep(SLEEP_TO_BATCH_MILLIS);
         } catch (InterruptedException ex) {
@@ -268,7 +267,7 @@ class ReplSyncFetcher extends RunnableTorodbService {
 
   private void infrequentChecks(OplogReader reader) throws RestartFetchException {
     if (syncSourceProvider.shouldChangeSyncSource()) {
-      LOGGER.info("A better sync source has been detected");
+      logger.info("A better sync source has been detected");
       throw new RestartFetchException();
     }
   }
@@ -287,17 +286,17 @@ class ReplSyncFetcher extends RunnableTorodbService {
         OplogOperation lastOp = reader.getLastOp();
 
         if (lastOp.getOpTime().compareTo(lastFetchedOpTime) < 0) {
-          LOGGER.info("We are ahead of the sync source. Rolling back");
+          logger.info("We are ahead of the sync source. Rolling back");
           return true;
         }
       } catch (OplogStartMissingException ex) {
-        LOGGER.error("Sync source contais no operation on his oplog!");
+        logger.error("Sync source contais no operation on his oplog!");
         throw new StopFetchException();
       } catch (OplogOperationUnsupported ex) {
-        LOGGER.error("Sync source contais an invalid operation!");
+        logger.error("Sync source contais an invalid operation!");
         throw new StopFetchException(ex);
       } catch (MongoException ex) {
-        LOGGER.error("Unknown error while trying to fetch last remote operation", ex);
+        logger.error("Unknown error while trying to fetch last remote operation", ex);
         throw new StopFetchException(ex);
       }
     } else {
@@ -306,7 +305,7 @@ class ReplSyncFetcher extends RunnableTorodbService {
       if (firstOp.getHash() != lastFetchedHash
           || !firstOp.getOpTime().equals(lastFetchedOpTime)) {
 
-        LOGGER.info(
+        logger.info(
             "Rolling back: Our last fetched = [{}, {}]. Source = [{}, {}]",
             lastFetchedOpTime,
             lastFetchedHash,

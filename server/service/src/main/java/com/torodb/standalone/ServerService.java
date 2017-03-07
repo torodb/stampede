@@ -23,8 +23,10 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.ComponentLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
@@ -34,9 +36,8 @@ import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.torod.SqlTorodBundle;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
@@ -48,7 +49,6 @@ import java.util.concurrent.ThreadFactory;
  */
 public class ServerService extends AbstractIdleService implements Supervisor {
 
-  private static final Logger LOGGER = LogManager.getLogger(ServerService.class);
   private final ThreadFactory threadFactory;
   private final Injector essentialInjector;
   private final BundleConfig generalBundleConfig;  
@@ -79,7 +79,7 @@ public class ServerService extends AbstractIdleService implements Supervisor {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.info("Starting up ToroDB Server");
+    config.getLifecycleLogger().info("Starting up ToroDB Server");
 
     shutdowner.startAsync();
     shutdowner.awaitRunning();
@@ -97,23 +97,30 @@ public class ServerService extends AbstractIdleService implements Supervisor {
         .apply(generalBundleConfig, mongoDbCoreBundle);
     startBundle(mongodbWpBundle);
 
-    LOGGER.info("ToroDB Server is now running");
+    config.getLifecycleLogger().info("ToroDB Server is now running");
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.info("Shutting down ToroDB Standalone");
+    config.getLifecycleLogger().info("Shutting down ToroDB Standalone");
     if (shutdowner != null) {
       shutdowner.stopAsync();
       shutdowner.awaitTerminated();
     }
-    LOGGER.info("ToroDB Stampede has been shutted down");
+    config.getLifecycleLogger().info("ToroDB Stampede has been shutted down");
   }
 
   private MongoDbCoreBundle createMongoDbCoreBundle(TorodBundle torodBundle) {
     MongodServerConfig mongodServerConfig = new MongodServerConfig(config.getSelfHostAndPort());
+    LoggerFactory lf = new ComponentLoggerFactory("MONGOD");
     return new MongoDbCoreBundle(
-        MongoDbCoreConfig.simpleConfig(torodBundle, mongodServerConfig, generalBundleConfig)
+        MongoDbCoreConfig.simpleConfig(
+            torodBundle,
+            lf,
+            mongodServerConfig,
+            Optional.empty(),
+            generalBundleConfig
+        )
     );
   }
 

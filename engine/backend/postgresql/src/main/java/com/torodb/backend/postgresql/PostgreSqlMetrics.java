@@ -20,29 +20,48 @@ package com.torodb.backend.postgresql;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PostgreSqlMetrics {
+public final class PostgreSqlMetrics {
 
-  private static final MetricNameFactory factory = new MetricNameFactory("PostgreSQLWrite");
-  public final Timer insertDocPartDataTimer;
-  public final Meter insertRows;
-  public final Meter insertFields;
-  public final Meter insertDefault;
-  public final Meter insertCopy;
+  private final Timer insertDocPartDataTimer;
+  private final Meter insertRows;
+  private final Meter insertFields;
+  private final Meter insertDefault;
+  private final Meter insertCopy;
 
   @Inject
-  public PostgreSqlMetrics(ToroMetricRegistry registry) {
-    insertDocPartDataTimer = registry.timer(factory.createMetricName("insertDocPartDataTimer"));
-    insertRows = registry.meter(factory.createMetricName("insertRows"));
-    insertFields = registry.meter(factory.createMetricName("insertFields"));
-    insertDefault = registry.meter(factory.createMetricName("insertDefault"));
-    insertCopy = registry.meter(factory.createMetricName("insertCopy"));
+  public PostgreSqlMetrics(ToroMetricRegistry parentRegistry) {
+    ToroMetricRegistry registry = parentRegistry.createSubRegistry("PostgreSQLWrite");
+    insertDocPartDataTimer = registry.timer("insertDocPartDataTimer");
+    insertRows = registry.meter("insertRows");
+    insertFields = registry.meter("insertFields");
+    insertDefault = registry.meter("insertDefault");
+    insertCopy = registry.meter("insertCopy");
+  }
+
+  public Timer getInsertDocPartDataTimer() {
+    return insertDocPartDataTimer;
+  }
+
+  public Meter getInsertRows() {
+    return insertRows;
+  }
+
+  public Meter getInsertFields() {
+    return insertFields;
+  }
+
+  public Meter getInsertDefault() {
+    return insertDefault;
+  }
+
+  public Meter getInsertCopy() {
+    return insertCopy;
   }
 
 }

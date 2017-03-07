@@ -21,6 +21,7 @@ package com.torodb.mongodb.repl;
 import com.eightkdata.mongowp.OpTime;
 import com.google.inject.assistedinject.Assisted;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.ReadOplogTransaction;
@@ -31,7 +32,6 @@ import com.torodb.mongodb.repl.oplogreplier.RollbackReplicationException;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.ContinuousOplogFetcher.ContinuousOplogFetcherFactory;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
@@ -49,7 +49,7 @@ import javax.inject.Inject;
  */
 public class DefaultOplogApplierService extends IdleTorodbService implements OplogApplierService {
 
-  private static final Logger LOGGER = LogManager.getLogger(DefaultOplogApplierService.class);
+  private final Logger logger;
   private final OplogApplier oplogApplier;
   private final ContinuousOplogFetcherFactory oplogFetcherFactory;
   private final OplogManager oplogManager;
@@ -63,9 +63,10 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
   @Inject
   public DefaultOplogApplierService(ThreadFactory threadFactory,
       OplogApplier oplogApplier, OplogManager oplogManager,
-      ContinuousOplogFetcherFactory oplogFetcherFactory,
+      ContinuousOplogFetcherFactory oplogFetcherFactory, LoggerFactory loggerFactory,
       @Assisted Callback callback, ConcurrentToolsFactory concurrentToolsFactory) {
     super(threadFactory);
+    this.logger = loggerFactory.apply(this.getClass());
     this.oplogApplier = oplogApplier;
     this.oplogFetcherFactory = oplogFetcherFactory;
     this.oplogManager = oplogManager;
@@ -119,26 +120,26 @@ public class DefaultOplogApplierService extends IdleTorodbService implements Opl
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.debug("Shutdown requested");
+    logger.debug("Shutdown requested");
     stopping = true;
     if (applyJob != null) {
       if (!applyJob.onFinish().isDone()) {
-        LOGGER.trace("Applier has been already finished");
+        logger.trace("Applier has been already finished");
       } else {
-        LOGGER.trace("Requesting to stop the stream");
+        logger.trace("Requesting to stop the stream");
         applyJob.cancel();
         applyJob.onFinish().join();
-        LOGGER.trace("Applier finished");
+        logger.trace("Applier finished");
       }
     } else {
-      LOGGER.debug(serviceName() + " stopped before it was running?");
+      logger.debug(serviceName() + " stopped before it was running?");
     }
     if (fetcher != null) {
-      LOGGER.trace("Closing the fetcher");
+      logger.trace("Closing the fetcher");
       fetcher.close();
-      LOGGER.trace("Fetcher closed");
+      logger.trace("Fetcher closed");
     } else {
-      LOGGER.debug(serviceName() + " stopped before it was running?");
+      logger.debug(serviceName() + " stopped before it was running?");
     }
     if (onFinishFuture != null) {
       onFinishFuture.join();

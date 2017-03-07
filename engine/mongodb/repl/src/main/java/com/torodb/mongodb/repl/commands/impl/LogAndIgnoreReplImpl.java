@@ -22,20 +22,21 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.inject.Inject;
 
 public class LogAndIgnoreReplImpl extends ReplCommandImpl<String, Empty> {
 
-  private static final Logger LOGGER = LogManager.getLogger(LogAndIgnoreReplImpl.class);
+  private final Logger logger;
   private final CommandFilterUtil filterUtil;
 
   @Inject
-  public LogAndIgnoreReplImpl(CommandFilterUtil filterUtil) {
+  public LogAndIgnoreReplImpl(CommandFilterUtil filterUtil, LoggerFactory loggerFactory) {
     this.filterUtil = filterUtil;
+    this.logger = loggerFactory.apply(this.getClass());
   }
 
   @Override
@@ -46,7 +47,7 @@ public class LogAndIgnoreReplImpl extends ReplCommandImpl<String, Empty> {
       return Status.ok();
     }
 
-    LOGGER.warn("Command {} is not supported. It will not be executed", arg);
+    logger.warn("Command {} is not supported. It will not be executed", arg);
     return Status.ok();
   }
 

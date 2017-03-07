@@ -28,8 +28,9 @@ import com.torodb.backend.derby.DerbyDbBackendBundle;
 import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
 
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.EssentialModule;
@@ -54,6 +55,7 @@ public class SqlTorodBundleTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )
@@ -87,7 +89,7 @@ public class SqlTorodBundleTest {
   @Test
   public void testStartAndStop() {
     torodBundle.start()
-        .thenCompose((o) -> torodBundle.stop())
+        .thenCompose((Object ignore) -> torodBundle.stop())
         .join();
     assertThat(torodBundle.state(), is(Service.State.TERMINATED));
   }

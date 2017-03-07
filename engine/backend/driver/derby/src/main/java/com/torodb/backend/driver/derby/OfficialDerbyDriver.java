@@ -19,10 +19,10 @@
 package com.torodb.backend.driver.derby;
 
 import com.google.common.base.Charsets;
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.core.exceptions.SystemException;
 import org.apache.derby.jdbc.ClientDataSource;
 import org.apache.derby.jdbc.EmbeddedDataSource;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
@@ -38,21 +38,20 @@ import java.sql.Statement;
 import javax.sql.DataSource;
 
 /**
- *
- * A provider for the Derby driver based on the "official" Derby driver
+ * A provider for the Derby driver based on the "official" Derby driver.
  *
  * @see <a href="https://db.apache.org/derby/docs/10.12/devguide/cdevdvlp40653.html">Derby JDBC
  * Driver</a>
  */
 public class OfficialDerbyDriver implements DerbyDriverProvider {
 
-  private static final Logger LOGGER = LogManager.getLogger(
-      OfficialDerbyDriver.class
-  );
-  private static final Logger DRIVER_LOGGER = LogManager.getLogger(
-      ClientDataSource.class
-  );
+  private static final Logger LOGGER = BackendLoggerFactory.get(OfficialDerbyDriver.class);
+  private static final Logger DRIVER_LOGGER = BackendLoggerFactory.get(ClientDataSource.class);
   private static final PrintWriter LOGGER_WRITER = new PrintWriter(new LoggerWriter());
+  /*
+   * It seems to be used by derby by the system propperty derby.stream.error.field. See the static
+   * initialization
+   */
   public static final OutputStream LOGGER_OUTPUT = new OutputStream() {
     public void write(int b) {
     }
@@ -67,7 +66,7 @@ public class OfficialDerbyDriver implements DerbyDriverProvider {
     }
   };
 
-  {
+  static {
     if (DRIVER_LOGGER.isTraceEnabled()) {
       DriverManager.setLogWriter(LOGGER_WRITER);
       System.setProperty("derby.stream.error.field", OfficialDerbyDriver.class.getName()

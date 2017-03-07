@@ -38,7 +38,6 @@ import com.eightkdata.mongowp.utils.BsonReaderTool;
 import com.google.common.collect.Lists;
 import com.torodb.mongodb.commands.signatures.diagnostic.ListDatabasesCommand.ListDatabasesReply;
 import com.torodb.mongodb.commands.tools.EmptyCommandArgumentMarshaller;
-import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,8 +45,6 @@ import java.util.List;
 
 public class ListDatabasesCommand extends AbstractNotAliasableCommand<Empty, ListDatabasesReply> {
 
-  private static final org.apache.logging.log4j.Logger LOGGER =
-      LogManager.getLogger(ListDatabasesCommand.class);
   public static final ListDatabasesCommand INSTANCE = new ListDatabasesCommand();
   private static final String COMMAND_NAME = "listDatabases";
 
@@ -103,18 +100,6 @@ public class ListDatabasesCommand extends AbstractNotAliasableCommand<Empty, Lis
     public ListDatabasesReply(@NotMutable List<DatabaseEntry> databases, long sizeOnDisk) {
       this.databases = Collections.unmodifiableList(databases);
       this.totalSize = sizeOnDisk;
-
-      long temp = 0;
-      for (DatabaseEntry database : databases) {
-        temp += database.getSizeOnDisk();
-      }
-      if (temp != sizeOnDisk) {
-        LOGGER.warn("Inconsistent data provided to " + getClass()
-            + " constructor. Recived a total size of {} but {} was "
-            + "calculated. Using provided value",
-            sizeOnDisk,
-            temp);
-      }
     }
 
     public List<DatabaseEntry> getDatabases() {

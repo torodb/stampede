@@ -24,6 +24,7 @@ import com.eightkdata.mongowp.server.api.CommandImplementation;
 import com.eightkdata.mongowp.server.api.impl.MapBasedCommandExecutor;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.core.BuildProperties;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.CmdImplMapSupplier;
 import com.torodb.mongodb.commands.CommandClassifier;
 import com.torodb.mongodb.commands.RequiredTransaction;
@@ -33,7 +34,6 @@ import com.torodb.mongodb.core.MongodServerConfig;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.mongodb.core.ReadOnlyMongodTransaction;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Clock;
@@ -48,7 +48,6 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class CommandClassifierImpl implements CommandClassifier {
-  private static final Logger LOGGER = LogManager.getLogger(CommandClassifierImpl.class);
   private final CommandExecutor<ExclusiveWriteMongodTransaction> exclusiveWriteCommandsExecutor;
   private final CommandExecutor<WriteMongodTransaction> writeCommandsExecutor;
   private final CommandExecutor<ReadOnlyMongodTransaction> readOnlyCommandsExecutor;
@@ -60,10 +59,11 @@ public class CommandClassifierImpl implements CommandClassifier {
       CmdImplMapSupplier<ExclusiveWriteMongodTransaction> exclusiveWriteTransImpls,
       CmdImplMapSupplier<WriteMongodTransaction> writeTransImpls,
       CmdImplMapSupplier<MongodTransaction> generalTransImpls,
-      CmdImplMapSupplier<MongodConnection> connTransImpls) {
+      CmdImplMapSupplier<MongodConnection> connTransImpls,
+      Logger logger) {
 
     this.requiredTranslationMap = classifyCommands(exclusiveWriteTransImpls, writeTransImpls,
-        generalTransImpls, connTransImpls);
+        generalTransImpls, connTransImpls, logger);
 
     ImmutableMap.Builder<Command<?, ?>, CommandImplementation<?, ?, ? super ExclusiveWriteMongodTransaction>> exclusiveWriteMapBuilder =
         ImmutableMap.builder();
@@ -102,13 +102,14 @@ public class CommandClassifierImpl implements CommandClassifier {
   /**
    * Creates a default {@link CommandClassifier}.
    */
-  public static CommandClassifierImpl createDefault(Clock clock, BuildProperties buildProp,
-      MongodServerConfig mongodServerConfig) {
+  public static CommandClassifierImpl createDefault(LoggerFactory loggerFactory, Clock clock,
+      BuildProperties buildProp, MongodServerConfig mongodServerConfig) {
     return new CommandClassifierImpl(
         new ExclusiveWriteTransactionCmdsImpl(),
-        new WriteTransactionCmdImpl(),
-        new GeneralTransactionCmdImpl(),
-        new ConnectionCmdImpl(clock, buildProp, mongodServerConfig)
+        new WriteTransactionCmdImpl(loggerFactory),
+        new GeneralTransactionCmdImpl(loggerFactory),
+        new ConnectionCmdImpl(loggerFactory, clock, buildProp, mongodServerConfig),
+        loggerFactory.apply(CommandClassifierImpl.class)
     );
   }
 
@@ -116,27 +117,31 @@ public class CommandClassifierImpl implements CommandClassifier {
       CmdImplMapSupplier<ExclusiveWriteMongodTransaction> exclusiveWriteTransImpls,
       CmdImplMapSupplier<WriteMongodTransaction> writeTransImpls,
       CmdImplMapSupplier<MongodTransaction> generalTransImpls,
-      CmdImplMapSupplier<MongodConnection> connTransImpls) {
+      CmdImplMapSupplier<MongodConnection> connTransImpls,
+      Logger logger) {
 
     HashMap<Command<?, ?>, RequiredTransaction> map = new HashMap<>();
 
     exclusiveWriteTransImpls.get().keySet().stream()
-        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.EXCLUSIVE_WRITE_TRANSACTION));
+        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.EXCLUSIVE_WRITE_TRANSACTION,
+            logger
+        )
+    );
     writeTransImpls.get().keySet().stream()
-        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.WRITE_TRANSACTION));
+        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.WRITE_TRANSACTION, logger));
     generalTransImpls.get().keySet().stream()
-        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.READ_TRANSACTION));
+        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.READ_TRANSACTION, logger));
     connTransImpls.get().keySet().stream()
-        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.NO_TRANSACTION));
+        .forEach(cmd -> classifyCommand(map, cmd, RequiredTransaction.NO_TRANSACTION, logger));
 
     return map;
   }
 
   private static void classifyCommand(HashMap<Command<?, ?>, RequiredTransaction> map,
-      Command<?, ?> c, RequiredTransaction rt) {
+      Command<?, ?> c, RequiredTransaction rt, Logger logger) {
     RequiredTransaction oldRequiredTrans = map.put(c, rt);
     if (oldRequiredTrans != null) {
-      LOGGER.warn("The command {} is classified as it requires {} but also {}", c, rt,
+      logger.warn("The command {} is classified as it requires {} but also {}", c, rt,
           oldRequiredTrans);
     }
   }

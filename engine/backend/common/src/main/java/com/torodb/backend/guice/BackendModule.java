@@ -37,9 +37,6 @@ import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.dsl.backend.impl.BackendConnectionJobFactoryImpl;
 
-/**
- *
- */
 public class BackendModule extends PrivateModule {
 
   @Override

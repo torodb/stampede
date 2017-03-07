@@ -30,12 +30,12 @@ import com.eightkdata.mongowp.server.api.MongoRuntimeException;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.net.HostAndPort;
 import com.torodb.common.util.CompletionExceptions;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.mongodb.commands.pojos.ReplicaSetConfig;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatCommand.ReplSetHeartbeatArgument;
 import com.torodb.mongodb.commands.signatures.internal.ReplSetHeartbeatReply;
 import com.torodb.mongodb.repl.guice.ReplSetName;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.UncheckedException;
 
@@ -55,7 +55,7 @@ import javax.inject.Singleton;
 @Singleton
 public class TopologyHeartbeatHandler extends IdleTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(TopologyHeartbeatHandler.class);
+  private final Logger logger;
 
   private final HostAndPort seed;
   private final Clock clock;
@@ -69,10 +69,11 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
 
   @Inject
   public TopologyHeartbeatHandler(Clock clock, @ReplSetName String replSetName,
-      HeartbeatNetworkHandler heartbeatSender, TopologyExecutor executor,
-      TopologyErrorHandler errorHandler, ThreadFactory threadFactory,
+      LoggerFactory loggerFactory, HeartbeatNetworkHandler heartbeatSender,
+      TopologyExecutor executor, TopologyErrorHandler errorHandler, ThreadFactory threadFactory,
       @RemoteSeed HostAndPort seed) {
     super(threadFactory);
+    this.logger = loggerFactory.apply(this.getClass());
     this.clock = clock;
     this.replSetName = replSetName;
     this.networkHandler = heartbeatSender;
@@ -89,7 +90,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
 
   @Override
   protected void startUp() throws Exception {
-    LOGGER.debug("Starting up {}", serviceName());
+    logger.debug("Starting up {}", serviceName());
 
     boolean finished = false;
     while (!finished) {
@@ -97,39 +98,39 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
           .handle(this::checkHeartbeatStarted)
           .join();
       if (!finished) {
-        LOGGER.debug("Retrying to start heartbeats in 1 second");
+        logger.debug("Retrying to start heartbeats in 1 second");
         Thread.sleep(1000);
       }
     }
 
-    LOGGER.debug("{} has been started up", serviceName());
+    logger.debug("{} has been started up", serviceName());
   }
 
   @Override
   protected void shutDown() throws Exception {
-    LOGGER.debug("Shutting down {}", serviceName());
+    logger.debug("Shutting down {}", serviceName());
     executor.onAnyVersion()
         .consumeAsync(coord -> stopped = true)
         .join();
-    LOGGER.debug("{} has been shutted down", serviceName());
+    logger.debug("{} has been shutted down", serviceName());
   }
 
   @GuardedBy("any")
   private boolean checkHeartbeatStarted(Status<?> status, Throwable t) {
     if (t == null) {
       if (status.isOk()) {
-        LOGGER.trace("Heartbeat started correctly");
+        logger.trace("Heartbeat started correctly");
         return true;
       } else {
-        LOGGER.debug("Heartbeat start failed: {}", status);
+        logger.debug("Heartbeat start failed: {}", status);
         switch (status.getErrorCode()) {
           case NO_REPLICATION_ENABLED:
-            LOGGER.warn("The sync source {} is not running with "
+            logger.warn("The sync source {} is not running with "
                 + "replication enabled", seed);
             break;
           case INCONSISTENT_REPLICA_SET_NAMES:
           default:
-            LOGGER.warn(status.getErrorMsg());
+            logger.warn(status.getErrorMsg());
             break;
         }
         return false;
@@ -143,7 +144,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
             ? usefulThrowable.getCause() : usefulThrowable;
       }
 
-      LOGGER.warn("Heartbeat start failed (sync source: " + seed + "): " + usefulThrowable
+      logger.warn("Heartbeat start failed (sync source: " + seed + "): " + usefulThrowable
           .getLocalizedMessage(),
           usefulThrowable);
       return false;
@@ -188,7 +189,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
 
   @GuardedBy("executor")
   private void scheduleHeartbeats(TopologyCoordinator coord, ReplicaSetConfig oldConf) {
-    LOGGER.debug("Scheduling new heartbeats to nodes on config {}",
+    logger.debug("Scheduling new heartbeats to nodes on config {}",
         coord.getRsConfig().getConfigVersion());
     coord.getRsConfig().getMembers().stream()
         .forEach(member -> scheduleHeartbeatToTarget(
@@ -199,7 +200,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
 
   @GuardedBy("any")
   private CompletableFuture<?> scheduleHeartbeatToTarget(final HostAndPort target, Duration delay) {
-    LOGGER.trace("Scheduling heartbeat to {} in {}", target, delay);
+    logger.trace("Scheduling heartbeat to {} in {}", target, delay);
 
     return executor.onCurrentVersion()
         .scheduleOnce((coord) -> doHeartbeat(coord, target), delay);
@@ -208,7 +209,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
   @GuardedBy("executor")
   private void doHeartbeat(final TopologyCoordinator coord, final HostAndPort target) {
     if (stopped) {
-      LOGGER.trace("Ignoring heartbeat to {} because the handler has "
+      logger.trace("Ignoring heartbeat to {} because the handler has "
           + "been stopped", target);
       return;
     }
@@ -245,22 +246,22 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
       cause = cause.getCause();
     }
     if (cause instanceof CancellationException) {
-      LOGGER.trace("Heartbeat handling to {} has been cancelled "
+      logger.trace("Heartbeat handling to {} has been cancelled "
           + "before execution: {}", target, cause.getMessage());
       throw (CancellationException) cause;
     } else {
-      LOGGER.debug("Error while on the heartbeat request sent to "
+      logger.debug("Error while on the heartbeat request sent to "
           + target, t);
       if (errorHandler.reciveHeartbeatError(cause)) {
         RemoteCommandResponse<ReplSetHeartbeatReply> response =
             handleHeartbeatError(cause, start);
-        LOGGER.trace("Handled with a response with error {}",
+        logger.trace("Handled with a response with error {}",
             response.getErrorCode());
         return response;
       } else {
         String msg = "Aborting execution as requested by the topology "
             + "supervisor";
-        LOGGER.trace(msg);
+        logger.trace(msg);
         stopAsync();
         throw new CancellationException(msg);
       }
@@ -279,7 +280,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
     } else {
       if (!(t instanceof MongoRuntimeException)
           && !(t instanceof UnreachableMongoServerException)) {
-        LOGGER.warn("Unexpected exception {} catched by the topology "
+        logger.warn("Unexpected exception {} catched by the topology "
             + "heartbeat handler", t.getClass().getSimpleName());
       }
       errorCode = ErrorCode.UNKNOWN_ERROR;
@@ -303,9 +304,9 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
     if (response.isOk()) {
       networkTime = response.getNetworkTime();
     } else {
-      LOGGER.warn("Error in heartbeat request to {}; {}", target, response.asStatus());
+      logger.warn("Error in heartbeat request to {}; {}", target, response.asStatus());
       if (response.getBson() != null) {
-        LOGGER.debug("heartbeat response: ", response.getBson());
+        logger.debug("heartbeat response: ", response.getBson());
       }
 
       if (isUnauthorized) {
@@ -344,7 +345,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
       case STEP_DOWN_REMOTE_PRIMARY:
         throw new UnsupportedHeartbeatResponseActionException(action, reply);
       default:
-        LOGGER.error("Illegal heartbeat response action code {}", action.getAction());
+        logger.error("Illegal heartbeat response action code {}", action.getAction());
         throw new AssertionError();
     }
   }
@@ -357,7 +358,7 @@ public class TopologyHeartbeatHandler extends IdleTorodbService {
 
   @GuardedBy("executor")
   private void validateConfig(TopologyCoordinator coord, ReplicaSetConfig config) {
-    LOGGER.debug("Accepting the new replica set config (version is {}) without validating it first "
+    logger.debug("Accepting the new replica set config (version is {}) without validating it first "
         + "(not supported yet)",
         config.getConfigVersion());
   }

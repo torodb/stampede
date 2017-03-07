@@ -30,21 +30,24 @@ import com.eightkdata.mongowp.messages.utils.IterableDocumentProvider;
 import com.eightkdata.mongowp.server.api.Connection;
 import com.eightkdata.mongowp.server.api.ErrorHandler;
 import com.eightkdata.mongowp.utils.BsonDocumentBuilder;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.logging.LoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import javax.inject.Inject;
 
-/**
- *
- */
 public class ToroErrorHandler implements ErrorHandler {
 
   private static final StringField ERRMSG_FIELD = new StringField("errmsg");
   private static final IntField CODE_FIELD = new IntField("code");
   private static final DoubleField OK_FIELD = new DoubleField("ok");
 
-  private static final Logger LOGGER = LogManager.getLogger(ToroErrorHandler.class);
+  private final Logger logger;
+
+  @Inject
+  public ToroErrorHandler(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   @Nullable
@@ -54,7 +57,7 @@ public class ToroErrorHandler implements ErrorHandler {
       boolean canReply,
       Throwable error) {
     if (canReply) {
-      LOGGER.warn(
+      logger.warn(
           "An unexpected error was catched",
           error
       );
@@ -76,7 +79,7 @@ public class ToroErrorHandler implements ErrorHandler {
           )
       );
     } else {
-      LOGGER.warn(
+      logger.warn(
           "An error was catched but it cannot be returned to the user",
           error
       );
@@ -110,7 +113,7 @@ public class ToroErrorHandler implements ErrorHandler {
           )
       );
     } else {
-      LOGGER.warn(
+      logger.warn(
           "An error was catched but it cannot be returned to the user",
           exception
       );

@@ -23,7 +23,7 @@ import com.torodb.common.util.RetryHelper.DelegateExceptionHandler;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
 import com.torodb.common.util.RetryHelper.IncrementalWaitExceptionHandler;
 import com.torodb.common.util.RetryHelper.RetryCallback;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import org.apache.logging.log4j.Logger;
 
 import java.util.EnumSet;
@@ -35,7 +35,7 @@ import java.util.function.IntPredicate;
  */
 public class SmartRetrier extends AbstractHintableRetrier {
 
-  private static final Logger LOGGER = LogManager.getLogger(SmartRetrier.class);
+  private static final Logger LOGGER = DefaultLoggerFactory.get(SmartRetrier.class);
   private final IntPredicate criticalGiveUpPredicate;
   private final IntPredicate infrequentGiveUpPredicate;
   private final IntPredicate frequentGiveUpPredicate;

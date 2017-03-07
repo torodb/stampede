@@ -42,10 +42,10 @@ import com.torodb.kvdocument.values.KvValue;
 import com.torodb.torod.CollectionInfo;
 import com.torodb.torod.CollectionInfo.Type;
 import com.torodb.torod.IndexInfo;
+import com.torodb.torod.TorodLoggerFactory;
 import com.torodb.torod.TorodTransaction;
 import com.torodb.torod.cursors.EmptyTorodCursor;
 import com.torodb.torod.cursors.TorodCursor;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -62,7 +62,7 @@ import javax.json.Json;
 public abstract class SqlTorodTransaction<T extends InternalTransaction>
     implements TorodTransaction {
 
-  private static final Logger LOGGER = LogManager.getLogger(SqlTorodTransaction.class);
+  private static final Logger LOGGER = TorodLoggerFactory.get(SqlTorodTransaction.class);
   private boolean closed = false;
   private final SqlTorodConnection connection;
   private final T internalTransaction;

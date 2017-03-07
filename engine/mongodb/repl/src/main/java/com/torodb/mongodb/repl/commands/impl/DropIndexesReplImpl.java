@@ -22,6 +22,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.language.AttributeReference;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions;
 import com.torodb.mongodb.commands.pojos.index.IndexOptions.KnownType;
 import com.torodb.mongodb.commands.signatures.admin.DropIndexesCommand.DropIndexesArgument;
@@ -30,7 +31,6 @@ import com.torodb.mongodb.utils.DefaultIdUtils;
 import com.torodb.torod.IndexFieldInfo;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
@@ -42,12 +42,13 @@ import javax.inject.Inject;
 
 public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, DropIndexesResult> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DropIndexesReplImpl.class);
+  private final Logger logger;
   private final CommandFilterUtil filterUtil;
 
   @Inject
-  public DropIndexesReplImpl(CommandFilterUtil filterUtil) {
+  public DropIndexesReplImpl(CommandFilterUtil filterUtil, LoggerFactory loggerFactory) {
     this.filterUtil = filterUtil;
+    this.logger = loggerFactory.apply(this.getClass());
   }
 
   @Override
@@ -68,7 +69,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
     if (!arg.isDropAllIndexes()) {
       if (!arg.isDropByKeys()) {
         if (DefaultIdUtils.ID_INDEX.equals(arg.getIndexToDrop())) {
-          LOGGER.warn("Trying to drop index {}. Ignoring the whole request",
+          logger.warn("Trying to drop index {}. Ignoring the whole request",
               arg.getIndexToDrop());
           return Status.ok(new DropIndexesResult(indexesBefore));
         }
@@ -80,7 +81,7 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
             .collect(Collectors.toList());
 
         if (indexesToDrop.isEmpty()) {
-          LOGGER.warn("Index not found with keys [" + arg.getKeys()
+          logger.warn("Index not found with keys [" + arg.getKeys()
               .stream()
               .map(key -> '"' + key.getKeys()
                   .stream()
@@ -98,13 +99,13 @@ public class DropIndexesReplImpl extends ReplCommandImpl<DropIndexesArgument, Dr
     }
 
     for (String indexToDrop : indexesToDrop) {
-      LOGGER.info("Dropping index {} on collection {}.{}", req.getDatabase(), arg.getCollection(),
+      logger.info("Dropping index {} on collection {}.{}", req.getDatabase(), arg.getCollection(),
           indexToDrop);
 
       boolean dropped = trans.dropIndex(req.getDatabase(), arg.getCollection(), indexToDrop
       );
       if (!dropped) {
-        LOGGER.info("Trying to drop index {}, but it has not been "
+        logger.info("Trying to drop index {}, but it has not been "
             + "found. This is normal since the index could have been filtered or "
             + "we are reapplying oplog during a recovery. Ignoring it", indexToDrop);
       }

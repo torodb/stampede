@@ -24,7 +24,6 @@ import com.eightkdata.mongowp.server.api.oplog.DbCmdOplogOperation;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.exceptions.user.UserException;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.retrier.RetrierAbortException;
 import com.torodb.core.retrier.RetrierGiveUpException;
@@ -57,29 +56,27 @@ public interface AnalyzedOplogBatchExecutor extends Service,
 
   public static class AnalyzedOplogBatchExecutorMetrics {
 
-    protected static final MetricNameFactory NAME_FACTORY =
-        new MetricNameFactory("OplogBatchExecutor");
     private final ConcurrentMap<String, Timer> singleOpTimers = new ConcurrentHashMap<>();
-    private final ToroMetricRegistry metricRegistry;
+    private final ToroMetricRegistry registry;
     private final Histogram cudBatchSize;
     private final Timer cudBatchTimer;
     private final Timer namespaceBatchTimer;
 
     @Inject
-    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry metricRegistry) {
-      this.metricRegistry = metricRegistry;
-      this.cudBatchSize = metricRegistry.histogram(NAME_FACTORY.createMetricName("batchSize"));
-      this.cudBatchTimer = metricRegistry.timer(NAME_FACTORY.createMetricName("cudTimer"));
-      this.namespaceBatchTimer = metricRegistry.timer(NAME_FACTORY
-          .createMetricName("namespaceTimer"));
+    public AnalyzedOplogBatchExecutorMetrics(ToroMetricRegistry parentRegistry) {
+      this.registry = parentRegistry.createSubRegistry("OplogBatchExecutor");
+      this.cudBatchSize = registry.histogram("batchSize");
+      this.cudBatchTimer = registry.timer("cudTimer");
+      this.namespaceBatchTimer = registry.timer("namespaceTimer");
+    }
+
+    protected ToroMetricRegistry getRegistry() {
+      return registry;
     }
 
     /**
      * Returns the timer associated with {@link SingleOpAnalyzedOplogBatch} that contains the given
      * operation.
-     *
-     * @param singleOplogOp
-     * @return
      */
     public Timer getSingleOpTimer(OplogOperation singleOplogOp) {
       String mapKey = getMapKey(singleOplogOp);
@@ -111,11 +108,12 @@ public interface AnalyzedOplogBatchExecutor extends Service,
     }
 
     private Timer createSingleTimer(OplogOperation oplogOp, String mapKey) {
-      String prefix = "single-";
+      String prefix = "single.";
       if (oplogOp instanceof DbCmdOplogOperation) {
-        return metricRegistry.timer(NAME_FACTORY.createMetricName(prefix + mapKey));
+        return registry.timer(prefix + mapKey);
+      } else {
+        return registry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
       }
-      return metricRegistry.timer(prefix + mapKey.toLowerCase(Locale.ENGLISH));
     }
   }
 

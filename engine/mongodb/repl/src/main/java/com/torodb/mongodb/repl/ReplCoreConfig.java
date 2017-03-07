@@ -20,25 +20,29 @@ package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 
 public class ReplCoreConfig implements BundleConfig {
 
   private final MongoClientConfiguration mongoClientConfig;
   private final ToroDbReplicationFilters replicationFilters;
   private final MongoDbCoreBundle mongoDbCoreBundle;
+  private final ReplEssentialOverrideModule essentialOverrideModule;
   private final Injector essentialInjector;
   private final Supervisor replSupervisor;
 
   public ReplCoreConfig(MongoClientConfiguration mongoClientConfig,
       ToroDbReplicationFilters replicationFilters, MongoDbCoreBundle mongoDbCoreBundle,
-      Injector essentialInjector, Supervisor replSupervisor) {
+      ReplEssentialOverrideModule replEssentialOverrideModule, Injector essentialInjector,
+      Supervisor replSupervisor) {
     this.mongoClientConfig = mongoClientConfig;
     this.replicationFilters = replicationFilters;
     this.mongoDbCoreBundle = mongoDbCoreBundle;
+    this.essentialOverrideModule = replEssentialOverrideModule;
     this.essentialInjector = essentialInjector;
     this.replSupervisor = replSupervisor;
   }
@@ -53,6 +57,10 @@ public class ReplCoreConfig implements BundleConfig {
 
   public MongoDbCoreBundle getMongoDbCoreBundle() {
     return mongoDbCoreBundle;
+  }
+
+  public ReplEssentialOverrideModule getEssentialOverrideModule() {
+    return essentialOverrideModule;
   }
 
   @Override

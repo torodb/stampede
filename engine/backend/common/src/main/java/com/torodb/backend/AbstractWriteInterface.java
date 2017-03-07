@@ -30,7 +30,6 @@ import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.kvdocument.values.KvValue;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.exception.DataAccessException;
@@ -53,7 +52,7 @@ import javax.inject.Singleton;
 @SuppressFBWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
 public abstract class AbstractWriteInterface implements WriteInterface {
 
-  private static final Logger LOGGER = LogManager.getLogger(AbstractWriteInterface.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(AbstractWriteInterface.class);
 
   private final MetaDataReadInterface metaDataReadInterface;
   private final ErrorHandler errorHandler;

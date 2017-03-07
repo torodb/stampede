@@ -36,7 +36,6 @@ import akka.stream.javadsl.Source;
 import com.google.common.base.Preconditions;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.StreamExecutor;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.Callable;
@@ -52,8 +51,7 @@ import javax.inject.Inject;
 public class AkkaStreamExecutor extends ActorSystemTorodbService
     implements StreamExecutor {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(AkkaStreamExecutor.class);
+  private final Logger logger;
   private final int parallelLevel;
   private final Sink<Runnable, CompletionStage<Done>> genericRunnableGraph;
   private Materializer materializer;
@@ -61,8 +59,9 @@ public class AkkaStreamExecutor extends ActorSystemTorodbService
   @Inject
   public AkkaStreamExecutor(ThreadFactory threadFactory,
       @ParallelLevel int parallelLevel, ExecutorService executor,
-      String prefix) {
+      String prefix, Logger logger) {
     super(threadFactory, () -> executor, prefix);
+    this.logger = logger;
     this.parallelLevel = parallelLevel;
 
     genericRunnableGraph = Flow.fromFunction(
@@ -76,7 +75,7 @@ public class AkkaStreamExecutor extends ActorSystemTorodbService
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    return logger;
   }
 
   @Override
