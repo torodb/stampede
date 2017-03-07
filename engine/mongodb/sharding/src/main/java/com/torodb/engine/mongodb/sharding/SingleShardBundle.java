@@ -26,8 +26,6 @@ import com.torodb.mongodb.repl.MongoDbReplBundle;
 import com.torodb.mongodb.repl.MongoDbReplConfig;
 import com.torodb.mongodb.repl.MongoDbReplConfigBuilder;
 import com.torodb.torod.TorodBundle;
-import com.torodb.torod.TorodServer;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,17 +33,14 @@ import java.util.Optional;
 
 public class SingleShardBundle extends ShardBundle {
 
-  private final Logger logger;
   private final TorodBundle actualTorodBundle;
   private final MongoDbCoreBundle coreBundle;
   private final MongoDbReplBundle replBundle;
 
   public SingleShardBundle(ShardBundleConfig config) {
     super(config);
-    this.logger = config.getLifecycleLoggingFactory().apply(this.getClass());
 
     actualTorodBundle = config.getTorodBundle();
-    TorodServer actualTorod = actualTorodBundle.getExternalInterface().getTorodServer();
 
     coreBundle = new MongoDbCoreBundle(
         MongoDbCoreConfig.simpleNonServerConfig(

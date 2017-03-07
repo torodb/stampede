@@ -32,10 +32,11 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
   private String toropassFile;
   private String applicationName;
   private Boolean includeForeignKeys;
+  private Boolean ssl;
 
   protected AbstractPostgres(String host, Integer port, String database, String user,
       String password, String toropassFile,
-      String applicationName, Boolean includeForeignKeys) {
+      String applicationName, Boolean includeForeignKeys, Boolean ssl) {
     super();
     this.host = host;
     this.port = port;
@@ -45,8 +46,10 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
     this.toropassFile = toropassFile;
     this.applicationName = applicationName;
     this.includeForeignKeys = includeForeignKeys;
+    this.ssl = ssl;
   }
 
+  @Override
   public String getHost() {
     return host;
   }
@@ -55,6 +58,7 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
     this.host = host;
   }
 
+  @Override
   public Integer getPort() {
     return port;
   }
@@ -63,6 +67,7 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
     this.port = port;
   }
 
+  @Override
   public String getUser() {
     return user;
   }
@@ -90,6 +95,7 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
     this.toropassFile = toropassFile;
   }
 
+  @Override
   public String getDatabase() {
     return database;
   }
@@ -112,6 +118,14 @@ public abstract class AbstractPostgres implements BackendImplementation, Backend
 
   public Boolean getIncludeForeignKeys() {
     return includeForeignKeys;
+  }
+
+  public Boolean getSsl() {
+    return ssl;
+  }
+
+  public void setSsl(Boolean ssl) {
+    this.ssl = ssl;
   }
 
   @Override

@@ -18,7 +18,7 @@
 
 package com.torodb.backend.driver.postgresql;
 
-import com.torodb.backend.BackendConfig;
+import com.torodb.backend.BackendConfigImpl;
 import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.core.exceptions.SystemException;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +53,7 @@ public class OfficialPostgreSqlDriver implements PostgreSqlDriverProvider {
   }
 
   @Override
-  public DataSource getConfiguredDataSource(BackendConfig configuration, String poolName) {
+  public DataSource getConfiguredDataSource(BackendConfigImpl configuration, String poolName) {
     PGSimpleDataSource dataSource = new PGSimpleDataSource();
 
     dataSource.setUser(configuration.getUsername());
@@ -63,13 +63,12 @@ public class OfficialPostgreSqlDriver implements PostgreSqlDriverProvider {
     dataSource.setDatabaseName(configuration.getDbName());
 
     dataSource.setApplicationName("torodb-" + poolName);
-
+    dataSource.setSsl(configuration.getSslEnabled());
+    
     if (JDBC_LOGGER.isTraceEnabled()) {
       dataSource.setLogLevel(Driver.DEBUG);
       dataSource.setLogWriter(LOGGER_WRITER);
     }
-
-    //TODO
     
     try (
         Connection conn = dataSource.getConnection();
