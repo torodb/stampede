@@ -95,7 +95,7 @@ public class ReplCoordinator extends IdleTorodbService implements Supervisor {
   }
 
   private void loadStoredConfig() {
-    logger.warn("loadStoredConfig() is not implemented yet");
+    logger.debug("loadStoredConfig() is not implemented yet");
   }
 
   private class RecoveryServiceCallback implements RecoveryService.Callback {

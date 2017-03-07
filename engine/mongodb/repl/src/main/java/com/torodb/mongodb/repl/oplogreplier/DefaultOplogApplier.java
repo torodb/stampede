@@ -150,7 +150,7 @@ public class DefaultOplogApplier implements OplogApplier {
               killSwitch.shutdown();
             } else { //in this case the exception should came from the stream
               cause = Throwables.getRootCause(cause);
-              logger.error("Oplog replication stream finished exceptionally: " + cause
+              logger.warn("Oplog replication stream finished exceptionally: " + cause
                   .getLocalizedMessage(), cause);
               //the stream should be finished exceptionally, but just in case we
               //notify the kill switch to stop the stream.
