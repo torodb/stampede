@@ -20,7 +20,10 @@ package com.torodb.backend.derby;
 
 import com.torodb.backend.tests.common.AbstractMetaDataIntegrationSuite;
 import com.torodb.backend.tests.common.DatabaseTestContext;
+import com.torodb.core.test.IntegrationTest;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class DerbyMetaDataIT extends AbstractMetaDataIntegrationSuite {
 
   @Override

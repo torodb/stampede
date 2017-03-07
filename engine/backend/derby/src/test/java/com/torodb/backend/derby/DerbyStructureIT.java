@@ -16,39 +16,42 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.postgresql;
+package com.torodb.backend.derby;
 
 import com.torodb.backend.tests.common.AbstractStructureIntegrationSuite;
 import com.torodb.backend.tests.common.DatabaseTestContext;
+import com.torodb.core.test.IntegrationTest;
 import com.torodb.core.transaction.metainf.FieldType;
+import org.junit.experimental.categories.Category;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class PostgreSqlStructureIT extends AbstractStructureIntegrationSuite {
+@Category(IntegrationTest.class)
+public class DerbyStructureIT extends AbstractStructureIntegrationSuite {
 
   private Map<FieldType, String> typesDictionary = new HashMap<>();
 
-  public PostgreSqlStructureIT() {
-    typesDictionary.put(FieldType.STRING, "varchar");
-    typesDictionary.put(FieldType.BINARY, "bytea");
-    typesDictionary.put(FieldType.BOOLEAN, "bool");
-    typesDictionary.put(FieldType.DATE, "date");
-    typesDictionary.put(FieldType.DOUBLE, "float8");
-    typesDictionary.put(FieldType.INSTANT, "timestamptz");
-    typesDictionary.put(FieldType.INTEGER, "int4");
-    typesDictionary.put(FieldType.LONG, "int8");
-    typesDictionary.put(FieldType.MONGO_OBJECT_ID, "bytea");
-    typesDictionary.put(FieldType.MONGO_TIME_STAMP, "\"torodb\".\"mongo_timestamp\"");
-    typesDictionary.put(FieldType.NULL, "bool");
-    typesDictionary.put(FieldType.TIME, "time");
-    typesDictionary.put(FieldType.CHILD, "bool");
-    typesDictionary.put(FieldType.DECIMAL128, "numeric");
+  public DerbyStructureIT() {
+    typesDictionary.put(FieldType.STRING, "VARCHAR");
+    typesDictionary.put(FieldType.BINARY, "VARCHAR () FOR BIT DATA");
+    typesDictionary.put(FieldType.BOOLEAN, "BOOLEAN");
+    typesDictionary.put(FieldType.DATE, "DATE");
+    typesDictionary.put(FieldType.DOUBLE, "DOUBLE");
+    typesDictionary.put(FieldType.INSTANT, "TIMESTAMP");
+    typesDictionary.put(FieldType.INTEGER, "INTEGER");
+    typesDictionary.put(FieldType.LONG, "BIGINT");
+    typesDictionary.put(FieldType.MONGO_OBJECT_ID, "VARCHAR () FOR BIT DATA");
+    typesDictionary.put(FieldType.MONGO_TIME_STAMP, "VARCHAR");
+    typesDictionary.put(FieldType.NULL, "BOOLEAN");
+    typesDictionary.put(FieldType.TIME, "TIME");
+    typesDictionary.put(FieldType.CHILD, "BOOLEAN");
+    typesDictionary.put(FieldType.DECIMAL128, "NUMERIC");
   }
 
   @Override
   protected DatabaseTestContext getDatabaseTestContext() {
-    return new PostgreSqlDatabaseTestContextFactory().createInstance();
+    return new DerbyDatabaseTestContextFactory().createInstance();
   }
 
   @Override
@@ -58,5 +61,6 @@ public class PostgreSqlStructureIT extends AbstractStructureIntegrationSuite {
 
     return typesDictionary.get(fieldType);
   }
+
 
 }
