@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Function;
 
 /**
  * This service is used to start and stop ToroDB Stampede.
@@ -131,18 +132,29 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     Retrier retrier = essentialInjector.getInstance(Retrier.class);
     BackendService backendService = backendBundle.getExternalInterface().getBackendService();
 
+    Function<String, ConsistencyHandler> chSupplier;
+    if (stampedeConfig.getShardConfigBuilders().size() == 1) {
+      chSupplier = (shardId) -> new DefaultConsistencyHandler(
+          backendService, 
+          retrier, 
+          threadFactory
+      );
+    } else {
+      chSupplier = (shardId) -> new ShardConsistencyHandler(
+          shardId, backendService, retrier, threadFactory
+      );
+    }
+
     Map<String, ConsistencyHandler> result = new HashMap<>();
 
     stampedeConfig.getShardConfigBuilders().stream()
         .map(StampedeConfig.ShardConfigBuilder::getShardId)
         .forEachOrdered((shardId) -> {
-          ConsistencyHandler consistencyHandler = new ShardConsistencyHandler(
-              shardId, backendService, retrier, threadFactory
-          );
+          ConsistencyHandler consistencyHandler = chSupplier.apply(shardId);
 
           consistencyHandler.startAsync();
           consistencyHandler.awaitRunning();
-          
+
           result.put(shardId, consistencyHandler);
         });
 

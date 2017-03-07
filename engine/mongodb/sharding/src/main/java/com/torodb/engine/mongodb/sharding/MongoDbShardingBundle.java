@@ -20,11 +20,13 @@ package com.torodb.engine.mongodb.sharding;
 
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.bundle.AbstractBundle;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MongoDbShardingBundle extends AbstractBundle<MongoDbShardingExtInt> {
   
@@ -35,7 +37,23 @@ public class MongoDbShardingBundle extends AbstractBundle<MongoDbShardingExtInt>
     super(bundleConfig);
     this.config = bundleConfig;
 
-    this.shards = createShards(bundleConfig);
+    Logger logger = bundleConfig.getLifecycleLoggingFactory().apply(this.getClass());
+
+    if (bundleConfig.getShardConfigs().size() == 1) {
+      logger.info("Starting replication with a single shard");
+      this.shards = createSingleShard(bundleConfig);
+    } else {
+      logger.info("Starting replication with the following shards: {}",
+          () -> showShardInfo(config));
+      this.shards = createMultiShards(bundleConfig);
+    }
+  }
+
+  private static String showShardInfo(MongoDbShardingConfig config) {
+    return config.getShardConfigs().stream()
+        .sorted((s1, s2) -> s1.getShardId().compareTo(s2.getShardId()))
+        .map(shard -> shard.getShardId() + " (" + shard.getClientConfig().getHostAndPort() + ')')
+        .collect(Collectors.joining(", "));
   }
 
   @Override
@@ -68,14 +86,22 @@ public class MongoDbShardingBundle extends AbstractBundle<MongoDbShardingExtInt>
     return new MongoDbShardingExtInt();
   }
 
-  private static List<ShardBundle> createShards(MongoDbShardingConfig generalConf) {
+  private static List<ShardBundle> createMultiShards(MongoDbShardingConfig generalConf) {
     List<ShardBundle> result = new ArrayList<>(generalConf.getShardConfigs().size());
 
     for (MongoDbShardingConfig.ShardConfig shardConfig : generalConf.getShardConfigs()) {
-      result.add(new ShardBundle(toShardBundleConfig(generalConf, shardConfig)));
+      result.add(new MultiShardBundle(toShardBundleConfig(generalConf, shardConfig)));
     }
 
     return result;
+  }
+
+  private static List<ShardBundle> createSingleShard(MongoDbShardingConfig generalConf) {
+    MongoDbShardingConfig.ShardConfig shardConfig = generalConf.getShardConfigs().get(0);
+
+    ShardBundleConfig shardBundleConf = toShardBundleConfig(generalConf, shardConfig);
+
+    return Collections.singletonList(new SingleShardBundle(shardBundleConf));
   }
 
   private static ShardBundleConfig toShardBundleConfig(MongoDbShardingConfig generalConf,

@@ -18,7 +18,7 @@
 
 package com.torodb.backend.driver.postgresql;
 
-import com.torodb.backend.BackendConfig;
+import com.torodb.backend.BackendConfigImpl;
 
 import javax.sql.DataSource;
 
@@ -28,5 +28,5 @@ import javax.sql.DataSource;
  */
 public interface PostgreSqlDriverProvider {
 
-  DataSource getConfiguredDataSource(BackendConfig configuration, String poolName);
+  DataSource getConfiguredDataSource(BackendConfigImpl configuration, String poolName);
 }

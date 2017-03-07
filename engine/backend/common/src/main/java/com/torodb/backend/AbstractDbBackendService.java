@@ -25,8 +25,10 @@ import com.torodb.core.services.IdleTorodbService;
 import com.vladmihalcea.flexypool.FlexyPoolDataSource;
 import com.vladmihalcea.flexypool.adaptor.HikariCPPoolAdapter;
 import com.vladmihalcea.flexypool.config.Configuration;
+import com.vladmihalcea.flexypool.strategy.RetryConnectionAcquiringStrategy;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.Logger;
 
@@ -48,7 +50,8 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   public static final int MIN_CONNECTIONS_DATABASE = SYSTEM_DATABASE_CONNECTIONS
       + MIN_READ_CONNECTIONS_DATABASE
       + MIN_SESSION_CONNECTIONS_DATABASE;
-
+  public static final int MAX_RETRY_ATTEMPS = 5;
+  
   private final ConfigurationT configuration;
   private final ErrorHandler errorHandler;
 
@@ -181,7 +184,8 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     Configuration<HikariDataSource> hikariConfiguration =
             createPooledObservableDataSourceConfiguration(dataSource);
 
-    return new FlexyPoolDataSource<>(hikariConfiguration);
+    return new FlexyPoolDataSource<>(hikariConfiguration,
+        new RetryConnectionAcquiringStrategy.Factory(MAX_RETRY_ATTEMPS));
   }
 
   private Configuration<HikariDataSource> createPooledObservableDataSourceConfiguration(

@@ -5,10 +5,10 @@
     </Properties>
     <Appenders>
         <Console name="3RDPARTY" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} 3RDPARTY   %-5level %-30.-30replace{'%t'}{\s}{-} - %msg%n%throwable{none}"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %-5level 3RDPARTY   - %msg%n%throwable{none}"/>
         </Console>
         <Console name="CONSOLE" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %-10.-10map{component} %-5level %-30.-30replace{'%t'}{\s}{-} - %msg%n%throwable{none}"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd'T'hh:mm:ss.SSS} %-5level %-10.-10map{component} - %msg%n%throwable{none}"/>
         </Console>
         <Async name="ASYNC">
             <AppenderRef ref="router"/>
@@ -40,6 +40,7 @@
         <Logger name="org.postgresql" level="WARN" additivity="false"/>
         <Logger name="org.jboss" level="WARN" additivity="false"/>
         <Logger name="io.netty" level="WARN" additivity="false"/>
+        <Logger name="akka" level="OFF" additivity="false"/>
 
         <!-- Root -->
 
