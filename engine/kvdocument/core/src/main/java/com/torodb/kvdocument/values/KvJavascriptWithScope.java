@@ -70,6 +70,7 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
 
     public abstract KvDocument getScope();
 
+    public abstract String getScopeAsString();
 
 
     private static class DefaultKvJavascriptWithScope extends KvJavascriptWithScope{
@@ -91,6 +92,11 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
         @Override
         public KvDocument getScope() {
             return scope;
+        }
+
+        @Override
+        public String getScopeAsString() {
+            return scope.toString();
         }
 
 

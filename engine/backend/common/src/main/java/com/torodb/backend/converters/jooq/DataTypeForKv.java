@@ -60,7 +60,7 @@ public class DataTypeForKv<T extends KvValue<?>> implements DataType<T> {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static <DT, JT, T extends KvValue<?>> DataTypeForKv<T> from(DataType<DT> dataType,
       KvValueConverter<DT, JT, T> converter, Binding<DT, T> binding) {
-    return new DataTypeForKv<>(dataType.asConvertedDataType(new KvChainBinding(binding, dataType
+      return new DataTypeForKv<>(dataType.asConvertedDataType(new KvChainBinding(binding, dataType
         .getConverter(), converter)), converter);
   }
 

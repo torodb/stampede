@@ -34,6 +34,12 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
   public String getOptionsAsText() {
     Set options = this.getOptions();
+
+    System.out.println("******** Options ********");
+    for (Object option:options) {
+      System.out.print(((Options)option).getCharId());
+    }
+    System.out.println();
     if(options.isEmpty()) {
       return "";
     } else if(options.size() == 1) {
@@ -56,6 +62,10 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
 
   public static KvMongoRegex of(String pattern, Set<Options> options) {
+    return new DefaultKvMongoRegex(pattern, options);
+  }
+  
+  public static KvMongoRegex of(String pattern, String options) {
     return new DefaultKvMongoRegex(pattern, options);
   }
 
@@ -88,6 +98,8 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
   public abstract String getPattern();
 
   public abstract Set<Options> getOptions();
+
+  public abstract Set<Options> getOptionsFromString();
 
   public enum Options {
     CASE_INSENSITIVE('i'),
@@ -153,6 +165,10 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
       this.options = options;
     }
 
+    public DefaultKvMongoRegex(String pattern, String options) {
+      super();
+    }
+
     @Override
     public String getPattern() {
       return pattern;
@@ -160,6 +176,12 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
     @Override
     public Set<Options> getOptions() {
+      return options;
+    }
+
+    @Override
+    public Set<Options> getOptionsFromString() {
+
       return options;
     }
 

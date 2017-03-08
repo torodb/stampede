@@ -153,7 +153,7 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
   @Override
   public Void visit(KvJavascriptWithScope value, StringBuilder arg) {
     ESCAPER.appendEscaped(arg, value.getJs());
-    //We don't append the scope because it is a KvDocument and it can't be visited
+    arg.append(value.getScopeAsString());
     return null;
   }
 
@@ -185,8 +185,11 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
 
   @Override
   public Void visit(KvMongoDbPointer value, StringBuilder arg) {
+    arg.append('(');
     ESCAPER.appendEscaped(arg, value.getNamespace());
+    arg.append(',');
     visit(value.getId(),arg);
+    arg.append(')');
     return null;
   }
 

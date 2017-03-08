@@ -21,19 +21,7 @@ package com.torodb.backend.postgresql;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.backend.AbstractDataTypeProvider;
 import com.torodb.backend.converters.jooq.DataTypeForKv;
-import com.torodb.backend.postgresql.converters.jooq.BinaryValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.BooleanValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.DateValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.Decimal128ValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.DoubleValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.InstantValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.IntegerValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.LongValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.MongoObjectIdValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.MongoTimestampValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.NullValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.StringValueConverter;
-import com.torodb.backend.postgresql.converters.jooq.TimeValueConverter;
+import com.torodb.backend.postgresql.converters.jooq.*;
 import com.torodb.core.transaction.metainf.FieldType;
 
 import org.jooq.SQLDialect;
@@ -59,6 +47,14 @@ public class PostgreSqlDataTypeProvider extends AbstractDataTypeProvider {
             .put(FieldType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE)
             .put(FieldType.MONGO_TIME_STAMP, MongoTimestampValueConverter.TYPE)
             .put(FieldType.BINARY, BinaryValueConverter.TYPE)
+            .put(FieldType.JAVASCRIPT, JavascriptValueConverter.TYPE)
+            .put(FieldType.JAVASCRIPT_WITH_SCOPE, JavascriptWithScopeValueConverter.TYPE)
+            .put(FieldType.MIN_KEY, MinKeyValueConverter.TYPE)
+            .put(FieldType.MAX_KEY, MaxKeyValueConverter.TYPE)
+            .put(FieldType.UNDEFINED, UndefinedValueConverter.TYPE)
+            .put(FieldType.MONGO_REGEX, MongoRegexValueConverter.TYPE)
+            .put(FieldType.MONGO_DB_POINTER, MongoDbPointerValueConverter.TYPE)
+            .put(FieldType.DEPRECATED, DeprecatedValueConverter.TYPE)
             .build()
     );
   }

@@ -18,9 +18,11 @@
 
 package com.torodb.d2r;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.ByteSource;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.*;
+import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -190,22 +192,40 @@ public class DocumentsAndRelationsTypesTest {
     if(docPartIterator.hasNext())
       secondaryDocPart = docPartIterator.next();
 
+    //DocPartResult result = null;
 
 
     if(isScalar(value.getType()))
     {
       testScalar();
+      //result = createResult(mainDocPart, false);
     }
 
     if(isArray(value.getType()))
     {
       testArray();
+      //result = createResult(secondaryDocPart, true);
     }
 
     if (isDocument(value.getType()))
     {
       testDocument();
+      //result = createResult(secondaryDocPart, false);
     }
+
+
+    /*List<ToroDocument> toroDocs = r2dTranslator.translate(Arrays.asList(new DocPartResult[]{result}).iterator());
+
+    toroDocs.forEach(
+            toroDocument -> {
+              KvDocument doc = toroDocument.getRoot();
+
+              System.out.println(doc);
+
+
+            }
+    );*/
+
 
   }
 
@@ -255,6 +275,48 @@ public class DocumentsAndRelationsTypesTest {
   }
 
 
+  /*private DocPartResult createResult(DocPartData data, boolean scalar)
+  {
+    if(data == null)
+      return null;
+
+    MetaDocPartBuilder builder = new MetaDocPartBuilder(data.getMetaDocPart().getTableRef());
+
+    Iterator<MetaField> mfIterator = data.orderedMetaFieldIterator();
+    MetaField metaField;
+    while(mfIterator.hasNext())
+    {
+      metaField = mfIterator.next();
+      builder.addMetaField(metaField.getName(), metaField.getIdentifier(), metaField.getType());
+    }
+
+    Iterator<DocPartRow> rowIterator = data.iterator();
+    DocPartRow row;
+
+    while(rowIterator.hasNext())
+    {
+      row = rowIterator.next();
+      Stream<KvValue<?>> stream = Lists.newArrayList(
+              scalar ? row.getScalarValues() : row.getFieldValues()
+      ).stream();
+
+      List<Object> values = stream.map(KvValue::getValue).collect(Collectors.toList());
+
+      builder.addRow(
+              row.getDid(),
+              row.getPid(),
+              row.getRid(),
+              row.getSeq(),
+              new Object[]{
+                      values.toArray(new Object[values.size()])
+              }
+              );
+    }
+
+    return builder.getResultSet();
+
+  }
+*/
   private static class KvTypeFinder{
 
     public static Stream<Class<?>> findAllKvTypes(){
