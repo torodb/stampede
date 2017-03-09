@@ -22,16 +22,18 @@ import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.postgresql.converters.PostgreSqlValueToCopyConverter;
+import com.torodb.backend.postgresql.converters.jooq.binding.JsonbBinding;
+import com.torodb.backend.postgresql.converters.sql.JsonbSqlBinding;
 import com.torodb.backend.postgresql.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.JavascriptWithScopeType;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.values.KvJavascript;
-import com.torodb.kvdocument.values.KvJavascriptWithScope;
-import com.torodb.kvdocument.values.KvValue;
+import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.heap.MapKvDocument;
 import org.jooq.impl.SQLDataType;
 
+import javax.json.*;
+import java.io.ByteArrayInputStream;
 import java.util.LinkedHashMap;
 
 /**
@@ -41,8 +43,8 @@ public class JavascriptWithScopeValueConverter implements KvValueConverter<Strin
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvJavascriptWithScope> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
-      new JavascriptWithScopeValueConverter());
+  public static final DataTypeForKv<KvJavascriptWithScope> TYPE = JsonbBinding.fromKvValue(KvJavascriptWithScope.class,
+          new JavascriptWithScopeValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -51,15 +53,22 @@ public class JavascriptWithScopeValueConverter implements KvValueConverter<Strin
 
   @Override
   public KvJavascriptWithScope from(String databaseObject) {
+
+    final JsonReader reader = Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
+    JsonObject object = reader.readObject();
+
     //need to discuss implementation of scope
-    return KvJavascriptWithScope.of(databaseObject, new MapKvDocument(new LinkedHashMap<String, KvValue<?>>()));
+    return KvJavascriptWithScope.of(object.getString("js"), object.getString("scope"));
   }
 
   @Override
   public String to(KvJavascriptWithScope userObject) {
-    StringBuilder sb = new StringBuilder();
-    userObject.accept(PostgreSqlValueToCopyConverter.INSTANCE, sb);
-    return sb.toString();
+    return Json.createObjectBuilder()
+            .add("js", userObject.getJs())
+            .add("scope", userObject.getScope())
+            .build()
+            .toString();
+
   }
 
   @Override
@@ -74,7 +83,7 @@ public class JavascriptWithScopeValueConverter implements KvValueConverter<Strin
 
   @Override
   public SqlBinding<String> getSqlBinding() {
-    return StringSqlBinding.INSTANCE;
+    return JsonbSqlBinding.INSTANCE;
   }
 
 }

@@ -22,12 +22,20 @@ import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.postgresql.converters.PostgreSqlValueToCopyConverter;
+import com.torodb.backend.postgresql.converters.jooq.binding.JsonbBinding;
+import com.torodb.backend.postgresql.converters.sql.JsonbSqlBinding;
 import com.torodb.backend.postgresql.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.MongoDbPointerType;
 import com.torodb.kvdocument.types.StringType;
 import com.torodb.kvdocument.values.KvMongoDbPointer;
+import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 import org.jooq.impl.SQLDataType;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.ByteArrayInputStream;
 
 /**
  *
@@ -36,8 +44,8 @@ public class MongoDbPointerValueConverter implements KvValueConverter<String, St
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMongoDbPointer> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
-      new MongoDbPointerValueConverter());
+  public static final DataTypeForKv<KvMongoDbPointer> TYPE = JsonbBinding.fromKvValue(KvMongoDbPointer.class,
+          new MongoDbPointerValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -46,15 +54,21 @@ public class MongoDbPointerValueConverter implements KvValueConverter<String, St
 
   @Override
   public KvMongoDbPointer from(String databaseObject) {
-    //need to discuss implementation of options
-    return KvMongoDbPointer.of(databaseObject, null);
+
+    final JsonReader reader = Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
+    JsonObject object = reader.readObject();
+
+    return KvMongoDbPointer.of(object.getString("namespace"), new ByteArrayKvMongoObjectId(object.getString("objectId").getBytes()));
   }
 
   @Override
   public String to(KvMongoDbPointer userObject) {
-    StringBuilder sb = new StringBuilder();
-    userObject.accept(PostgreSqlValueToCopyConverter.INSTANCE, sb);
-    return sb.toString();
+    return Json.createObjectBuilder()
+            .add("namespace", userObject.getNamespace())
+            .add("objectId", new String(userObject.getId().getArrayValue()))
+            .build()
+            .toString();
+
   }
 
   @Override
@@ -69,7 +83,7 @@ public class MongoDbPointerValueConverter implements KvValueConverter<String, St
 
   @Override
   public SqlBinding<String> getSqlBinding() {
-    return StringSqlBinding.INSTANCE;
+    return JsonbSqlBinding.INSTANCE;
   }
 
 }

@@ -140,7 +140,7 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
 
   @Override
   public Void visit(KvDecimal128 value, StringBuilder arg) {
-    arg.append(value.getValue().toPlainString());
+    arg.append(value.getValue().toString());
     return null;
   }
 

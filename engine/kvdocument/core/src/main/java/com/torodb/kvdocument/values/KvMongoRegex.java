@@ -34,12 +34,6 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
   public String getOptionsAsText() {
     Set options = this.getOptions();
-
-    System.out.println("******** Options ********");
-    for (Object option:options) {
-      System.out.print(((Options)option).getCharId());
-    }
-    System.out.println();
     if(options.isEmpty()) {
       return "";
     } else if(options.size() == 1) {
@@ -192,7 +186,7 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
     @Override
     public String toString() {
-      return pattern;
+      return pattern + "/" + getOptionsAsText();
     }
   }
 }

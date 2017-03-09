@@ -147,12 +147,6 @@ public class SchemaValidator {
                     .reduce((e1, e2) -> e2).get())) {
               return true;
             } else {
-              System.out.println(field.getSqlType());
-              System.out.println(columnType.getSQLType());
-              System.out.println(field.getTypeName());
-              System.out.println(COLUMN_TYPE_NAME_SPLITTER
-                      .splitToList(columnType.getTypeName()).stream()
-                      .reduce((e1, e2) -> e2).get());
               return false;
             }
           }

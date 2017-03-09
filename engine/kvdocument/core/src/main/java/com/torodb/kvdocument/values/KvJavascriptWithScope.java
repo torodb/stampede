@@ -52,6 +52,9 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
     }
 
     public static KvJavascriptWithScope of(String js, KvDocument scope) {
+        return new DefaultKvJavascriptWithScope(js, scope.toString());
+    }
+    public static KvJavascriptWithScope of(String js, String scope) {
         return new DefaultKvJavascriptWithScope(js, scope);
     }
 
@@ -68,7 +71,7 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
 
     public abstract String getJs();
 
-    public abstract KvDocument getScope();
+    public abstract String getScope();
 
     public abstract String getScopeAsString();
 
@@ -77,9 +80,9 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
 
         private String js;
 
-        private KvDocument scope;
+        private String scope;
 
-        public DefaultKvJavascriptWithScope(String js, KvDocument scope) {
+        private DefaultKvJavascriptWithScope(String js, String scope) {
             this.js = js;
             this.scope = scope;
         }
@@ -90,7 +93,7 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
         }
 
         @Override
-        public KvDocument getScope() {
+        public String getScope() {
             return scope;
         }
 

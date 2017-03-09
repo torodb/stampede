@@ -20,11 +20,12 @@ package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.Decimal128Type;
 
+import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 
-public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
+public abstract class KvDecimal128 extends KvValue<KvDecimal128> {
 
   private static final long serialVersionUID = 6351251976353558479L;
 
@@ -36,34 +37,25 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     return new DefaultKvDecimal128(value);
   }
 
+  public static KvDecimal128 NaN = DefaultKvDecimal128.NaN;
+  public static KvDecimal128 INFINITY = DefaultKvDecimal128.INFINITY;
+  public static KvDecimal128 NEGATIVE_ZERO = DefaultKvDecimal128.NEGATIVE_ZERO;
+
+  @Nonnull
+  @Override
+  public KvDecimal128 getValue() {
+    return this;
+  }
+
+  @Nonnull
+  @Override
+  public Class<? extends KvDecimal128> getValueClass() {
+    return KvDecimal128.class;
+  }
+
   @Override
   public Decimal128Type getType() {
     return Decimal128Type.INSTANCE;
-  }
-
-  @Override
-  public int intValue() {
-    return (int) doubleValue();
-  }
-
-  @Override
-  public long longValue() {
-    return (long) doubleValue();
-  }
-
-  @Override
-  public double doubleValue() {
-    return getValue().doubleValue();
-  }
-
-  @Override
-  public Class<? extends BigDecimal> getValueClass() {
-    return BigDecimal.class;
-  }
-
-  @Override
-  public String toString() {
-    return getValue().toPlainString();
   }
 
   @Override
@@ -103,6 +95,14 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     return visitor.visit(this, arg);
   }
 
+  public abstract boolean isNaN();
+
+  public abstract boolean isInfinite();
+
+  public abstract boolean isNegativeZero();
+
+  public abstract BigDecimal getBigDecimal();
+
   public abstract long getHigh();
 
   public abstract long getLow();
@@ -123,6 +123,10 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     private static final BigInteger BIG_INT_ONE = new BigInteger("1");
     private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
 
+
+    private static final DefaultKvDecimal128 NaN = new DefaultKvDecimal128(NaN_MASK, 0);
+    private static final DefaultKvDecimal128 INFINITY = new DefaultKvDecimal128(INFINITY_MASK, 0);
+    private static final DefaultKvDecimal128 NEGATIVE_ZERO = new DefaultKvDecimal128(0xb040000000000000L, 0x0000000000000000L);
     private long high;
     private long low;
 
@@ -136,34 +140,22 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     }
 
     @Override
-    public BigDecimal getValue() {
-      if (isNaN()) {
-        throw new ArithmeticException("Can not get value of NaN");
-      }
-
-      if (isInfinite()) {
-        throw new ArithmeticException("Can not get value of Infinite");
-      }
-
-      BigDecimal value = getBigDecimal();
-
-      // If the BigDecimal is 0, but the Decimal128 is negative, that means we have -0.
-      if (isNegative() && value.signum() == 0) {
-        throw new ArithmeticException("Negative zero can not be converted to a BigDecimal");
-      }
-
-      return value;
-    }
-
-    private boolean isNaN() {
+    public boolean isNaN() {
       return (high & NaN_MASK) == NaN_MASK;
     }
 
-    private boolean isInfinite() {
+    @Override
+    public boolean isInfinite() {
       return (high & INFINITY_MASK) == INFINITY_MASK;
     }
 
-    private BigDecimal getBigDecimal() {
+    @Override
+    public boolean isNegativeZero(){
+      return isNegative() && getBigDecimal().signum() == 0;
+    }
+
+    @Override
+    public BigDecimal getBigDecimal() {
       int scale = -getExponent();
 
       if (twoHighestCombinationBitsAreSet()) {
@@ -319,6 +311,26 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     @Override
     public long getLow() {
       return low;
+    }
+
+
+
+    @Override
+    public String toString() {
+      if (isNaN()) {
+        return "NaN";
+      }
+
+      if (isInfinite()) {
+        return "Infinity";
+      }
+
+      // If the BigDecimal is 0, but the Decimal128 is negative, that means we have -0.
+      if (isNegativeZero()) {
+        return "Negative zero";
+      }
+
+      return getBigDecimal().toString();
     }
   }
 
