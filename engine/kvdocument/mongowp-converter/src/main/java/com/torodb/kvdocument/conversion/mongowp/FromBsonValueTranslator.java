@@ -55,7 +55,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  *
@@ -158,12 +157,12 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonJavaScript value, Void arg) {
-    return KvJavascript.of(value.getValue());
+    return KvMongoJavascript.of(value.getValue());
   }
 
   @Override
   public KvValue<?> visit(BsonJavaScriptWithScope value, Void arg) {
-    return KvJavascriptWithScope.of(value.getJavaScript(), (KvDocument)visit(value.getScope(), arg));
+    return KvMongoJavascriptWithScope.of(value.getJavaScript(), (KvDocument)visit(value.getScope(), arg));
   }
 
   @Override

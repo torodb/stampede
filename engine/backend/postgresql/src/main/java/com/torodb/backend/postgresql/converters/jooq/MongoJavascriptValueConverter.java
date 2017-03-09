@@ -24,21 +24,18 @@ import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.postgresql.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.JavascriptType;
 import com.torodb.kvdocument.types.KvType;
-import com.torodb.kvdocument.types.StringType;
-import com.torodb.kvdocument.values.KvJavascript;
-import com.torodb.kvdocument.values.KvString;
-import com.torodb.kvdocument.values.heap.StringKvString;
+import com.torodb.kvdocument.values.KvMongoJavascript;
 import org.jooq.impl.SQLDataType;
 
 /**
  *
  */
-public class JavascriptValueConverter implements KvValueConverter<String, String, KvJavascript> {
+public class MongoJavascriptValueConverter implements KvValueConverter<String, String, KvMongoJavascript> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvJavascript> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
-      new JavascriptValueConverter());
+  public static final DataTypeForKv<KvMongoJavascript> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
+      new MongoJavascriptValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -46,12 +43,12 @@ public class JavascriptValueConverter implements KvValueConverter<String, String
   }
 
   @Override
-  public KvJavascript from(String databaseObject) {
-    return KvJavascript.of(databaseObject);
+  public KvMongoJavascript from(String databaseObject) {
+    return KvMongoJavascript.of(databaseObject);
   }
 
   @Override
-  public String to(KvJavascript userObject) {
+  public String to(KvMongoJavascript userObject) {
     return userObject.getValue();
   }
 
@@ -61,8 +58,8 @@ public class JavascriptValueConverter implements KvValueConverter<String, String
   }
 
   @Override
-  public Class<KvJavascript> toType() {
-    return KvJavascript.class;
+  public Class<KvMongoJavascript> toType() {
+    return KvMongoJavascript.class;
   }
 
   @Override

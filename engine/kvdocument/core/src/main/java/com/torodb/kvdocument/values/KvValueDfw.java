@@ -301,14 +301,14 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
     return null;
   }
 
-  protected void preJavascript(KvJavascript value, A arg) {
+  protected void preJavascript(KvMongoJavascript value, A arg) {
   }
 
-  protected void postJavascript(KvJavascript value, A arg) {
+  protected void postJavascript(KvMongoJavascript value, A arg) {
   }
 
   @Override
-  public Void visit(KvJavascript value, A arg) {
+  public Void visit(KvMongoJavascript value, A arg) {
     preKvValue(value, arg);
     preJavascript(value, arg);
 
@@ -318,14 +318,14 @@ public class KvValueDfw<A> implements KvValueVisitor<Void, A> {
     return null;
   }
 
-  protected void preJavascriptWithoutScope(KvJavascriptWithScope value, A arg) {
+  protected void preJavascriptWithoutScope(KvMongoJavascriptWithScope value, A arg) {
   }
 
-  protected void postJavascriptWithoutScope(KvJavascriptWithScope value, A arg) {
+  protected void postJavascriptWithoutScope(KvMongoJavascriptWithScope value, A arg) {
   }
 
   @Override
-  public Void visit(KvJavascriptWithScope value, A arg) {
+  public Void visit(KvMongoJavascriptWithScope value, A arg) {
     preKvValue(value, arg);
     preJavascriptWithoutScope(value, arg);
 

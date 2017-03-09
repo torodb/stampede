@@ -101,12 +101,12 @@ public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
   }
 
   @Override
-  public Void visit(KvJavascript value, DocConsumer arg) {
+  public Void visit(KvMongoJavascript value, DocConsumer arg) {
     return null;
   }
 
   @Override
-  public Void visit(KvJavascriptWithScope value, DocConsumer arg) {
+  public Void visit(KvMongoJavascriptWithScope value, DocConsumer arg) {
     return null;
   }
 

@@ -119,10 +119,10 @@ public class PostgreSqlValueToCopyConverterTest {
             {"MaxKey", KvMaxKey.getInstance(), "true"},
             {"Undefined", KvUndefined.getInstance(), "true"},
             {"Deprecated", KvDeprecated.of("deprecate me"), "deprecate me"},
-            {"Javascript", KvJavascript.of("alert('hello');"), "alert('hello');"},
+            {"Javascript", KvMongoJavascript.of("alert('hello');"), "alert('hello');"},
             {
                     "JavascriptWithScope",
-                    KvJavascriptWithScope.of("alert('hello');", new MapKvDocument(new LinkedHashMap<>(
+                    KvMongoJavascriptWithScope.of("alert('hello');", new MapKvDocument(new LinkedHashMap<>(
                             ImmutableMap.<String, KvValue<?>>builder().
                                     put("a", KvInteger.of(123)).
                                     put("b", KvLong.of(0)).

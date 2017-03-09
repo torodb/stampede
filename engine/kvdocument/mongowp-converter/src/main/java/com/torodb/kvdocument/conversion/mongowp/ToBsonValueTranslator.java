@@ -191,12 +191,12 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
   }
 
   @Override
-  public BsonJavaScript visit(KvJavascript value, Void arg) {
+  public BsonJavaScript visit(KvMongoJavascript value, Void arg) {
     return new DefaultBsonJavaScript(value.getValue());
   }
 
   @Override
-  public DefaultBsonJavaScriptWithCode visit(KvJavascriptWithScope value, Void arg) {
+  public DefaultBsonJavaScriptWithCode visit(KvMongoJavascriptWithScope value, Void arg) {
     //We don't support this because our string
     throw new UnsupportedBsonTypeException(BsonType.JAVA_SCRIPT_WITH_SCOPE);
   }

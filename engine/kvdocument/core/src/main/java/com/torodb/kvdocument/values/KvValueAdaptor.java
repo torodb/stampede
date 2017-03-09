@@ -103,12 +103,12 @@ public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
   }
 
   @Override
-  public R visit(KvJavascript value, A arg) {
+  public R visit(KvMongoJavascript value, A arg) {
     return defaultCase(value, arg);
   }
 
   @Override
-  public R visit(KvJavascriptWithScope value, A arg) {
+  public R visit(KvMongoJavascriptWithScope value, A arg) {
     return defaultCase(value, arg);
   }
 

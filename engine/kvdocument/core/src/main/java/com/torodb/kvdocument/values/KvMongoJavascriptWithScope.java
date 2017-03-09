@@ -23,18 +23,18 @@ import com.torodb.kvdocument.types.KvType;
 
 import javax.annotation.Nonnull;
 
-public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScope> {
+public abstract class KvMongoJavascriptWithScope extends KvValue<KvMongoJavascriptWithScope> {
     private static final long serialVersionUID = 4130181266747513960L;
 
     @Nonnull
     @Override
-    public KvJavascriptWithScope getValue() {
+    public KvMongoJavascriptWithScope getValue() {
         return this;
     }
 
     @Override
-    public Class<? extends KvJavascriptWithScope> getValueClass() {
-        return KvJavascriptWithScope.class;
+    public Class<? extends KvMongoJavascriptWithScope> getValueClass() {
+        return KvMongoJavascriptWithScope.class;
     }
 
     @Override
@@ -45,17 +45,17 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof KvJavascriptWithScope)) {
+        if (!(obj instanceof KvMongoJavascriptWithScope)) {
             return false;
         }
-        return this.getValue().equals(((KvJavascriptWithScope) obj).getValue());
+        return this.getValue().equals(((KvMongoJavascriptWithScope) obj).getValue());
     }
 
-    public static KvJavascriptWithScope of(String js, KvDocument scope) {
-        return new DefaultKvJavascriptWithScope(js, scope.toString());
+    public static KvMongoJavascriptWithScope of(String js, KvDocument scope) {
+        return new DefaultKvMongoJavascriptWithScope(js, scope.toString());
     }
-    public static KvJavascriptWithScope of(String js, String scope) {
-        return new DefaultKvJavascriptWithScope(js, scope);
+    public static KvMongoJavascriptWithScope of(String js, String scope) {
+        return new DefaultKvMongoJavascriptWithScope(js, scope);
     }
 
     @Nonnull
@@ -76,13 +76,13 @@ public abstract class KvJavascriptWithScope extends KvValue<KvJavascriptWithScop
     public abstract String getScopeAsString();
 
 
-    private static class DefaultKvJavascriptWithScope extends KvJavascriptWithScope{
+    private static class DefaultKvMongoJavascriptWithScope extends KvMongoJavascriptWithScope {
 
         private String js;
 
         private String scope;
 
-        private DefaultKvJavascriptWithScope(String js, String scope) {
+        private DefaultKvMongoJavascriptWithScope(String js, String scope) {
             this.js = js;
             this.scope = scope;
         }

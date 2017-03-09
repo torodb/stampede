@@ -18,11 +18,9 @@
 
 package com.torodb.d2r;
 
-import com.google.common.collect.Lists;
 import com.google.common.io.ByteSource;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.*;
-import com.torodb.core.document.ToroDocument;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
@@ -117,8 +115,8 @@ public class DocumentsAndRelationsTypesTest {
             KvNull.getInstance(),
             KvMongoRegex.of("hello", EnumSet.allOf(KvMongoRegex.Options.class)),
             KvMongoDbPointer.of("ns", new ByteArrayKvMongoObjectId("101010101110".getBytes())),
-            KvJavascript.of("function"),
-            KvJavascriptWithScope.of("function", new KvDocument.Builder().putValue("times", KvInteger.of(3)).build()),
+            KvMongoJavascript.of("function"),
+            KvMongoJavascriptWithScope.of("function", new KvDocument.Builder().putValue("times", KvInteger.of(3)).build()),
             KvDeprecated.of("Deprecate"),
             new DefaultKvMongoTimestamp(1234,3),
             KvLong.of(82147234L),

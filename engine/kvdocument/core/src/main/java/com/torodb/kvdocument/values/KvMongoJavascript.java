@@ -23,12 +23,12 @@ import com.torodb.kvdocument.types.KvType;
 
 import javax.annotation.Nonnull;
 
-public abstract class KvJavascript extends KvValue<String> {
+public abstract class KvMongoJavascript extends KvValue<String> {
 
     private static final long serialVersionUID = -628511849455517129L;
 
-    public static KvJavascript of(String s) {
-        return new DefaultKvJavascript(s);
+    public static KvMongoJavascript of(String s) {
+        return new DefaultKvMongoJavascript(s);
     }
 
     @Nonnull
@@ -66,13 +66,13 @@ public abstract class KvJavascript extends KvValue<String> {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof KvJavascript)) {
+        if (!(obj instanceof KvMongoJavascript)) {
             return false;
         }
-        return this.getValue().equals(((KvJavascript) obj).getValue());
+        return this.getValue().equals(((KvMongoJavascript) obj).getValue());
     }
 
-    private static class DefaultKvJavascript extends KvJavascript{
+    private static class DefaultKvMongoJavascript extends KvMongoJavascript {
 
         @Nonnull
         @Override
@@ -82,7 +82,7 @@ public abstract class KvJavascript extends KvValue<String> {
 
         private String value;
 
-        public DefaultKvJavascript(String value) {
+        public DefaultKvMongoJavascript(String value) {
             this.value = value;
         }
     }
