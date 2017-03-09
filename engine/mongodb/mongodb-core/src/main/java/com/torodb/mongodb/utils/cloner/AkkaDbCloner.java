@@ -171,19 +171,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     }
     String fromDb = opts.getDbToClone();
 
-    CursorResult<Entry> listCollections;
-    try (MongoConnection remoteConnection = remoteClient.openConnection()) {
-      listCollections = ListCollectionsRequester.getListCollections(
-          remoteConnection,
-          fromDb,
-          null
-      );
-    } catch (MongoException ex) {
-      throw new CloningException(
-          "It was impossible to get information from the remote server",
-          ex
-      );
-    }
+    CursorResult<Entry> listCollections = getRemoteCollections(remoteClient, fromDb);
 
     if (!opts.getWritePermissionSupplier().get()) {
       throw new NotMasterException("Destiny database cannot be written");
@@ -195,56 +183,84 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       throw new NotMasterException("Destiny database cannot be written "
           + "after get collections info");
     }
+    
+    cloneDatabase(collsToClone, dstDb, remoteClient, localServer, opts);
+  }
 
-    try {
-      for (Entry entry : collsToClone) {
-        prepareCollection(localServer, dstDb, entry);
-      }
-    } catch (RollbackException ex) {
-      throw new AssertionError("Unexpected rollback exception", ex);
-    }
+  private void cloneDatabase(List<Entry> collsToClone, String dstDb, MongoClient remoteClient,
+      MongodServer localServer, CloneOptions opts) throws MongoException {
 
-    Materializer materializer = ActorMaterializer.create(getActorSystem());
-
+    prepareCollections(collsToClone, localServer, dstDb);
+    
     try (MongoConnection remoteConnection = remoteClient.openConnection()) {
       if (opts.isCloneData()) {
-        for (Entry entry : collsToClone) {
-          logger.info("Cloning collection data {}.{} into {}.{}",
-              fromDb, entry.getCollectionName(), dstDb,
-              entry.getCollectionName());
-
-          try {
-            cloneCollection(localServer, remoteConnection, dstDb,
-                opts, materializer, entry);
-          } catch (CompletionException completionException) {
-            Throwable cause = completionException.getCause();
-            if (cause instanceof RollbackException) {
-              throw (RollbackException) cause;
-            }
-
-            throw completionException;
-          }
-        }
+        cloneData(collsToClone, remoteConnection, dstDb, localServer, opts);
       }
       if (opts.isCloneIndexes()) {
-        for (Entry entry : collsToClone) {
-          logger.info("Cloning collection indexes {}.{} into {}.{}",
-              fromDb, entry.getCollectionName(), dstDb,
-              entry.getCollectionName());
+        cloneIndexes(collsToClone, remoteConnection, dstDb, localServer, opts);
+      }
+    }
+  }
 
-          try {
-            cloneIndex(localServer, dstDb, dstDb, remoteConnection,
-                opts, entry.getCollectionName(),
-                entry.getCollectionName());
-          } catch (CompletionException completionException) {
-            Throwable cause = completionException.getCause();
-            if (cause instanceof RollbackException) {
-              throw (RollbackException) cause;
-            }
+  private CursorResult<Entry> getRemoteCollections(MongoClient remoteClient, String fromDb) {
+    try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+      return ListCollectionsRequester.getListCollections(
+          remoteConnection,
+          fromDb,
+          null
+      );
+    } catch (MongoException ex) {
+      throw new CloningException(
+          "It was impossible to get information from the remote server",
+          ex
+      );
+    }
+  }
 
-            throw completionException;
-          }
+  private void cloneData(List<Entry> collsToClone, MongoConnection remoteConnection, String dstDb,
+      MongodServer localServer, CloneOptions opts) throws MongoException {
+
+    String fromDb = opts.getDbToClone();
+    Materializer materializer = ActorMaterializer.create(getActorSystem());
+    
+    for (Entry entry : collsToClone) {
+      logger.info("Cloning collection data {}.{} into {}.{}",
+          fromDb, entry.getCollectionName(), dstDb,
+          entry.getCollectionName());
+
+      try {
+        cloneCollection(localServer, remoteConnection, dstDb,
+            opts, materializer, entry);
+      } catch (CompletionException completionException) {
+        Throwable cause = completionException.getCause();
+        if (cause instanceof RollbackException) {
+          throw (RollbackException) cause;
         }
+
+        throw completionException;
+      }
+    }
+  }
+
+  private void cloneIndexes(List<Entry> collsToClone, MongoConnection remoteConnection, String dstDb,
+      MongodServer localServer, CloneOptions opts) {
+    String fromDb = opts.getDbToClone();
+    for (Entry entry : collsToClone) {
+      logger.info("Cloning collection indexes {}.{} into {}.{}",
+          fromDb, entry.getCollectionName(), dstDb,
+          entry.getCollectionName());
+
+      try {
+        cloneIndex(localServer, dstDb, dstDb, remoteConnection,
+            opts, entry.getCollectionName(),
+            entry.getCollectionName());
+      } catch (CompletionException completionException) {
+        Throwable cause = completionException.getCause();
+        if (cause instanceof RollbackException) {
+          throw (RollbackException) cause;
+        }
+
+        throw completionException;
       }
     }
   }
@@ -450,14 +466,25 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     return collsToClone;
   }
 
+  private void prepareCollections(List<Entry> collsToClone, MongodServer localServer,
+      String dstDb) {
+    try {
+      for (Entry entry : collsToClone) {
+        prepareCollection(localServer, dstDb, entry);
+      }
+    } catch (RollbackException ex) {
+      throw new AssertionError("Unexpected rollback exception", ex);
+    }
+  }
+
   private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry)
       throws RetrierAbortException {
     try {
       retrier.retry(() -> {
         try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
           dropCollection(transaction, dstDb, colEntry.getCollectionName());
-          createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry
-              .getCollectionOptions());
+          createCollection(transaction, dstDb, colEntry.getCollectionName(),
+              colEntry.getCollectionOptions());
           transaction.commit();
           return null;
         } catch (UserException ex) {
