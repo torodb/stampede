@@ -129,6 +129,11 @@ public class ImmutableMetaIndex implements MetaIndex {
   }
 
   @Override
+  public ImmutableMetaIndex immutableCopy() {
+    return this;
+  }
+
+  @Override
   public boolean isCompatible(MetaDocPart docPart) {
     return isCompatible(docPart,
         iteratorMetaIndexFieldByTableRef(docPart.getTableRef()));

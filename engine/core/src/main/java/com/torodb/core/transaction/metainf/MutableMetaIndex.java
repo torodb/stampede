@@ -58,6 +58,4 @@ public interface MutableMetaIndex extends MetaIndex {
 
   @DoNotChange
   public abstract Iterable<? extends ImmutableMetaIndexField> getAddedMetaIndexFields();
-
-  public abstract ImmutableMetaIndex immutableCopy();
 }

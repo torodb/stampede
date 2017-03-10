@@ -46,6 +46,10 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
     aliveMap = Maps.filterValues(dbsByName, tuple -> tuple.v2().isAlive());
   }
 
+  public static WrapperMutableMetaSnapshot createEmpty() {
+    return new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
+  }
+
   protected WrapperMutableMetaDatabase createMetaDatabase(ImmutableMetaDatabase immutable) {
     return new WrapperMutableMetaDatabase(immutable, this::onMetaDatabaseChange);
   }

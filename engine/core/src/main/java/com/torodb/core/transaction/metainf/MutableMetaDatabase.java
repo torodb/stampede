@@ -60,6 +60,4 @@ public interface MutableMetaDatabase extends MetaDatabase {
   @SuppressWarnings("checkstyle:LineLength")
   public abstract Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections();
 
-  public abstract ImmutableMetaDatabase immutableCopy();
-
 }

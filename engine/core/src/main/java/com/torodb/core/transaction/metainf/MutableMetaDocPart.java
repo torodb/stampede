@@ -103,6 +103,4 @@ public interface MutableMetaDocPart extends MetaDocPart {
 
   public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(
       MetaIndex missingIndex, List<String> identifiers, MetaField newField);
-
-  public abstract ImmutableMetaDocPart immutableCopy();
 }

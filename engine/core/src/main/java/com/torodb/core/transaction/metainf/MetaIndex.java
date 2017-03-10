@@ -78,4 +78,6 @@ public interface MetaIndex {
     return "index{" + "name:" + getName() + ", unique:" + isUnique() + '}';
   }
 
+  public abstract ImmutableMetaIndex immutableCopy();
+
 }

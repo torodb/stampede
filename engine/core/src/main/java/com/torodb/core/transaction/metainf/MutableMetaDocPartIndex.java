@@ -62,11 +62,4 @@ public interface MutableMetaDocPartIndex extends MetaDocPartIndex {
   @DoNotChange
   @SuppressWarnings("checkstyle:LineLength")
   public abstract Iterable<? extends ImmutableMetaDocPartIndexColumn> getAddedMetaDocPartIndexColumns();
-
-  /**
-   * @throws IllegalArgumentException if this index does not contains all column from position 0 to
-   *                                  the position for the column with maximum position
-   */
-  public abstract ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws
-      IllegalArgumentException;
 }

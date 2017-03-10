@@ -119,6 +119,11 @@ public class ImmutableMetaCollection implements MetaCollection {
     return getMissingIndexesForNewField(streamContainedMetaIndexes(), docPart, newField);
   }
 
+  @Override
+  public ImmutableMetaCollection immutableCopy() {
+    return this;
+  }
+
   protected List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
       Stream<? extends MetaIndex> containedMetaIndexes,
       MutableMetaDocPart docPart, MetaField newField) {

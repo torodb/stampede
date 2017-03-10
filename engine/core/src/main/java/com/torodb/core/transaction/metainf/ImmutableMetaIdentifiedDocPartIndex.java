@@ -77,6 +77,12 @@ public class ImmutableMetaIdentifiedDocPartIndex extends AbstractMetaDocPartInde
   }
 
   @Override
+  public ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws
+      IllegalArgumentException {
+    return this;
+  }
+
+  @Override
   public String toString() {
     return defautToString();
   }

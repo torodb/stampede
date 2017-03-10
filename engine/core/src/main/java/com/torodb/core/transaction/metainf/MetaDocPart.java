@@ -26,8 +26,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-/**
- */
 public interface MetaDocPart {
 
   @Nonnull
@@ -102,4 +100,6 @@ public interface MetaDocPart {
   public default String defautToString() {
     return "docPart{" + "ref:" + getTableRef() + ", id:" + getIdentifier() + '}';
   }
+
+  public abstract ImmutableMetaDocPart immutableCopy();
 }

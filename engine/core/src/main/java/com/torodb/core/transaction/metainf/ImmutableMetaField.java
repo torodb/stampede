@@ -52,6 +52,11 @@ public class ImmutableMetaField implements MetaField {
   }
 
   @Override
+  public ImmutableMetaField immutableCopy() {
+    return this;
+  }
+
+  @Override
   public String toString() {
     return defautToString();
   }

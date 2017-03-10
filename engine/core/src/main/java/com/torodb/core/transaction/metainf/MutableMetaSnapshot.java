@@ -68,9 +68,6 @@ public interface MutableMetaSnapshot extends MetaSnapshot {
 
   public abstract boolean hasChanged();
 
-  @Nonnull
-  public abstract ImmutableMetaSnapshot immutableCopy();
-
   public default boolean containsMetaDatabaseByName(String dbName) {
     return getMetaDatabaseByName(dbName) != null;
   }

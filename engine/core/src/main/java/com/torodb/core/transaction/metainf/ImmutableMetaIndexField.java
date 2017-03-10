@@ -137,4 +137,9 @@ public class ImmutableMetaIndexField implements MetaIndexField {
         getName()) && otherIndexField.getOrdering() == getOrdering();
   }
 
+  @Override
+  public ImmutableMetaIndexField immutableCopy() {
+    return this;
+  }
+
 }

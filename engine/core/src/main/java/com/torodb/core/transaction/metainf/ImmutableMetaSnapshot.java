@@ -68,6 +68,11 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
     return dbsByIdentifier.get(schemaDbName);
   }
 
+  @Override
+  public ImmutableMetaSnapshot immutableCopy() {
+    return this;
+  }
+
   public static class Builder {
 
     private boolean built = false;

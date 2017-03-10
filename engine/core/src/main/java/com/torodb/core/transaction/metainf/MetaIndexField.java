@@ -57,4 +57,6 @@ public interface MetaIndexField {
     return "indexField{" + "position:" + getPosition() + ", tableRef:" + getTableRef() + ", name:"
         + getName() + ", ordering:" + getOrdering() + '}';
   }
+
+  public ImmutableMetaIndexField immutableCopy();
 }

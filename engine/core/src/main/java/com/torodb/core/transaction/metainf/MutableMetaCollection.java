@@ -76,6 +76,4 @@ public interface MutableMetaCollection extends MetaCollection {
 
   public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
       ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
-
-  public abstract ImmutableMetaCollection immutableCopy();
 }
