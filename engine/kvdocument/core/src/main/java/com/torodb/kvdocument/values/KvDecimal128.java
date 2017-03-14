@@ -37,9 +37,20 @@ public abstract class KvDecimal128 extends KvValue<KvDecimal128> {
     return new DefaultKvDecimal128(value);
   }
 
-  public static KvDecimal128 NaN = DefaultKvDecimal128.NaN;
-  public static KvDecimal128 INFINITY = DefaultKvDecimal128.INFINITY;
-  public static KvDecimal128 NEGATIVE_ZERO = DefaultKvDecimal128.NEGATIVE_ZERO;
+  public static KvDecimal128 getNan()
+  {
+    return new DefaultKvDecimal128(DefaultKvDecimal128.NaN_MASK, 0);
+  }
+
+  public static DefaultKvDecimal128 getInfinity()
+  {
+    return new DefaultKvDecimal128(DefaultKvDecimal128.INFINITY_MASK, 0);
+  }
+
+  public static DefaultKvDecimal128 getNegativeZero()
+  {
+    return new DefaultKvDecimal128(0xb040000000000000L, 0x0000000000000000L);
+  }
 
   @Nonnull
   @Override
@@ -124,9 +135,6 @@ public abstract class KvDecimal128 extends KvValue<KvDecimal128> {
     private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
 
 
-    private static final DefaultKvDecimal128 NaN = new DefaultKvDecimal128(NaN_MASK, 0);
-    private static final DefaultKvDecimal128 INFINITY = new DefaultKvDecimal128(INFINITY_MASK, 0);
-    private static final DefaultKvDecimal128 NEGATIVE_ZERO = new DefaultKvDecimal128(0xb040000000000000L, 0x0000000000000000L);
     private long high;
     private long low;
 

@@ -51,15 +51,15 @@ public class Decimal128ValueConverter
   public KvDecimal128 from(Decimal128Record value) {
     if(value.getInfinity())
     {
-      return KvDecimal128.INFINITY;
+      return KvDecimal128.getInfinity();
     }
     if(value.getNan())
     {
-      return KvDecimal128.NaN;
+      return KvDecimal128.getNan();
     }
     if(value.getNegativeZero())
     {
-      return KvDecimal128.INFINITY;
+      return KvDecimal128.getNegativeZero();
     }
 
     return KvDecimal128.of(value.getValue());
@@ -70,12 +70,16 @@ public class Decimal128ValueConverter
   public Decimal128Record to(KvDecimal128 userObject) {
     //The only way of building the object without creating a new module dependency (circular)
     // is exposing the internal state of the KV
-    return new Decimal128Record(
+
+    final Decimal128Record result = new Decimal128Record(
             userObject.getBigDecimal(),
             userObject.isInfinite() && !userObject.isNaN(),
             userObject.isNaN(),
             userObject.isNegativeZero()
-            );
+    );
+
+
+    return result;
   }
 
   @Override

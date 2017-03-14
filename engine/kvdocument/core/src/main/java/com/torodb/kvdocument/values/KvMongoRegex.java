@@ -23,6 +23,7 @@ import com.torodb.kvdocument.types.NullType;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -93,8 +94,6 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
   public abstract Set<Options> getOptions();
 
-  public abstract Set<Options> getOptionsFromString();
-
   public enum Options {
     CASE_INSENSITIVE('i'),
     MULTILINE_MATCHING('m'),
@@ -160,7 +159,8 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
     }
 
     public DefaultKvMongoRegex(String pattern, String options) {
-      super();
+      this.pattern = pattern;
+      this.options = getOptionsFromString(options);
     }
 
     @Override
@@ -173,11 +173,18 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
       return options;
     }
 
-    @Override
-    public Set<Options> getOptionsFromString() {
+    private static Set<Options> getOptionsFromString(String optString) {
 
-      return options;
+      if(optString.isEmpty())
+        return EnumSet.noneOf(Options.class);
+
+      final List<Options> optionList = optString.chars().mapToObj(i -> (char) i).map(character ->
+        Arrays.stream(Options.values()).filter(opt -> opt.charId == character).findAny().get()
+      ).collect(Collectors.toList());
+
+      return EnumSet.copyOf(optionList);
     }
+
 
     @Override
     public int hashCode() {

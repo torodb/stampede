@@ -53,15 +53,15 @@ public class Decimal128RecordSqlBinding implements SqlBinding<Decimal128Record> 
     value = value.substring(1, value.length() - 1);
     int indexOfComma = value.lastIndexOf(',');
 
-    boolean isNegZero = Boolean.parseBoolean(value.substring(indexOfComma + 1, value.length()));
+    boolean isNegZero = value.substring(indexOfComma + 1, value.length()).charAt(0)=='t';
     value = value.substring(0, indexOfComma);
     indexOfComma = value.lastIndexOf(',');
 
-    boolean isNan = Boolean.parseBoolean(value.substring(indexOfComma + 1, value.length()));
+    boolean isNan = value.substring(indexOfComma + 1, value.length()).charAt(0)=='t';
     value = value.substring(0, indexOfComma);
     indexOfComma = value.lastIndexOf(',');
 
-    boolean isInfinity = Boolean.parseBoolean(value.substring(indexOfComma + 1, value.length()));
+    boolean isInfinity = value.substring(indexOfComma + 1, value.length()).charAt(0)=='t';
     value = value.substring(0, indexOfComma);
 
     BigDecimal bigDec = new BigDecimal(value);

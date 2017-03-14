@@ -212,18 +212,6 @@ public class DocumentsAndRelationsTypesTest {
     }
 
 
-    /*List<ToroDocument> toroDocs = r2dTranslator.translate(Arrays.asList(new DocPartResult[]{result}).iterator());
-
-    toroDocs.forEach(
-            toroDocument -> {
-              KvDocument doc = toroDocument.getRoot();
-
-              System.out.println(doc);
-
-
-            }
-    );*/
-
 
   }
 
