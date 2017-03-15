@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  *
@@ -62,6 +63,11 @@ public class ImmutableMetaIdentifiedDocPartIndex extends AbstractMetaDocPartInde
   }
 
   @Override
+  public Stream<? extends MetaDocPartIndexColumn> streamColumns() {
+    return columnsByPosition.stream();
+  }
+
+  @Override
   public Iterator<ImmutableMetaDocPartIndexColumn> iteratorColumns() {
     return columnsByPosition.iterator();
   }
@@ -74,6 +80,17 @@ public class ImmutableMetaIdentifiedDocPartIndex extends AbstractMetaDocPartInde
   @Override
   public ImmutableMetaDocPartIndexColumn getMetaDocPartIndexColumnByIdentifier(String columnName) {
     return columnsByIdentifier.get(columnName);
+  }
+
+  @Override
+  public ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws
+      IllegalArgumentException {
+    return this;
+  }
+
+  @Override
+  public ImmutableMetaIdentifiedDocPartIndex immutableCopy() {
+    return this;
   }
 
   @Override

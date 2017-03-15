@@ -23,9 +23,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-/**
- *
- */
 public interface MetaDatabase {
 
   /**
@@ -55,5 +52,7 @@ public interface MetaDatabase {
   public default String defautToString() {
     return "db{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
   }
+
+  public abstract ImmutableMetaDatabase immutableCopy();
 
 }

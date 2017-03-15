@@ -288,16 +288,23 @@ public class RecoveryService extends RunnableTorodbService {
     return true;
   }
 
-  private void enableDataImportMode() throws UserException {
-    logger.debug("Starting data import mode");
-    server.getTorodServer().enableDataImportMode();
-    logger.trace("Data import mode started");
+  private void enableDataImportMode(String db) {
+    logger.trace("Starting data import mode on {}", db);
+    server.getTorodServer().enableDataImportMode(db).join();
+    logger.debug("Data import mode started on {}", db);
   }
 
-  private void disableDataImportMode() throws UserException {
-    logger.debug("Ending data import mode");
-    server.getTorodServer().disableDataImportMode();
-    logger.trace("Data import mode ended");
+  private void disableDataImportMode(String db) {
+    logger.trace("Ending data import mode on {}", db);
+    server.getTorodServer().disableDataImportMode(db)
+        .whenComplete((empty, error) -> {
+          if (error == null) {
+            logger.debug("Data import mode on database {} ended", db);
+          } else {
+            logger.error("Error while disabling import mode on database " + db, error);
+          }
+        })
+        .join();
   }
 
   @Override
@@ -324,60 +331,60 @@ public class RecoveryService extends RunnableTorodbService {
   private void cloneDatabases(@Nonnull MongoClient remoteClient) throws CloningException,
       MongoException, UserException {
 
-    enableDataImportMode();
-    try {
-      Stream<String> dbNames;
-      try (MongoConnection remoteConnection = remoteClient.openConnection()) {
-        RemoteCommandResponse<ListDatabasesReply> remoteResponse = remoteConnection.execute(
-            ListDatabasesCommand.INSTANCE,
-            "admin",
-            true,
-            Empty.getInstance()
-        );
-        if (!remoteResponse.isOk()) {
-          throw remoteResponse.asMongoException();
-        }
+    streamRemoteDatabases(remoteClient)
+        .map(ListDatabasesReply.DatabaseEntry::getName)
+        .filter(this::isReplicable)
+        .forEach(databaseName -> cloneDatabase(databaseName, remoteClient));
+  }
 
-        dbNames = remoteResponse.getCommandReply().get().getDatabases().stream().map(db -> db
-            .getName());
+  private Stream<ListDatabasesReply.DatabaseEntry> streamRemoteDatabases(MongoClient remoteClient)
+      throws MongoException {
+    try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+      RemoteCommandResponse<ListDatabasesReply> remoteResponse = remoteConnection.execute(
+          ListDatabasesCommand.INSTANCE,
+          "admin",
+          true,
+          Empty.getInstance()
+      );
+      if (!remoteResponse.isOk()) {
+        throw remoteResponse.asMongoException();
       }
 
-      dbNames.filter(this::isReplicable)
-          .forEach(databaseName -> {
-            MyWritePermissionSupplier writePermissionSupplier =
-                new MyWritePermissionSupplier(databaseName);
+      return remoteResponse.getCommandReply().get()
+          .getDatabases()
+          .stream();
+    }
+  }
 
-            CloneOptions options = new CloneOptions(
-                true,
-                true,
-                true,
-                false,
-                databaseName,
-                Collections.<String>emptySet(),
-                writePermissionSupplier,
-                (colName) -> namespaceFilter.filter(new Namespace(databaseName, colName)),
-                indexFilter
-            );
+  private void cloneDatabase(String databaseName, MongoClient remoteClient) {
+    MyWritePermissionSupplier writePermissionSupplier =
+        new MyWritePermissionSupplier(databaseName);
 
-            try {
-              cloner.cloneDatabase(databaseName, remoteClient, server, options);
-            } catch (MongoException ex) {
-              throw new CloningException(ex);
-            }
-          });
+    CloneOptions options = new CloneOptions(
+        true,
+        true,
+        true,
+        false,
+        databaseName,
+        Collections.<String>emptySet(),
+        writePermissionSupplier,
+        (colName) -> namespaceFilter.filter(new Namespace(databaseName, colName)),
+        indexFilter
+    );
+
+    try {
+      enableDataImportMode(databaseName);
+      cloner.cloneDatabase(databaseName, remoteClient, server, options);
+    } catch (MongoException ex) {
+      throw new CloningException(ex);
     } finally {
-      disableDataImportMode();
+      disableDataImportMode(databaseName);
     }
   }
 
   /**
    * Applies all the oplog operations stored on the remote server whose optime is higher than
    * <em>from</em> but lower or equal than <em>to</em>.
-   *
-   * @param myOplog
-   * @param remoteOplog
-   * @param to
-   * @param from
    */
   private void applyOplog(
       OplogReader remoteOplog,

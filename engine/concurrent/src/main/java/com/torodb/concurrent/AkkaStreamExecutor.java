@@ -34,6 +34,7 @@ import akka.stream.javadsl.Merge;
 import akka.stream.javadsl.Sink;
 import akka.stream.javadsl.Source;
 import com.google.common.base.Preconditions;
+import com.torodb.common.util.Empty;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.concurrent.StreamExecutor;
 import org.apache.logging.log4j.Logger;
@@ -85,16 +86,17 @@ public class AkkaStreamExecutor extends ActorSystemTorodbService
   }
 
   @Override
-  public CompletableFuture<?> executeRunnables(Stream<Runnable> runnables) {
+  public CompletableFuture<Empty> executeRunnables(Stream<Runnable> runnables) {
     Preconditions.checkState(isRunning(), "This service is not running");
     return Source.fromIterator(() -> runnables.iterator())
         .toMat(genericRunnableGraph, Keep.right())
         .run(materializer)
-        .toCompletableFuture();
+        .toCompletableFuture()
+        .thenApply(d -> Empty.getInstance());
   }
 
   @Override
-  public <I> CompletableFuture<?> execute(Stream<Callable<I>> callables) {
+  public <I> CompletableFuture<Empty> execute(Stream<Callable<I>> callables) {
     Preconditions.checkState(isRunning(), "This service is not running");
     Flow<Callable<I>, I, NotUsed> flow = Flow.fromFunction(callable -> callable.call());
 
@@ -104,7 +106,8 @@ public class AkkaStreamExecutor extends ActorSystemTorodbService
         .via(balanceGraph)
         .toMat(Sink.ignore(), Keep.right())
         .run(materializer)
-        .toCompletableFuture();
+        .toCompletableFuture()
+        .thenApply(d -> Empty.getInstance());
   }
 
   @Override

@@ -386,7 +386,7 @@ public abstract class SqlTorodTransaction<T extends InternalTransaction>
     metaIndex.iteratorFields()
         .forEachRemaining(metaIndexField ->
             indexInfoBuilder.addField(
-                getAttrivuteReference(metaIndexField.getTableRef(), metaIndexField.getName()),
+                getAttrivuteReference(metaIndexField.getTableRef(), metaIndexField.getFieldName()),
                 metaIndexField.getOrdering().isAscending()));
 
     return indexInfoBuilder.build();

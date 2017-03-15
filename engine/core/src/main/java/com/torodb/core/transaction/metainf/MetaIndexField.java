@@ -23,7 +23,7 @@ import com.torodb.core.TableRef;
 import javax.annotation.Nonnull;
 
 /**
- *
+ * A representation of a indexed field on the document model.
  */
 public interface MetaIndexField {
 
@@ -35,11 +35,9 @@ public interface MetaIndexField {
 
   /**
    * The name of the field to index on the document model.
-   *
-   * @return
    */
   @Nonnull
-  public abstract String getName();
+  public abstract String getFieldName();
 
   @Nonnull
   public abstract FieldIndexOrdering getOrdering();
@@ -55,6 +53,8 @@ public interface MetaIndexField {
 
   public default String defautToString() {
     return "indexField{" + "position:" + getPosition() + ", tableRef:" + getTableRef() + ", name:"
-        + getName() + ", ordering:" + getOrdering() + '}';
+        + getFieldName() + ", ordering:" + getOrdering() + '}';
   }
+
+  public ImmutableMetaIndexField immutableCopy();
 }

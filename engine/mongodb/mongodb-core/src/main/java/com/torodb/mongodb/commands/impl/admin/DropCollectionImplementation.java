@@ -47,7 +47,7 @@ public class DropCollectionImplementation implements
       Command<? super CollectionCommandArgument, ? super Empty> command,
       CollectionCommandArgument arg, WriteMongodTransaction context) {
     try {
-      logDropCommand(arg);
+      logDropCommand(req, arg);
 
       context.getTorodTransaction().dropCollection(req.getDatabase(), arg.getCollection());
     } catch (UserException ex) {
@@ -58,10 +58,10 @@ public class DropCollectionImplementation implements
     return Status.ok();
   }
 
-  private void logDropCommand(CollectionCommandArgument arg) {
+  private void logDropCommand(Request req, CollectionCommandArgument arg) {
     String collection = arg.getCollection();
 
-    logger.info("Drop collection {}", collection);
+    logger.info("Drop collection {}.{}", req.getDatabase(), collection);
   }
 
 }

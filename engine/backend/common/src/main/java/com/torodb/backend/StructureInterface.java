@@ -25,7 +25,6 @@ import com.torodb.core.exceptions.InvalidDatabaseException;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
 import org.jooq.Schema;
@@ -97,13 +96,10 @@ public interface StructureInterface {
    * be done once the data insert mode finishes and return a label that indicate the type of
    * operation executed.
    *
-   * For example, PostgreSQL backend would like to run analyze on the modified tables to get some
+   * <p>For example, PostgreSQL backend would like to run analyze on the modified tables to get some
    * stadistics.
-   *
-   * @param snapshot
-   * @return
    */
-  public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaSnapshot snapshot);
+  public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaDatabase db);
 
   void createIndex(@Nonnull DSLContext dsl, @Nonnull String indexName, @Nonnull String tableSchema,
       @Nonnull String tableName, @Nonnull List<Tuple2<String, Boolean>> columnList, boolean unique)

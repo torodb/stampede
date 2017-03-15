@@ -116,9 +116,8 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
   }
 
   @Override
-  @DoNotChange
-  public Iterable<ImmutableMetaField> getAddedMetaFields() {
-    return addedFields;
+  public Stream<ImmutableMetaField> streamAddedMetaFields() {
+    return addedFields.stream();
   }
 
   @Override
@@ -127,9 +126,10 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
   }
 
   @Override
-  public Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars() {
-    return newScalars.values();
+  public Stream<? extends ImmutableMetaScalar> streamAddedMetaScalars() {
+    return newScalars.values().stream();
   }
+
 
   @Override
   public MutableMetaDocPartIndex addMetaDocPartIndex(boolean unique) {
@@ -153,11 +153,11 @@ public class WrapperMutableMetaDocPart implements MutableMetaDocPart {
   }
 
   @Override
-  @DoNotChange
   @SuppressWarnings("checkstyle:LineLength")
-  public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
-    return Maps.filterValues(indexesByIdentifier, tuple -> tuple.v2().hasChanged())
-        .values();
+  public Stream<ChangedElement<ImmutableMetaIdentifiedDocPartIndex>> streamModifiedMetaDocPartIndexes() {
+    return indexesByIdentifier.values().stream()
+        .filter(tuple -> tuple.v2().hasChanged())
+        .map(PojoChangedElement::new);
   }
 
   @Override

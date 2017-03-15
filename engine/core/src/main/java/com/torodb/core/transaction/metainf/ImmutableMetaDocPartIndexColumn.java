@@ -53,6 +53,11 @@ public class ImmutableMetaDocPartIndexColumn implements MetaDocPartIndexColumn {
   }
 
   @Override
+  public ImmutableMetaDocPartIndexColumn immutableCopy() {
+    return this;
+  }
+
+  @Override
   public String toString() {
     return defautToString();
   }

@@ -60,6 +60,11 @@ public class ImmutableMetaFieldIndex implements MetaFieldIndex {
   }
 
   @Override
+  public ImmutableMetaFieldIndex immutableCopy() {
+    return this;
+  }
+
+  @Override
   public String toString() {
     return defautToString();
   }

@@ -27,8 +27,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-/**
- */
 public interface MetaCollection {
 
   /**
@@ -66,5 +64,7 @@ public interface MetaCollection {
   public default String defautToString() {
     return "col{" + "name:" + getName() + ", id:" + getIdentifier() + '}';
   }
+
+  public ImmutableMetaCollection immutableCopy();
 
 }

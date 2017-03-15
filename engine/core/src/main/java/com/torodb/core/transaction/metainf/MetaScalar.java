@@ -38,4 +38,6 @@ public interface MetaScalar {
     return "field{type:" + getType() + ", id:" + getIdentifier() + '}';
   }
 
+  public ImmutableMetaScalar immutableCopy();
+
 }

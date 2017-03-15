@@ -78,6 +78,7 @@
     <properties>
         <torodb.engine.version>0.50.1-SNAPSHOT</torodb.engine.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <log4j.version>2.7</log4j.version>
         <jackson.version>2.6.3</jackson.version>
         <mongowp.version>0.50.1-SNAPSHOT</mongowp.version>

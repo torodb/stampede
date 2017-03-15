@@ -20,6 +20,7 @@ package com.torodb.backend;
 
 import com.torodb.backend.ErrorHandler.Context;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.common.util.Empty;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.backend.BackendConnection;
@@ -41,7 +42,6 @@ import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple2;
@@ -51,6 +51,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -104,54 +105,50 @@ public class BackendServiceImpl extends IdleTorodbService implements BackendServ
   }
 
   @Override
-  public void enableDataImportMode(MetaSnapshot snapshot) throws RollbackException {
-    if (!sqlInterface.getDbBackend().isOnDataInsertMode()) {
-      if (snapshot.streamMetaDatabases().findAny().isPresent()) {
-        throw new IllegalStateException("Can not disable indexes if any database exists");
-      }
-
-      sqlInterface.getDbBackend().enableDataInsertMode();
+  public CompletableFuture<Empty> enableDataImportMode(MetaDatabase db)
+      throws RollbackException {
+    if (!sqlInterface.getDbBackend().isOnDataInsertMode(db)) {
+      sqlInterface.getDbBackend().enableDataInsertMode(db);
     }
+    return CompletableFuture.completedFuture(Empty.getInstance());
   }
 
   @Override
-  public void disableDataImportMode(MetaSnapshot snapshot) throws RollbackException {
-    if (sqlInterface.getDbBackend().isOnDataInsertMode()) {
-      sqlInterface.getDbBackend().disableDataInsertMode();
-
-      //create internal indexes
-      Stream<Consumer<DSLContext>> createInternalIndexesJobs = snapshot.streamMetaDatabases()
-          .flatMap(
-              db -> db.streamMetaCollections().flatMap(
-                  col -> col.streamContainedMetaDocParts().flatMap(
-                      docPart -> enableInternalIndexJobs(db, col, docPart)
-                  )
-              )
-          );
-
-      //create indexes
-      Stream<Consumer<DSLContext>> createIndexesJobs = snapshot.streamMetaDatabases().flatMap(
-          db -> db.streamMetaCollections().flatMap(
-              col -> enableIndexJobs(db, col)
-          )
-      );
-
-      //backend specific jobs
-      Stream<Consumer<DSLContext>> backendSpecificJobs = sqlInterface.getStructureInterface()
-          .streamDataInsertFinishTasks(snapshot).map(job -> {
-            return (Consumer<DSLContext>) dsl -> {
-              String index = job.apply(dsl);
-              LOGGER.info("Task {} completed", index);
-            };
-          });
-      Stream<Consumer<DSLContext>> jobs = Stream
-          .concat(createInternalIndexesJobs, createIndexesJobs);
-      jobs = Stream.concat(jobs, backendSpecificJobs);
-      Stream<Runnable> runnables = jobs.map(this::dslConsumerToRunnable);
-
-      streamExecutor.executeRunnables(runnables)
-          .join();
+  public CompletableFuture<Empty> disableDataImportMode(MetaDatabase db)
+      throws RollbackException {
+    if (!sqlInterface.getDbBackend().isOnDataInsertMode(db)) {
+      LOGGER.debug("Ignoring attempt to disable import mode on {} as it is not on that mode",
+          db.getIdentifier());
+      return CompletableFuture.completedFuture(Empty.getInstance());
     }
+    sqlInterface.getDbBackend().disableDataInsertMode(db);
+
+    //create internal indexes
+    Stream<Consumer<DSLContext>> createInternalIndexesJobs = db.streamMetaCollections().flatMap(
+        col -> col.streamContainedMetaDocParts().flatMap(
+            docPart -> enableInternalIndexJobs(db, col, docPart)
+        )
+    );
+
+    //create indexes
+    Stream<Consumer<DSLContext>> createIndexesJobs = db.streamMetaCollections().flatMap(
+        col -> enableIndexJobs(db, col)
+    );
+
+    //backend specific jobs
+    Stream<Consumer<DSLContext>> backendSpecificJobs = sqlInterface.getStructureInterface()
+        .streamDataInsertFinishTasks(db).map(job -> {
+          return (Consumer<DSLContext>) dsl -> {
+            String index = job.apply(dsl);
+            LOGGER.info("Task {} completed", index);
+          };
+        });
+    Stream<Consumer<DSLContext>> jobs = Stream
+        .concat(createInternalIndexesJobs, createIndexesJobs);
+    jobs = Stream.concat(jobs, backendSpecificJobs);
+    Stream<Runnable> runnables = jobs.map(this::dslConsumerToRunnable);
+
+    return streamExecutor.executeRunnables(runnables);
   }
 
   private Stream<Consumer<DSLContext>> enableInternalIndexJobs(MetaDatabase db, MetaCollection col,

@@ -19,7 +19,6 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.stream.Stream;
 
@@ -28,9 +27,13 @@ import javax.annotation.Nullable;
 
 /**
  *
- * @param <MMD>
  */
 public interface MutableMetaSnapshot extends MetaSnapshot {
+
+  /**
+   * Returns the {@link ImmutableMetaSnapshot} from which this one derivates.
+   */
+  public ImmutableMetaSnapshot getOrigin();
 
   @Override
   @Nullable
@@ -64,12 +67,9 @@ public interface MutableMetaSnapshot extends MetaSnapshot {
   public abstract boolean removeMetaDatabaseByIdentifier(String dbId);
 
   @DoNotChange
-  public abstract Iterable<Tuple2<MutableMetaDatabase, MetaElementState>> getModifiedDatabases();
+  public Stream<ChangedElement<MutableMetaDatabase>> streamModifiedDatabases();
 
   public abstract boolean hasChanged();
-
-  @Nonnull
-  public abstract ImmutableMetaSnapshot immutableCopy();
 
   public default boolean containsMetaDatabaseByName(String dbName) {
     return getMetaDatabaseByName(dbName) != null;

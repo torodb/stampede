@@ -89,6 +89,10 @@ public class ImmutableMetaDatabase implements MetaDatabase {
     return defautToString();
   }
 
+  public ImmutableMetaDatabase immutableCopy() {
+    return this;
+  }
+
   public static class Builder {
 
     private boolean built = false;
