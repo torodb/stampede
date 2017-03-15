@@ -114,14 +114,14 @@ public class ImmutableMetaCollection implements MetaCollection {
   }
 
   @Override
-  public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
-      MutableMetaDocPart docPart, MetaField newField) {
-    return getMissingIndexesForNewField(streamContainedMetaIndexes(), docPart, newField);
+  public ImmutableMetaCollection immutableCopy() {
+    return this;
   }
 
   @Override
-  public ImmutableMetaCollection immutableCopy() {
-    return this;
+  public List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
+      MutableMetaDocPart docPart, MetaField newField) {
+    return getMissingIndexesForNewField(streamContainedMetaIndexes(), docPart, newField);
   }
 
   protected List<Tuple2<MetaIndex, List<String>>> getMissingIndexesForNewField(
@@ -132,7 +132,7 @@ public class ImmutableMetaCollection implements MetaCollection {
             .getName()) != null)
         .flatMap(index -> Seq.seq(index.iteratorMetaDocPartIndexesIdentifiers(docPart))
             .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
-            .map(identifiers -> new Tuple2<MetaIndex, List<String>>(index, identifiers)))
+            .map(identifiers -> new Tuple2<>(index, identifiers)))
         .collect(Collectors.groupingBy(missingIndexEntry -> missingIndexEntry.v2()))
         .entrySet()
         .stream()

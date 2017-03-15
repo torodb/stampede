@@ -29,7 +29,6 @@ import com.torodb.core.backend.IdentifierConstraints;
 import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
 import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -221,12 +220,10 @@ public class PostgreSqlStructureInterface extends AbstractStructureInterface {
   }
 
   @Override
-  public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaSnapshot snapshot) {
-    return snapshot.streamMetaDatabases().flatMap(
-        db -> db.streamMetaCollections().flatMap(
-            col -> col.streamContainedMetaDocParts().map(
-                docPart -> createAnalyzeConsumer(db, col, docPart)
-            )
+  public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaDatabase db) {
+    return db.streamMetaCollections().flatMap(
+        col -> col.streamContainedMetaDocParts().map(
+            docPart -> createAnalyzeConsumer(db, col, docPart)
         )
     );
   }

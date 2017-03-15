@@ -22,13 +22,12 @@ import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  *
  */
 public interface MutableMetaIndex extends MetaIndex {
-
-  public abstract boolean isUnique();
 
   @Override
   public ImmutableMetaIndexField getMetaIndexFieldByPosition(int position);
@@ -57,5 +56,5 @@ public interface MutableMetaIndex extends MetaIndex {
       FieldIndexOrdering ordering) throws IllegalArgumentException;
 
   @DoNotChange
-  public abstract Iterable<? extends ImmutableMetaIndexField> getAddedMetaIndexFields();
+  public Stream<? extends ImmutableMetaIndexField> streamAddedMetaIndexFields();
 }

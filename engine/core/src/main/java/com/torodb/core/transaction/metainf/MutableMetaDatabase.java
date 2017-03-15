@@ -18,8 +18,6 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.core.annotations.DoNotChange;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.stream.Stream;
 
@@ -27,6 +25,11 @@ import java.util.stream.Stream;
  *
  */
 public interface MutableMetaDatabase extends MetaDatabase {
+
+  /**
+   * Returns the {@link ImmutableMetaDatabase} from which this one derivates.
+   */
+  public ImmutableMetaDatabase getOrigin();
 
   @Override
   public MutableMetaCollection getMetaCollectionByIdentifier(String collectionIdentifier);
@@ -56,8 +59,6 @@ public interface MutableMetaDatabase extends MetaDatabase {
    */
   public abstract boolean removeMetaCollectionByIdentifier(String collectionId);
 
-  @DoNotChange
-  @SuppressWarnings("checkstyle:LineLength")
-  public abstract Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections();
+  public abstract Stream<ChangedElement<MutableMetaCollection>> streamModifiedCollections();
 
 }

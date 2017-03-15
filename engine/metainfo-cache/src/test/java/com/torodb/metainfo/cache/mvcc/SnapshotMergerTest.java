@@ -27,8 +27,10 @@ import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
+import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
@@ -40,12 +42,7 @@ import org.junit.Test;
 import org.mockito.MockSettings;
 import org.mockito.internal.creation.MockSettingsImpl;
 
-import java.util.Collections;
 
-/**
- *
- * @author gortiz
- */
 @SuppressWarnings({"unused", "rawtypes"})
 public class SnapshotMergerTest {
 
@@ -69,6 +66,7 @@ public class SnapshotMergerTest {
                     .put(new ImmutableMetaField("fieldName1", "fieldId1", FieldType.INTEGER))
                     .put(new ImmutableMetaScalar("scalarId1", FieldType.INTEGER))
                 )
+                .put(new ImmutableMetaIndex.Builder("idx", true))
                 .build()
             ).build()
         ).build();
@@ -80,16 +78,13 @@ public class SnapshotMergerTest {
   }
 
   /**
-   * Fails if the checker do not allow idempotency
-   *
-   * @throws Exception
+   * Fails if the checker do not allow idempotency.
    */
   @Test
   public void testIdempotency() throws Exception {
     SnapshotMerger merger;
 
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     MutableMetaDocPart metaDocPart = changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1");
@@ -101,136 +96,90 @@ public class SnapshotMergerTest {
   }
 
   /**
-   * Test that an exception is thrown on database name conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on database name conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testDatabaseNameConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName2", "dbId1");
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot)
-          .merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on database id conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on database id conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testDatabaseIdConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId2");
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on collection name conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on collection name conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testCollectionNameConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName2", "colId1");
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on collection id conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on collection id conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testCollectionIdConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId2");
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on doc part table ref conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on doc part table ref conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testDocPartRefConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createChild(tableRefFactory.createRoot(), "anotherTRef"),
             "docPartId1");
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on doc part id conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on doc part id conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testDocPartIdConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId2");
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on field name and type conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on field name and type conflicts.
    */
   @Test
   public void testFieldNameAndTypeConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
@@ -243,8 +192,7 @@ public class SnapshotMergerTest {
 
     }
 
-    changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections
-        .emptyMap()));
+    changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
@@ -259,37 +207,27 @@ public class SnapshotMergerTest {
   }
 
   /**
-   * Test that an exception is thrown on field id conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on field id conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testFieldIdConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
         .addMetaField("fieldName1", "fieldId2", FieldType.INTEGER);
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
    * Test that no exception is thrown when creating a new field that shares type but not name with a
    * previous one.
-   *
-   * @throws Exception
    */
   @Test
   public void testField_differentName() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
@@ -301,13 +239,10 @@ public class SnapshotMergerTest {
   /**
    * Test that no exception is thrown when creating a new field that shares name but not type with a
    * previous one.
-   *
-   * @throws Exception
    */
   @Test
   public void testField_differentType() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
@@ -317,14 +252,11 @@ public class SnapshotMergerTest {
   }
 
   /**
-   * Test that no exception is thrown when creating a new field with different id, name and type
-   *
-   * @throws Exception
+   * Test that no exception is thrown when creating a new field with different id, name and type.
    */
   @Test
   public void testField_different() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
@@ -334,63 +266,61 @@ public class SnapshotMergerTest {
   }
 
   /**
-   * Test that an exception is thrown on scalar id conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on scalar id conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testScalarIdConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
         .addMetaScalar("scalarId1", FieldType.LONG);
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that an exception is thrown on scalar type conflicts
-   *
-   * @throws Exception
+   * Test that an exception is thrown on scalar type conflicts.
    */
-  @Test
+  @Test(expected = UnmergeableException.class)
   public void testScalarTypeConflict() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
         .addMetaScalar("fieldId2", FieldType.INTEGER);
 
-    try {
-      new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
-      Assert.fail("A " + UnmergeableException.class.getSimpleName() + " was expected to be thrown");
-    } catch (UnmergeableException ex) {
-
-    }
+    new SnapshotMerger(currentSnapshot, changedSnapshot)
+        .merge();
   }
 
   /**
-   * Test that no exception is thrown when creating a new scalar with different id and type
-   *
-   * @throws Exception
+   * Test that no exception is thrown when creating a new scalar with different id and type.
    */
   @Test
   public void testScalar_different() throws Exception {
-    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(
-        Collections.emptyMap()));
+    MutableMetaSnapshot changedSnapshot = WrapperMutableMetaSnapshot.createEmpty();
     changedSnapshot.addMetaDatabase("dbName1", "dbId1")
         .addMetaCollection("colName1", "colId1")
         .addMetaDocPart(tableRefFactory.createRoot(), "docPartId1")
         .addMetaScalar("fieldId20", FieldType.LONG);
 
+    new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
+  }
+
+  @Test
+  public void testIndex_dropAndCreate() {
+    //GIVEN
+    MutableMetaSnapshot changedSnapshot = new WrapperMutableMetaSnapshot(currentSnapshot);
+    MutableMetaCollection col = changedSnapshot.getMetaDatabaseByIdentifier("dbId1")
+            .getMetaCollectionByIdentifier("colId1");
+
+    //WHEN
+    col.removeMetaIndexByName("idx");
+    col.addMetaIndex("idx", true);
+
+    //THEN
     new SnapshotMerger(currentSnapshot, changedSnapshot).merge();
   }
 }

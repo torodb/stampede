@@ -242,8 +242,8 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     }
   }
 
-  private void cloneIndexes(List<Entry> collsToClone, MongoConnection remoteConnection, String dstDb,
-      MongodServer localServer, CloneOptions opts) {
+  private void cloneIndexes(List<Entry> collsToClone, MongoConnection remoteConnection, 
+      String dstDb, MongodServer localServer, CloneOptions opts) {
     String fromDb = opts.getDbToClone();
     for (Entry entry : collsToClone) {
       logger.info("Cloning collection indexes {}.{} into {}.{}",

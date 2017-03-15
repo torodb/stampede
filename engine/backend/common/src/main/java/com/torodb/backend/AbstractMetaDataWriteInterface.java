@@ -242,7 +242,7 @@ public abstract class AbstractMetaDataWriteInterface implements MetaDataWriteInt
       MetaIndex index, MetaIndexField field) {
     String statement = getAddMetaIndexFieldStatement(database.getName(), collection.getName(), index
         .getName(),
-        field.getPosition(), field.getTableRef(), field.getName(), field.getOrdering());
+        field.getPosition(), field.getTableRef(), field.getFieldName(), field.getOrdering());
     sqlHelper.executeUpdate(dsl, statement, Context.META_INSERT);
   }
 

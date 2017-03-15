@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.Nonnull;
@@ -62,11 +63,13 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
   private FlexyPoolDataSource<HikariDataSource> systemDataSource;
   private FlexyPoolDataSource<HikariDataSource> readOnlyDataSource;
   /**
-   * Global state variable for data import mode. If true data import mode is enabled, data import
-   * mode is otherwise disabled. Indexes will not be created while data import mode is enabled. When
-   * this mode is enabled importing data will be faster.
+   * Relation between schema names and their data import mode.
+   *
+   * <p>If a entry has the value true, then that schema is on import mode. Indexes will not be
+   * created while data import mode is enabled. When this mode is enabled importing data will be
+   * faster.
    */
-  private volatile boolean dataImportMode;
+  private final ConcurrentHashMap<String, Boolean> schemaImportMode = new ConcurrentHashMap<>();
 
   /**
    * Configure the backend.
@@ -82,7 +85,6 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     super(threadFactory);
     this.configuration = configuration;
     this.errorHandler = errorHandler;
-    this.dataImportMode = false;
 
     int connectionPoolSize = configuration.getConnectionPoolSize();
     int reservedReadPoolSize = configuration.getReservedReadPoolSize();
@@ -201,13 +203,22 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
                                                         String poolName);
 
   @Override
-  public void disableDataInsertMode() {
-    this.dataImportMode = false;
+  public void disableDataInsertMode(String schemaName) {
+    schemaImportMode.put(schemaName, Boolean.FALSE);
   }
 
   @Override
-  public void enableDataInsertMode() {
-    this.dataImportMode = true;
+  public void enableDataInsertMode(String schemaName) {
+    schemaImportMode.put(schemaName, Boolean.TRUE);
+  }
+
+  @Override
+  public boolean isOnDataInsertMode(String schemaName) {
+    Boolean importMode = schemaImportMode.get(schemaName);
+    if (importMode == null) {
+      return false;
+    }
+    return importMode;
   }
 
   @Override
@@ -235,11 +246,6 @@ public abstract class AbstractDbBackendService<ConfigurationT extends BackendCon
     if (!isRunning()) {
       throw new IllegalStateException("The " + serviceName() + " is not running");
     }
-  }
-
-  @Override
-  public boolean isOnDataInsertMode() {
-    return dataImportMode;
   }
 
   @Override

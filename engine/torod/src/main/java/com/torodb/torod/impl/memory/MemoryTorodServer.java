@@ -22,10 +22,12 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import com.google.inject.Singleton;
+import com.torodb.common.util.Empty;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,11 +59,13 @@ public class MemoryTorodServer extends IdleTorodbService implements TorodServer 
   }
 
   @Override
-  public void disableDataImportMode() {
+  public CompletableFuture<Empty> disableDataImportMode(String dbName) {
+    return CompletableFuture.completedFuture(Empty.getInstance());
   }
 
   @Override
-  public void enableDataImportMode() {
+  public CompletableFuture<Empty> enableDataImportMode(String dbName) {
+    return CompletableFuture.completedFuture(Empty.getInstance());
   }
 
   @Override

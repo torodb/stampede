@@ -55,6 +55,11 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
   }
 
   @Override
+  public ImmutableMetaSnapshot getOrigin() {
+    return wrapped;
+  }
+
+  @Override
   public MutableMetaDatabase addMetaDatabase(String dbName, String dbId) throws
       IllegalArgumentException {
     if (getMetaDatabaseByName(dbName) != null) {
@@ -74,9 +79,10 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
   }
 
   @Override
-  public Iterable<Tuple2<MutableMetaDatabase, MetaElementState>> getModifiedDatabases() {
-    return Maps.filterValues(dbsByName, tuple -> tuple.v2().hasChanged())
-        .values();
+  public Stream<ChangedElement<MutableMetaDatabase>> streamModifiedDatabases() {
+    return dbsByName.values().stream()
+        .filter(tuple -> tuple.v2().hasChanged())
+        .map(PojoChangedElement::new);
   }
 
   @Override

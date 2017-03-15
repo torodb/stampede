@@ -32,9 +32,7 @@ import javax.annotation.Nullable;
 public interface MetaIndex {
 
   /**
-   * The name of the index on the doc model.
-   *
-   * @return
+   * The name of the index on the document model.
    */
   @Nonnull
   public abstract String getName();
@@ -45,6 +43,10 @@ public interface MetaIndex {
 
   public abstract Iterator<? extends MetaIndexField> iteratorFields();
 
+  /**
+   * Returns an iterator that iterates over all {@link MetaIndexField} contained by this object
+   * whose {@link MetaIndexField#getTableRef() table ref} is the given by argument.
+   */
   public abstract Iterator<? extends ImmutableMetaIndexField> iteratorMetaIndexFieldByTableRef(
       TableRef tableRef);
 
@@ -69,6 +71,9 @@ public interface MetaIndex {
   public abstract boolean isMatch(MetaDocPart docPart, List<String> identifiers,
       MetaDocPartIndex docPartIndex);
 
+  /**
+   * Returns true iff the given index has the same name OR has the same fields that this one.
+   */
   public abstract boolean isMatch(MetaIndex index);
 
   public abstract boolean isSubMatch(MetaDocPart docPart, List<String> identifiersSublist,

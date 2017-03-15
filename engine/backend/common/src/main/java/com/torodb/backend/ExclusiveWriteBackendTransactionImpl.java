@@ -128,7 +128,7 @@ public class ExclusiveWriteBackendTransactionImpl extends SharedWriteBackendTran
       MetaIndexField fromMetaIndexField = fromMetaIndexFieldIterator.next();
       MetaIndexField toMetaIndexField = toMetaIndex.addMetaIndexField(
           fromMetaIndexField.getTableRef(),
-          fromMetaIndexField.getName(),
+          fromMetaIndexField.getFieldName(),
           fromMetaIndexField.getOrdering());
       getSqlInterface().getMetaDataWriteInterface().addMetaIndexField(
           getDsl(), toMetaDb, toMetaColl, toMetaIndex, toMetaIndexField);
