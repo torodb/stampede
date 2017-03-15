@@ -35,7 +35,7 @@ import com.torodb.kvdocument.values.KvValue;
 import java.util.Collection;
 
 public interface WriteBackendTransaction extends BackendTransaction {
-
+  
   /**
    * Adds a new database.
    *

@@ -18,12 +18,14 @@
 
 package com.torodb.engine.mongodb.sharding.isolation.db;
 
+import com.torodb.common.util.Empty;
 import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
 import org.apache.logging.log4j.Logger;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 
 
@@ -60,13 +62,13 @@ public class DbIsolatorServer extends IdleTorodbService implements TorodServer {
   }
 
   @Override
-  public void disableDataImportMode() {
-    logger.warn("Data import mode is ignored on isolated databases");
+  public CompletableFuture<Empty> disableDataImportMode(String dbName) {
+    return decorated.disableDataImportMode(convertDatabaseName(dbName));
   }
 
   @Override
-  public void enableDataImportMode() {
-    logger.warn("Data import mode is ignored on isolated databases");
+  public CompletableFuture<Empty> enableDataImportMode(String dbName) {
+    return decorated.enableDataImportMode(convertDatabaseName(dbName));
   }
 
   @Override

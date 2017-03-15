@@ -44,6 +44,11 @@ public class ImmutableMetaScalar implements MetaScalar {
   }
 
   @Override
+  public ImmutableMetaScalar immutableCopy() {
+    return this;
+  }
+
+  @Override
   public int hashCode() {
     int hash = 7;
     hash = 97 * hash + Objects.hashCode(this.type);

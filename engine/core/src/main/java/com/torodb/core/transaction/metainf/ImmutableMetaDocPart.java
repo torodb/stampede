@@ -117,6 +117,11 @@ public class ImmutableMetaDocPart implements MetaDocPart {
     return defautToString();
   }
 
+  @Override
+  public ImmutableMetaDocPart immutableCopy() {
+    return this;
+  }
+
   public static class Builder {
 
     private boolean built = false;

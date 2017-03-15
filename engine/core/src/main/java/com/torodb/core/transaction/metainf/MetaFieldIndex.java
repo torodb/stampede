@@ -46,4 +46,6 @@ public interface MetaFieldIndex {
     return "fieldIndex{" + "position:" + getPosition() + ", name:" + getName() + ", type:"
         + getType() + ", ordering:" + getOrdering() + '}';
   }
+
+  public abstract ImmutableMetaFieldIndex immutableCopy();
 }

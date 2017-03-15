@@ -19,8 +19,6 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -29,6 +27,11 @@ import java.util.stream.Stream;
  *
  */
 public interface MutableMetaCollection extends MetaCollection {
+
+  /**
+   * Returns the {@link ImmutableMetaCollection} from which this one derivates.
+   */
+  public ImmutableMetaCollection getOrigin();
 
   @Override
   public MutableMetaDocPart getMetaDocPartByTableRef(TableRef tableRef);
@@ -45,8 +48,7 @@ public interface MutableMetaCollection extends MetaCollection {
   public MutableMetaDocPart addMetaDocPart(TableRef tableRef, String identifier) throws
       IllegalArgumentException;
 
-  @DoNotChange
-  public Iterable<? extends MutableMetaDocPart> getModifiedMetaDocParts();
+  public Stream<? extends MutableMetaDocPart> streamModifiedMetaDocParts();
 
   @Override
   public Stream<? extends MutableMetaIndex> streamContainedMetaIndexes();
@@ -55,27 +57,18 @@ public interface MutableMetaCollection extends MetaCollection {
 
   public boolean removeMetaIndexByName(String indexName);
 
-  @DoNotChange
-  public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes();
+  public Stream<ChangedElement<MutableMetaIndex>> streamModifiedMetaIndexes();
 
-  public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
-      MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
-      ImmutableMetaField newField);
-
-  public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
-      ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex);
-
-  public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
-      MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex);
-
-  public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
-      ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
+  public default Optional<ChangedElement<MutableMetaIndex>> getModifiedMetaIndexByName(
+      String idxName) {
+    return streamModifiedMetaIndexes()
+        .filter(change -> change.getElement().getName().equals(idxName))
+        .findAny();
+  }
 
   public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
       ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
 
   public Optional<? extends MetaIdentifiedDocPartIndex> getAnyOrphanDocPartIndex(
       ImmutableMetaCollection oldStructure, MutableMetaIndex changed);
-
-  public abstract ImmutableMetaCollection immutableCopy();
 }

@@ -224,7 +224,7 @@ public abstract class SqlWriteTorodTransaction<T extends WriteInternalTransactio
               Tuple3<TableRef, String, FieldIndexOrdering> indexFieldDef =
                   indexFieldDefs.get(indexField.getPosition());
               return indexFieldDef != null && indexFieldDef.v1().equals(indexField.getTableRef())
-                  && indexFieldDef.v2().equals(indexField.getName()) && indexFieldDef.v3()
+                  && indexFieldDef.v2().equals(indexField.getFieldName()) && indexFieldDef.v3()
                   == indexField.getOrdering();
             })));
 

@@ -19,7 +19,6 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex.Builder;
 
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class WrapperMutableMetaIndex implements MutableMetaIndex {
 
   private final ImmutableMetaIndex wrapped;
   /**
-   * This map contains all fields contained by wrapper and all new fields
+   * This map contains all fields contained by wrapper and all new fields.
    */
   private final Map<TableRef, List<ImmutableMetaIndexField>> newFields;
   /**
@@ -82,9 +81,8 @@ public class WrapperMutableMetaIndex implements MutableMetaIndex {
   }
 
   @Override
-  @DoNotChange
-  public Iterable<ImmutableMetaIndexField> getAddedMetaIndexFields() {
-    return addedFields;
+  public Stream<? extends ImmutableMetaIndexField> streamAddedMetaIndexFields() {
+    return addedFields.stream();
   }
 
   @Override
@@ -144,7 +142,7 @@ public class WrapperMutableMetaIndex implements MutableMetaIndex {
   public ImmutableMetaIndexField getMetaIndexFieldByTableRefAndName(TableRef tableRef,
       String fieldName) {
     return newFields.computeIfAbsent(tableRef, t -> new ArrayList<>()).stream()
-        .filter(f -> f.getName().equals(fieldName))
+        .filter(f -> f.getFieldName().equals(fieldName))
         .findAny()
         .orElse(null);
   }

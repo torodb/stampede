@@ -19,6 +19,7 @@
 package com.torodb.core.transaction.metainf;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -30,7 +31,11 @@ public interface MetaDocPartIndex {
 
   public abstract int size();
 
-  public abstract Iterator<? extends MetaDocPartIndexColumn> iteratorColumns();
+  public abstract Stream<? extends MetaDocPartIndexColumn> streamColumns();
+
+  public default Iterator<? extends MetaDocPartIndexColumn> iteratorColumns() {
+    return streamColumns().iterator();
+  }
 
   @Nullable
   public abstract MetaDocPartIndexColumn getMetaDocPartIndexColumnByPosition(int position);
@@ -43,5 +48,12 @@ public interface MetaDocPartIndex {
   public default String defautToString() {
     return "docPartIndex{" + "unique:" + isUnique() + '}';
   }
+
+  /**
+   * @throws IllegalArgumentException if this index does not contains all column from position 0 to
+   *                                  the position for the column with maximum position
+   */
+  public abstract ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws
+      IllegalArgumentException;
 
 }

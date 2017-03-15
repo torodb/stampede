@@ -43,4 +43,6 @@ public interface MetaDocPartIndexColumn {
     return "fieldIndex{" + "position:" + getPosition() + ", identifier:" + getIdentifier()
         + ", ordering:" + getOrdering() + '}';
   }
+
+  public abstract ImmutableMetaDocPartIndexColumn immutableCopy();
 }

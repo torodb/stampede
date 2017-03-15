@@ -59,13 +59,18 @@ public class ImmutableMetaSnapshot implements MetaSnapshot {
   }
 
   @Override
-  public ImmutableMetaDatabase getMetaDatabaseByName(String schemaDocName) {
-    return dbsByName.get(schemaDocName);
+  public ImmutableMetaDatabase getMetaDatabaseByName(String dbName) {
+    return dbsByName.get(dbName);
   }
 
   @Override
   public ImmutableMetaDatabase getMetaDatabaseByIdentifier(String schemaDbName) {
     return dbsByIdentifier.get(schemaDbName);
+  }
+
+  @Override
+  public ImmutableMetaSnapshot immutableCopy() {
+    return this;
   }
 
   public static class Builder {
