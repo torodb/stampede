@@ -20,10 +20,10 @@ package com.torodb.metainfo.cache.mvcc.merge.docpart;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection.Builder;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The strategy used when there is no commited doc part with the same table ref and identifier.
  */
 class NewDocPartStrategy implements DocPartPartialStrategy {
 

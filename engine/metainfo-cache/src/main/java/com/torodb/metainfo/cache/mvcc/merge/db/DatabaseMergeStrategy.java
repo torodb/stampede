@@ -24,13 +24,13 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot.Builder;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.metainfo.cache.mvcc.merge.ByStateStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.DoNothingMergeStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The root strategy used to merge databases.
  */
 @SuppressWarnings("checkstyle:LineLength")
 public class DatabaseMergeStrategy

@@ -23,13 +23,13 @@ import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
-import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.ExtendedMergeContext;
 
 /**
  *
  */
 public class IndexContext
-    extends DefaultMergeContext<ImmutableMetaCollection, MutableMetaIndex, MutableMetaCollection> {
+    extends ExtendedMergeContext<ImmutableMetaCollection, MutableMetaIndex, MutableMetaCollection> {
 
   public IndexContext(ImmutableMetaCollection commitedParent, MutableMetaIndex changed,
       MetaElementState change, MutableMetaCollection uncommitedParent) {

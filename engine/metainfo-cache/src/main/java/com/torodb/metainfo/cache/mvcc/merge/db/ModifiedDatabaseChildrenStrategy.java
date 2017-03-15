@@ -24,14 +24,16 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.metainfo.cache.mvcc.merge.ChildrenMergePartialStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.collection.ColContext;
 import com.torodb.metainfo.cache.mvcc.merge.collection.CollectionMergeStrategy;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.stream.Stream;
 
-
-
+/**
+ * The strategy that iterates on children elements (collections).
+ */
 class ModifiedDatabaseChildrenStrategy extends ChildrenMergePartialStrategy<ImmutableMetaSnapshot,
     MutableMetaDatabase, ImmutableMetaSnapshot.Builder, DbContext, Builder, ImmutableMetaDatabase>
     implements DatabasePartialStrategy {
@@ -77,7 +79,7 @@ class ModifiedDatabaseChildrenStrategy extends ChildrenMergePartialStrategy<Immu
 
   @Override
   protected String describeChanged(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaSnapshot> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaSnapshot> parentDescFun,
       ImmutableMetaSnapshot parent, ImmutableMetaDatabase immutableSelf) {
     return immutableSelf.getIdentifier();
   }

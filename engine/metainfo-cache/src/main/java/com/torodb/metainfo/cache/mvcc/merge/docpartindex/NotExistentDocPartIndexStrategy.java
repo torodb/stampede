@@ -21,7 +21,7 @@ package com.torodb.metainfo.cache.mvcc.merge.docpartindex;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 
 /**

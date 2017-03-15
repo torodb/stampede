@@ -20,10 +20,14 @@ package com.torodb.metainfo.cache.mvcc.merge.db;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.core.transaction.metainf.MutableMetaDatabase;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * A strategy that shortcuts the merge process if the commited database is the same as the
+ * {@link MutableMetaDatabase#getOrigin() origin} of the one that is being merged, which means
+ * that no other transaction modified the commited database and therefore no more checks need
+ * to be done.
  */
 public class ShortcutDatabaseStrategy implements DatabasePartialStrategy {
 

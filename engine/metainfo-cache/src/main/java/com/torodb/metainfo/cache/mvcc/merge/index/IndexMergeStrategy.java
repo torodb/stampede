@@ -24,14 +24,11 @@ import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection.Builder;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.metainfo.cache.mvcc.merge.ByStateStrategyPicker;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
-/**
- *
- */
 public class IndexMergeStrategy
     implements MergeStrategy<ImmutableMetaCollection, MutableMetaIndex, Builder, IndexContext> {
 

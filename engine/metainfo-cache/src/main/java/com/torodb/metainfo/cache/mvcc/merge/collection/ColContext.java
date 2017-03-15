@@ -22,13 +22,10 @@ import com.torodb.core.transaction.metainf.ChangedElement;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.metainfo.cache.mvcc.merge.PojoMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
 
-/**
- *
- */
 public class ColContext
-    extends PojoMergeContext<ImmutableMetaDatabase, MutableMetaCollection> {
+    extends DefaultMergeContext<ImmutableMetaDatabase, MutableMetaCollection> {
 
   public ColContext(ImmutableMetaDatabase commitedParent, MutableMetaCollection changed,
       MetaElementState change) {

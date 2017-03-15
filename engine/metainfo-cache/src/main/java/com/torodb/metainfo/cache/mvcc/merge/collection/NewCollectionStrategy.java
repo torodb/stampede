@@ -21,10 +21,10 @@ package com.torodb.metainfo.cache.mvcc.merge.collection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase.Builder;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The strategy used when there is no commited collection with the same name and identifier.
  */
 class NewCollectionStrategy implements CollectionPartialStrategy {
 

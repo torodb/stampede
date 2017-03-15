@@ -22,7 +22,8 @@ import com.torodb.core.TableRef;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 import org.jooq.lambda.Seq;
 
 import java.util.Optional;
@@ -57,7 +58,7 @@ public class MissingIndexStrategy implements FieldPartialStrategy {
   }
 
   private String getErrorMessage(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaDocPart> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaDocPart> parentDescFun,
       FieldContext context) {
     String missed = getAnyMissedIndex(context)
         .map(index -> index.getName())

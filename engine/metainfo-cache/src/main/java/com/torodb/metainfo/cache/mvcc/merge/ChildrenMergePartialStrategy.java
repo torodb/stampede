@@ -18,12 +18,15 @@
 
 package com.torodb.metainfo.cache.mvcc.merge;
 
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult.InnerErrorMessageFactory;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult.ParentDescriptionFun;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.InnerErrorMessageFactory;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.stream.Stream;
 
 /**
+ * An abstract {@link PartialMergeStrategy} designed to be extended by strategies that delegate
+ * on children elements strategies.
  * @param <P> The commited parent type
  * @param <C> The changed self type
  * @param <PBT> The parent builder type
@@ -53,12 +56,32 @@ public abstract class ChildrenMergePartialStrategy<P, C, PBT, CtxT extends Merge
     return result;
   }
 
+  /**
+   * Returns a new builder that can be used to create the merged element.
+   */
   protected abstract CBT createSelfBuilder(CtxT context);
 
+  /**
+   * Returns a stream with the result of merge children.
+   * @param context the merging context
+   * @param selfBuilder the builder used to create the merged element
+   */
   protected abstract Stream<ExecutionResult<IST>> streamChildResults(CtxT context, CBT selfBuilder);
 
+  /**
+   * The method called to add the created element to the parent builder.
+   * @param parentBuilder the parent builder
+   * @param selfBuilder the self builder where children have been already merged
+   */
   protected abstract void changeParent(PBT parentBuilder, CBT selfBuilder);
 
+  /**
+   * A method that describe the changed element.
+   * @param parentDescFun a function that describes elements of the parent class
+   * @param parent the parent of the current element
+   * @param immutableSelf the instance to be described
+   * @return the description of the given instance
+   */
   protected abstract String describeChanged(ParentDescriptionFun<P> parentDescFun, P parent,
       IST immutableSelf);
 

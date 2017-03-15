@@ -21,12 +21,12 @@ package com.torodb.metainfo.cache.mvcc.merge.index.field;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaIndexField;
-import com.torodb.metainfo.cache.mvcc.merge.PojoMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
 
 /**
  *
  */
-public class IndexFieldContext extends PojoMergeContext<ImmutableMetaIndex, MetaIndexField> {
+public class IndexFieldContext extends DefaultMergeContext<ImmutableMetaIndex, MetaIndexField> {
 
   public IndexFieldContext(ImmutableMetaIndex commitedParent, MetaIndexField changed) {
     super(commitedParent, changed, MetaElementState.ADDED);

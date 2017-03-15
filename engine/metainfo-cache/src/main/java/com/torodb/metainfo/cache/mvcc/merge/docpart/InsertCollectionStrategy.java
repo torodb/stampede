@@ -21,12 +21,9 @@ package com.torodb.metainfo.cache.mvcc.merge.docpart;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection.Builder;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
-/**
- *
- */
 public class InsertCollectionStrategy
     implements MergeStrategy<ImmutableMetaCollection, MutableMetaDocPart, Builder, DocPartCtx> {
 

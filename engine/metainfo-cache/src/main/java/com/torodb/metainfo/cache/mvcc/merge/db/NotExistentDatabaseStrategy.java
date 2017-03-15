@@ -21,7 +21,7 @@ package com.torodb.metainfo.cache.mvcc.merge.db;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot.Builder;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 
 /**

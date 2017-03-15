@@ -21,7 +21,7 @@ package com.torodb.metainfo.cache.mvcc.merge.index;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection.Builder;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
  * A partial strategy that applies when an index is being removed but it is not found on the

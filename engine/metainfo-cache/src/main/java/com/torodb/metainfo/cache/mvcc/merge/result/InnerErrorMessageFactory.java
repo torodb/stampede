@@ -16,29 +16,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.metainfo.cache.mvcc.merge;
+package com.torodb.metainfo.cache.mvcc.merge.result;
 
-
-import java.util.Optional;
+import java.util.function.Function;
 
 /**
+ * A marker interface used to identify error factories.
  *
+ * <p>Objects of this class are wrapped by {@link PrettyErrorMessageFactory} to create the real
+ * error message factory that can be used to generate the error message with some context 
+ * information (like the rule id).
  */
-class SuccessExecutionResult<P> extends ExecutionResult<P> {
-
-  static final SuccessExecutionResult<?> INSTANCE = new SuccessExecutionResult<>();
-
-  private SuccessExecutionResult() {
-  }
+@FunctionalInterface
+public interface InnerErrorMessageFactory<P>
+    extends Function<ParentDescriptionFun<P>, String> {
 
   @Override
-  public boolean isSuccess() {
-    return true;
-  }
-
-  @Override
-  public Optional<PrettyErrorMessageFactory<P>> getErrorMessageFactory() {
-    return Optional.empty();
-  }
+  public String apply(ParentDescriptionFun<P> parentDescriptionFun);
 
 }

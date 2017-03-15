@@ -22,30 +22,40 @@ import com.torodb.core.transaction.metainf.ChangedElement;
 import com.torodb.core.transaction.metainf.MetaElementState;
 
 /**
- *
+ * A pojo implementation of {@link MergeContext}.
  */
-public class DefaultMergeContext<P, C, UncommitedParentT> extends PojoMergeContext<P, C> {
-  private final UncommitedParentT uncommitedParent;
+public class DefaultMergeContext<CommitedParentT, ChangedT>
+    implements MergeContext<CommitedParentT, ChangedT> {
 
-  public DefaultMergeContext(
-      P commitedParent,
-      C changed,
-      MetaElementState change,
-      UncommitedParentT uncommitedParent) {
-    super(commitedParent, changed, change);
-    this.uncommitedParent = uncommitedParent;
+  private final CommitedParentT commitedParent;
+  private final ChangedT changed;
+  private final MetaElementState change;
+
+  public DefaultMergeContext(CommitedParentT commitedParent, ChangedT changed,
+      MetaElementState change) {
+    this.commitedParent = commitedParent;
+    this.changed = changed;
+    this.change = change;
   }
 
-  public DefaultMergeContext(
-      P commitedParent,
-      ChangedElement<? extends C> changed,
-      UncommitedParentT uncommitedParent) {
-    super(commitedParent, changed);
-    this.uncommitedParent = uncommitedParent;
+  public DefaultMergeContext(CommitedParentT commitedParent,
+      ChangedElement<? extends ChangedT> changed) {
+    this(commitedParent, changed.getElement(), changed.getChange());
   }
 
-  public UncommitedParentT getUncommitedParent() {
-    return uncommitedParent;
+  @Override
+  public CommitedParentT getCommitedParent() {
+    return commitedParent;
+  }
+
+  @Override
+  public ChangedT getChanged() {
+    return changed;
+  }
+
+  @Override
+  public MetaElementState getChange() {
+    return change;
   }
 
 }

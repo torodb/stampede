@@ -20,12 +20,12 @@ package com.torodb.metainfo.cache.mvcc.merge.db;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaDatabase;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult.ParentDescriptionFun;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 
 /**
- *
+ * Checks whether there is a commited database with the same name but different id.
  */
 class SameNameOtherTypeStrategy implements DatabasePartialStrategy {
 

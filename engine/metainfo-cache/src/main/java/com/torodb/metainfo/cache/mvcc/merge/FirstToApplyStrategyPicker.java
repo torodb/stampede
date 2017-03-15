@@ -24,7 +24,16 @@ import org.apache.logging.log4j.Logger;
 import java.util.Collection;
 import java.util.Optional;
 
-
+/**
+ * A {@link MergeStrategyPicker} that contains a list of partial strategies and picks the first
+ * strategy that 
+ * {@link PartialMergeStrategy#appliesTo(com.torodb.metainfo.cache.mvcc.merge.MergeContext) applies}
+ * on the given context.
+ * @param <P> the type of the commited parent
+ * @param <C> the type of the changed element
+ * @param <PBT> the builder class to create new parents
+ * @param <CtxT> the context type
+ */
 public class FirstToApplyStrategyPicker<P, C, PBT, CtxT extends MergeContext<P, C>>
     implements MergeStrategyPicker<P, C, PBT, CtxT> {
 

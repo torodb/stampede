@@ -26,14 +26,18 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.metainfo.cache.mvcc.merge.ChildrenMergePartialStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.docpart.DocPartCtx;
 import com.torodb.metainfo.cache.mvcc.merge.docpart.DocPartMergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.index.IndexContext;
 import com.torodb.metainfo.cache.mvcc.merge.index.IndexMergeStrategy;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.stream.Stream;
 
+/**
+ * The strategy that iterates on children elements (doc parts and indexes).
+ */
 class ModifiedCollectionChildrenStrategy
     extends ChildrenMergePartialStrategy<ImmutableMetaDatabase, MutableMetaCollection,
       ImmutableMetaDatabase.Builder, ColContext, Builder, ImmutableMetaCollection>
@@ -81,7 +85,7 @@ class ModifiedCollectionChildrenStrategy
 
   @Override
   protected String describeChanged(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaDatabase> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaDatabase> parentDescFun,
       ImmutableMetaDatabase parent, ImmutableMetaCollection immutableSelf) {
     return parentDescFun.apply(parent) + '.' + immutableSelf.getIdentifier();
   }

@@ -22,14 +22,11 @@ import com.google.common.collect.Lists;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import com.torodb.core.transaction.metainf.MetaScalar;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
-/**
- *
- */
 public class ScalarMergeStrategy implements
     MergeStrategy<ImmutableMetaDocPart, MetaScalar, Builder, ScalarContext> {
 

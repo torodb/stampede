@@ -21,7 +21,7 @@ package com.torodb.metainfo.cache.mvcc.merge.collection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase.Builder;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
  * A partial strategy that applies when a collection is being removed but it is not found on the

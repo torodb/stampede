@@ -20,10 +20,14 @@ package com.torodb.metainfo.cache.mvcc.merge.collection;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.core.transaction.metainf.MutableMetaCollection;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * A strategy that shortcuts the merge process if the commited collection is the same as the
+ * {@link MutableMetaCollection#getOrigin() origin} of the one that is being merged, which means
+ * that no other transaction modified the commited collection and therefore no more checks need
+ * to be done.
  */
 public class ShortcutCollectionStrategy implements CollectionPartialStrategy {
 

@@ -19,10 +19,10 @@
 package com.torodb.metainfo.cache.mvcc.merge.docpartindex;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The strategy used when there is no commited collection with the identifier.
  */
 public class NewDocPartIndexStrategy implements DocPartIndexPartialStrategy {
 

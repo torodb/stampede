@@ -18,12 +18,22 @@
 
 package com.torodb.metainfo.cache.mvcc.merge;
 
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+
 /**
- *
+ * A {@link MergeStrategy} that can only be executed on conditions specified by
+ * {@link #appliesTo(com.torodb.metainfo.cache.mvcc.merge.MergeContext)}.
+ * @param <P> the type of the commited parent
+ * @param <C> the type of the changed element
+ * @param <PBT> the builder class to create new parents
+ * @param <CtxT> the context type
  */
 public interface PartialMergeStrategy<P, C, PBT, CtxT extends MergeContext<P, C>>
     extends MergeStrategy<P, C, PBT, CtxT> {
 
+  /**
+   * Returns true if this strategy can be applied on the given context.
+   */
   public boolean appliesTo(CtxT context);
 
   /**

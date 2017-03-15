@@ -27,7 +27,7 @@ import com.torodb.metainfo.cache.mvcc.merge.PartialMergeStrategy;
 import javax.annotation.Nullable;
 
 /**
- *
+ * A marker interface created to simplify the declaration of collection sub strategies.
  */
 interface CollectionPartialStrategy extends
     PartialMergeStrategy<ImmutableMetaDatabase, MutableMetaCollection, Builder, ColContext> {

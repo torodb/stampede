@@ -20,7 +20,7 @@ package com.torodb.metainfo.cache.mvcc.merge.index.field.column;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex.Builder;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
  *

@@ -24,14 +24,14 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDatabase.Builder;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.metainfo.cache.mvcc.merge.ByStateStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.DoNothingMergeStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeContext;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The root strategy used to merge collections.
  */
 @SuppressWarnings("checkstyle:LineLength")
 public class CollectionMergeStrategy implements MergeStrategy<ImmutableMetaDatabase,
@@ -48,15 +48,15 @@ public class CollectionMergeStrategy implements MergeStrategy<ImmutableMetaDatab
   }
 
   @Override
-  public ExecutionResult execute(ColContext context, Builder parentBuilder) {
-    return this.delegate.pick(context)
+  public ExecutionResult<ImmutableMetaDatabase> execute(ColContext context, Builder parentBuilder) {
+    return delegate.pick(context)
         .execute(context, parentBuilder);
   }
 
   private static MergeStrategyPicker<ImmutableMetaDatabase, MutableMetaCollection, Builder, ColContext> createOnAddStrategy() {
     return new FirstToApplyStrategyPicker<>(Lists.newArrayList(
         new SameIdOtherNameStrategy(),
-        new SameNameOtherTypeStrategy(),
+        new SameNameOtherIdStrategy(),
         new NewCollectionStrategy(),
         new ShortcutCollectionStrategy(),
         new ModifiedCollectionChildrenStrategy()
@@ -70,7 +70,7 @@ public class CollectionMergeStrategy implements MergeStrategy<ImmutableMetaDatab
   private static MergeStrategyPicker<ImmutableMetaDatabase, MutableMetaCollection, Builder, ColContext> createOnRemoveStrategy() {
     return new FirstToApplyStrategyPicker<>(Lists.newArrayList(
         new SameIdOtherNameStrategy(),
-        new SameNameOtherTypeStrategy(),
+        new SameNameOtherIdStrategy(),
         new NotExistentCollectionStrategy(),
         new ShortcutCollectionStrategy()
     ), CollectionMergeStrategy::deleteCollection);

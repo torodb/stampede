@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.metainfo.cache.mvcc.merge;
+package com.torodb.metainfo.cache.mvcc.merge.result;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -27,24 +27,51 @@ import java.util.function.Function;
  */
 public abstract class ExecutionResult<P> {
 
+  /**
+   * Returns a successful result.
+   */
   @SuppressWarnings("unchecked")
   public static <P> ExecutionResult<P> success() {
     return (ExecutionResult<P>) SuccessExecutionResult.INSTANCE;
   }
 
+  /**
+   * Returns an erroneous result with a given rule id and error factory.
+   *
+   * @param ruleId     the rule id, used to make it easy to identify the rule that reports the error
+   * @param errFactory the error factory that can be evaluated to obtain the error message.
+   */
   public static <P> ExecutionResult<P> error(
       String ruleId, InnerErrorMessageFactory<P> errFactory) {
     return new ErrorExecutionResult<>(ruleId, errFactory);
   }
 
+  /**
+   * Returns an erroneous result with a given rule class and error factory.
+   *
+   * @param ruleClass  the rule class, used to make it easy to identify the rule that reports the
+   *                   error
+   * @param errFactory the error factory that can be evaluated to obtain the error message.
+   */
   public static <P> ExecutionResult<P> error(
       Class<?> ruleClass,
       InnerErrorMessageFactory<P> errFactory) {
     return error(ruleClass.getCanonicalName(), errFactory);
   }
 
+  /**
+   * Returns true iff the execution was successful.
+   *
+   * <p>If (and only if) this is true, {@link #getErrorMessageFactory() } returns an empty optional.
+   * @see #getErrorMessageFactory()
+   */
   public abstract boolean isSuccess();
 
+  /**
+   * Optionally returns a function that can be used to get the error message.
+   *
+   * @return an empty optional if {@link #isSuccess() } or a non empty optional on other case.
+   */
   public abstract Optional<PrettyErrorMessageFactory<P>> getErrorMessageFactory();
 
   /**
@@ -61,40 +88,6 @@ public abstract class ExecutionResult<P> {
     }
   }
 
-  @FunctionalInterface
-  public static interface InnerErrorMessageFactory<P>
-      extends Function<ParentDescriptionFun<P>, String> {
 
-    @Override
-    public String apply(ParentDescriptionFun<P> parentDescriptionFun);
 
-  }
-
-  @FunctionalInterface
-  public static interface ParentDescriptionFun<P> extends Function<P, String> {
-
-    @Override
-    public String apply(P parent);
-  }
-
-  public static class PrettyErrorMessageFactory<P>
-      implements Function<ParentDescriptionFun<P>, String> {
-    private final String ruleId;
-    private final InnerErrorMessageFactory<P> delegate;
-
-    public PrettyErrorMessageFactory(String ruleId, InnerErrorMessageFactory<P> delegate) {
-      this.ruleId = ruleId;
-      this.delegate = delegate;
-    }
-
-    @Override
-    public String apply(ParentDescriptionFun<P> parentDescriptionFun) {
-      return ruleId + ": " + delegate.apply(parentDescriptionFun);
-    }
-
-    public <P2> PrettyErrorMessageFactory<P2> transform(
-        Function<InnerErrorMessageFactory<P>, InnerErrorMessageFactory<P2>> transformation) {
-      return new PrettyErrorMessageFactory<>(ruleId, transformation.apply(delegate));
-    }
-  }
 }

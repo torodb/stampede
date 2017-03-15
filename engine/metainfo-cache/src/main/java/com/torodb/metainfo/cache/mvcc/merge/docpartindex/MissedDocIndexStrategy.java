@@ -29,8 +29,8 @@ import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult.ParentDescriptionFun;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.Optional;
 

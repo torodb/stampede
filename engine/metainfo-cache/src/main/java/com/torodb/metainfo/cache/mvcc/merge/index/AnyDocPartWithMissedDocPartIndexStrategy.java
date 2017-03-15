@@ -19,7 +19,8 @@
 package com.torodb.metainfo.cache.mvcc.merge.index;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 
 /**
@@ -46,7 +47,7 @@ public class AnyDocPartWithMissedDocPartIndexStrategy implements IndexPartialStr
   }
 
   private String getErrorMessage(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
       IndexContext context) {
     String conflictingDocPart = context.getUncommitedParent()
         .getAnyDocPartWithMissedDocPartIndex(

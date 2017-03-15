@@ -22,19 +22,17 @@ import com.google.common.collect.Streams;
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
-import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.metainfo.cache.mvcc.merge.ChildrenMergePartialStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult.InnerErrorMessageFactory;
-import com.torodb.metainfo.cache.mvcc.merge.MergeContext;
 import com.torodb.metainfo.cache.mvcc.merge.docpartindex.DocPartIndexCtx;
 import com.torodb.metainfo.cache.mvcc.merge.docpartindex.DocPartIndexMergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.field.FieldContext;
 import com.torodb.metainfo.cache.mvcc.merge.field.FieldMergeStrategy;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 import com.torodb.metainfo.cache.mvcc.merge.scalar.ScalarContext;
 import com.torodb.metainfo.cache.mvcc.merge.scalar.ScalarMergeStrategy;
 
@@ -42,7 +40,7 @@ import java.util.stream.Stream;
 
 
 /**
- *
+ * The strategy that iterates on children elements (fieldds, scalar and field indexes).
  */
 public class DocPartChildrenStrategy
     extends ChildrenMergePartialStrategy<ImmutableMetaCollection, MutableMetaDocPart,
@@ -98,7 +96,7 @@ public class DocPartChildrenStrategy
 
   @Override
   protected String describeChanged(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
       ImmutableMetaCollection parent, ImmutableMetaDocPart immutableSelf) {
     return parentDescFun.apply(parent) + '.' + immutableSelf.getIdentifier();
   }
@@ -144,40 +142,6 @@ public class DocPartChildrenStrategy
             context.getUncommitedParent())
         )
         .map(ctx -> indexStrategy.execute(ctx, newDocPartBuilder));
-  }
-
-
-  /**
-   * Given a context and a stream with the result of the sub structures, returns a single
-   * {@link ExecutionResult} that describes the first error it found or a
-   * {@link ExecutionResult#success() success} if there is no error.
-   */
-  private <S> ExecutionResult<MetaCollection> mergeSubStructure(
-      MergeContext<MetaCollection, MutableMetaDocPart> context,
-      Stream<ExecutionResult<MetaDocPart>> subStructureMergeStream) {
-
-    MetaCollection parent = context.getCommitedParent();
-
-    return subStructureMergeStream.filter(result -> !result.isSuccess())
-        .map(result -> result.map(docPartErrorFactory -> createErrorMsgFactory(
-            docPartErrorFactory,
-            parent)
-        ))
-        .findAny()
-        .orElse(ExecutionResult.success());
-  }
-
-  /**
-   * Given a {@link InnerErrorMessageFactory} that uses {@link MetaDocPart}, returns a new
-   * {@link InnerErrorMessageFactory} that uses {@link MetaCollection}.
-   */
-  private InnerErrorMessageFactory<MetaCollection> createErrorMsgFactory(
-      InnerErrorMessageFactory<MetaDocPart> docPartErrFactory,
-      MetaCollection parentCol) {
-    return (colDescFun) -> {
-      return colDescFun.apply(parentCol) + '.'
-          + docPartErrFactory.apply(docPart -> docPart.getIdentifier());
-    };
   }
 
 }

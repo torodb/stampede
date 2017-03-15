@@ -21,12 +21,11 @@ package com.torodb.metainfo.cache.mvcc.merge.collection;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaDatabase.Builder;
 import com.torodb.core.transaction.metainf.MetaCollection;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult.ParentDescriptionFun;
-
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 /**
- *
+ * Checks whether there is a commited collection with the same id but different name.
  */
 class SameIdOtherNameStrategy implements CollectionPartialStrategy {
 

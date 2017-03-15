@@ -22,14 +22,11 @@ import com.google.common.collect.Lists;
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex.Builder;
 import com.torodb.core.transaction.metainf.MetaDocPartIndexColumn;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
-/**
- *
- */
 public class IndexColumnMergeStrategy implements MergeStrategy<ImmutableMetaIdentifiedDocPartIndex,
     MetaDocPartIndexColumn, Builder, IndexColumnCtx> {
 

@@ -24,15 +24,17 @@ import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.db.DatabaseMergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.db.DbContext;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Optional;
 
 /**
- *
+ * The class used to merge the last commited {@link ImmutableMetaSnapshot} with a uncommited
+ * {@link MutableMetaSnapshot}.
  */
 public class SnapshotMerger {
 
@@ -46,6 +48,13 @@ public class SnapshotMerger {
     this.newSnapshot = newSnapshot;
   }
 
+  /**
+   * Merge the uncommited snapshot into the commited one.
+   *
+   * @return a {@link ImmutableMetaSnapshot.Builder} that can be used to create the merged snapshot.
+   * @throws UnmergeableException if there is an incompatibility that makes impossible to merge the
+   *                              uncommited into the commited snapshot
+   */
   public ImmutableMetaSnapshot.Builder merge() throws UnmergeableException {
 
     ImmutableMetaSnapshot.Builder builder = new ImmutableMetaSnapshot.Builder(oldSnapshot);
@@ -75,7 +84,7 @@ public class SnapshotMerger {
   }
 
   private String getErrorMessage(ExecutionResult<ImmutableMetaSnapshot> result) {
-    ExecutionResult.ParentDescriptionFun<ImmutableMetaSnapshot> snapshotDescFun = (snapshot) -> "";
+    ParentDescriptionFun<ImmutableMetaSnapshot> snapshotDescFun = (snapshot) -> "";
     return result.getErrorMessageFactory()
         .map(errFactory -> errFactory.apply(snapshotDescFun))
         .orElse("unknown");

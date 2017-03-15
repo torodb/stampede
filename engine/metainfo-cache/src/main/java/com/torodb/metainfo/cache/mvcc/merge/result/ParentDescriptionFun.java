@@ -16,34 +16,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.metainfo.cache.mvcc.merge;
+package com.torodb.metainfo.cache.mvcc.merge.result;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 /**
- *
+ * A marker interface used to identify functions that describes elements of a given type.
+ * @param <P> the type that is described
  */
-class MapErrorExecutionResult<P1, P2> extends ExecutionResult<P2> {
-
-  private final ExecutionResult<P1> delegate;
-  private final Function<InnerErrorMessageFactory<P1>, InnerErrorMessageFactory<P2>> transformation;
-
-  public MapErrorExecutionResult(ExecutionResult<P1> delegate,
-      Function<InnerErrorMessageFactory<P1>, InnerErrorMessageFactory<P2>> transformation) {
-    this.delegate = delegate;
-    this.transformation = transformation;
-  }
+@FunctionalInterface
+public interface ParentDescriptionFun<P> extends Function<P, String> {
 
   @Override
-  public boolean isSuccess() {
-    return delegate.isSuccess();
-  }
-
-  @Override
-  public Optional<PrettyErrorMessageFactory<P2>> getErrorMessageFactory() {
-    return delegate.getErrorMessageFactory()
-        .map(factory -> factory.transform(transformation));
-  }
+  public String apply(P parent);
 
 }

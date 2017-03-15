@@ -20,10 +20,10 @@ package com.torodb.metainfo.cache.mvcc.merge.db;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MetaElementState;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The strategy used when there is no commited database with the same name and identifier.
  */
 class NewDatabaseStrategy implements DatabasePartialStrategy {
 

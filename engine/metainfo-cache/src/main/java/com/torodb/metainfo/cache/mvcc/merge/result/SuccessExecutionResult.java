@@ -16,32 +16,31 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.metainfo.cache.mvcc.merge;
+package com.torodb.metainfo.cache.mvcc.merge.result;
+
 
 import java.util.Optional;
 
 /**
- *
+ * A {@link ExecutionResult} that has success and therefore {@link #isSuccess()} returns true and
+ * {@link #getErrorMessageFactory() } returns an empty optional.
+ * @param <P> The commited parent type.
  */
-class ErrorExecutionResult<P, C> extends ExecutionResult<P> {
-  /**
-   * Returns the error message on a format that follow {@link MessageFormat} syntax, where
-   * the first argument is a text that identifies the parent and the second a text that identifies
-   * the changed element.
-   */
-  private final ExecutionResult.PrettyErrorMessageFactory<P> messageFactory;
+class SuccessExecutionResult<P> extends ExecutionResult<P> {
 
-  public ErrorExecutionResult(String ruleId, InnerErrorMessageFactory<P> messageFactory) {
-    this.messageFactory = new PrettyErrorMessageFactory<>(ruleId, messageFactory);
+  static final SuccessExecutionResult<?> INSTANCE = new SuccessExecutionResult<>();
+
+  private SuccessExecutionResult() {
   }
 
   @Override
   public boolean isSuccess() {
-    return false;
+    return true;
   }
 
   @Override
   public Optional<PrettyErrorMessageFactory<P>> getErrorMessageFactory() {
-    return Optional.of(messageFactory);
+    return Optional.empty();
   }
+
 }

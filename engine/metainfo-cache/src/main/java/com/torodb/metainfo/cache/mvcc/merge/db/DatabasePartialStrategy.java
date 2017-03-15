@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 
 
 /**
- *
+ * A marker interface created to simplify the declaration of collection sub strategies.
  */
 interface DatabasePartialStrategy extends
     PartialMergeStrategy<ImmutableMetaSnapshot, MutableMetaDatabase, Builder, DbContext> {

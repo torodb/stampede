@@ -22,15 +22,13 @@ import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.metainfo.cache.mvcc.merge.ChildrenMergePartialStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.index.field.IndexFieldContext;
 import com.torodb.metainfo.cache.mvcc.merge.index.field.IndexFieldMergeStrategy;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class IndexChildrenStrategy extends ChildrenMergePartialStrategy<ImmutableMetaCollection,
     MutableMetaIndex, ImmutableMetaCollection.Builder, IndexContext, ImmutableMetaIndex.Builder,
     ImmutableMetaIndex>
@@ -68,7 +66,7 @@ public class IndexChildrenStrategy extends ChildrenMergePartialStrategy<Immutabl
 
   @Override
   protected String describeChanged(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
       ImmutableMetaCollection parent, ImmutableMetaIndex immutableSelf) {
     return parentDescFun.apply(parent) + '.' + immutableSelf.getName();
   }

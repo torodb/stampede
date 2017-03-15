@@ -26,7 +26,8 @@ import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.Optional;
 
@@ -53,7 +54,7 @@ public class ConflictingIndexStrategy implements IndexPartialStrategy {
   }
 
   private String getErrorMessage(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
       IndexContext context) {
     String parentDesc = parentDescFun.apply(context.getCommitedParent());
     ImmutableMetaIndex byName = context.getCommitedParent()

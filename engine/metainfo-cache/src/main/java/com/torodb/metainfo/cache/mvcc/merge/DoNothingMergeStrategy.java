@@ -18,6 +18,8 @@
 
 package com.torodb.metainfo.cache.mvcc.merge;
 
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+
 /**
  *
  */

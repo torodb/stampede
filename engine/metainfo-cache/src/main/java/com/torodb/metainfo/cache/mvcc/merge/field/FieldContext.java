@@ -24,13 +24,13 @@ import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.ExtendedMergeContext;
 
 /**
  *
  */
 public class FieldContext 
-    extends DefaultMergeContext<ImmutableMetaDocPart, MetaField, MutableMetaDocPart> {
+    extends ExtendedMergeContext<ImmutableMetaDocPart, MetaField, MutableMetaDocPart> {
 
   private final ImmutableMetaCollection commitedCollection;
   private final MutableMetaCollection uncommitedCollection;

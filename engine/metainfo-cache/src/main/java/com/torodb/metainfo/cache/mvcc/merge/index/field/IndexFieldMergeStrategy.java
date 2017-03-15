@@ -21,14 +21,11 @@ package com.torodb.metainfo.cache.mvcc.merge.index.field;
 import com.google.common.collect.Lists;
 import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.MetaIndexField;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
-/**
- *
- */
 public class IndexFieldMergeStrategy implements MergeStrategy<ImmutableMetaIndex, MetaIndexField,
     ImmutableMetaIndex.Builder, IndexFieldContext> {
 

@@ -25,12 +25,12 @@ import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.ExtendedMergeContext;
 
 /**
  *
  */
-public class DocPartIndexCtx extends DefaultMergeContext<ImmutableMetaDocPart,
+public class DocPartIndexCtx extends ExtendedMergeContext<ImmutableMetaDocPart,
     MetaIdentifiedDocPartIndex, MutableMetaDocPart> {
 
   private final ImmutableMetaCollection commitedCollection;

@@ -19,15 +19,12 @@
 package com.torodb.metainfo.cache.mvcc.merge.index;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.Optional;
 
-/**
- *
- */
 public class OrphanDocPartIndexStrategy implements IndexPartialStrategy {
 
   @Override
@@ -46,11 +43,9 @@ public class OrphanDocPartIndexStrategy implements IndexPartialStrategy {
   }
 
   private String getErrorMessage(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaCollection> parentDescFun,
       IndexContext context) {
     String parentDesc = parentDescFun.apply(context.getCommitedParent());
-    ImmutableMetaIndex byName = context.getCommitedParent()
-        .getMetaIndexByName(context.getChanged().getName());
     String orphan = getOrphan(context)
         .map(MetaIdentifiedDocPartIndex::getIdentifier)
         .orElse("unknown");

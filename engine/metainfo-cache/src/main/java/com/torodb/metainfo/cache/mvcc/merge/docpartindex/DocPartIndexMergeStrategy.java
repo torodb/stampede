@@ -23,14 +23,11 @@ import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart.Builder;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.metainfo.cache.mvcc.merge.ByStateStrategyPicker;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.FirstToApplyStrategyPicker;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.MergeStrategyPicker;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
-/**
- *
- */
 public class DocPartIndexMergeStrategy implements
     MergeStrategy<ImmutableMetaDocPart, MetaIdentifiedDocPartIndex, Builder, DocPartIndexCtx> {
 

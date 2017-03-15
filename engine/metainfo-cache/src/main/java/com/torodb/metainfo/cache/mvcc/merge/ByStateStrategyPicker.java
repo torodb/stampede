@@ -18,6 +18,14 @@
 
 package com.torodb.metainfo.cache.mvcc.merge;
 
+/**
+ * A {@link MergeStrategyPicker} that choose between strategies by the
+ * {@link MergeContext#getChange() kind of change}.
+ * @param <P> The commited parent class
+ * @param <C> The changed element class
+ * @param <PBT> The class that is used to create new commited parents
+ * @param <CtxT> The context class
+ */
 public class ByStateStrategyPicker<P, C, PBT, CtxT extends MergeContext<P, C>>
     implements MergeStrategyPicker<P, C, PBT, CtxT> {
 

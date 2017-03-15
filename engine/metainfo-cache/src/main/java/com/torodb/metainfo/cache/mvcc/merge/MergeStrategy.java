@@ -18,8 +18,14 @@
 
 package com.torodb.metainfo.cache.mvcc.merge;
 
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+
 /**
- *
+ * A rule or strategy to merge an element.
+ * @param <P> the type of the commited parent
+ * @param <C> the type of the changed element
+ * @param <PBT> the builder class to create new parents
+ * @param <CtxT> the context type
  */
 public interface MergeStrategy<P, C, PBT, CtxT extends MergeContext<P, C>> {
 

@@ -25,7 +25,8 @@ import com.torodb.core.transaction.metainf.ImmutableMetaIndex;
 import com.torodb.core.transaction.metainf.MetaDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaCollection;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.Optional;
 
@@ -52,7 +53,7 @@ public class NoDocIndexStrategy implements DocPartIndexPartialStrategy {
   }
 
   private String getErrorMessage(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaDocPart> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaDocPart> parentDescFun,
       DocPartIndexCtx context) {
     String parentDesc = parentDescFun.apply(context.getCommitedParent());
 

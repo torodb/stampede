@@ -21,14 +21,20 @@ package com.torodb.metainfo.cache.mvcc.merge;
 import com.torodb.core.transaction.metainf.MetaElementState;
 
 /**
- *
+ * The context of a metainformation merge phase.
  */
 public interface MergeContext<CommitedParentT, ChangedT> {
 
   CommitedParentT getCommitedParent();
 
+  /**
+   * The element that has changed and it is being merged right now.
+   */
   ChangedT getChanged();
 
+  /**
+   * The kind of change.
+   */
   MetaElementState getChange();
 
 }

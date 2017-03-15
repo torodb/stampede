@@ -21,12 +21,9 @@ package com.torodb.metainfo.cache.mvcc.merge.db;
 import com.torodb.core.transaction.metainf.ChangedElement;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.MutableMetaDatabase;
-import com.torodb.metainfo.cache.mvcc.merge.PojoMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
 
-/**
- *
- */
-public class DbContext extends PojoMergeContext<ImmutableMetaSnapshot, MutableMetaDatabase> {
+public class DbContext extends DefaultMergeContext<ImmutableMetaSnapshot, MutableMetaDatabase> {
 
   public DbContext(ImmutableMetaSnapshot commitedParent,
       ChangedElement<? extends MutableMetaDatabase> changed) {

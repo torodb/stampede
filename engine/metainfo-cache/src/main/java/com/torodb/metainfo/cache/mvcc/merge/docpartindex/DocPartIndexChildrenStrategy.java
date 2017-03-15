@@ -23,15 +23,13 @@ import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex.Builder;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.metainfo.cache.mvcc.merge.ChildrenMergePartialStrategy;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
 import com.torodb.metainfo.cache.mvcc.merge.index.field.column.IndexColumnCtx;
 import com.torodb.metainfo.cache.mvcc.merge.index.field.column.IndexColumnMergeStrategy;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ParentDescriptionFun;
 
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class DocPartIndexChildrenStrategy extends ChildrenMergePartialStrategy<
     ImmutableMetaDocPart, MetaIdentifiedDocPartIndex, ImmutableMetaDocPart.Builder, DocPartIndexCtx,
     Builder, ImmutableMetaIdentifiedDocPartIndex>
@@ -73,7 +71,7 @@ public class DocPartIndexChildrenStrategy extends ChildrenMergePartialStrategy<
 
   @Override
   protected String describeChanged(
-      ExecutionResult.ParentDescriptionFun<ImmutableMetaDocPart> parentDescFun,
+      ParentDescriptionFun<ImmutableMetaDocPart> parentDescFun,
       ImmutableMetaDocPart parent, ImmutableMetaIdentifiedDocPartIndex immutableSelf) {
     return parentDescFun.apply(parent) + '.' + immutableSelf.getIdentifier();
   }

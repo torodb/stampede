@@ -19,10 +19,10 @@
 package com.torodb.metainfo.cache.mvcc.merge.index;
 
 import com.torodb.core.transaction.metainf.ImmutableMetaCollection;
-import com.torodb.metainfo.cache.mvcc.merge.ExecutionResult;
+import com.torodb.metainfo.cache.mvcc.merge.result.ExecutionResult;
 
 /**
- *
+ * The strategy used when there is no commited collection with the same name.
  */
 public class NewIndexStrategy implements IndexPartialStrategy {
 

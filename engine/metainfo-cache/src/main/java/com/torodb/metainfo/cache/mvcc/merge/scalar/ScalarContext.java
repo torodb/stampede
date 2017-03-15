@@ -22,12 +22,12 @@ import com.torodb.core.transaction.metainf.ChangedElement;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaScalar;
-import com.torodb.metainfo.cache.mvcc.merge.PojoMergeContext;
+import com.torodb.metainfo.cache.mvcc.merge.DefaultMergeContext;
 
 /**
  *
  */
-public class ScalarContext extends PojoMergeContext<ImmutableMetaDocPart, MetaScalar> {
+public class ScalarContext extends DefaultMergeContext<ImmutableMetaDocPart, MetaScalar> {
 
   public ScalarContext(ImmutableMetaDocPart commitedParent, MetaScalar changed,
       MetaElementState change) {

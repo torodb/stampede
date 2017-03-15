@@ -42,6 +42,7 @@ import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaIndex;
 import com.torodb.core.transaction.metainf.MutableMetaSnapshot;
 import com.torodb.core.transaction.metainf.UnmergeableException;
+import com.torodb.metainfo.cache.mvcc.merge.MergeStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.docpartindex.DocPartIndexCtx;
 import com.torodb.metainfo.cache.mvcc.merge.docpartindex.MissedDocIndexStrategy;
 import com.torodb.metainfo.cache.mvcc.merge.docpartindex.NoDocIndexStrategy;
@@ -54,8 +55,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Optional;
 
 /**
+ * The old {@link SnapshotMerger} version that does not delegate on
+ * {@link MergeStrategy strategies}.
  *
+ * It is not directly used, but called by the actual merger to verify that they implement the same
+ * logic.
  */
+@Deprecated
 public class LegacySnapshotMerger {
 
   private final ImmutableMetaSnapshot oldSnapshot;
