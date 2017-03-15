@@ -218,16 +218,10 @@ public class ToBsonValueTranslator implements KvValueVisitor<BsonValue<?>, Void>
 
   @Override
   public BsonRegex visit(KvMongoRegex value, Void arg) {
-
-    List<BsonRegex.Options> kvOptions = value.getOptions().stream().map(
-            bsonOption -> BsonRegex.Options.valueOf(bsonOption.name())).collect(Collectors.toList());
-
     return new DefaultBsonRegex(
-            kvOptions.isEmpty()?EnumSet.noneOf(BsonRegex.Options.class):EnumSet.copyOf(kvOptions),
+            value.getOptionsAsText(),
             value.getPattern()
     );
-
-
   }
 
   @Override

@@ -56,7 +56,7 @@ public class Decimal128ValueConverter
 
   @Override
   public BigDecimal to(KvDecimal128 userObject) {
-    return userObject.getValue();
+    return userObject.getBigDecimal();
   }
 
   @Override

@@ -110,8 +110,6 @@ public class MongoDbBsonTypesTest {
   @Parameterized.Parameters(name = "{index}: Collection {0}")
   public static Collection<Object[]> data() {
 
-    BsonRegex.Options [] singleRegexOption = {BsonRegex.Options.CASE_INSENSITIVE};
-
     Collection<Object[]> allTests = Arrays.asList(new Object[][] {
             {"DOUBLE", PrimitiveBsonDouble.newInstance(2.3)},
             {"STRING", new StringBsonString("hello")},
@@ -124,8 +122,8 @@ public class MongoDbBsonTypesTest {
             {"DATETIME", new LongBsonDateTime(0L)},
             {"DATETIME", new InstantBsonDateTime(Instant.now())},
             {"NULL", SimpleBsonNull.getInstance()},
-            {"REGEX", new DefaultBsonRegex(EnumSet.noneOf(BsonRegex.Options.class), "asd")},
-            {"REGEX_WITH_OPTIONS", new DefaultBsonRegex(EnumSet.copyOf(Arrays.asList(singleRegexOption)), "asd")},
+            {"REGEX", new DefaultBsonRegex("", "asd")},
+            {"REGEX_WITH_OPTIONS", new DefaultBsonRegex("gimy", "asd")},
             {"DB_POINTER", new DefaultBsonDbPointer("asd", new IntBasedBsonObjectId(1, 1, 1, 1))},
             {"JAVA_SCRIPT", new DefaultBsonJavaScript("alert(\"hello\");")},
             {"DEPRECATED", new StringBsonDeprecated("Deprecable me")},

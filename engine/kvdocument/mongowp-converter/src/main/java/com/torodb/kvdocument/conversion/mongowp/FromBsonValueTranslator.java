@@ -188,12 +188,9 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
   @Override
   public KvValue<?> visit(BsonRegex value, Void arg) {
 
-    List<KvMongoRegex.Options> kvOptions = value.getOptions().stream().map(
-            bsonOption -> KvMongoRegex.Options.valueOf(bsonOption.name())).collect(Collectors.toList());
-
     return KvMongoRegex.of(
             value.getPattern(),
-            kvOptions.isEmpty()?EnumSet.noneOf(KvMongoRegex.Options.class):EnumSet.copyOf(kvOptions)
+            value.getOptionsAsText()
     );
   }
 

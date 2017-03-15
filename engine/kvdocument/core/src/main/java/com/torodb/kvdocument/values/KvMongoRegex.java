@@ -33,33 +33,8 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
   private static final long serialVersionUID = 4583557874141119051L;
 
 
-  public String getOptionsAsText() {
-    Set options = this.getOptions();
-    if(options.isEmpty()) {
-      return "";
-    } else if(options.size() == 1) {
-      return Character.toString(((Options)options.iterator().next()).getCharId());
-    } else {
-      TreeSet sortedOptions = new TreeSet(Options.getLexicographicalComparator());
-      sortedOptions.addAll(options);
-      StringBuilder sb = new StringBuilder(6);
-      Iterator var4 = sortedOptions.iterator();
+  public abstract String getOptionsAsText();
 
-      while(var4.hasNext()) {
-        Options option = (Options)var4.next();
-        sb.append(option.getCharId());
-      }
-
-      return sb.toString();
-    }
-  }
-
-
-
-  public static KvMongoRegex of(String pattern, Set<Options> options) {
-    return new DefaultKvMongoRegex(pattern, options);
-  }
-  
   public static KvMongoRegex of(String pattern, String options) {
     return new DefaultKvMongoRegex(pattern, options);
   }
@@ -114,22 +89,6 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
     }
 
 
-    public static int patternOptionsToFlags(Set<KvMongoRegex.Options> options) {
-      if(options.isEmpty()) {
-        return 0;
-      } else {
-        return 0;
-      }
-    }
-
-    public static EnumSet<KvMongoRegex.Options> patternFlagsToOptions(int flags) {
-      if(flags == 0) {
-        return EnumSet.noneOf(KvMongoRegex.Options.class);
-      } else {
-        return EnumSet.noneOf(KvMongoRegex.Options.class);
-      }
-    }
-
     public static Comparator<KvMongoRegex.Options> getLexicographicalComparator() {
       return LEXICOGRAPHICAL_COMPARATOR;
     }
@@ -151,16 +110,16 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
     private String pattern;
 
-    private Set<Options> options;
+    private String options;
 
-    public DefaultKvMongoRegex(String pattern, Set<Options> options) {
+    private DefaultKvMongoRegex(String pattern, String options) {
       this.pattern = pattern;
       this.options = options;
     }
 
-    public DefaultKvMongoRegex(String pattern, String options) {
-      this.pattern = pattern;
-      this.options = getOptionsFromString(options);
+    @Override
+    public String getOptionsAsText() {
+      return options;
     }
 
     @Override
@@ -170,7 +129,7 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
     @Override
     public Set<Options> getOptions() {
-      return options;
+      return getOptionsFromString(options);
     }
 
     private static Set<Options> getOptionsFromString(String optString) {

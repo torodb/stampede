@@ -113,7 +113,7 @@ public class DocumentsAndRelationsTypesTest {
             new ByteArrayKvMongoObjectId("101010101010".getBytes()),
             new LocalDateKvDate(LocalDate.now()),
             KvNull.getInstance(),
-            KvMongoRegex.of("hello", EnumSet.allOf(KvMongoRegex.Options.class)),
+            KvMongoRegex.of("hello", "gimy"),
             KvMongoDbPointer.of("ns", new ByteArrayKvMongoObjectId("101010101110".getBytes())),
             KvMongoJavascript.of("function"),
             KvMongoJavascriptWithScope.of("function", new KvDocument.Builder().putValue("times", KvInteger.of(3)).build()),
