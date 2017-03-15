@@ -22,14 +22,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.torodb.packaging.config.model.generic.LogLevel;
 import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
+import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.stampede.CliConfig;
 import com.torodb.stampede.CliConfigUtils;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.postgres.Postgres;
+import com.torodb.stampede.config.model.mongo.replication.Replication;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -38,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class ConfigTest {
 
@@ -51,7 +53,6 @@ public class ConfigTest {
   }
 
   @Test
-  @Ignore("This test is not working with the temporal configuration. See TORODB-398")
   public void testPrintXmlConf() throws Exception {
     ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
     Config config = new Config();
@@ -178,15 +179,7 @@ public class ConfigTest {
         return ConfigTest.class.getResourceAsStream("/test-parse-with-empty-yaml.yml");
       }
     };
-    Config config = CliConfigUtils.readConfig(cliConfig);
-
-    Assert.assertTrue("/logging not defined", config.getLogging() != null);
-    Assert.assertTrue("/replication not defined", config.getReplication() != null);
-    Assert.assertTrue("/backend not defined", config.getBackend() != null);
-    Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
-        .getBackendImplementation().getClass());
-    Assert.assertTrue("/backend/postgres not identified as AbstractPostgres", config.getBackend()
-        .is(Postgres.class));
+    CliConfigUtils.readConfig(cliConfig);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -231,12 +224,18 @@ public class ConfigTest {
     Assert.assertEquals("/logging/packages/com.torodb has different value than that specified",
         LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
     Assert.assertTrue("/replication not defined", config.getReplication() != null);
-    Assert.assertEquals("/replications/replSetName has different value than that specified", "rs1",
-        config.getReplication().getReplSetName());
-    Assert.assertEquals("/replications/role has different value than that specified",
-        Role.HIDDEN_SLAVE, config.getReplication().getRole());
-    Assert.assertEquals("/replications/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource());
+    Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1",
+        config.getReplication().getReplSetName().value());
+    Assert.assertEquals("/replication/role has different value than that specified",
+        Role.HIDDEN_SLAVE, config.getReplication().getRole().value());
+    Assert.assertEquals("/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getReplication().getSyncSource().value());
+    Assert.assertNotNull("/replication/include not defined", config.getReplication().getInclude());
+    Assert.assertTrue("/replication/include empty", !config.getReplication().getInclude().isEmpty());
+    Assert.assertNotNull("/replication/exclude not defined", config.getReplication().getExclude());
+    Assert.assertTrue("/replication/exclude empty", !config.getReplication().getExclude().isEmpty());
+    Assert.assertNotNull("/replication/shards not defined", config.getReplication().getShardList());
+    Assert.assertTrue("/replication/shards not empty", config.getReplication().getShardList().isEmpty());
     Assert.assertTrue("/backend not defined", config.getBackend() != null);
     Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
         .getBackendImplementation().getClass());
@@ -331,12 +330,19 @@ public class ConfigTest {
     Assert.assertEquals("/logging/packages/com.torodb has different value than that specified",
         LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
     Assert.assertTrue("/replication not defined", config.getReplication() != null);
-    Assert.assertEquals("/replications/replSetName has different value than that specified", "rs1",
-        config.getReplication().getReplSetName());
-    Assert.assertEquals("/replications/role has different value than that specified",
-        Role.HIDDEN_SLAVE, config.getReplication().getRole());
-    Assert.assertEquals("/replications/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource());
+    Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1",
+        config.getReplication().getReplSetName().value());
+    Assert.assertEquals("/replication/role has different value than that specified",
+        Role.HIDDEN_SLAVE, config.getReplication().getRole().value());
+    Assert.assertEquals("/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getReplication().getSyncSource().value());
+    Assert.assertTrue("/replication/include defined", config.getReplication().getInclude()
+        == null);
+    Assert.assertTrue("/replication/exclude defined", config.getReplication().getExclude()
+        == null);
+    Assert.assertTrue("/replication/shards not defined", config.getReplication().getShardList()
+        != null);
+    Assert.assertTrue("/replication/shards not empty", config.getReplication().getShardList().isEmpty());
     Assert.assertTrue("/backend not defined", config.getBackend() != null);
     Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
         .getBackendImplementation().getClass());
@@ -358,149 +364,146 @@ public class ConfigTest {
   public void testReplicationFiltering() throws Exception {
     CliConfig cliConfig = new CliConfig() {
       @Override
-      public boolean hasConfFile() {
-        return true;
-      }
-
-      @Override
-      public InputStream getConfInputStream() {
-        return ConfigTest.class.getResourceAsStream("/test-parse-with-yaml.yml");
-      }
-
-      @Override
       public List<String> getParams() {
         String[] params = new String[]{
-          "/replications/0/include={torodb: [postgres, derby]}",
-          "/replications/0/exclude={mongodb: {mmapv1, wiredtiger}}"
+          "/replication/include={torodb: [postgres, derby]}",
+          "/replication/exclude={mongodb: {mmapv1, wiredtiger}}"
         };
         return Arrays.asList(params);
       }
     };
     Config config = CliConfigUtils.readConfig(cliConfig);
 
-    Assert.assertTrue("/logging not defined", config.getLogging() != null);
-    Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
-    Assert.assertTrue("/logging/packages/com.torodb not defined", config.getLogging().getPackages()
-        .get("com.torodb") != null);
-    Assert.assertEquals("/logging/level has different value than that specified", LogLevel.NONE,
-        config.getLogging().getLevel());
-    Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages()
-        .size());
-    Assert.assertEquals("/logging/packages/com.torodb has different value than that specified",
-        LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
     Assert.assertTrue("/replication not defined", config.getReplication() != null);
-    Assert.assertEquals("/replications/replSetName has different value than that specified", "rs1",
-        config.getReplication().getReplSetName());
-    Assert.assertEquals("/replications/role has different value than that specified",
-        Role.HIDDEN_SLAVE, config.getReplication().getRole());
-    Assert.assertEquals("/replications/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource());
-    Assert.assertTrue("/replications/include not defined", config.getReplication().getInclude()
+    Assert.assertTrue("/replication/include not defined", config.getReplication().getInclude()
         != null);
-    Assert.assertTrue("/replications/include/torodb not defined", config.getReplication()
+    Assert.assertTrue("/replication/include/torodb not defined", config.getReplication()
         .getInclude().get("torodb") != null);
-    Assert.assertEquals("/replications/include/torodb has different value than that specified",
+    Assert.assertEquals("/replication/include/torodb has different value than that specified",
         ImmutableMap.of("postgres", ImmutableList.of(), "derby", ImmutableList.of()),
         config.getReplication().getInclude().get("torodb"));
-    Assert.assertTrue("/replications/exclude not defined", config.getReplication().getExclude()
+    Assert.assertTrue("/replication/exclude not defined", config.getReplication().getExclude()
         != null);
-    Assert.assertTrue("/replications/exclude/mongodb not defined", config.getReplication()
+    Assert.assertTrue("/replication/exclude/mongodb not defined", config.getReplication()
         .getExclude().get("mongodb") != null);
-    Assert.assertEquals("/replications/exclude/mongodb has different value than that specified",
+    Assert.assertEquals("/replication/exclude/mongodb has different value than that specified",
         ImmutableMap.of("mmapv1", ImmutableList.of(), "wiredtiger", ImmutableList.of()),
         config.getReplication().getExclude().get("mongodb"));
-    Assert.assertTrue("/backend not defined", config.getBackend() != null);
-    Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
-        .getBackendImplementation().getClass());
-    Assert.assertTrue("/backend/postgres not identified as AbstractPostgres", config.getBackend()
-        .is(Postgres.class));
-    Assert.assertTrue("/backend/postgres not identified as AbstractPostgres Like", config
-        .getBackend().isLike(Postgres.class));
-    Assert.assertEquals("/backend/postgres/host has different value than that specified",
-        "localhost", config.getBackend().as(Postgres.class).getHost());
-    Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer
-        .valueOf(5432), config.getBackend().as(Postgres.class).getPort());
-    Assert.assertEquals("/backend/postgres/user has different value than that specified", "root",
-        config.getBackend().as(Postgres.class).getUser());
-    Assert.assertEquals(
-        "/backend/postgres/password specified but should have not been read from parameters", null,
-        config.getBackend().as(Postgres.class).getPassword());
   }
 
   @Test
   public void testReplicationFilteringWithIndexes() throws Exception {
     CliConfig cliConfig = new CliConfig() {
       @Override
-      public boolean hasConfFile() {
-        return true;
-      }
-
-      @Override
-      public InputStream getConfInputStream() {
-        return ConfigTest.class.getResourceAsStream("/test-parse-with-yaml.yml");
-      }
-
-      @Override
       public List<String> getParams() {
         String[] params = new String[]{
-          "/replications/0/include={torodb: [{postgres: {name: awesome, unique: true}}, derby]}",
-          "/replications/0/exclude={mongodb: [{mmapv1: {keys: {\"the.old.mmapv1\": 1}}}, wiredtiger]}"
+          "/replication/include={torodb: [{postgres: {name: awesome, unique: true}}, derby]}",
+          "/replication/exclude={mongodb: [{mmapv1: {keys: {\"the.old.mmapv1\": 1}}}, wiredtiger]}"
         };
         return Arrays.asList(params);
       }
     };
     Config config = CliConfigUtils.readConfig(cliConfig);
 
-    Assert.assertTrue("/logging not defined", config.getLogging() != null);
-    Assert.assertTrue("/logging/packages not defined", config.getLogging().getPackages() != null);
-    Assert.assertTrue("/logging/packages/com.torodb not defined", config.getLogging().getPackages()
-        .get("com.torodb") != null);
-    Assert.assertEquals("/logging/level has different value than that specified", LogLevel.NONE,
-        config.getLogging().getLevel());
-    Assert.assertEquals("/logging/packages has not 1 entry", 1, config.getLogging().getPackages()
-        .size());
-    Assert.assertEquals("/logging/packages/com.torodb has different value than that specified",
-        LogLevel.DEBUG, config.getLogging().getPackages().get("com.torodb"));
     Assert.assertTrue("/replication not defined", config.getReplication() != null);
-    Assert.assertEquals("/replications/replSetName has different value than that specified", "rs1",
-        config.getReplication().getReplSetName());
-    Assert.assertEquals("/replications/role has different value than that specified",
-        Role.HIDDEN_SLAVE, config.getReplication().getRole());
-    Assert.assertEquals("/replications/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource());
-    Assert.assertTrue("/replications/include not defined", config.getReplication().getInclude()
+    Assert.assertEquals("/replication/replSetName has different value than that specified", "rs1",
+        config.getReplication().getReplSetName().value());
+    Assert.assertEquals("/replication/role has different value than that specified",
+        Role.HIDDEN_SLAVE, config.getReplication().getRole().value());
+    Assert.assertEquals("/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getReplication().getSyncSource().value());
+    Assert.assertTrue("/replication/include not defined", config.getReplication().getInclude()
         != null);
-    Assert.assertTrue("/replications/include/torodb not defined", config.getReplication()
+    Assert.assertTrue("/replication/include/torodb not defined", config.getReplication()
         .getInclude().get("torodb") != null);
-    Assert.assertEquals("/replications/include/torodb has different value than that specified",
+    Assert.assertEquals("/replication/include/torodb has different value than that specified",
         ImmutableMap.of("postgres", ImmutableList.of(new IndexFilter("awesome", true, null)),
             "derby", ImmutableList.of()),
         config.getReplication().getInclude().get("torodb"));
-    Assert.assertTrue("/replications/exclude not defined", config.getReplication().getExclude()
+    Assert.assertTrue("/replication/exclude not defined", config.getReplication().getExclude()
         != null);
-    Assert.assertTrue("/replications/exclude/mongodb not defined", config.getReplication()
+    Assert.assertTrue("/replication/exclude/mongodb not defined", config.getReplication()
         .getExclude().get("mongodb") != null);
-    Assert.assertEquals("/replications/exclude/mongodb has different value than that specified",
+    Assert.assertEquals("/replication/exclude/mongodb has different value than that specified",
         ImmutableMap.of("mmapv1", ImmutableList.of(new IndexFilter(null, null, ImmutableMap
             .<String, String>builder().put("the.old.mmapv1", "1").build())), "wiredtiger",
             ImmutableList.of()),
         config.getReplication().getExclude().get("mongodb"));
-    Assert.assertTrue("/backend not defined", config.getBackend() != null);
-    Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
-        .getBackendImplementation().getClass());
-    Assert.assertTrue("/backend/postgres not identified as AbstractPostgres", config.getBackend()
-        .is(Postgres.class));
-    Assert.assertTrue("/backend/postgres not identified as AbstractPostgres Like", config
-        .getBackend().isLike(Postgres.class));
-    Assert.assertEquals("/backend/postgres/host has different value than that specified",
-        "localhost", config.getBackend().as(Postgres.class).getHost());
-    Assert.assertEquals("/backend/postgres/port has different value than that specified", Integer
-        .valueOf(5432), config.getBackend().as(Postgres.class).getPort());
-    Assert.assertEquals("/backend/postgres/user has different value than that specified", "root",
-        config.getBackend().as(Postgres.class).getUser());
-    Assert.assertEquals(
-        "/backend/postgres/password specified but should have not been read from parameters", null,
-        config.getBackend().as(Postgres.class).getPassword());
+  }
+
+  @Test
+  public void testReplicationFilteringWithShards() throws Exception {
+    CliConfig cliConfig = new CliConfig() {
+      @Override
+      public List<String> getParams() {
+        String[] params = new String[]{
+            "/replication/shards=[" 
+                + "{syncSource: 'localhost:27020', replSetName: shard1},"
+                + "{syncSource: 'localhost:27030', replSetName: shard2},"
+                + "{syncSource: 'localhost:27040', replSetName: shard3}" 
+                + "]",
+        };
+        return Arrays.asList(params);
+      }
+    };
+    Config config = CliConfigUtils.readConfig(cliConfig);
+
+    Assert.assertTrue("/replication/shards not defined", config.getReplication().getShardList()
+        != null);
+    Assert.assertTrue("/replication/shards empty", !config.getReplication().getShardList().isEmpty());
+    Assert.assertEquals("/replication/shards has different size that specified", 3, config.getReplication().getShardList().size());
+    Assert.assertEquals("/replication/shards/0/syncSource has different value than that specified", "localhost:27020", config.getReplication().getShardList().get(0).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/0/replSetName has different value than that specified", "shard1", config.getReplication().getShardList().get(0).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/1/syncSource has different value than that specified", "localhost:27030", config.getReplication().getShardList().get(1).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/1/replSetName has different value than that specified", "shard2", config.getReplication().getShardList().get(1).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/2/syncSource has different value than that specified", "localhost:27040", config.getReplication().getShardList().get(2).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/2/replSetName has different value than that specified", "shard3", config.getReplication().getShardList().get(2).getReplSetName().value());
+  }
+
+  @Test
+  public void testReplicationFilteringWithShardsMerged() throws Exception {
+    CliConfig cliConfig = new CliConfig() {
+      @Override
+      public List<String> getParams() {
+        String[] params = new String[]{
+            "/replication/auth/mode=negotiate",
+            "/replication/auth/user=userShard",
+            "/replication/ssl/enabled=true",
+            "/replication/shards=[" 
+                + "{syncSource: 'localhost:27020', replSetName: shard1, auth: {mode: disabled}, ssl: {enabled: false}},"
+                + "{syncSource: 'localhost:27030', replSetName: shard2, auth: {source: usersShard1}},"
+                + "{syncSource: 'localhost:27040', replSetName: shard3, auth: {source: usersShard2, user: userShard2}}"
+                + "]",
+        };
+        return Arrays.asList(params);
+      }
+    };
+    Config config = CliConfigUtils.readConfig(cliConfig);
+
+    Assert.assertTrue("/replication/shards not defined", config.getReplication().getShardList()
+        != null);
+    List<Replication> shards = config.getReplication().getShardList()
+        .stream()
+        .map(shard -> config.getReplication().mergeWith(shard))
+        .collect(Collectors.toList());
+    
+    Assert.assertEquals("/replication/shards has different size that specified", 3, shards.size());
+    Assert.assertEquals("/replication/shards/0/syncSource has different value than that specified", "localhost:27020", shards.get(0).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/0/replSetName has different value than that specified", "shard1", shards.get(0).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/0/auth/mode has different value than that specified", AuthMode.disabled, shards.get(0).getAuth().getMode().value());
+    Assert.assertEquals("/replication/shards/0/ssl/enabled has different value than that specified", false, shards.get(0).getSsl().getEnabled().value());
+    Assert.assertEquals("/replication/shards/1/syncSource has different value than that specified", "localhost:27030", shards.get(1).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/1/replSetName has different value than that specified", "shard2", shards.get(1).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/1/auth/mode has different value than that specified", AuthMode.negotiate, shards.get(1).getAuth().getMode().value());
+    Assert.assertEquals("/replication/shards/1/auth/source has different value than that specified", "usersShard1", shards.get(1).getAuth().getSource().value());
+    Assert.assertEquals("/replication/shards/1/auth/user has different value than that specified", "userShard", shards.get(1).getAuth().getUser().value());
+    Assert.assertEquals("/replication/shards/1/ssl/enabled has different value than that specified", true, shards.get(1).getSsl().getEnabled().value());
+    Assert.assertEquals("/replication/shards/2/syncSource has different value than that specified", "localhost:27040", shards.get(2).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/2/replSetName has different value than that specified", "shard3", shards.get(2).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/2/auth/mode has different value than that specified", AuthMode.negotiate, shards.get(2).getAuth().getMode().value());
+    Assert.assertEquals("/replication/shards/2/auth/source has different value than that specified", "usersShard2", shards.get(2).getAuth().getSource().value());
+    Assert.assertEquals("/replication/shards/2/auth/user has different value than that specified", "userShard2", shards.get(2).getAuth().getUser().value());
+    Assert.assertEquals("/replication/shards/2/ssl/enabled has different value than that specified", true, shards.get(1).getSsl().getEnabled().value());
   }
 
 }

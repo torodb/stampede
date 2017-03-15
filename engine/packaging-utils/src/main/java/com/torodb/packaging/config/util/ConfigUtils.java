@@ -72,37 +72,40 @@ public class ConfigUtils {
     return getUserHomePath() + File.separatorChar + file;
   }
 
-  public static ObjectMapper mapper() {
+  public static ObjectMapper mapper(boolean excludeDefaults) {
     ObjectMapper objectMapper = new ObjectMapper();
 
-    configMapper(objectMapper);
+    configMapper(objectMapper, excludeDefaults);
 
     return objectMapper;
   }
 
-  public static YAMLMapper yamlMapper() {
+  public static YAMLMapper yamlMapper(boolean excludeDefaults) {
     YAMLMapper yamlMapper = new YAMLMapper();
 
-    configMapper(yamlMapper);
+    configMapper(yamlMapper, excludeDefaults);
 
     return yamlMapper;
   }
 
-  public static XmlMapper xmlMapper() {
+  public static XmlMapper xmlMapper(boolean excludeDefaults) {
     XmlMapper xmlMapper = new XmlMapper();
 
-    configMapper(xmlMapper);
+    configMapper(xmlMapper, excludeDefaults);
 
     return xmlMapper;
   }
 
-  private static void configMapper(ObjectMapper objectMapper) {
+  private static void configMapper(ObjectMapper objectMapper, boolean excludeDefaults) {
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
     objectMapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, true);
     objectMapper.configure(Feature.ALLOW_COMMENTS, true);
     objectMapper.configure(Feature.ALLOW_YAML_COMMENTS, true);
-    objectMapper.setSerializationInclusion(Include.NON_NULL);
+    objectMapper.setSerializationInclusion(Include.NON_EMPTY);
     objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+    if (excludeDefaults) {
+      objectMapper.setSerializationInclusion(Include.NON_DEFAULT);
+    }
   }
 
   public static IllegalArgumentException transformJsonMappingException(
@@ -145,8 +148,8 @@ public class ConfigUtils {
 
   public static <T> T readConfigFromYaml(Class<T> configClass, String yamlString) throws
       JsonProcessingException, IOException {
-    ObjectMapper objectMapper = mapper();
-    YAMLMapper yamlMapper = yamlMapper();
+    ObjectMapper objectMapper = mapper(true);
+    YAMLMapper yamlMapper = yamlMapper(true);
 
     JsonNode configNode = yamlMapper.readTree(yamlString);
 
@@ -159,8 +162,8 @@ public class ConfigUtils {
 
   public static <T> T readConfigFromXml(Class<T> configClass, String xmlString) throws
       JsonProcessingException, IOException {
-    ObjectMapper objectMapper = mapper();
-    XmlMapper xmlMapper = xmlMapper();
+    ObjectMapper objectMapper = mapper(true);
+    XmlMapper xmlMapper = xmlMapper(true);
 
     JsonNode configNode = xmlMapper.readTree(xmlString);
 
@@ -320,7 +323,7 @@ public class ConfigUtils {
 
   public static <T> JsonNode getParam(T config, String pathAndProp)
       throws Exception {
-    XmlMapper xmlMapper = xmlMapper();
+    XmlMapper xmlMapper = xmlMapper(true);
     JsonNode configNode = xmlMapper.valueToTree(config);
 
     if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
@@ -353,14 +356,14 @@ public class ConfigUtils {
 
   public static <T> void printYamlConfig(T config, Console console)
       throws IOException, JsonGenerationException, JsonMappingException {
-    ObjectMapper objectMapper = yamlMapper();
+    ObjectMapper objectMapper = yamlMapper(false);
     ObjectWriter objectWriter = objectMapper.writer();
     printConfig(config, console, objectWriter);
   }
 
   public static <T> void printXmlConfig(T config, Console console)
       throws IOException, JsonGenerationException, JsonMappingException {
-    ObjectMapper objectMapper = xmlMapper();
+    ObjectMapper objectMapper = xmlMapper(false);
     ObjectWriter objectWriter = objectMapper.writer();
     objectWriter = objectWriter.withRootName("config");
     printConfig(config, console, objectWriter);
@@ -378,7 +381,7 @@ public class ConfigUtils {
   public static <T> void printParamDescriptionFromConfigSchema(Class<T> configClass,
       ResourceBundle resourceBundle, Console console, int tabs)
       throws UnsupportedEncodingException, JsonMappingException {
-    ObjectMapper objectMapper = mapper();
+    ObjectMapper objectMapper = mapper(false);
     DescriptionFactoryWrapper visitor = new DescriptionFactoryWrapper(
         resourceBundle, console, tabs);
     objectMapper.acceptJsonFormatVisitor(objectMapper.constructType(configClass), visitor);

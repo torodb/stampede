@@ -22,54 +22,36 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.common.EnumWithDefault;
+import com.torodb.packaging.config.model.common.StringWithDefault;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.model.protocol.mongo.Ssl;
-import com.torodb.packaging.config.util.ConfigUtils;
+import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"replSetName", "syncSource", "ssl", "auth", "include", "exclude",
-    "mongopassFile"})
-public class Replication extends AbstractReplication {
-
-  private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
-
-  public Replication() {
-    setSyncSource("localhost:27017");
-    setReplSetName("rs1");
-  }
-
-  @Description("config.mongo.mongopassFile")
-  @JsonProperty(required = true)
-  public String getMongopassFile() {
-    return mongopassFile;
-  }
-
-  public void setMongopassFile(String mongopassFile) {
-    this.mongopassFile = mongopassFile;
-  }
+@JsonPropertyOrder({"replSetName", "syncSource", "ssl", "auth"})
+public class ShardReplication extends AbstractShardReplication {
 
   @Description("config.mongo.replication.replSetName")
-  @NotEmpty
+  @NotEmptySrtingWithDefault
   @JsonProperty(required = true)
-  public String getReplSetName() {
+  public StringWithDefault getReplSetName() {
     return super.getReplSetName();
   }
 
   @JsonIgnore
-  public Role getRole() {
+  public EnumWithDefault<Role> getRole() {
     return super.getRole();
   }
 
   @Description("config.mongo.replication.syncSource")
-  @NotNull
-  @JsonProperty(required = true)
-  public String getSyncSource() {
+  @NotEmptySrtingWithDefault
+  @JsonProperty(required = false)
+  public StringWithDefault getSyncSource() {
     return super.getSyncSource();
   }
 
@@ -86,17 +68,5 @@ public class Replication extends AbstractReplication {
   @RequiredParametersForAuthentication
   public Auth getAuth() {
     return super.getAuth();
-  }
-
-  @Description("config.mongo.replication.include")
-  @JsonProperty(required = true)
-  public FilterList getInclude() {
-    return super.getInclude();
-  }
-
-  @Description("config.mongo.replication.exclude")
-  @JsonProperty(required = true)
-  public FilterList getExclude() {
-    return super.getExclude();
   }
 }

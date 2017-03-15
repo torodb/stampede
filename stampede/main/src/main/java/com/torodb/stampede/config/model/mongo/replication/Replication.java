@@ -16,91 +16,80 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.standalone.config.model.protocol.mongo;
+package com.torodb.stampede.config.model.mongo.replication;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.common.EnumWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
-import com.torodb.packaging.config.model.protocol.mongo.Auth;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList;
-import com.torodb.packaging.config.model.protocol.mongo.Role;
-import com.torodb.packaging.config.model.protocol.mongo.Ssl;
+import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
-import com.torodb.packaging.config.validation.NotNullElements;
 
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
-@JsonPropertyOrder({"replSetName", "syncSource", 
-    "role", "ssl", "auth", "include", "exclude", "shards"})
+@JsonPropertyOrder({"replSetName", "syncSource", "ssl", "auth", "include", "exclude",
+    "mongopassFile", "shards"})
 public class Replication extends AbstractReplication<ShardReplication> {
+
+  private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
+
+  public Replication() {
+    super.setSyncSource(StringWithDefault.withDefault("localhost:27017"));
+    super.setReplSetName(StringWithDefault.withDefault("rs1"));
+  }
 
   @Description("config.mongo.replication.replSetName")
   @NotEmptySrtingWithDefault
-  @JsonProperty(required = true)
+  @JsonProperty(required = false)
   public StringWithDefault getReplSetName() {
     return super.getReplSetName();
   }
 
-  @Description("config.mongo.replication.role")
-  @NotNull
-  @JsonProperty(required = true)
-  public EnumWithDefault<Role> getRole() {
-    return super.getRole();
-  }
-
   @Description("config.mongo.replication.syncSource")
   @NotEmptySrtingWithDefault
-  @JsonProperty(required = true)
+  @JsonProperty(required = false)
   public StringWithDefault getSyncSource() {
     return super.getSyncSource();
   }
-
-  @Description("config.mongo.replication.ssl")
-  @NotNull
+  
+  @Description("config.mongo.mongopassFile")
   @JsonProperty(required = true)
-  public Ssl getSsl() {
-    return super.getSsl();
+  public String getMongopassFile() {
+    return mongopassFile;
   }
 
-  @Description("config.mongo.replication.auth")
-  @NotNull
-  @JsonProperty(required = true)
-  public Auth getAuth() {
-    return super.getAuth();
-  }
-
-  @Description("config.mongo.replication.include")
-  @JsonProperty(required = true)
-  public FilterList getInclude() {
-    return super.getInclude();
-  }
-
-  @Description("config.mongo.replication.exclude")
-  @JsonProperty(required = true)
-  public FilterList getExclude() {
-    return super.getExclude();
-  }
-
-  @NotNullElements
-  @JsonProperty(required = true)
+  @Description("config.mongo.shards")
+  @JsonProperty(required = false)
   public List<ShardReplication> getShards() {
     return super.getShardList();
   }
-  
+
   public void setShards(List<ShardReplication> shards) {
     super.setShardList(shards);
+  }
+
+  public void setMongopassFile(String mongopassFile) {
+    this.mongopassFile = mongopassFile;
+  }
+
+  @Override
+  public void setReplSetName(StringWithDefault replSetName) {
+    super.setReplSetName(replSetName);
+  }
+
+  @Override
+  public void setSyncSource(StringWithDefault syncSource) {
+    super.setSyncSource(syncSource);
   }
   
   public Replication mergeWith(AbstractShardReplication shard) {
     Replication mergedShard = new Replication();
     
     merge(shard, mergedShard);
+    
+    mergedShard.setMongopassFile(getMongopassFile());
     
     return mergedShard;
   }

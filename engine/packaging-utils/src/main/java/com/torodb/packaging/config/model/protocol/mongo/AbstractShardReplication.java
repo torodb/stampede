@@ -16,92 +16,79 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.standalone.config.model.protocol.mongo;
+package com.torodb.packaging.config.model.protocol.mongo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.jackson.RoleWithDefaultDeserializer;
 import com.torodb.packaging.config.model.common.EnumWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
-import com.torodb.packaging.config.model.protocol.mongo.Auth;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList;
-import com.torodb.packaging.config.model.protocol.mongo.Role;
-import com.torodb.packaging.config.model.protocol.mongo.Ssl;
-import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
-import com.torodb.packaging.config.validation.NotNullElements;
-
-import java.util.List;
+import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"replSetName", "syncSource", 
-    "role", "ssl", "auth", "include", "exclude", "shards"})
-public class Replication extends AbstractReplication<ShardReplication> {
+@JsonPropertyOrder({"replSetName", "syncSource", "role", "ssl", "auth", "include", "exclude"})
+public abstract class AbstractShardReplication {
+
+  private StringWithDefault replSetName = StringWithDefault.withDefault(null);
+  private EnumWithDefault<Role> role = EnumWithDefault.withDefault(Role.HIDDEN_SLAVE);
+  private StringWithDefault syncSource = StringWithDefault.withDefault(null);
+  private Ssl ssl = new Ssl();
+  private Auth auth = new Auth();
 
   @Description("config.mongo.replication.replSetName")
-  @NotEmptySrtingWithDefault
   @JsonProperty(required = true)
   public StringWithDefault getReplSetName() {
-    return super.getReplSetName();
+    return replSetName;
+  }
+
+  public void setReplSetName(StringWithDefault replSetName) {
+    this.replSetName = replSetName;
   }
 
   @Description("config.mongo.replication.role")
   @NotNull
   @JsonProperty(required = true)
+  @JsonDeserialize(using = RoleWithDefaultDeserializer.class)
   public EnumWithDefault<Role> getRole() {
-    return super.getRole();
+    return role;
+  }
+
+  public void setRole(EnumWithDefault<Role> role) {
+    this.role = role;
   }
 
   @Description("config.mongo.replication.syncSource")
-  @NotEmptySrtingWithDefault
   @JsonProperty(required = true)
   public StringWithDefault getSyncSource() {
-    return super.getSyncSource();
+    return syncSource;
+  }
+
+  public void setSyncSource(StringWithDefault syncSource) {
+    this.syncSource = syncSource;
   }
 
   @Description("config.mongo.replication.ssl")
   @NotNull
   @JsonProperty(required = true)
   public Ssl getSsl() {
-    return super.getSsl();
+    return ssl;
+  }
+
+  public void setSsl(Ssl ssl) {
+    this.ssl = ssl;
   }
 
   @Description("config.mongo.replication.auth")
   @NotNull
   @JsonProperty(required = true)
   public Auth getAuth() {
-    return super.getAuth();
+    return auth;
   }
 
-  @Description("config.mongo.replication.include")
-  @JsonProperty(required = true)
-  public FilterList getInclude() {
-    return super.getInclude();
-  }
-
-  @Description("config.mongo.replication.exclude")
-  @JsonProperty(required = true)
-  public FilterList getExclude() {
-    return super.getExclude();
-  }
-
-  @NotNullElements
-  @JsonProperty(required = true)
-  public List<ShardReplication> getShards() {
-    return super.getShardList();
-  }
-  
-  public void setShards(List<ShardReplication> shards) {
-    super.setShardList(shards);
-  }
-  
-  public Replication mergeWith(AbstractShardReplication shard) {
-    Replication mergedShard = new Replication();
-    
-    merge(shard, mergedShard);
-    
-    return mergedShard;
+  public void setAuth(Auth auth) {
+    this.auth = auth;
   }
 }

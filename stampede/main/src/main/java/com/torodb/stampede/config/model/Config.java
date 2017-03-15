@@ -18,19 +18,17 @@
 
 package com.torodb.stampede.config.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.google.common.collect.Lists;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.validation.MutualExclusiveReplSetOrShards;
+import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
+import com.torodb.packaging.config.validation.SslEnabledForX509Authentication;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.logging.Logging;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
-import org.hibernate.validator.constraints.NotEmpty;
-
-import java.util.List;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -47,10 +45,12 @@ public class Config implements MetricsConfig {
   @NotNull
   @JsonProperty(required = true)
   private Boolean metricsEnabled = false;
-  @NotEmpty
   @Valid
+  @MutualExclusiveReplSetOrShards
+  @SslEnabledForX509Authentication
+  @RequiredParametersForAuthentication
   @JsonProperty(required = true)
-  private List<Replication> replications = Lists.newArrayList(new Replication());
+  private Replication replication = new Replication();
   @Description("config.backend")
   @NotNull
   @Valid
@@ -76,20 +76,15 @@ public class Config implements MetricsConfig {
     this.metricsEnabled = metricsEnabled;
   }
 
-  @DoNotChange
-  public List<Replication> getReplications() {
-    return replications;
-  }
-
-  public void setReplications(List<Replication> replications) {
-    this.replications = replications;
-  }
-
   //TODO: This is a patch that should be changed once TORODB-397 is completed
   @DoNotChange
-  @JsonIgnore
+  @MutualExclusiveReplSetOrShards
   public Replication getReplication() {
-    return replications.get(0);
+    return replication;
+  }
+  
+  public void setReplication(Replication replication) {
+    this.replication = replication;
   }
 
   public Backend getBackend() {

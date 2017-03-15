@@ -18,33 +18,20 @@
 
 package com.torodb.packaging.config.validation;
 
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
-
-import java.util.HashSet;
-import java.util.Set;
+import com.torodb.packaging.config.model.common.StringWithDefault;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class NoDuplicatedReplNameValidator implements
-    ConstraintValidator<NoDuplicatedReplName, AbstractReplication<?>> {
+public class NotEmptySrtingWithDefaultValidator implements 
+    ConstraintValidator<NotEmptySrtingWithDefault, StringWithDefault> {
 
   @Override
-  public void initialize(NoDuplicatedReplName constraintAnnotation) {
+  public void initialize(NotEmptySrtingWithDefault constraintAnnotation) {
   }
 
   @Override
-  public boolean isValid(AbstractReplication<?> value, ConstraintValidatorContext context) {
-    if (value != null) {
-      Set<String> replNameSet = new HashSet<>();
-      for (AbstractShardReplication shard : value.getShardList()) {
-        if (!replNameSet.add(shard.getReplSetName().value())) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+  public boolean isValid(StringWithDefault value, ConstraintValidatorContext context) {
+    return value != null && value.value() != null && !value.value().isEmpty();
   }
 }
