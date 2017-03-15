@@ -67,7 +67,7 @@ public class DatabaseMergeStrategy
   }
 
   private static MergeStrategyPicker<ImmutableMetaSnapshot, MutableMetaDatabase, Builder, DbContext> createOnRemoveStrategy() {
-    return new FirstToApplyStrategyPicker<>(Lists.newArrayList(
+    return new FirstToApplyStrategyPicker<ImmutableMetaSnapshot, MutableMetaDatabase, Builder, DbContext>(Lists.newArrayList(
         new SameIdOtherNameStrategy(),
         new SameNameOtherTypeStrategy(),
         new ShortcutDatabaseStrategy(),

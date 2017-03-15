@@ -67,7 +67,7 @@ public class DocPartIndexMergeStrategy implements
   @SuppressWarnings("checkstyle:LineLength")
   private static MergeStrategyPicker<ImmutableMetaDocPart, MetaIdentifiedDocPartIndex, Builder,
       DocPartIndexCtx> createOnRemoveStrategy() {
-    return new FirstToApplyStrategyPicker<>(Lists.newArrayList(
+    return new FirstToApplyStrategyPicker<ImmutableMetaDocPart, MetaIdentifiedDocPartIndex, Builder, DocPartIndexCtx>(Lists.newArrayList(
         new MissedDocIndexStrategy(),
         new NotExistentDocPartIndexStrategy()
     ), DocPartIndexMergeStrategy::deleteIndex);

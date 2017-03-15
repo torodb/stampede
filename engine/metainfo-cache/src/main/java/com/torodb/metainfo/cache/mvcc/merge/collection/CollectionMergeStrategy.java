@@ -68,7 +68,8 @@ public class CollectionMergeStrategy implements MergeStrategy<ImmutableMetaDatab
   }
 
   private static MergeStrategyPicker<ImmutableMetaDatabase, MutableMetaCollection, Builder, ColContext> createOnRemoveStrategy() {
-    return new FirstToApplyStrategyPicker<>(Lists.newArrayList(
+    return new FirstToApplyStrategyPicker<ImmutableMetaDatabase,
+        MutableMetaCollection, Builder, ColContext>(Lists.newArrayList(
         new SameIdOtherNameStrategy(),
         new SameNameOtherIdStrategy(),
         new NotExistentCollectionStrategy(),
