@@ -69,6 +69,7 @@ public class CollectionMergeStrategy implements MergeStrategy<ImmutableMetaDatab
 
   private static MergeStrategyPicker<ImmutableMetaDatabase, MutableMetaCollection, Builder, ColContext> createOnRemoveStrategy() {
     return new FirstToApplyStrategyPicker<ImmutableMetaDatabase,
+        // Fix for Eclipse compiler, please do not remove explicit generics
         MutableMetaCollection, Builder, ColContext>(Lists.newArrayList(
         new SameIdOtherNameStrategy(),
         new SameNameOtherIdStrategy(),

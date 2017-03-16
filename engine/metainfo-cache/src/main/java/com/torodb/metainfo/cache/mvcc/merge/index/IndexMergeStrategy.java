@@ -66,6 +66,7 @@ public class IndexMergeStrategy
 
   @SuppressWarnings("checkstyle:LineLength")
   private static MergeStrategyPicker<ImmutableMetaCollection, MutableMetaIndex, Builder, IndexContext> createOnRemoveStrategy() {
+    // Fix for Eclipse compiler, please do not remove explicit generics
     return new FirstToApplyStrategyPicker<ImmutableMetaCollection, MutableMetaIndex, Builder, IndexContext>(Lists.newArrayList(
         new OrphanDocPartIndexStrategy(),
         new NotExistentIndexStrategy()

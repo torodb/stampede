@@ -67,6 +67,7 @@ public class DocPartIndexMergeStrategy implements
   @SuppressWarnings("checkstyle:LineLength")
   private static MergeStrategyPicker<ImmutableMetaDocPart, MetaIdentifiedDocPartIndex, Builder,
       DocPartIndexCtx> createOnRemoveStrategy() {
+    // Fix for Eclipse compiler, please do not remove explicit generics
     return new FirstToApplyStrategyPicker<ImmutableMetaDocPart, MetaIdentifiedDocPartIndex, Builder, DocPartIndexCtx>(Lists.newArrayList(
         new MissedDocIndexStrategy(),
         new NotExistentDocPartIndexStrategy()
