@@ -70,6 +70,15 @@ public class PostgreSqlValueToCopyConverterTest {
       PostgreSqlValueToCopyConverter.INSTANCE;
   private StringBuilder sb = new StringBuilder();
 
+  @Parameterized.Parameter(0)
+  public String label;
+
+  @Parameterized.Parameter(1)
+  public KvValue value;
+
+  @Parameterized.Parameter(2)
+  public String expectedResult;
+
   public PostgreSqlValueToCopyConverterTest() {
     sb = new StringBuilder();
   }
@@ -197,15 +206,6 @@ public class PostgreSqlValueToCopyConverterTest {
 
     return allTests;
   }
-
-  @Parameterized.Parameter(0)
-  public String label;
-
-  @Parameterized.Parameter(1)
-  public KvValue value;
-
-  @Parameterized.Parameter(2)
-  public String expectedResult;
 
   @Test
   public void test() {

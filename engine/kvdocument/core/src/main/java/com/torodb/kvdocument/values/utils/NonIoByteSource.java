@@ -165,11 +165,7 @@ public class NonIoByteSource implements Serializable {
         throw new IOException("The end of the stream was reach before it was expected");
       }
       if (remaining < 0) {
-        throw new IOException(
-            "A byte array of lenght "
-                + size
-                + " was expected, but only "
-                + off
+        throw new IOException( "A byte array of lenght " + size + " was expected, but only " + off
                 + " bytes were found");
       }
       delegate = ByteSource.wrap(bytes);

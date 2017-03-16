@@ -36,8 +36,8 @@ public class Decimal128ValueConverter
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvDecimal128> TYPE =
-      DataTypeForKv.from(JsonObjectConverter.TYPE, new Decimal128ValueConverter());
+  public static final DataTypeForKv<KvDecimal128> TYPE = DataTypeForKv.from(
+          JsonObjectConverter.TYPE, new Decimal128ValueConverter());
 
   @Override
   public KvType getErasuredType() {

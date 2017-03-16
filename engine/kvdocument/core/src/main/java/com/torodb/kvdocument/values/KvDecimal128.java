@@ -273,9 +273,8 @@ public abstract class KvDecimal128 extends KvValue<KvDecimal128> {
               "Exponent is out of range for Decimal128 encoding of " + initialValue);
         } else {
           BigInteger multiplier = BIG_INT_TEN.pow(diff);
-          value =
-              new BigDecimal(
-                  initialValue.unscaledValue().multiply(multiplier), initialValue.scale() + diff);
+          value = new BigDecimal( initialValue.unscaledValue().multiply(multiplier),
+                  initialValue.scale() + diff);
         }
       } else if (-initialValue.scale() < MIN_EXPONENT) {
         // Increasing a very negative exponent may require decreasing precision, which is rounding
@@ -284,9 +283,8 @@ public abstract class KvDecimal128 extends KvValue<KvDecimal128> {
         int diff = initialValue.scale() + MIN_EXPONENT;
         int undiscardedPrecision = ensureExactRounding(initialValue, diff);
         BigInteger divisor = undiscardedPrecision == 0 ? BIG_INT_ONE : BIG_INT_TEN.pow(diff);
-        value =
-            new BigDecimal(
-                initialValue.unscaledValue().divide(divisor), initialValue.scale() - diff);
+        value = new BigDecimal(initialValue.unscaledValue().divide(divisor),
+                initialValue.scale() - diff);
       } else {
         value = initialValue.round(java.math.MathContext.DECIMAL128);
         int extraPrecision = initialValue.precision() - value.precision();

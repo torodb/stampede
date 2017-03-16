@@ -64,11 +64,10 @@ public class MapToKvValueConverter {
       return buildSpecialObject(source);
     }
     LinkedHashMap<String, KvValue<?>> docMap = new LinkedHashMap<>();
-    source.forEach(
-        (key, value) -> {
-          String interned = key.intern();
-          docMap.put(interned, convertValue(value));
-        });
+    source.forEach((key, value) -> {
+      String interned = key.intern();
+      docMap.put(interned, convertValue(value));
+    });
     return new MapKvDocument(docMap);
   }
 

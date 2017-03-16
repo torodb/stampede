@@ -210,11 +210,8 @@ public class ToBsonValueTranslator
         subtype = BinarySubtype.USER_DEFINED;
         break;
       default:
-        throw new AssertionError(
-            "It is not defined how to translate "
-                + "the binary subtype "
-                + value.getSubtype()
-                + " to"
+        throw new AssertionError("It is not defined how to translate "
+                + "the binary subtype " + value.getSubtype() + " to"
                 + "MongoDB binaries subtypes");
     }
     byte byteType = value.getCategory();

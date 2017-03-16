@@ -70,11 +70,16 @@ public class DocumentsAndRelationsTypesTest {
   private MutableMetaSnapshot mutableSnapshot;
 
   private D2RTranslator d2RTranslator;
-  private R2DTranslator r2dTranslator;
-
 
   private DocPartData mainDocPart;
   private DocPartData secondaryDocPart;
+
+  @Parameterized.Parameter(0)
+  public String collName;
+
+  @Parameterized.Parameter(1)
+  public KvValue value;
+
 
   @Before
   public void setup() {
@@ -90,7 +95,6 @@ public class DocumentsAndRelationsTypesTest {
     MutableMetaDatabase db = mutableSnapshot.getMetaDatabaseByName(DB1);
     d2RTranslator = new D2RTranslatorStack(tableRefFactory, identifierFactory,
             ridGenerator, db, db.getMetaCollectionByName(COLLA));
-    r2dTranslator = new R2DTranslatorImpl();
   }
 
 
@@ -154,13 +158,6 @@ public class DocumentsAndRelationsTypesTest {
   private static boolean isDocument(KvType kvType) {
     return kvType == DocumentType.INSTANCE;
   }
-
-
-  @Parameterized.Parameter(0)
-  public String collName;
-
-  @Parameterized.Parameter(1)
-  public KvValue value;
 
 
   @Test

@@ -96,12 +96,8 @@ public class MongoWpConverter {
       case DEPRECATED:
         throw new UnsupportedBsonTypeException(bsonType);
       default:
-        throw new AssertionError(
-            "It seems that "
-                + bsonType
-                + " has "
-                + "been added to "
-                + BsonType.class.getCanonicalName()
+        throw new AssertionError("It seems that " + bsonType + " has "
+                + "been added to " + BsonType.class.getCanonicalName()
                 + " but it is not defined how to translate it to "
                 + KvType.class.getCanonicalName());
     }

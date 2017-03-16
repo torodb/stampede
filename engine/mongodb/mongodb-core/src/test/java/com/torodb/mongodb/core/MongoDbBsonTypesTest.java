@@ -19,7 +19,6 @@
 package com.torodb.mongodb.core;
 
 import com.eightkdata.mongowp.Status;
-import com.eightkdata.mongowp.WriteConcern;
 import com.eightkdata.mongowp.bson.*;
 import com.eightkdata.mongowp.bson.impl.*;
 import com.eightkdata.mongowp.server.api.Request;
@@ -32,7 +31,6 @@ import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.metrics.DisabledMetricRegistry;
-import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.DefaultBuildProperties;
@@ -48,12 +46,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.lang.reflect.Parameter;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(Parameterized.class)
 public class MongoDbBsonTypesTest {
@@ -64,6 +62,13 @@ public class MongoDbBsonTypesTest {
   private Request request;
   private final String dbName="test";
   private WriteMongodTransaction writeTransaction;
+
+  @Parameterized.Parameter(0)
+  public String collName;
+
+
+  @Parameterized.Parameter(1)
+  public BsonValue value;
 
   @Before
   public void setUp() {
@@ -153,13 +158,6 @@ public class MongoDbBsonTypesTest {
     return allTests;
   }
 
-  @Parameterized.Parameter(0)
-  public String collName;
-
-
-  @Parameterized.Parameter(1)
-  public BsonValue value;
-
   @Test
   public void test() {
     List<BsonDocument> docs = new ArrayList<>();
@@ -194,8 +192,14 @@ public class MongoDbBsonTypesTest {
     //Asserting that the status of both operations are right
 
     assertTrue(insertResultStatus.getResult().getWriteErrors().isEmpty());
-    assertTrue(insertResultStatus.isOk()?"ok":insertResultStatus.getErrorMsg() + " in collection " + collName, insertResultStatus.isOk());
-    assertTrue(findResultStatus.isOk()?"ok":findResultStatus.getErrorMsg() + " in collection " + collName, findResultStatus.isOk());
+
+    if (!insertResultStatus.isOk()) {
+      fail(insertResultStatus.getErrorMsg() + " in collection " + collName);
+    }
+
+    if (!findResultStatus.isOk()) {
+      fail(findResultStatus.getErrorMsg() + " in collection " + collName);
+    }
 
     //We ensure that every element in the inserted list exists in the list retrieved from DB and viceversa
     //That is, we ensure that (apart from the order) they are the same

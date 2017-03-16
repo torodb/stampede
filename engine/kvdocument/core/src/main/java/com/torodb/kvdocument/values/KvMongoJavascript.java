@@ -75,13 +75,13 @@ public abstract class KvMongoJavascript extends KvValue<String> {
 
     private static final long serialVersionUID = -5704502002532582458L;
 
+    private String value;
+
     @Nonnull
     @Override
     public String getValue() {
       return value;
     }
-
-    private String value;
 
     public DefaultKvMongoJavascript(String value) {
       this.value = value;
