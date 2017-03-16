@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.common.ScalarWithDefault;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,33 +70,33 @@ public abstract class AbstractReplication<T extends AbstractShardReplication>
     mergedShard.setSyncSource(shard.getSyncSource());
     
     Auth mergedAuth = new Auth();
-    mergedAuth.setMode(shard.getAuth().getMode().notDefault()
-        ? shard.getAuth().getMode() : getAuth().getMode());
-    mergedAuth.setSource(shard.getAuth().getSource().notDefault()
-        ? shard.getAuth().getSource() : getAuth().getSource());
-    mergedAuth.setUser(shard.getAuth().getUser().notDefault()
-        ? shard.getAuth().getUser() : getAuth().getUser());
+    mergedAuth.setMode(ScalarWithDefault.merge(
+        shard.getAuth().getMode(), getAuth().getMode()));
+    mergedAuth.setSource(ScalarWithDefault.merge(
+        shard.getAuth().getSource(), getAuth().getSource()));
+    mergedAuth.setUser(ScalarWithDefault.merge(
+        shard.getAuth().getUser(), getAuth().getUser()));
     mergedShard.setAuth(mergedAuth);
     
     Ssl mergedSsl = new Ssl();
-    mergedSsl.setAllowInvalidHostnames(shard.getSsl().getAllowInvalidHostnames().notDefault()
-        ? shard.getSsl().getAllowInvalidHostnames() : getSsl().getAllowInvalidHostnames());
-    mergedSsl.setCaFile(shard.getSsl().getCaFile().notDefault()
-        ? shard.getSsl().getCaFile() : getSsl().getCaFile());
-    mergedSsl.setEnabled(shard.getSsl().getEnabled().notDefault()
-        ? shard.getSsl().getEnabled() : getSsl().getEnabled());
-    mergedSsl.setFipsMode(shard.getSsl().getFipsMode().notDefault()
-        ? shard.getSsl().getFipsMode() : getSsl().getFipsMode());
-    mergedSsl.setKeyPassword(shard.getSsl().getKeyPassword().notDefault()
-        ? shard.getSsl().getKeyPassword() : getSsl().getKeyPassword());
-    mergedSsl.setKeyStoreFile(shard.getSsl().getKeyStoreFile().notDefault()
-        ? shard.getSsl().getKeyStoreFile() : getSsl().getKeyStoreFile());
-    mergedSsl.setKeyStorePassword(shard.getSsl().getKeyStorePassword().notDefault()
-        ? shard.getSsl().getKeyStorePassword() : getSsl().getKeyStorePassword());
-    mergedSsl.setTrustStoreFile(shard.getSsl().getTrustStoreFile().notDefault()
-        ? shard.getSsl().getTrustStoreFile() : getSsl().getTrustStoreFile());
-    mergedSsl.setTrustStorePassword(shard.getSsl().getTrustStorePassword().notDefault()
-        ? shard.getSsl().getTrustStorePassword() : getSsl().getTrustStorePassword());
+    mergedSsl.setAllowInvalidHostnames(ScalarWithDefault.merge(
+        shard.getSsl().getAllowInvalidHostnames(), getSsl().getAllowInvalidHostnames()));
+    mergedSsl.setCaFile(ScalarWithDefault.merge(
+        shard.getSsl().getCaFile(), getSsl().getCaFile()));
+    mergedSsl.setEnabled(ScalarWithDefault.merge(
+        shard.getSsl().getEnabled(), getSsl().getEnabled()));
+    mergedSsl.setFipsMode(ScalarWithDefault.merge(
+        shard.getSsl().getFipsMode(), getSsl().getFipsMode()));
+    mergedSsl.setKeyPassword(ScalarWithDefault.merge(
+        shard.getSsl().getKeyPassword(), getSsl().getKeyPassword()));
+    mergedSsl.setKeyStoreFile(ScalarWithDefault.merge(
+        shard.getSsl().getKeyStoreFile(), getSsl().getKeyStoreFile()));
+    mergedSsl.setKeyStorePassword(ScalarWithDefault.merge(
+        shard.getSsl().getKeyStorePassword(), getSsl().getKeyStorePassword()));
+    mergedSsl.setTrustStoreFile(ScalarWithDefault.merge(
+        shard.getSsl().getTrustStoreFile(), getSsl().getTrustStoreFile()));
+    mergedSsl.setTrustStorePassword(ScalarWithDefault.merge(
+        shard.getSsl().getTrustStorePassword(), getSsl().getTrustStorePassword()));
     mergedShard.setSsl(mergedSsl);
   }
 }

@@ -45,19 +45,14 @@ public class SslEnabledForX509AuthenticationValidator implements
           }
         }
       } else {
-        for (AbstractShardReplication replication : value.getShardList()) {
-          if ((replication.getAuth().getMode().isDefault() 
-              ? value.getAuth().getMode().value()
-              : replication.getAuth().getMode().value()) == AuthMode.x509) {
-            if (!(replication.getSsl().getEnabled().isDefault() 
-                ? value.getSsl().getEnabled().value()
-                : replication.getSsl().getEnabled().value())
-                || (replication.getSsl().getKeyStoreFile().isDefault() 
-                    ? value.getSsl().getKeyStoreFile().value()
-                        : replication.getSsl().getKeyStoreFile().value()) == null 
-                || (replication.getSsl().getKeyPassword().isDefault() 
-                    ? value.getSsl().getKeyPassword().value()
-                        : replication.getSsl().getKeyPassword().value()) == null) {
+        for (AbstractShardReplication shard : value.getShardList()) {
+          if (shard.getAuth().getMode().mergeValue( 
+              value.getAuth().getMode()) == AuthMode.x509) {
+            Ssl shardSsl = shard.getSsl();
+            Ssl commonSsl = value.getSsl();
+            if (!shardSsl.getEnabled().mergeValue(commonSsl.getEnabled()) 
+                || shardSsl.getKeyStoreFile().mergeValue(commonSsl.getKeyStoreFile()) == null
+                || shardSsl.getKeyPassword().mergeValue(commonSsl.getKeyPassword()) == null) {
               return false;
             }
           }

@@ -37,6 +37,23 @@ public abstract class ScalarWithDefault<T> {
     return value;
   }
 
+  @JsonIgnore
+  public T mergeValue(ScalarWithDefault<T> common) {
+    if (isDefault()) {
+      return common.value();
+    }
+    
+    return value();
+  }
+
+  public static <S extends ScalarWithDefault<?>> S merge(S specific, S common) {
+    if (specific.isDefault()) {
+      return common;
+    }
+    
+    return specific;
+  }
+
   @JsonProperty(value = "default")
   public boolean isDefault() {
     return isDefault;
