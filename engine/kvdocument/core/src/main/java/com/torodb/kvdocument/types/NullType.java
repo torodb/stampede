@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class NullType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final NullType INSTANCE = new NullType();
 
-  private NullType() {
-  }
+  private NullType() {}
 
   @Override
   public boolean equals(Object o) {

@@ -18,7 +18,33 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.kvdocument.types.*;
+import com.torodb.kvdocument.types.ArrayType;
+import com.torodb.kvdocument.types.BinaryType;
+import com.torodb.kvdocument.types.BooleanType;
+import com.torodb.kvdocument.types.DateType;
+import com.torodb.kvdocument.types.Decimal128Type;
+import com.torodb.kvdocument.types.DeprecatedType;
+import com.torodb.kvdocument.types.DocumentType;
+import com.torodb.kvdocument.types.DoubleType;
+import com.torodb.kvdocument.types.GenericType;
+import com.torodb.kvdocument.types.InstantType;
+import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.JavascriptType;
+import com.torodb.kvdocument.types.JavascriptWithScopeType;
+import com.torodb.kvdocument.types.KvType;
+import com.torodb.kvdocument.types.KvTypeVisitor;
+import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MaxKeyType;
+import com.torodb.kvdocument.types.MinKeyType;
+import com.torodb.kvdocument.types.MongoDbPointerType;
+import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoRegexType;
+import com.torodb.kvdocument.types.MongoTimestampType;
+import com.torodb.kvdocument.types.NonExistentType;
+import com.torodb.kvdocument.types.NullType;
+import com.torodb.kvdocument.types.StringType;
+import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.types.UndefinedType;
 
 /**
  *

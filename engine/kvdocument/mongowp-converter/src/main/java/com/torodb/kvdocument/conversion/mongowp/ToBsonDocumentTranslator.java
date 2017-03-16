@@ -24,13 +24,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.function.Function;
 
-/**
- *
- */
+/** */
 public class ToBsonDocumentTranslator implements Function<KvDocument, BsonDocument> {
 
-  private ToBsonDocumentTranslator() {
-  }
+  private ToBsonDocumentTranslator() {}
 
   @Override
   public BsonDocument apply(KvDocument t) {

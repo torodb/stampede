@@ -55,7 +55,8 @@ public class MapToKvValueConverter {
   public List<KvDocument> convert(List<Map<String, Object>> source) {
     KvArray array = (KvArray) convertList(source);
     return StreamSupport.stream(array.spliterator(), false)
-        .map(e -> (KvDocument) e).collect(Collectors.toList());
+        .map(e -> (KvDocument) e)
+        .collect(Collectors.toList());
   }
 
   private KvValue<?> convertMap(Map<String, Object> source) {
@@ -63,10 +64,11 @@ public class MapToKvValueConverter {
       return buildSpecialObject(source);
     }
     LinkedHashMap<String, KvValue<?>> docMap = new LinkedHashMap<>();
-    source.forEach((key, value) -> {
-      String interned = key.intern();
-      docMap.put(interned, convertValue(value));
-    });
+    source.forEach(
+        (key, value) -> {
+          String interned = key.intern();
+          docMap.put(interned, convertValue(value));
+        });
     return new MapKvDocument(docMap);
   }
 
@@ -139,9 +141,8 @@ public class MapToKvValueConverter {
   }
 
   private KvValue<?> convertList(List<?> values) {
-    List<KvValue<?>> kvvalues = values.stream()
-        .map(this::convertValue)
-        .collect(Collectors.toList());
+    List<KvValue<?>> kvvalues =
+        values.stream().map(this::convertValue).collect(Collectors.toList());
     return new ListKvArray(kvvalues);
   }
 }

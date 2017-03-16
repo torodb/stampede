@@ -20,15 +20,12 @@ package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.NullType;
 
-/**
- *
- */
+/** */
 public class KvNull extends KvValue<KvNull> {
 
   private static final long serialVersionUID = 4583557874141119051L;
 
-  private KvNull() {
-  }
+  private KvNull() {}
 
   public static KvNull getInstance() {
     return KvNullHolder.INSTANCE;

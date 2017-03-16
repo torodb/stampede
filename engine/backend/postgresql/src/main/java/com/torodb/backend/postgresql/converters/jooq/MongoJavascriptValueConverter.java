@@ -27,15 +27,14 @@ import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.values.KvMongoJavascript;
 import org.jooq.impl.SQLDataType;
 
-/**
- *
- */
-public class MongoJavascriptValueConverter implements KvValueConverter<String, String, KvMongoJavascript> {
+/** */
+public class MongoJavascriptValueConverter
+    implements KvValueConverter<String, String, KvMongoJavascript> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMongoJavascript> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
-      new MongoJavascriptValueConverter());
+  public static final DataTypeForKv<KvMongoJavascript> TYPE =
+      DataTypeForKv.from(SQLDataType.VARCHAR, new MongoJavascriptValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -66,5 +65,4 @@ public class MongoJavascriptValueConverter implements KvValueConverter<String, S
   public SqlBinding<String> getSqlBinding() {
     return StringSqlBinding.INSTANCE;
   }
-
 }

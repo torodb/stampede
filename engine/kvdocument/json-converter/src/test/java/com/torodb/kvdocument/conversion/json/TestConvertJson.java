@@ -145,5 +145,4 @@ public class TestConvertJson {
     KvArray inner = (KvArray) array.get(0);
     assertEquals("April", inner.get(0).getValue());
   }
-
 }

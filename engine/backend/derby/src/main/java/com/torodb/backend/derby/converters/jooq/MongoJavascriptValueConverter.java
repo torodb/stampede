@@ -16,12 +16,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.postgresql.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.backend.postgresql.converters.sql.StringSqlBinding;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.JavascriptType;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.values.KvMongoJavascript;
@@ -30,12 +30,16 @@ import org.jooq.impl.SQLDataType;
 /**
  *
  */
-public class MongoJavascriptValueConverter implements KvValueConverter<String, String, KvMongoJavascript> {
+public class MongoJavascriptValueConverter
+        implements KvValueConverter<String, String, KvMongoJavascript> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMongoJavascript> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
-      new MongoJavascriptValueConverter());
+  public static final DataTypeForKv<KvMongoJavascript> TYPE =
+          DataTypeForKv.from(
+                  SQLDataType.VARCHAR,
+                  new MongoJavascriptValueConverter()
+          );
 
   @Override
   public KvType getErasuredType() {

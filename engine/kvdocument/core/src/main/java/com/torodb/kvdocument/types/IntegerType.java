@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class IntegerType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final IntegerType INSTANCE = new IntegerType();
 
-  private IntegerType() {
-  }
+  private IntegerType() {}
 
   @Override
   public boolean equals(Object o) {

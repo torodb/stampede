@@ -27,20 +27,19 @@ import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.MongoRegexType;
 import com.torodb.kvdocument.values.KvMongoRegex;
 
+import java.io.ByteArrayInputStream;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import java.io.ByteArrayInputStream;
 
-/**
- *
- */
+/** */
 public class MongoRegexValueConverter implements KvValueConverter<String, String, KvMongoRegex> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMongoRegex> TYPE = JsonbBinding.fromKvValue(KvMongoRegex.class,
-          new MongoRegexValueConverter());
+  public static final DataTypeForKv<KvMongoRegex> TYPE =
+      JsonbBinding.fromKvValue(KvMongoRegex.class, new MongoRegexValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -49,7 +48,8 @@ public class MongoRegexValueConverter implements KvValueConverter<String, String
 
   @Override
   public KvMongoRegex from(String databaseObject) {
-    final JsonReader reader = Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
+    final JsonReader reader =
+        Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
     JsonObject object = reader.readObject();
 
     return KvMongoRegex.of(object.getString("pattern"), object.getString("options"));
@@ -58,11 +58,10 @@ public class MongoRegexValueConverter implements KvValueConverter<String, String
   @Override
   public String to(KvMongoRegex userObject) {
     return Json.createObjectBuilder()
-            .add("pattern", userObject.getPattern())
-            .add("options", userObject.getOptionsAsText())
-            .build()
-            .toString();
-
+        .add("pattern", userObject.getPattern())
+        .add("options", userObject.getOptionsAsText())
+        .build()
+        .toString();
   }
 
   @Override
@@ -79,5 +78,4 @@ public class MongoRegexValueConverter implements KvValueConverter<String, String
   public SqlBinding<String> getSqlBinding() {
     return JsonbSqlBinding.INSTANCE;
   }
-
 }

@@ -24,94 +24,92 @@ import com.torodb.kvdocument.types.KvType;
 import javax.annotation.Nonnull;
 
 public abstract class KvMongoJavascriptWithScope extends KvValue<KvMongoJavascriptWithScope> {
-    private static final long serialVersionUID = 4130181266747513960L;
+  private static final long serialVersionUID = 4130181266747513960L;
 
-    @Nonnull
-    @Override
-    public KvMongoJavascriptWithScope getValue() {
-        return this;
+  @Nonnull
+  @Override
+  public KvMongoJavascriptWithScope getValue() {
+    return this;
+  }
+
+  @Override
+  public Class<? extends KvMongoJavascriptWithScope> getValueClass() {
+    return KvMongoJavascriptWithScope.class;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof KvMongoJavascriptWithScope)) {
+      return false;
+    }
+    return this.getValue().equals(((KvMongoJavascriptWithScope) obj).getValue());
+  }
+
+  public static KvMongoJavascriptWithScope of(String js, KvDocument scope) {
+    return new DefaultKvMongoJavascriptWithScope(js, scope.toString());
+  }
+
+  public static KvMongoJavascriptWithScope of(String js, String scope) {
+    return new DefaultKvMongoJavascriptWithScope(js, scope);
+  }
+
+  @Nonnull
+  @Override
+  public KvType getType() {
+    return JavascriptWithScopeType.INSTANCE;
+  }
+
+  @Override
+  public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
+
+  public abstract String getJs();
+
+  public abstract String getScope();
+
+  public abstract String getScopeAsString();
+
+  private static class DefaultKvMongoJavascriptWithScope extends KvMongoJavascriptWithScope {
+
+    private String js;
+
+    private String scope;
+
+    private DefaultKvMongoJavascriptWithScope(String js, String scope) {
+      this.js = js;
+      this.scope = scope;
     }
 
     @Override
-    public Class<? extends KvMongoJavascriptWithScope> getValueClass() {
-        return KvMongoJavascriptWithScope.class;
+    public String getJs() {
+      return js;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof KvMongoJavascriptWithScope)) {
-            return false;
-        }
-        return this.getValue().equals(((KvMongoJavascriptWithScope) obj).getValue());
-    }
-
-    public static KvMongoJavascriptWithScope of(String js, KvDocument scope) {
-        return new DefaultKvMongoJavascriptWithScope(js, scope.toString());
-    }
-    public static KvMongoJavascriptWithScope of(String js, String scope) {
-        return new DefaultKvMongoJavascriptWithScope(js, scope);
-    }
-
-    @Nonnull
-    @Override
-    public KvType getType() {
-        return JavascriptWithScopeType.INSTANCE;
+    public String getScope() {
+      return scope;
     }
 
     @Override
-    public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
-        return visitor.visit(this, arg);
+    public String getScopeAsString() {
+      return scope.toString();
     }
 
-    public abstract String getJs();
-
-    public abstract String getScope();
-
-    public abstract String getScopeAsString();
-
-
-    private static class DefaultKvMongoJavascriptWithScope extends KvMongoJavascriptWithScope {
-
-        private String js;
-
-        private String scope;
-
-        private DefaultKvMongoJavascriptWithScope(String js, String scope) {
-            this.js = js;
-            this.scope = scope;
-        }
-
-        @Override
-        public String getJs() {
-            return js;
-        }
-
-        @Override
-        public String getScope() {
-            return scope;
-        }
-
-        @Override
-        public String getScopeAsString() {
-            return scope.toString();
-        }
-
-
-        @Override
-        public String toString() {
-            return js;
-        }
-
-        @Override
-        public int hashCode() {
-            return js.hashCode();
-        }
-
+    @Override
+    public String toString() {
+      return js;
     }
+
+    @Override
+    public int hashCode() {
+      return js.hashCode();
+    }
+  }
 }

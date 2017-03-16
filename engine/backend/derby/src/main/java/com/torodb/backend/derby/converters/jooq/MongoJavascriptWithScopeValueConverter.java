@@ -16,29 +16,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.postgresql.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.backend.postgresql.converters.jooq.binding.JsonbBinding;
-import com.torodb.backend.postgresql.converters.sql.JsonbSqlBinding;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.JavascriptWithScopeType;
 import com.torodb.kvdocument.types.KvType;
-import com.torodb.kvdocument.values.*;
+import com.torodb.kvdocument.values.KvMongoJavascriptWithScope;
 
-import javax.json.*;
-import java.io.ByteArrayInputStream;
+import javax.json.Json;
+import javax.json.JsonObject;
 
 /**
  *
  */
-public class MongoJavascriptWithScopeValueConverter implements KvValueConverter<String, String, KvMongoJavascriptWithScope> {
+public class MongoJavascriptWithScopeValueConverter
+        implements KvValueConverter<JsonObject, String, KvMongoJavascriptWithScope> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMongoJavascriptWithScope> TYPE = JsonbBinding.fromKvValue(KvMongoJavascriptWithScope.class,
-          new MongoJavascriptWithScopeValueConverter());
+  public static final DataTypeForKv<KvMongoJavascriptWithScope> TYPE =
+          DataTypeForKv.from(
+                  JsonObjectConverter.TYPE,
+                  new MongoJavascriptWithScopeValueConverter()
+          );
 
   @Override
   public KvType getErasuredType() {
@@ -46,28 +49,25 @@ public class MongoJavascriptWithScopeValueConverter implements KvValueConverter<
   }
 
   @Override
-  public KvMongoJavascriptWithScope from(String databaseObject) {
-
-    final JsonReader reader = Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
-    JsonObject object = reader.readObject();
-
-    //need to discuss implementation of scope
-    return KvMongoJavascriptWithScope.of(object.getString("js"), object.getString("scope"));
+  public KvMongoJavascriptWithScope from(JsonObject databaseObject) {
+    return KvMongoJavascriptWithScope.of(
+            databaseObject.getString("js"),
+            databaseObject.getString("scope")
+    );
   }
 
   @Override
-  public String to(KvMongoJavascriptWithScope userObject) {
+  public JsonObject to(KvMongoJavascriptWithScope userObject) {
     return Json.createObjectBuilder()
             .add("js", userObject.getJs())
             .add("scope", userObject.getScope())
-            .build()
-            .toString();
+            .build();
 
   }
 
   @Override
-  public Class<String> fromType() {
-    return String.class;
+  public Class<JsonObject> fromType() {
+    return JsonObject.class;
   }
 
   @Override
@@ -77,7 +77,7 @@ public class MongoJavascriptWithScopeValueConverter implements KvValueConverter<
 
   @Override
   public SqlBinding<String> getSqlBinding() {
-    return JsonbSqlBinding.INSTANCE;
+    return StringSqlBinding.INSTANCE;
   }
 
 }

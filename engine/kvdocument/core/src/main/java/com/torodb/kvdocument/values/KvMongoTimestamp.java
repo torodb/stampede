@@ -45,10 +45,7 @@ public abstract class KvMongoTimestamp extends KvValue<KvMongoTimestamp> {
 
   @Override
   public String toString() {
-    return "Timestamp{"
-        + "seconds:" + getSecondsSinceEpoch()
-        + ", ordinal:" + getOrdinal()
-        + '}';
+    return "Timestamp{" + "seconds:" + getSecondsSinceEpoch() + ", ordinal:" + getOrdinal() + '}';
   }
 
   @Override
@@ -78,5 +75,4 @@ public abstract class KvMongoTimestamp extends KvValue<KvMongoTimestamp> {
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

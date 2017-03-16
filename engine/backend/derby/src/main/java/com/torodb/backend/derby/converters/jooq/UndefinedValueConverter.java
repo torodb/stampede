@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.postgresql.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
@@ -25,7 +25,10 @@ import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.UndefinedType;
 import com.torodb.kvdocument.values.KvUndefined;
-import org.jooq.util.postgres.PostgresDataType;
+import org.jooq.DataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
+import org.jooq.impl.SQLDataType;
 
 import java.sql.Types;
 
@@ -35,8 +38,11 @@ import java.sql.Types;
 public class UndefinedValueConverter implements KvValueConverter<Boolean, Boolean, KvUndefined> {
 
   private static final long serialVersionUID = 1L;
+  private static final DataType<Boolean> BOOLEAN_TYPE =
+          new DefaultDataType<Boolean>(SQLDialect.DERBY, SQLDataType.BOOLEAN, "BOOLEAN");
 
-  public static final DataTypeForKv<KvUndefined> TYPE = DataTypeForKv.from(PostgresDataType.BOOL,
+
+  public static final DataTypeForKv<KvUndefined> TYPE = DataTypeForKv.from(BOOLEAN_TYPE,
       new UndefinedValueConverter(), Types.BIT);
 
   @Override

@@ -20,15 +20,12 @@ package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.UndefinedType;
 
-/**
- *
- */
+/** */
 public class KvUndefined extends KvValue<KvUndefined> {
 
   private static final long serialVersionUID = 4583557874141119051L;
 
-  private KvUndefined() {
-  }
+  private KvUndefined() {}
 
   public static KvUndefined getInstance() {
     return KvUndefinedHolder.INSTANCE;

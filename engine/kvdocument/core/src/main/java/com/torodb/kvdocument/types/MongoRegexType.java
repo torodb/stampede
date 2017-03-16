@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class MongoRegexType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final MongoRegexType INSTANCE = new MongoRegexType();
 
-  private MongoRegexType() {
-  }
+  private MongoRegexType() {}
 
   @Override
   public boolean equals(Object o) {

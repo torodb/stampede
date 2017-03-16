@@ -25,65 +25,64 @@ import javax.annotation.Nonnull;
 
 public abstract class KvMongoJavascript extends KvValue<String> {
 
-    private static final long serialVersionUID = -628511849455517129L;
+  private static final long serialVersionUID = -628511849455517129L;
 
-    public static KvMongoJavascript of(String s) {
-        return new DefaultKvMongoJavascript(s);
+  public static KvMongoJavascript of(String s) {
+    return new DefaultKvMongoJavascript(s);
+  }
+
+  @Nonnull
+  @Override
+  public KvType getType() {
+    return JavascriptType.INSTANCE;
+  }
+
+  @Override
+  public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
+
+  @Override
+  public Class<? extends String> getValueClass() {
+    return String.class;
+  }
+
+  @Override
+  public String toString() {
+    return getValue();
+  }
+
+  @Override
+  public int hashCode() {
+    return getValue().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
     }
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof KvMongoJavascript)) {
+      return false;
+    }
+    return this.getValue().equals(((KvMongoJavascript) obj).getValue());
+  }
+
+  private static class DefaultKvMongoJavascript extends KvMongoJavascript {
 
     @Nonnull
     @Override
-    public KvType getType() {
-        return JavascriptType.INSTANCE;
+    public String getValue() {
+      return value;
     }
 
-    @Override
-    public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
-        return visitor.visit(this, arg);
+    private String value;
+
+    public DefaultKvMongoJavascript(String value) {
+      this.value = value;
     }
-
-
-    @Override
-    public Class<? extends String> getValueClass() {
-        return String.class;
-    }
-
-    @Override
-    public String toString() {
-        return getValue();
-    }
-
-    @Override
-    public int hashCode() {
-        return getValue().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof KvMongoJavascript)) {
-            return false;
-        }
-        return this.getValue().equals(((KvMongoJavascript) obj).getValue());
-    }
-
-    private static class DefaultKvMongoJavascript extends KvMongoJavascript {
-
-        @Nonnull
-        @Override
-        public String getValue() {
-            return value;
-        }
-
-        private String value;
-
-        public DefaultKvMongoJavascript(String value) {
-            this.value = value;
-        }
-    }
+  }
 }

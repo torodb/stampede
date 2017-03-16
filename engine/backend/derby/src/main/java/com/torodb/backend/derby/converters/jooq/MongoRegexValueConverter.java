@@ -16,31 +16,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.postgresql.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
 import com.torodb.backend.converters.sql.SqlBinding;
-import com.torodb.backend.postgresql.converters.jooq.binding.JsonbBinding;
-import com.torodb.backend.postgresql.converters.sql.JsonbSqlBinding;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.MongoRegexType;
 import com.torodb.kvdocument.values.KvMongoRegex;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
-import java.io.ByteArrayInputStream;
 
 /**
  *
  */
-public class MongoRegexValueConverter implements KvValueConverter<String, String, KvMongoRegex> {
+public class MongoRegexValueConverter
+        implements KvValueConverter<JsonObject, String, KvMongoRegex> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMongoRegex> TYPE = JsonbBinding.fromKvValue(KvMongoRegex.class,
-          new MongoRegexValueConverter());
+  public static final DataTypeForKv<KvMongoRegex> TYPE =
+          DataTypeForKv.from(
+                  JsonObjectConverter.TYPE,
+                  new MongoRegexValueConverter()
+          );
 
   @Override
   public KvType getErasuredType() {
@@ -48,26 +49,25 @@ public class MongoRegexValueConverter implements KvValueConverter<String, String
   }
 
   @Override
-  public KvMongoRegex from(String databaseObject) {
-    final JsonReader reader = Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
-    JsonObject object = reader.readObject();
-
-    return KvMongoRegex.of(object.getString("pattern"), object.getString("options"));
+  public KvMongoRegex from(JsonObject databaseObject) {
+    return KvMongoRegex.of(
+            databaseObject.getString("pattern"),
+            databaseObject.getString("options")
+    );
   }
 
   @Override
-  public String to(KvMongoRegex userObject) {
+  public JsonObject to(KvMongoRegex userObject) {
     return Json.createObjectBuilder()
             .add("pattern", userObject.getPattern())
             .add("options", userObject.getOptionsAsText())
-            .build()
-            .toString();
+            .build();
 
   }
 
   @Override
-  public Class<String> fromType() {
-    return String.class;
+  public Class<JsonObject> fromType() {
+    return JsonObject.class;
   }
 
   @Override
@@ -77,7 +77,7 @@ public class MongoRegexValueConverter implements KvValueConverter<String, String
 
   @Override
   public SqlBinding<String> getSqlBinding() {
-    return JsonbSqlBinding.INSTANCE;
+    return StringSqlBinding.INSTANCE;
   }
 
 }

@@ -71,9 +71,9 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
         .put(FieldType.UNDEFINED, 'u') //[u]ndefined
         .put(FieldType.MONGO_REGEX, 'g') //Re[g]Ex
         .put(FieldType.MONGO_DB_POINTER, 'p') //DB [p]ointer
-        .put(FieldType.DEPRECATED, 'z') //running out of available chars; z means "the last". Maybe '-' is an option
+        .put(FieldType.DEPRECATED, 'z') //running out of available chars; z means "the last".
         .build());
-//fhov
+    //Letters left: f h o v
     ImmutableMap.Builder<FieldType, String> scalarFieldTypeIdentifiersBuilder =
         ImmutableMap.<FieldType, String>builder();
     Set<Character> fieldTypeIdentifierSet = new HashSet<>();

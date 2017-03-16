@@ -25,12 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
-/**
- *
- */
+/** */
 public interface KvType extends Serializable {
 
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg);
-
-
 }

@@ -43,27 +43,37 @@ import com.eightkdata.mongowp.bson.BsonValue;
 import com.eightkdata.mongowp.bson.BsonValueVisitor;
 import com.eightkdata.mongowp.bson.impl.InstantBsonDateTime;
 import com.torodb.kvdocument.conversion.mongowp.values.BsonKvString;
-import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
+import com.torodb.kvdocument.values.KvBoolean;
+import com.torodb.kvdocument.values.KvDecimal128;
+import com.torodb.kvdocument.values.KvDeprecated;
+import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.KvDouble;
+import com.torodb.kvdocument.values.KvInteger;
+import com.torodb.kvdocument.values.KvLong;
+import com.torodb.kvdocument.values.KvMaxKey;
+import com.torodb.kvdocument.values.KvMinKey;
+import com.torodb.kvdocument.values.KvMongoDbPointer;
+import com.torodb.kvdocument.values.KvMongoJavascript;
+import com.torodb.kvdocument.values.KvMongoJavascriptWithScope;
+import com.torodb.kvdocument.values.KvMongoObjectId;
+import com.torodb.kvdocument.values.KvMongoRegex;
+import com.torodb.kvdocument.values.KvNull;
+import com.torodb.kvdocument.values.KvUndefined;
+import com.torodb.kvdocument.values.KvValue;
 import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 import com.torodb.kvdocument.values.heap.ByteSourceKvBinary;
 import com.torodb.kvdocument.values.heap.DefaultKvMongoTimestamp;
 import com.torodb.kvdocument.values.heap.InstantKvInstant;
 import com.torodb.kvdocument.values.heap.LongKvInstant;
 
-import java.util.EnumSet;
-import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
-/**
- *
- */
-public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Void>,
-    Function<BsonValue<?>, KvValue<?>> {
+/** */
+public class FromBsonValueTranslator
+    implements BsonValueVisitor<KvValue<?>, Void>, Function<BsonValue<?>, KvValue<?>> {
 
-  private FromBsonValueTranslator() {
-  }
+  private FromBsonValueTranslator() {}
 
   public static FromBsonValueTranslator getInstance() {
     return FromBsonValueTranslatorHolder.INSTANCE;
@@ -108,15 +118,13 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
         subtype = KvBinarySubtype.UNDEFINED;
         break;
     }
-    return new ByteSourceKvBinary(subtype, value.getNumericSubType(), value.getByteSource()
-        .getDelegate());
+    return new ByteSourceKvBinary(
+        subtype, value.getNumericSubType(), value.getByteSource().getDelegate());
   }
 
   @Override
   public KvValue<?> visit(BsonDbPointer value, Void arg) {
-    return KvMongoDbPointer.of(value.getNamespace(),
-            (KvMongoObjectId) visit(value.getId(), arg)
-    );
+    return KvMongoDbPointer.of(value.getNamespace(), (KvMongoObjectId) visit(value.getId(), arg));
   }
 
   @Override
@@ -162,7 +170,8 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonJavaScriptWithScope value, Void arg) {
-    return KvMongoJavascriptWithScope.of(value.getJavaScript(), (KvDocument)visit(value.getScope(), arg));
+    return KvMongoJavascriptWithScope.of(
+        value.getJavaScript(), (KvDocument) visit(value.getScope(), arg));
   }
 
   @Override
@@ -188,10 +197,7 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
   @Override
   public KvValue<?> visit(BsonRegex value, Void arg) {
 
-    return KvMongoRegex.of(
-            value.getPattern(),
-            value.getOptionsAsText()
-    );
+    return KvMongoRegex.of(value.getPattern(), value.getOptionsAsText());
   }
 
   @Override
@@ -227,5 +233,4 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
   private Object readResolve() {
     return FromBsonValueTranslator.getInstance();
   }
-
 }

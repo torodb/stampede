@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class MongoDbPointerType implements KvType {
 
   public static final MongoDbPointerType INSTANCE = new MongoDbPointerType();
@@ -32,7 +30,7 @@ public class MongoDbPointerType implements KvType {
   }
 
   @Override
-  public <R, A> R accept(KvTypeVisitor<R, A> visitor,A arg) {
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
 }

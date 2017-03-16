@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class UndefinedType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final UndefinedType INSTANCE = new UndefinedType();
 
-  private UndefinedType() {
-  }
+  private UndefinedType() {}
 
   @Override
   public boolean equals(Object o) {

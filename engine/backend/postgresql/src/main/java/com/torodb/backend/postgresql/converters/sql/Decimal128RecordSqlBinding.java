@@ -21,9 +21,7 @@ package com.torodb.backend.postgresql.converters.sql;
 import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.backend.meta.TorodbSchema;
 import com.torodb.backend.udt.Decimal128UDT;
-import com.torodb.backend.udt.MongoTimestampUDT;
 import com.torodb.backend.udt.record.Decimal128Record;
-import com.torodb.backend.udt.record.MongoTimestampRecord;
 import org.postgresql.util.PGobject;
 
 import java.math.BigDecimal;
@@ -33,8 +31,7 @@ import java.sql.SQLException;
 
 public class Decimal128RecordSqlBinding implements SqlBinding<Decimal128Record> {
 
-  public static final Decimal128RecordSqlBinding INSTANCE =
-      new Decimal128RecordSqlBinding();
+  public static final Decimal128RecordSqlBinding INSTANCE = new Decimal128RecordSqlBinding();
 
   @Override
   public Decimal128Record get(ResultSet resultSet, int columnIndex) throws SQLException {
@@ -53,15 +50,15 @@ public class Decimal128RecordSqlBinding implements SqlBinding<Decimal128Record> 
     value = value.substring(1, value.length() - 1);
     int indexOfComma = value.lastIndexOf(',');
 
-    boolean isNegZero = value.substring(indexOfComma + 1, value.length()).charAt(0)=='t';
+    final boolean isNegZero = value.substring(indexOfComma + 1, value.length()).charAt(0) == 't';
     value = value.substring(0, indexOfComma);
     indexOfComma = value.lastIndexOf(',');
 
-    boolean isNan = value.substring(indexOfComma + 1, value.length()).charAt(0)=='t';
+    final boolean isNan = value.substring(indexOfComma + 1, value.length()).charAt(0) == 't';
     value = value.substring(0, indexOfComma);
     indexOfComma = value.lastIndexOf(',');
 
-    boolean isInfinity = value.substring(indexOfComma + 1, value.length()).charAt(0)=='t';
+    final boolean isInfinity = value.substring(indexOfComma + 1, value.length()).charAt(0) == 't';
     value = value.substring(0, indexOfComma);
 
     BigDecimal bigDec = new BigDecimal(value);
@@ -70,15 +67,19 @@ public class Decimal128RecordSqlBinding implements SqlBinding<Decimal128Record> 
   }
 
   @Override
-  public void set(PreparedStatement preparedStatement, int parameterIndex,
-                  Decimal128Record value)
+  public void set(PreparedStatement preparedStatement, int parameterIndex, Decimal128Record value)
       throws SQLException {
-    preparedStatement.setString(parameterIndex, "("
-            + value.getValue() + ','
-            + value.getInfinity() + ','
-            + value.getNan() + ','
+    preparedStatement.setString(
+        parameterIndex,
+        "("
+            + value.getValue()
+            + ','
+            + value.getInfinity()
+            + ','
+            + value.getNan()
+            + ','
             + value.getNegativeZero()
-        + ')');
+            + ')');
   }
 
   @Override

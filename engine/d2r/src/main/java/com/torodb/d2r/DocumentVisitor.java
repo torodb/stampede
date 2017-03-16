@@ -19,7 +19,30 @@
 package com.torodb.d2r;
 
 import com.torodb.d2r.D2Relational.DocConsumer;
-import com.torodb.kvdocument.values.*;
+import com.torodb.kvdocument.values.KvArray;
+import com.torodb.kvdocument.values.KvBinary;
+import com.torodb.kvdocument.values.KvBoolean;
+import com.torodb.kvdocument.values.KvDate;
+import com.torodb.kvdocument.values.KvDecimal128;
+import com.torodb.kvdocument.values.KvDeprecated;
+import com.torodb.kvdocument.values.KvDocument;
+import com.torodb.kvdocument.values.KvDouble;
+import com.torodb.kvdocument.values.KvInstant;
+import com.torodb.kvdocument.values.KvInteger;
+import com.torodb.kvdocument.values.KvLong;
+import com.torodb.kvdocument.values.KvMaxKey;
+import com.torodb.kvdocument.values.KvMinKey;
+import com.torodb.kvdocument.values.KvMongoDbPointer;
+import com.torodb.kvdocument.values.KvMongoJavascript;
+import com.torodb.kvdocument.values.KvMongoJavascriptWithScope;
+import com.torodb.kvdocument.values.KvMongoObjectId;
+import com.torodb.kvdocument.values.KvMongoRegex;
+import com.torodb.kvdocument.values.KvMongoTimestamp;
+import com.torodb.kvdocument.values.KvNull;
+import com.torodb.kvdocument.values.KvString;
+import com.torodb.kvdocument.values.KvTime;
+import com.torodb.kvdocument.values.KvUndefined;
+import com.torodb.kvdocument.values.KvValueVisitor;
 
 public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
 

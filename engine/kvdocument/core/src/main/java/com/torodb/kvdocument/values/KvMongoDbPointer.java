@@ -26,83 +26,81 @@ import javax.annotation.Nonnull;
 
 public abstract class KvMongoDbPointer extends KvValue<KvMongoDbPointer> {
 
-    private static final long serialVersionUID = 4130181266747513960L;
+  private static final long serialVersionUID = 4130181266747513960L;
+
+  @Override
+  public Class<? extends KvMongoDbPointer> getValueClass() {
+    return KvMongoDbPointer.class;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof KvMongoDbPointer)) {
+      return false;
+    }
+    return this.getValue().equals(((KvMongoDbPointer) obj).getValue());
+  }
+
+  public static KvMongoDbPointer of(String namespace, KvMongoObjectId id) {
+    return new DefaultKvMongoDbPointer(namespace, id);
+  }
+
+  @Nonnull
+  @Override
+  public KvType getType() {
+    return MongoDbPointerType.INSTANCE;
+  }
+
+  @Override
+  public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
+
+  public abstract String getNamespace();
+
+  public abstract KvMongoObjectId getId();
+
+  private static class DefaultKvMongoDbPointer extends KvMongoDbPointer {
+
+    private String namespace;
+
+    private KvMongoObjectId id;
 
     @Override
-    public Class<? extends KvMongoDbPointer> getValueClass() {
-        return KvMongoDbPointer.class;
+    public String getNamespace() {
+      return namespace;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof KvMongoDbPointer)) {
-            return false;
-        }
-        return this.getValue().equals(((KvMongoDbPointer) obj).getValue());
+    public KvMongoObjectId getId() {
+      return id;
     }
 
-    public static KvMongoDbPointer of(String namespace, KvMongoObjectId id) {
-        return new DefaultKvMongoDbPointer(namespace, id);
+    public DefaultKvMongoDbPointer(String namespace, KvMongoObjectId id) {
+      this.namespace = namespace;
+      this.id = id;
     }
 
+    @Override
+    public String toString() {
+      return namespace;
+    }
+
+    @Override
+    public int hashCode() {
+      return namespace.hashCode();
+    }
 
     @Nonnull
     @Override
-    public KvType getType() {
-        return MongoDbPointerType.INSTANCE;
+    public KvMongoDbPointer getValue() {
+      return this;
     }
-
-    @Override
-    public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
-        return visitor.visit(this, arg);
-    }
-
-    public abstract String getNamespace();
-
-    public abstract KvMongoObjectId getId();
-
-    private static class DefaultKvMongoDbPointer extends KvMongoDbPointer{
-
-        private String namespace;
-
-        private KvMongoObjectId id;
-
-        @Override
-        public String getNamespace() {
-            return namespace;
-        }
-
-        @Override
-        public KvMongoObjectId getId() {
-            return id;
-        }
-
-        public DefaultKvMongoDbPointer(String namespace, KvMongoObjectId id) {
-            this.namespace = namespace;
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            return namespace;
-        }
-
-        @Override
-        public int hashCode() {
-            return namespace.hashCode();
-        }
-
-        @Nonnull
-        @Override
-        public KvMongoDbPointer getValue() {
-            return this;
-        }
-
-    }
+  }
 }

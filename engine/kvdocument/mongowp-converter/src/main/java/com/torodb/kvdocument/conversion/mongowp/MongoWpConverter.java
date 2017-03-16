@@ -51,15 +51,12 @@ import java.util.LinkedHashMap;
 
 import javax.annotation.Nonnull;
 
-/**
- *
- */
+/** */
 public class MongoWpConverter {
 
   public static final Function<BsonValue<?>, KvValue<?>> FROM_BSON = new FromBsonFunction();
 
-  private MongoWpConverter() {
-  }
+  private MongoWpConverter() {}
 
   public static KvType translate(BsonType bsonType) throws UnsupportedBsonTypeException {
     switch (bsonType) {
@@ -99,10 +96,14 @@ public class MongoWpConverter {
       case DEPRECATED:
         throw new UnsupportedBsonTypeException(bsonType);
       default:
-        throw new AssertionError("It seems that " + bsonType + " has "
-            + "been added to " + BsonType.class.getCanonicalName()
-            + " but it is not defined how to translate it to "
-            + KvType.class.getCanonicalName());
+        throw new AssertionError(
+            "It seems that "
+                + bsonType
+                + " has "
+                + "been added to "
+                + BsonType.class.getCanonicalName()
+                + " but it is not defined how to translate it to "
+                + KvType.class.getCanonicalName());
     }
   }
 
@@ -132,7 +133,5 @@ public class MongoWpConverter {
     public KvValue<?> apply(@Nonnull BsonValue<?> input) {
       return translate(input);
     }
-
   }
-
 }

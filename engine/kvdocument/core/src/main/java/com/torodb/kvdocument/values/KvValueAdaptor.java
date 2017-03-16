@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.values;
 
-/**
- *
- */
+/** */
 public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
 
   public R defaultCase(KvValue<?> value, A arg) {
@@ -141,5 +139,4 @@ public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
   public R visit(KvDeprecated value, A arg) {
     return defaultCase(value, arg);
   }
-
 }

@@ -31,5 +31,4 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.PARAMETER})
 @Documented
-public @interface NotMutable {
-}
+public @interface NotMutable {}

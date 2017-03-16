@@ -28,9 +28,7 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 
-/**
- *
- */
+/** */
 public class ListKvArray extends KvArray {
 
   private static final long serialVersionUID = -5242307037136472681L;

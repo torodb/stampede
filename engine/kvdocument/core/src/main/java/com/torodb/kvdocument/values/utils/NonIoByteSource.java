@@ -33,11 +33,7 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 
 /**
- *
- */
-/**
- * An object that wraps {@link ByteSource} but do not throw {@link IOException}.
- */
+ * An object that wraps {@link ByteSource} but do not throw {@link IOException}. */
 public class NonIoByteSource implements Serializable {
 
   private static final long serialVersionUID = 4441628071714697039L;
@@ -45,9 +41,7 @@ public class NonIoByteSource implements Serializable {
   private transient ByteSource delegate;
 
   /**
-   *
-   * @param delegate it shall not throw IOException for any of its methods.
-   */
+   * @param delegate it shall not throw IOException for any of its methods. */
   public NonIoByteSource(ByteSource delegate) {
     this.delegate = delegate;
   }
@@ -171,8 +165,12 @@ public class NonIoByteSource implements Serializable {
         throw new IOException("The end of the stream was reach before it was expected");
       }
       if (remaining < 0) {
-        throw new IOException("A byte array of lenght " + size + " was expected, but only " + off
-            + " bytes were found");
+        throw new IOException(
+            "A byte array of lenght "
+                + size
+                + " was expected, but only "
+                + off
+                + " bytes were found");
       }
       delegate = ByteSource.wrap(bytes);
     }

@@ -34,8 +34,7 @@ public class JacksonJsonParser implements JsonParser {
   private static final ObjectMapper mapper = new ObjectMapper();
   private static final MapToKvValueConverter converter = new MapToKvValueConverter();
   private static final TypeReference<List<HashMap<String, Object>>> typeReference =
-      new TypeReference<List<HashMap<String, Object>>>() {
-  };
+      new TypeReference<List<HashMap<String, Object>>>() {};
 
   @Override
   public KvDocument createFromJson(String json) {
@@ -82,5 +81,4 @@ public class JacksonJsonParser implements JsonParser {
   public List<KvDocument> createListFromResource(String name) {
     return createListFrom(this.getClass().getClassLoader().getResourceAsStream(name));
   }
-
 }

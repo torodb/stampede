@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.backend.postgresql.converters.jooq;
+package com.torodb.backend.derby.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
@@ -25,7 +25,10 @@ import com.torodb.backend.converters.sql.SqlBinding;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.MinKeyType;
 import com.torodb.kvdocument.values.KvMinKey;
-import org.jooq.util.postgres.PostgresDataType;
+import org.jooq.DataType;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DefaultDataType;
+import org.jooq.impl.SQLDataType;
 
 import java.sql.Types;
 
@@ -36,7 +39,10 @@ public class MinKeyValueConverter implements KvValueConverter<Boolean, Boolean, 
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvMinKey> TYPE = DataTypeForKv.from(PostgresDataType.BOOL,
+  private static final DataType<Boolean> BOOLEAN_TYPE =
+          new DefaultDataType<Boolean>(SQLDialect.DERBY, SQLDataType.BOOLEAN, "BOOLEAN");
+
+  public static final DataTypeForKv<KvMinKey> TYPE = DataTypeForKv.from(BOOLEAN_TYPE,
       new MinKeyValueConverter(), Types.BIT);
 
   @Override

@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.values;
 
-/**
- *
- */
+/** */
 public abstract class KvNumeric<N extends Number> extends KvValue<N> {
 
   private static final long serialVersionUID = -7452665790013539917L;
@@ -33,5 +31,4 @@ public abstract class KvNumeric<N extends Number> extends KvValue<N> {
   public abstract long longValue();
 
   public abstract double doubleValue();
-
 }

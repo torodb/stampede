@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class MaxKeyType implements KvType {
 
   public static final MaxKeyType INSTANCE = new MaxKeyType();
@@ -32,7 +30,7 @@ public class MaxKeyType implements KvType {
   }
 
   @Override
-  public <R, A> R accept(KvTypeVisitor<R, A> visitor,A arg) {
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
 }

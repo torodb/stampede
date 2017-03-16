@@ -20,9 +20,7 @@ package com.torodb.kvdocument.values.heap;
 
 import com.torodb.kvdocument.values.KvMongoTimestamp;
 
-/**
- *
- */
+/** */
 public class DefaultKvMongoTimestamp extends KvMongoTimestamp {
 
   private static final long serialVersionUID = -1503905785806988728L;
@@ -44,5 +42,4 @@ public class DefaultKvMongoTimestamp extends KvMongoTimestamp {
   public int getOrdinal() {
     return ordinal;
   }
-
 }

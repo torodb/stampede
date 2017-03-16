@@ -28,20 +28,23 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.ObjectStreamException;
 
-/**
- *
- */
-@SuppressFBWarnings(value = {"SE_BAD_FIELD", "SE_NO_SERIALVERSIONID"},
-    justification = "writeReplace is used")
+/** */
+@SuppressFBWarnings(
+    value = {"SE_BAD_FIELD", "SE_NO_SERIALVERSIONID"},
+    justification = "writeReplace is used"
+)
 public class IterableKvArray extends KvArray {
 
   private static final long serialVersionUID = -1955250327304119290L;
 
   private final Iterable<KvValue<?>> iterable;
 
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-      justification = "We know this can be dangerous, but it improves the efficiency and, by"
-      + "contract, the iterable shall be immutable")
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP2",
+      justification =
+        "We know this can be dangerous, but it improves the efficiency and, by"
+            + "contract, the iterable shall be immutable"
+  )
   public IterableKvArray(@NotMutable Iterable<KvValue<?>> iterable) {
     this.iterable = iterable;
   }

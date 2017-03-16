@@ -25,65 +25,64 @@ import javax.annotation.Nonnull;
 
 public abstract class KvDeprecated extends KvValue<String> {
 
-    private static final long serialVersionUID = -628511849455517129L;
+  private static final long serialVersionUID = -628511849455517129L;
 
-    public static KvDeprecated of(String s) {
-        return new DefaultKvDeprecated(s);
+  public static KvDeprecated of(String s) {
+    return new DefaultKvDeprecated(s);
+  }
+
+  @Nonnull
+  @Override
+  public KvType getType() {
+    return DeprecatedType.INSTANCE;
+  }
+
+  @Override
+  public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
+
+  @Override
+  public Class<? extends String> getValueClass() {
+    return String.class;
+  }
+
+  @Override
+  public String toString() {
+    return getValue();
+  }
+
+  @Override
+  public int hashCode() {
+    return getValue().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
     }
+    if (obj == null) {
+      return false;
+    }
+    if (!(obj instanceof KvDeprecated)) {
+      return false;
+    }
+    return this.getValue().equals(((KvDeprecated) obj).getValue());
+  }
+
+  private static class DefaultKvDeprecated extends KvDeprecated {
 
     @Nonnull
     @Override
-    public KvType getType() {
-        return DeprecatedType.INSTANCE;
+    public String getValue() {
+      return value;
     }
 
-    @Override
-    public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
-        return visitor.visit(this, arg);
+    private String value;
+
+    public DefaultKvDeprecated(String value) {
+      this.value = value;
     }
-
-
-    @Override
-    public Class<? extends String> getValueClass() {
-        return String.class;
-    }
-
-    @Override
-    public String toString() {
-        return getValue();
-    }
-
-    @Override
-    public int hashCode() {
-        return getValue().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof KvDeprecated)) {
-            return false;
-        }
-        return this.getValue().equals(((KvDeprecated) obj).getValue());
-    }
-
-    private static class DefaultKvDeprecated extends KvDeprecated {
-
-        @Nonnull
-        @Override
-        public String getValue() {
-            return value;
-        }
-
-        private String value;
-
-        public DefaultKvDeprecated(String value) {
-            this.value = value;
-        }
-    }
+  }
 }

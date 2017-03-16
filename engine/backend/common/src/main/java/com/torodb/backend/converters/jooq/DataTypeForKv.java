@@ -39,7 +39,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 
-public class DataTypeForKv<T extends KvValue<?>> implements DataType<T> {
+public class  DataTypeForKv<T extends KvValue<?>> implements DataType<T> {
 
   private static final long serialVersionUID = 1L;
 
@@ -60,8 +60,8 @@ public class DataTypeForKv<T extends KvValue<?>> implements DataType<T> {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static <DT, JT, T extends KvValue<?>> DataTypeForKv<T> from(DataType<DT> dataType,
       KvValueConverter<DT, JT, T> converter, Binding<DT, T> binding) {
-      return new DataTypeForKv<>(dataType.asConvertedDataType(new KvChainBinding(binding, dataType
-        .getConverter(), converter)), converter);
+    return new DataTypeForKv<>(dataType.asConvertedDataType(new KvChainBinding(binding, dataType
+            .getConverter(), converter)), converter);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

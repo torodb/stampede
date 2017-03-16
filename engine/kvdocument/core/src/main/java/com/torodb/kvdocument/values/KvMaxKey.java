@@ -25,53 +25,53 @@ import javax.annotation.Nonnull;
 
 public class KvMaxKey extends KvValue<KvMaxKey> {
 
-    private static final long serialVersionUID = 4879628684225402030L;
+  private static final long serialVersionUID = 4879628684225402030L;
 
-    private KvMaxKey(){}
+  private KvMaxKey() {}
 
-    private static class KvMaxKeyHolder {
+  private static class KvMaxKeyHolder {
 
-        private static final KvMaxKey INSTANCE = new KvMaxKey();
-    }
+    private static final KvMaxKey INSTANCE = new KvMaxKey();
+  }
 
-    public static KvMaxKey getInstance(){
-        return KvMaxKeyHolder.INSTANCE;
-    }
+  public static KvMaxKey getInstance() {
+    return KvMaxKeyHolder.INSTANCE;
+  }
 
-    @Nonnull
-    @Override
-    public KvMaxKey getValue() {
-        return this;
-    }
+  @Nonnull
+  @Override
+  public KvMaxKey getValue() {
+    return this;
+  }
 
-    @Override
-    public Class<? extends KvMaxKey> getValueClass() {
-        return KvMaxKey.class;
-    }
+  @Override
+  public Class<? extends KvMaxKey> getValueClass() {
+    return KvMaxKey.class;
+  }
 
-    @Override
-    public String toString() {
-        return "MaxKey";
-    }
+  @Override
+  public String toString() {
+    return "MaxKey";
+  }
 
-    @Override
-    public int hashCode() {
-        return System.identityHashCode(this);
-    }
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this || obj != null && obj instanceof KvMaxKey;
-    }
+  @Override
+  public boolean equals(Object obj) {
+    return obj == this || obj != null && obj instanceof KvMaxKey;
+  }
 
-    @Nonnull
-    @Override
-    public KvType getType() {
-        return MaxKeyType.INSTANCE;
-    }
+  @Nonnull
+  @Override
+  public KvType getType() {
+    return MaxKeyType.INSTANCE;
+  }
 
-    @Override
-    public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
-        return visitor.visit(this, arg);
-    }
+  @Override
+  public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
+    return visitor.visit(this, arg);
+  }
 }

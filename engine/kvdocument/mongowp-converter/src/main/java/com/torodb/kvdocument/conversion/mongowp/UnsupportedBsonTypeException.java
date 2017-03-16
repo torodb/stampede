@@ -20,9 +20,7 @@ package com.torodb.kvdocument.conversion.mongowp;
 
 import com.eightkdata.mongowp.bson.BsonType;
 
-/**
- *
- */
+/** */
 public class UnsupportedBsonTypeException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
@@ -30,13 +28,14 @@ public class UnsupportedBsonTypeException extends RuntimeException {
   private final BsonType bsonType;
 
   public UnsupportedBsonTypeException(BsonType bsonType) {
-    super(bsonType + " is not supported on KVDocument model and should be "
-        + "consumed by a layer closer to MongoDB");
+    super(
+        bsonType
+            + " is not supported on KVDocument model and should be "
+            + "consumed by a layer closer to MongoDB");
     this.bsonType = bsonType;
   }
 
   public BsonType getBsonType() {
     return bsonType;
   }
-
 }
