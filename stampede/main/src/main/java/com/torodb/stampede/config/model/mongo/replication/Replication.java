@@ -18,12 +18,15 @@
 
 package com.torodb.stampede.config.model.mongo.replication;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.common.EnumWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
+import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
 
@@ -45,6 +48,11 @@ public class Replication extends AbstractReplication<ShardReplication> {
   @JsonProperty(required = false)
   public StringWithDefault getReplSetName() {
     return super.getReplSetName();
+  }
+
+  @JsonIgnore
+  public EnumWithDefault<Role> getRole() {
+    return super.getRole();
   }
 
   @Description("config.mongo.replication.syncSource")
