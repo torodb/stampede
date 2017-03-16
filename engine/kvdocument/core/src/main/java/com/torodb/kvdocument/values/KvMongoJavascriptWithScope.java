@@ -78,6 +78,7 @@ public abstract class KvMongoJavascriptWithScope extends KvValue<KvMongoJavascri
 
   private static class DefaultKvMongoJavascriptWithScope extends KvMongoJavascriptWithScope {
 
+    private static final long serialVersionUID = 6900846950534864792L;
     private String js;
 
     private String scope;
@@ -99,7 +100,7 @@ public abstract class KvMongoJavascriptWithScope extends KvValue<KvMongoJavascri
 
     @Override
     public String getScopeAsString() {
-      return scope.toString();
+      return scope;
     }
 
     @Override
@@ -108,8 +109,30 @@ public abstract class KvMongoJavascriptWithScope extends KvValue<KvMongoJavascri
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      DefaultKvMongoJavascriptWithScope that = (DefaultKvMongoJavascriptWithScope) o;
+
+      if (js != null ? !js.equals(that.js) : that.js != null) {
+        return false;
+      }
+      return scope != null ? scope.equals(that.scope) : that.scope == null;
+    }
+
+    @Override
     public int hashCode() {
-      return js.hashCode();
+      int result = js != null ? js.hashCode() : 0;
+      result = 31 * result + (scope != null ? scope.hashCode() : 0);
+      return result;
     }
   }
 }

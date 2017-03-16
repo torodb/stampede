@@ -28,6 +28,7 @@ import com.torodb.kvdocument.types.MongoRegexType;
 import com.torodb.kvdocument.values.KvMongoRegex;
 
 import java.io.ByteArrayInputStream;
+import java.io.StringReader;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -49,7 +50,7 @@ public class MongoRegexValueConverter implements KvValueConverter<String, String
   @Override
   public KvMongoRegex from(String databaseObject) {
     final JsonReader reader =
-        Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
+        Json.createReader(new StringReader(databaseObject));
     JsonObject object = reader.readObject();
 
     return KvMongoRegex.of(object.getString("pattern"), object.getString("options"));

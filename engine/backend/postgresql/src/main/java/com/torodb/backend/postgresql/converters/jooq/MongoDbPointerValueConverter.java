@@ -28,7 +28,8 @@ import com.torodb.kvdocument.types.MongoDbPointerType;
 import com.torodb.kvdocument.values.KvMongoDbPointer;
 import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 
-import java.io.ByteArrayInputStream;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -52,21 +53,31 @@ public class MongoDbPointerValueConverter
   public KvMongoDbPointer from(String databaseObject) {
 
     final JsonReader reader =
-        Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
+        Json.createReader(new StringReader(databaseObject));
     JsonObject object = reader.readObject();
 
-    return KvMongoDbPointer.of(
-        object.getString("namespace"),
-        new ByteArrayKvMongoObjectId(object.getString("objectId").getBytes()));
+    try {
+      return KvMongoDbPointer.of(
+          object.getString("namespace"),
+          new ByteArrayKvMongoObjectId(object.getString("objectId").getBytes("UTF-8")));
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @Override
   public String to(KvMongoDbPointer userObject) {
-    return Json.createObjectBuilder()
-        .add("namespace", userObject.getNamespace())
-        .add("objectId", new String(userObject.getId().getArrayValue()))
-        .build()
-        .toString();
+    try {
+      return Json.createObjectBuilder()
+          .add("namespace", userObject.getNamespace())
+          .add("objectId", new String(userObject.getId().getArrayValue(), "UTF-8"))
+          .build()
+          .toString();
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @Override

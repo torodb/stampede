@@ -106,6 +106,7 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
 
   private static class DefaultKvMongoRegex extends KvMongoRegex {
 
+    private static final long serialVersionUID = -324759198672148662L;
     private String pattern;
 
     private String options;
@@ -152,8 +153,30 @@ public abstract class KvMongoRegex extends KvValue<KvMongoRegex> {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      DefaultKvMongoRegex that = (DefaultKvMongoRegex) o;
+
+      if (pattern != null ? !pattern.equals(that.pattern) : that.pattern != null) {
+        return false;
+      }
+      return options != null ? options.equals(that.options) : that.options == null;
+    }
+
+    @Override
     public int hashCode() {
-      return pattern.hashCode();
+      int result = pattern != null ? pattern.hashCode() : 0;
+      result = 31 * result + (options != null ? options.hashCode() : 0);
+      return result;
     }
 
     @Override

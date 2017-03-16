@@ -27,6 +27,8 @@ import com.torodb.kvdocument.types.MongoDbPointerType;
 import com.torodb.kvdocument.values.KvMongoDbPointer;
 import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 
+import java.io.UnsupportedEncodingException;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 
@@ -46,17 +48,27 @@ public class MongoDbPointerValueConverter
 
   @Override
   public KvMongoDbPointer from(JsonObject databaseObject) {
-    return KvMongoDbPointer.of(
-        databaseObject.getString("namespace"),
-        new ByteArrayKvMongoObjectId(databaseObject.getString("objectId").getBytes()));
+    try {
+      return KvMongoDbPointer.of(
+          databaseObject.getString("namespace"),
+          new ByteArrayKvMongoObjectId(databaseObject.getString("objectId").getBytes("UTF-8")));
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @Override
   public JsonObject to(KvMongoDbPointer userObject) {
-    return Json.createObjectBuilder()
-        .add("namespace", userObject.getNamespace())
-        .add("objectId", new String(userObject.getId().getArrayValue()))
-        .build();
+    try {
+      return Json.createObjectBuilder()
+          .add("namespace", userObject.getNamespace())
+          .add("objectId", new String(userObject.getId().getArrayValue(),"UTF-8"))
+          .build();
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @Override

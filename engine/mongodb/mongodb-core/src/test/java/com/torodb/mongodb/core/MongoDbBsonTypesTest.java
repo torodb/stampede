@@ -28,14 +28,16 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
+import com.torodb.core.metrics.DisabledMetricRegistry;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
 import com.torodb.engine.essential.DefaultBuildProperties;
 import com.torodb.engine.essential.EssentialModule;
 import com.torodb.mongodb.commands.impl.CommandClassifierImpl;
-import com.torodb.mongodb.commands.impl.EmptyCommandClassifier;
 import com.torodb.mongodb.commands.signatures.general.FindCommand;
 import com.torodb.mongodb.commands.signatures.general.InsertCommand;
 import com.torodb.torod.MemoryTorodBundle;
@@ -51,8 +53,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
@@ -75,6 +75,7 @@ public class MongoDbBsonTypesTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )
@@ -88,8 +89,8 @@ public class MongoDbBsonTypesTest {
 
     MongoDbCoreConfig config = new MongoDbCoreConfig(torodBundle,
         new NameBasedCommandLibrary("test", ImmutableMap.of()),
-        CommandClassifierImpl.createDefault(Clock.systemUTC(), new DefaultBuildProperties(), new
-                MongodServerConfig(HostAndPort.fromParts("localhost",8095))), essentialInjector, supervisor);
+        CommandClassifierImpl.createDefault(DefaultLoggerFactory.getInstance(), Clock.systemUTC(), new DefaultBuildProperties(), new
+                MongodServerConfig(HostAndPort.fromParts("localhost",8095))), Optional.of(new DisabledMetricRegistry()), DefaultLoggerFactory.getInstance(), essentialInjector, supervisor);
 
     bundle = new MongoDbCoreBundle(config);
 

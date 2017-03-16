@@ -27,7 +27,7 @@ import com.torodb.kvdocument.types.JavascriptWithScopeType;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.values.KvMongoJavascriptWithScope;
 
-import java.io.ByteArrayInputStream;
+import java.io.StringReader;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -52,7 +52,7 @@ public class MongoJavascriptWithScopeValueConverter
   public KvMongoJavascriptWithScope from(String databaseObject) {
 
     final JsonReader reader =
-        Json.createReader(new ByteArrayInputStream(databaseObject.getBytes()));
+        Json.createReader(new StringReader(databaseObject));
     JsonObject object = reader.readObject();
 
     //need to discuss implementation of scope

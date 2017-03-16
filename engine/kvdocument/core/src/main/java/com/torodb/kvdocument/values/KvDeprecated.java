@@ -73,6 +73,8 @@ public abstract class KvDeprecated extends KvValue<String> {
 
   private static class DefaultKvDeprecated extends KvDeprecated {
 
+    private static final long serialVersionUID = -441679709442130566L;
+
     @Nonnull
     @Override
     public String getValue() {

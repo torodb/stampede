@@ -68,6 +68,8 @@ public abstract class KvMongoDbPointer extends KvValue<KvMongoDbPointer> {
 
   private static class DefaultKvMongoDbPointer extends KvMongoDbPointer {
 
+    private static final long serialVersionUID = 8105463918508185246L;
+
     private String namespace;
 
     private KvMongoObjectId id;
@@ -93,8 +95,30 @@ public abstract class KvMongoDbPointer extends KvValue<KvMongoDbPointer> {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      if (!super.equals(o)) {
+        return false;
+      }
+
+      DefaultKvMongoDbPointer that = (DefaultKvMongoDbPointer) o;
+
+      if (namespace != null ? !namespace.equals(that.namespace) : that.namespace != null) {
+        return false;
+      }
+      return id != null ? id.equals(that.id) : that.id == null;
+    }
+
+    @Override
     public int hashCode() {
-      return namespace.hashCode();
+      int result = namespace != null ? namespace.hashCode() : 0;
+      result = 31 * result + (id != null ? id.hashCode() : 0);
+      return result;
     }
 
     @Nonnull
