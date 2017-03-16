@@ -66,7 +66,7 @@ public abstract class AbstractReplication<T extends AbstractShardReplication>
   }
 
   protected void merge(AbstractShardReplication shard, AbstractReplication<T> mergedShard) {
-    mergedShard.setReplSetName(shard.getReplSetName());
+    mergedShard.setReplSetName(ScalarWithDefault.merge(shard.getReplSetName(), getReplSetName()));
     mergedShard.setSyncSource(shard.getSyncSource());
     
     Auth mergedAuth = new Auth();
