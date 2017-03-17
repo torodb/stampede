@@ -32,6 +32,8 @@ import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 @JsonPropertyOrder({"replSetName", "syncSource", "ssl", "auth", "include", "exclude",
     "mongopassFile", "shards"})
 public class Replication extends AbstractReplication<ShardReplication> {
@@ -69,6 +71,7 @@ public class Replication extends AbstractReplication<ShardReplication> {
   }
 
   @Description("config.mongo.shards")
+  @Valid
   @JsonProperty(required = false)
   public List<ShardReplication> getShards() {
     return super.getShardList();
