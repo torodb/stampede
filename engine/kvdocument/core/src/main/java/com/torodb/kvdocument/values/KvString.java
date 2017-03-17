@@ -20,9 +20,7 @@ package com.torodb.kvdocument.values;
 
 import com.torodb.kvdocument.types.StringType;
 
-/**
- *
- */
+/** */
 public abstract class KvString extends KvValue<String> {
 
   private static final long serialVersionUID = 7444822188204785183L;

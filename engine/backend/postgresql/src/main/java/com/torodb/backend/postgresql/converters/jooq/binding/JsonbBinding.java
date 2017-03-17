@@ -47,10 +47,12 @@ public class JsonbBinding<T> implements Binding<String, T> {
 
   private static final long serialVersionUID = 1L;
 
+  private static final int jsonbSqlType = 1111;
+
   public static <J, U extends KvValue<?>> DataTypeForKv<U> fromKvValue(Class<U> type,
       KvValueConverter<String, J, U> converter) {
     return DataTypeForKv.from(new DefaultDataType<>(null, String.class, "jsonb"), converter,
-        new JsonbBinding<>(converter));
+        new JsonbBinding<>(converter), jsonbSqlType);
   }
 
   public static <U extends KvValue<?>, V extends JsonValue> DataType<U> fromKvValue(

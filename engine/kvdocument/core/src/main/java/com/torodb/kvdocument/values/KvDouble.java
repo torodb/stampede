@@ -22,9 +22,7 @@ import com.google.common.primitives.Doubles;
 import com.torodb.kvdocument.types.DoubleType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-/**
- *
- */
+/** */
 public abstract class KvDouble extends KvNumeric<Double> {
 
   private static final long serialVersionUID = 6351251976353558479L;
@@ -77,8 +75,10 @@ public abstract class KvDouble extends KvNumeric<Double> {
     return Doubles.hashCode(doubleValue());
   }
 
-  @SuppressFBWarnings(value = "FE_FLOATING_POINT_EQUALITY",
-      justification = "We want to check for exactly equality")
+  @SuppressFBWarnings(
+          value = "FE_FLOATING_POINT_EQUALITY",
+          justification = "We want to check for exactly equality"
+      )
   @Override
   public boolean equals(Object obj) {
     if (obj == this) {

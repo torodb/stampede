@@ -110,6 +110,5 @@ public abstract class KvLong extends KvNumeric<Long> {
     public long longValue() {
       return value;
     }
-
   }
 }

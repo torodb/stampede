@@ -69,5 +69,4 @@ public abstract class KvInstant extends KvValue<Instant> {
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

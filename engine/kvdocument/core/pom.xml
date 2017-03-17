@@ -9,9 +9,9 @@
         <artifactId>kvdocument-pom</artifactId>
         <version>0.50.1-SNAPSHOT</version>
     </parent>
-    
+
     <artifactId>kvdocument-core</artifactId>
-    
+
     <name>KVDocument: Core</name>
     <description>
         Core classes of the KVDocument module
@@ -32,7 +32,7 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>annotations</artifactId>

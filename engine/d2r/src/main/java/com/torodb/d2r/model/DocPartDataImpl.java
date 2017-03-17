@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class DocPartDataImpl implements DocPartData {
+public class  DocPartDataImpl implements DocPartData {
 
   private List<DocPartRow> docPartRows = new ArrayList<>();
   private TableMetadata metadata;

@@ -22,9 +22,7 @@ import com.torodb.kvdocument.types.TimeType;
 
 import java.time.LocalTime;
 
-/**
- *
- */
+/** */
 public abstract class KvTime extends KvValue<LocalTime> {
 
   private static final long serialVersionUID = 9222753619413720286L;
@@ -67,5 +65,4 @@ public abstract class KvTime extends KvValue<LocalTime> {
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

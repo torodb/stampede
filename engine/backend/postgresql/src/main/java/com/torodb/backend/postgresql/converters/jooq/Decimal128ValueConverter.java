@@ -20,24 +20,22 @@ package com.torodb.backend.postgresql.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
-import com.torodb.backend.converters.sql.Decimal128SqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.postgresql.converters.sql.Decimal128RecordSqlBinding;
+import com.torodb.backend.udt.Decimal128UDT;
+import com.torodb.backend.udt.record.Decimal128Record;
 import com.torodb.kvdocument.types.Decimal128Type;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.values.KvDecimal128;
 
-import org.jooq.util.postgres.PostgresDataType;
-
-import java.math.BigDecimal;
-import java.sql.Types;
-
 public class Decimal128ValueConverter
-    implements KvValueConverter<BigDecimal, BigDecimal, KvDecimal128> {
+    implements KvValueConverter<Decimal128Record, Decimal128Record, KvDecimal128> {
 
   private static final long serialVersionUID = 1L;
 
   public static final DataTypeForKv<KvDecimal128> TYPE =
-      DataTypeForKv.from(PostgresDataType.NUMERIC, new Decimal128ValueConverter(), Types.NUMERIC);
+      DataTypeForKv.from(
+          Decimal128UDT.DECIMAL_128_UDT.getDataType(), new Decimal128ValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -45,18 +43,41 @@ public class Decimal128ValueConverter
   }
 
   @Override
-  public KvDecimal128 from(BigDecimal value) {
-    return KvDecimal128.of(value);
+  public KvDecimal128 from(Decimal128Record value) {
+
+    if (value.getInfinity()) {
+      return KvDecimal128.getInfinity();
+    }
+
+    if (value.getNan()) {
+      return KvDecimal128.getNan();
+    }
+
+    if (value.getNegativeZero()) {
+      return KvDecimal128.getNegativeZero();
+    }
+
+    return KvDecimal128.of(value.getValue());
   }
 
   @Override
-  public BigDecimal to(KvDecimal128 userObject) {
-    return userObject.getValue();
+  public Decimal128Record to(KvDecimal128 userObject) {
+    //The only way of building the object without creating a new module dependency (circular)
+    // is exposing the internal state of the KV
+
+    final Decimal128Record result =
+        new Decimal128Record(
+            userObject.getBigDecimal(),
+            userObject.isInfinite() && !userObject.isNaN(),
+            userObject.isNaN(),
+            userObject.isNegativeZero());
+
+    return result;
   }
 
   @Override
-  public Class<BigDecimal> fromType() {
-    return BigDecimal.class;
+  public Class<Decimal128Record> fromType() {
+    return Decimal128Record.class;
   }
 
   @Override
@@ -65,8 +86,7 @@ public class Decimal128ValueConverter
   }
 
   @Override
-  public SqlBinding<BigDecimal> getSqlBinding() {
-    return Decimal128SqlBinding.INSTANCE;
+  public SqlBinding<Decimal128Record> getSqlBinding() {
+    return Decimal128RecordSqlBinding.INSTANCE;
   }
-
 }

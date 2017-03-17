@@ -39,5 +39,6 @@ public class PostgreSqlSchemaUpdater extends AbstractSchemaUpdater {
     super.createSchema(dsl, sqlInterface, sqlHelper);
 
     executeSql(dsl, "/sql/postgresql/mongo_timestamp_type.sql", sqlHelper);
+    executeSql(dsl, "/sql/postgresql/decimal_128_type.sql", sqlHelper);
   }
 }
