@@ -43,7 +43,15 @@ public class DerbyStructureIT extends AbstractStructureIntegrationSuite {
     typesDictionary.put(FieldType.NULL, "BOOLEAN");
     typesDictionary.put(FieldType.TIME, "TIME");
     typesDictionary.put(FieldType.CHILD, "BOOLEAN");
-    typesDictionary.put(FieldType.DECIMAL128, "NUMERIC");
+    typesDictionary.put(FieldType.DECIMAL128, "VARCHAR");
+    typesDictionary.put(FieldType.JAVASCRIPT, "VARCHAR");
+    typesDictionary.put(FieldType.JAVASCRIPT_WITH_SCOPE, "VARCHAR");
+    typesDictionary.put(FieldType.MIN_KEY, "BOOLEAN");
+    typesDictionary.put(FieldType.MAX_KEY, "BOOLEAN");
+    typesDictionary.put(FieldType.UNDEFINED, "BOOLEAN");
+    typesDictionary.put(FieldType.MONGO_REGEX, "VARCHAR");
+    typesDictionary.put(FieldType.MONGO_DB_POINTER, "VARCHAR");
+    typesDictionary.put(FieldType.DEPRECATED, "VARCHAR");
   }
 
   @Override

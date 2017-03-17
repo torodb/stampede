@@ -34,8 +34,10 @@ public class DeprecatedValueConverter implements KvValueConverter<String, String
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataTypeForKv<KvDeprecated> TYPE = DataTypeForKv.from(SQLDataType.VARCHAR,
-      new DeprecatedValueConverter());
+  public static final DataTypeForKv<KvDeprecated> TYPE = DataTypeForKv.from(
+      StringValueConverter.VARCHAR_TYPE,
+      new DeprecatedValueConverter()
+  );
 
   @Override
   public KvType getErasuredType() {
