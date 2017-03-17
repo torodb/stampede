@@ -275,6 +275,7 @@
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <images>
                                         <image>
                                             <name>assembler-push-s3</name>
@@ -389,6 +390,7 @@
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <images>
                                         <image>
                                             <name>torodb-base</name>
@@ -430,16 +432,16 @@
                                     <goal>push</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <filter>torodb-stampede</filter>
                                     <images>
                                         <image>
                                             <alias>torodb-stampede</alias>
-                                            <name>torodb/stampede</name>
+                                            <name>torodb/stampede:%v</name>
                                             <build>
                                                 <from>torodb-base</from>
                                                 <cleanup>remove</cleanup>
                                                 <tags>
-                                                    <tag>${project.version}</tag>
                                                     <tag>${docker.tags.latest}</tag>
                                                 </tags>
                                                 <assembly>
@@ -552,6 +554,7 @@
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <images>
                                         <image>
                                             <name>snapbuilder</name>
@@ -740,6 +743,7 @@
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <images>
                                         <image>
                                             <name>rpmbuilder</name>
@@ -784,7 +788,7 @@
                                                         then
                                                             copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
                                                         fi;
-                                                        copr-cli build ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
+                                                        copr-cli build --nowait ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
                                                     else
                                                         rpmbuild -ba "$SPEC_FILE";
                                                         cp -a "$HOME/rpmbuild" "/rpm/.";
@@ -987,6 +991,7 @@
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <images>
                                         <image>
                                             <name>debbuilder</name>

@@ -39,6 +39,20 @@ done
 PRGDIR=`dirname "$PRG"`
 BASEDIR=`cd "$PRGDIR/.." >/dev/null; pwd`
 
+if ! (set -e; for p in "$@"; do ! echo "$p" | grep -q "^-h$\|^--help$"; done)
+then
+    echo "Usage: $0 [<@{assembler.fullName}'s parameter>, ...]"
+    echo
+    echo "To get available parameters: @{assembler.name} -h"
+    exit
+fi
+
+if ! (set -e; for p in "$@"; do ! echo "$p" | grep -q "^--version$"; done)
+then
+    echo "@{project.version}"
+    exit
+fi
+
 if [ -z "$ADMIN_USER" ]
 then
     ADMIN_USER="postgres"
@@ -80,20 +94,6 @@ fi
 psql_command="$(which psql)"
 exec_admin_command=(su -p -s /bin/bash "$ADMIN_USER" -c)
 exec_user_command=(su -p -s /bin/bash "$TORO_USER" -c)
-
-if echo ' '"$@"' ' | grep -q -- "\s-h\s\|\s--help\s"
-then
-    echo "Usage: $0 [<@{assembler.fullName}'s parameter>, ...]"
-    echo
-    echo "To get available parameters: @{assembler.name} -h"
-    exit
-fi
-
-if echo ' '"$@"' ' | grep -q -- "\s-v\s\|\s--version\s"
-then
-    echo "@{project.version}"
-    exit
-fi
 
 for invalid_parameter in -l --print-config -lx --print-xml-config\
     -lp --print-param -hp --help-param -W --ask-for-password
