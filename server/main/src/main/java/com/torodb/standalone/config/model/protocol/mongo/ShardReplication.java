@@ -23,22 +23,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.common.EnumWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.model.protocol.mongo.Ssl;
 import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
-import com.torodb.packaging.config.validation.NotNullElements;
-
-import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"replSetName", "syncSource", 
-    "role", "ssl", "auth", "include", "exclude", "shards"})
-public class Replication extends AbstractReplication<ShardReplication> {
+@JsonPropertyOrder({"replSetName", "syncSource", "role", "ssl", "auth"})
+public class ShardReplication extends AbstractShardReplication {
 
   @Description("config.mongo.replication.replSetName")
   @NotEmptySrtingWithDefault
@@ -73,35 +67,5 @@ public class Replication extends AbstractReplication<ShardReplication> {
   @JsonProperty(required = true)
   public Auth getAuth() {
     return super.getAuth();
-  }
-
-  @Description("config.mongo.replication.include")
-  @JsonProperty(required = true)
-  public FilterList getInclude() {
-    return super.getInclude();
-  }
-
-  @Description("config.mongo.replication.exclude")
-  @JsonProperty(required = true)
-  public FilterList getExclude() {
-    return super.getExclude();
-  }
-
-  @NotNullElements
-  @JsonProperty(required = true)
-  public List<ShardReplication> getShards() {
-    return super.getShardList();
-  }
-  
-  public void setShards(List<ShardReplication> shards) {
-    super.setShardList(shards);
-  }
-  
-  public Replication mergeWith(AbstractShardReplication shard) {
-    Replication mergedShard = new Replication();
-    
-    merge(shard, mergedShard);
-    
-    return mergedShard;
   }
 }

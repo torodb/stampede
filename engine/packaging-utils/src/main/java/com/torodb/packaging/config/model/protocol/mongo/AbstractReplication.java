@@ -18,81 +18,23 @@
 
 package com.torodb.packaging.config.model.protocol.mongo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
-import org.hibernate.validator.constraints.NotEmpty;
+import com.torodb.packaging.config.model.common.ScalarWithDefault;
 
-import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
-@JsonPropertyOrder({"replSetName", "syncSource", "role", "ssl", "auth", "include", "exclude"})
-//TODO(gortiz): Change the class name to something better like... just replication!
-public class AbstractReplication {
+@JsonPropertyOrder({"replSetName", "role", "syncSource", 
+    "ssl", "auth", "include", "exclude", "shards"})
+public abstract class AbstractReplication<T extends AbstractShardReplication> 
+    extends AbstractShardReplication {
 
-  private String replSetName;
-  private Role role = Role.HIDDEN_SLAVE;
-  private String syncSource;
-  private Ssl ssl = new Ssl();
-  private Auth auth = new Auth();
   private FilterList include;
   private FilterList exclude;
-
-  @Description("config.mongo.replication.replSetName")
-  @NotEmpty
-  @JsonProperty(required = true)
-  public String getReplSetName() {
-    return replSetName;
-  }
-
-  public void setReplSetName(String replSetName) {
-    this.replSetName = replSetName;
-  }
-
-  @Description("config.mongo.replication.role")
-  @NotNull
-  @JsonProperty(required = true)
-  public Role getRole() {
-    return role;
-  }
-
-  public void setRole(Role role) {
-    this.role = role;
-  }
-
-  @Description("config.mongo.replication.syncSource")
-  @NotNull
-  @JsonProperty(required = true)
-  public String getSyncSource() {
-    return syncSource;
-  }
-
-  public void setSyncSource(String syncSource) {
-    this.syncSource = syncSource;
-  }
-
-  @Description("config.mongo.replication.ssl")
-  @NotNull
-  @JsonProperty(required = true)
-  public Ssl getSsl() {
-    return ssl;
-  }
-
-  public void setSsl(Ssl ssl) {
-    this.ssl = ssl;
-  }
-
-  @Description("config.mongo.replication.auth")
-  @NotNull
-  @JsonProperty(required = true)
-  @RequiredParametersForAuthentication
-  public Auth getAuth() {
-    return auth;
-  }
-
-  public void setAuth(Auth auth) {
-    this.auth = auth;
-  }
+  private List<T> shards = new ArrayList<>();
 
   @Description("config.mongo.replication.include")
   @JsonProperty(required = true)
@@ -112,5 +54,49 @@ public class AbstractReplication {
 
   public void setExclude(FilterList exclude) {
     this.exclude = exclude;
+  }
+
+  @JsonIgnore
+  public List<T> getShardList() {
+    return shards;
+  }
+
+  public void setShardList(List<T> shards) {
+    this.shards = shards;
+  }
+
+  protected void merge(AbstractShardReplication shard, AbstractReplication<T> mergedShard) {
+    mergedShard.setReplSetName(ScalarWithDefault.merge(shard.getReplSetName(), getReplSetName()));
+    mergedShard.setSyncSource(shard.getSyncSource());
+    
+    Auth mergedAuth = new Auth();
+    mergedAuth.setMode(ScalarWithDefault.merge(
+        shard.getAuth().getMode(), getAuth().getMode()));
+    mergedAuth.setSource(ScalarWithDefault.merge(
+        shard.getAuth().getSource(), getAuth().getSource()));
+    mergedAuth.setUser(ScalarWithDefault.merge(
+        shard.getAuth().getUser(), getAuth().getUser()));
+    mergedShard.setAuth(mergedAuth);
+    
+    Ssl mergedSsl = new Ssl();
+    mergedSsl.setAllowInvalidHostnames(ScalarWithDefault.merge(
+        shard.getSsl().getAllowInvalidHostnames(), getSsl().getAllowInvalidHostnames()));
+    mergedSsl.setCaFile(ScalarWithDefault.merge(
+        shard.getSsl().getCaFile(), getSsl().getCaFile()));
+    mergedSsl.setEnabled(ScalarWithDefault.merge(
+        shard.getSsl().getEnabled(), getSsl().getEnabled()));
+    mergedSsl.setFipsMode(ScalarWithDefault.merge(
+        shard.getSsl().getFipsMode(), getSsl().getFipsMode()));
+    mergedSsl.setKeyPassword(ScalarWithDefault.merge(
+        shard.getSsl().getKeyPassword(), getSsl().getKeyPassword()));
+    mergedSsl.setKeyStoreFile(ScalarWithDefault.merge(
+        shard.getSsl().getKeyStoreFile(), getSsl().getKeyStoreFile()));
+    mergedSsl.setKeyStorePassword(ScalarWithDefault.merge(
+        shard.getSsl().getKeyStorePassword(), getSsl().getKeyStorePassword()));
+    mergedSsl.setTrustStoreFile(ScalarWithDefault.merge(
+        shard.getSsl().getTrustStoreFile(), getSsl().getTrustStoreFile()));
+    mergedSsl.setTrustStorePassword(ScalarWithDefault.merge(
+        shard.getSsl().getTrustStorePassword(), getSsl().getTrustStorePassword()));
+    mergedShard.setSsl(mergedSsl);
   }
 }

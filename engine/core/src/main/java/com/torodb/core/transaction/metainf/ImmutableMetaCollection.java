@@ -132,7 +132,8 @@ public class ImmutableMetaCollection implements MetaCollection {
             .getName()) != null)
         .flatMap(index -> Seq.seq(index.iteratorMetaDocPartIndexesIdentifiers(docPart))
             .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
-            .map(identifiers -> new Tuple2<>(index, identifiers)))
+            // Fix for Eclipse compiler, please do not remove explicit generics
+            .map(identifiers -> new Tuple2<MetaIndex, List<String>>(index, identifiers)))
         .collect(Collectors.groupingBy(missingIndexEntry -> missingIndexEntry.v2()))
         .entrySet()
         .stream()

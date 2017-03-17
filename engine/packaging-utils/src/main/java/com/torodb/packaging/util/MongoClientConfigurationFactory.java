@@ -66,24 +66,25 @@ public class MongoClientConfigurationFactory {
 
   public static MongoClientConfiguration getMongoClientConfiguration(
       AbstractReplication replication) {
-    HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
+    HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource().value())
         .withDefaultPort(27017);
 
     MongoClientConfiguration.Builder mongoClientConfigurationBuilder =
         new MongoClientConfiguration.Builder(syncSource);
 
     Ssl ssl = replication.getSsl();
-    mongoClientConfigurationBuilder.setSslEnabled(ssl.getEnabled());
-    if (ssl.getEnabled()) {
+    mongoClientConfigurationBuilder.setSslEnabled(ssl.getEnabled().value());
+    if (ssl.getEnabled().value()) {
       try {
-        mongoClientConfigurationBuilder.setSslAllowInvalidHostnames(ssl.getAllowInvalidHostnames());
+        mongoClientConfigurationBuilder.setSslAllowInvalidHostnames(
+            ssl.getAllowInvalidHostnames().value());
 
         TrustManager[] tms = getTrustManagers(ssl);
 
         KeyManager[] kms = getKeyManagers(ssl);
 
         SSLContext sslContext;
-        if (ssl.getFipsMode()) {
+        if (ssl.getFipsMode().value()) {
           sslContext = SSLContext.getInstance("TLS", "SunPKCS11-NSS");
         } else {
           sslContext = SSLContext.getInstance("TLS");
@@ -98,7 +99,7 @@ public class MongoClientConfigurationFactory {
     }
 
     Auth auth = replication.getAuth();
-    if (auth.getMode().isEnabled()) {
+    if (auth.getMode().value().isEnabled()) {
       MongoAuthenticationConfiguration mongoAuthenticationConfiguration =
           getMongoAuthenticationConfiguration(auth, ssl);
       mongoClientConfigurationBuilder.addAuthenticationConfiguration(
@@ -115,7 +116,7 @@ public class MongoClientConfigurationFactory {
     if (ssl.getCaFile() != null) {
       TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory
           .getDefaultAlgorithm());
-      try (InputStream is = new FileInputStream(ssl.getCaFile())) {
+      try (InputStream is = new FileInputStream(ssl.getCaFile().value())) {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509Certificate caCert = (X509Certificate) cf.generateCertificate(is);
 
@@ -130,11 +131,11 @@ public class MongoClientConfigurationFactory {
     } else if (ssl.getTrustStoreFile() != null) {
       TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory
           .getDefaultAlgorithm());
-      try (InputStream is = new FileInputStream(ssl.getTrustStoreFile())) {
+      try (InputStream is = new FileInputStream(ssl.getTrustStoreFile().value())) {
         char[] storePassword = null;
 
         if (ssl.getTrustStorePassword() != null) {
-          storePassword = ssl.getTrustStorePassword().toCharArray();
+          storePassword = ssl.getTrustStorePassword().value().toCharArray();
         }
 
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -160,7 +161,7 @@ public class MongoClientConfigurationFactory {
       char[] keyPassword = null;
 
       if (ssl.getKeyPassword() != null) {
-        keyPassword = ssl.getKeyPassword().toCharArray();
+        keyPassword = ssl.getKeyPassword().value().toCharArray();
       }
 
       kmf.init(ks, keyPassword);
@@ -173,11 +174,11 @@ public class MongoClientConfigurationFactory {
   private static KeyStore getKeyStore(Ssl ssl) throws FileNotFoundException, KeyStoreException,
       IOException,
       NoSuchAlgorithmException, CertificateException {
-    try (InputStream is = new FileInputStream(ssl.getKeyStoreFile())) {
+    try (InputStream is = new FileInputStream(ssl.getKeyStoreFile().value())) {
       char[] storePassword = null;
 
       if (ssl.getKeyStorePassword() != null) {
-        storePassword = ssl.getKeyStorePassword().toCharArray();
+        storePassword = ssl.getKeyStorePassword().value().toCharArray();
       }
 
       KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
@@ -188,13 +189,13 @@ public class MongoClientConfigurationFactory {
 
   private static MongoAuthenticationConfiguration getMongoAuthenticationConfiguration(Auth auth,
       Ssl ssl) {
-    AuthMode authMode = auth.getMode();
+    AuthMode authMode = auth.getMode().value();
     MongoAuthenticationConfiguration.Builder mongoAuthenticationConfigurationBuilder =
         new MongoAuthenticationConfiguration.Builder(mongoAuthenticationMechanismConverter.get(
             authMode).apply(authMode));
 
-    mongoAuthenticationConfigurationBuilder.setUser(auth.getUser());
-    mongoAuthenticationConfigurationBuilder.setSource(auth.getSource());
+    mongoAuthenticationConfigurationBuilder.setUser(auth.getUser().value());
+    mongoAuthenticationConfigurationBuilder.setSource(auth.getSource().value());
     mongoAuthenticationConfigurationBuilder.setPassword(auth.getPassword());
 
     if (authMode == AuthMode.x509 && auth.getUser() == null) {

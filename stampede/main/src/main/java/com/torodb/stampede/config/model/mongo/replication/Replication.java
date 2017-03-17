@@ -22,81 +22,91 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.common.EnumWithDefault;
+import com.torodb.packaging.config.model.common.StringWithDefault;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
-import com.torodb.packaging.config.model.protocol.mongo.Auth;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
-import com.torodb.packaging.config.model.protocol.mongo.Ssl;
 import com.torodb.packaging.config.util.ConfigUtils;
-import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
-import org.hibernate.validator.constraints.NotEmpty;
+import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
 
-import javax.validation.constraints.NotNull;
+import java.util.List;
+
+import javax.validation.Valid;
 
 @JsonPropertyOrder({"replSetName", "syncSource", "ssl", "auth", "include", "exclude",
-    "mongopassFile"})
-public class Replication extends AbstractReplication {
+    "mongopassFile", "shards"})
+public class Replication extends AbstractReplication<ShardReplication> {
 
   private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
 
   public Replication() {
-    setSyncSource("localhost:27017");
-    setReplSetName("rs1");
+    super.setSyncSource(StringWithDefault.withDefault("localhost:27017"));
+    super.setReplSetName(StringWithDefault.withDefault("rs1"));
   }
 
+  @JsonIgnore
+  public StringWithDefault getName() {
+    return super.getName();
+  }
+  
+  @Description("config.mongo.replication.replSetName")
+  @NotEmptySrtingWithDefault
+  @JsonProperty(required = false)
+  public StringWithDefault getReplSetName() {
+    return super.getReplSetName();
+  }
+
+  @JsonIgnore
+  public EnumWithDefault<Role> getRole() {
+    return super.getRole();
+  }
+
+  @Description("config.mongo.replication.syncSource")
+  @NotEmptySrtingWithDefault
+  @JsonProperty(required = false)
+  public StringWithDefault getSyncSource() {
+    return super.getSyncSource();
+  }
+  
   @Description("config.mongo.mongopassFile")
   @JsonProperty(required = true)
   public String getMongopassFile() {
     return mongopassFile;
   }
 
+  @Description("config.mongo.shards")
+  @Valid
+  @JsonProperty(required = false)
+  public List<ShardReplication> getShards() {
+    return super.getShardList();
+  }
+
+  public void setShards(List<ShardReplication> shards) {
+    super.setShardList(shards);
+  }
+
   public void setMongopassFile(String mongopassFile) {
     this.mongopassFile = mongopassFile;
   }
 
-  @Description("config.mongo.replication.replSetName")
-  @NotEmpty
-  @JsonProperty(required = true)
-  public String getReplSetName() {
-    return super.getReplSetName();
+  @Override
+  public void setReplSetName(StringWithDefault replSetName) {
+    super.setReplSetName(replSetName);
   }
 
-  @JsonIgnore
-  public Role getRole() {
-    return super.getRole();
+  @Override
+  public void setSyncSource(StringWithDefault syncSource) {
+    super.setSyncSource(syncSource);
   }
-
-  @Description("config.mongo.replication.syncSource")
-  @NotNull
-  @JsonProperty(required = true)
-  public String getSyncSource() {
-    return super.getSyncSource();
-  }
-
-  @Description("config.mongo.replication.ssl")
-  @NotNull
-  @JsonProperty(required = true)
-  public Ssl getSsl() {
-    return super.getSsl();
-  }
-
-  @Description("config.mongo.replication.auth")
-  @NotNull
-  @JsonProperty(required = true)
-  @RequiredParametersForAuthentication
-  public Auth getAuth() {
-    return super.getAuth();
-  }
-
-  @Description("config.mongo.replication.include")
-  @JsonProperty(required = true)
-  public FilterList getInclude() {
-    return super.getInclude();
-  }
-
-  @Description("config.mongo.replication.exclude")
-  @JsonProperty(required = true)
-  public FilterList getExclude() {
-    return super.getExclude();
+  
+  public Replication mergeWith(AbstractShardReplication shard) {
+    Replication mergedShard = new Replication();
+    
+    merge(shard, mergedShard);
+    
+    mergedShard.setMongopassFile(getMongopassFile());
+    
+    return mergedShard;
   }
 }

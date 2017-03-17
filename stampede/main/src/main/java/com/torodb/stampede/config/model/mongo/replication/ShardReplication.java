@@ -16,47 +16,39 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.standalone.config.model.protocol.mongo;
+package com.torodb.stampede.config.model.mongo.replication;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.common.EnumWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.model.protocol.mongo.Ssl;
 import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
-import com.torodb.packaging.config.validation.NotNullElements;
-
-import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"replSetName", "syncSource", 
-    "role", "ssl", "auth", "include", "exclude", "shards"})
-public class Replication extends AbstractReplication<ShardReplication> {
+@JsonPropertyOrder({"replSetName", "syncSource", "ssl", "auth"})
+public class ShardReplication extends AbstractShardReplication {
 
   @Description("config.mongo.replication.replSetName")
-  @NotEmptySrtingWithDefault
   @JsonProperty(required = true)
   public StringWithDefault getReplSetName() {
     return super.getReplSetName();
   }
 
-  @Description("config.mongo.replication.role")
-  @NotNull
-  @JsonProperty(required = true)
+  @JsonIgnore
   public EnumWithDefault<Role> getRole() {
     return super.getRole();
   }
 
   @Description("config.mongo.replication.syncSource")
   @NotEmptySrtingWithDefault
-  @JsonProperty(required = true)
+  @JsonProperty(required = false)
   public StringWithDefault getSyncSource() {
     return super.getSyncSource();
   }
@@ -73,35 +65,5 @@ public class Replication extends AbstractReplication<ShardReplication> {
   @JsonProperty(required = true)
   public Auth getAuth() {
     return super.getAuth();
-  }
-
-  @Description("config.mongo.replication.include")
-  @JsonProperty(required = true)
-  public FilterList getInclude() {
-    return super.getInclude();
-  }
-
-  @Description("config.mongo.replication.exclude")
-  @JsonProperty(required = true)
-  public FilterList getExclude() {
-    return super.getExclude();
-  }
-
-  @NotNullElements
-  @JsonProperty(required = true)
-  public List<ShardReplication> getShards() {
-    return super.getShardList();
-  }
-  
-  public void setShards(List<ShardReplication> shards) {
-    super.setShardList(shards);
-  }
-  
-  public Replication mergeWith(AbstractShardReplication shard) {
-    Replication mergedShard = new Replication();
-    
-    merge(shard, mergedShard);
-    
-    return mergedShard;
   }
 }

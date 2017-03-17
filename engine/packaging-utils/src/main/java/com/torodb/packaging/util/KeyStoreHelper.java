@@ -40,11 +40,11 @@ public class KeyStoreHelper {
   public static KeyStore getKeyStore(Ssl ssl) throws FileNotFoundException, KeyStoreException,
       IOException,
       NoSuchAlgorithmException, CertificateException {
-    try (InputStream is = new FileInputStream(ssl.getKeyStoreFile())) {
+    try (InputStream is = new FileInputStream(ssl.getKeyStoreFile().value())) {
       char[] storePassword = null;
 
       if (ssl.getKeyStorePassword() != null) {
-        storePassword = ssl.getKeyStorePassword().toCharArray();
+        storePassword = ssl.getKeyStorePassword().value().toCharArray();
       }
 
       KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());

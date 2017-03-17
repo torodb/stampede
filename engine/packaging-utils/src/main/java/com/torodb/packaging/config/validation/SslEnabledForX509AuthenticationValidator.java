@@ -19,29 +19,42 @@
 package com.torodb.packaging.config.validation;
 
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
 import com.torodb.packaging.config.model.protocol.mongo.Ssl;
-
-import java.util.List;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 public class SslEnabledForX509AuthenticationValidator implements
-    ConstraintValidator<SslEnabledForX509Authentication, List<AbstractReplication>> {
+    ConstraintValidator<SslEnabledForX509Authentication, AbstractReplication<?>> {
 
   @Override
   public void initialize(SslEnabledForX509Authentication constraintAnnotation) {
   }
 
   @Override
-  public boolean isValid(List<AbstractReplication> value, ConstraintValidatorContext context) {
+  public boolean isValid(AbstractReplication<?> value, ConstraintValidatorContext context) {
     if (value != null) {
-      for (AbstractReplication replication : value) {
-        if (replication.getAuth().getMode() == AuthMode.x509) {
-          Ssl ssl = replication.getSsl();
-          if (!ssl.getEnabled() || ssl.getKeyStoreFile() == null || ssl.getKeyPassword() == null) {
+      if (value.getShardList().isEmpty()) {
+        if (value.getAuth().getMode().value() == AuthMode.x509) {
+          Ssl ssl = value.getSsl();
+          if (!ssl.getEnabled().value() || ssl.getKeyStoreFile() == null 
+              || ssl.getKeyPassword() == null) {
             return false;
+          }
+        }
+      } else {
+        for (AbstractShardReplication shard : value.getShardList()) {
+          if (shard.getAuth().getMode().mergeValue( 
+              value.getAuth().getMode()) == AuthMode.x509) {
+            Ssl shardSsl = shard.getSsl();
+            Ssl commonSsl = value.getSsl();
+            if (!shardSsl.getEnabled().mergeValue(commonSsl.getEnabled()) 
+                || shardSsl.getKeyStoreFile().mergeValue(commonSsl.getKeyStoreFile()) == null
+                || shardSsl.getKeyPassword().mergeValue(commonSsl.getKeyPassword()) == null) {
+              return false;
+            }
           }
         }
       }

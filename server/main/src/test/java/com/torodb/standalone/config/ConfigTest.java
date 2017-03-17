@@ -258,21 +258,25 @@ public class ConfigTest {
     Assert.assertTrue("/protocol/mongo not defined", config.getProtocol().getMongo() != null);
     Assert.assertTrue("/protocol/mongo/net not defined", config.getProtocol().getMongo().getNet()
         != null);
-    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
-        .getReplication() != null);
     Assert.assertEquals("/protocol/mongo/net/port has different value than that specified", Integer
         .valueOf(27019), config.getProtocol().getMongo().getNet().getPort());
-    Assert.assertEquals("/protocol/mongo/replication has not 1 element", 1, config.getProtocol()
-        .getMongo().getReplication().size());
+    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
+        .getReplication() != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/replSetName has different value than that specified", "rs1",
-        config.getProtocol().getMongo().getReplication().get(0).getReplSetName());
+        "/protocol/mongo/replication/replSetName has different value than that specified", "rs1",
+        config.getProtocol().getMongo().getReplication().getReplSetName().value());
     Assert
-        .assertEquals("/protocol/mongo/replication/0/role has different value than that specified",
-            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().get(0).getRole());
+        .assertEquals("/protocol/mongo/replication/role has different value than that specified",
+            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().getRole().value());
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/syncSource has different value than that specified",
-        "localhost:27017", config.getProtocol().getMongo().getReplication().get(0).getSyncSource());
+        "/protocol/mongo/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getProtocol().getMongo().getReplication().getSyncSource().value());
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not defined",
+        config.getProtocol().getMongo().getReplication().getShards() != null);
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not empty",
+        config.getProtocol().getMongo().getReplication().getShards().isEmpty());
     Assert.assertTrue("/backend not defined", config.getBackend() != null);
     Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
         .getBackendImplementation().getClass());
@@ -447,21 +451,25 @@ public class ConfigTest {
     Assert.assertTrue("/protocol/mongo not defined", config.getProtocol().getMongo() != null);
     Assert.assertTrue("/protocol/mongo/net not defined", config.getProtocol().getMongo().getNet()
         != null);
-    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
-        .getReplication() != null);
     Assert.assertEquals("/protocol/mongo/net/port has different value than that specified", Integer
         .valueOf(27019), config.getProtocol().getMongo().getNet().getPort());
-    Assert.assertEquals("/protocol/mongo/replication has not 1 element", 1, config.getProtocol()
-        .getMongo().getReplication().size());
+    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
+        .getReplication() != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/replSetName has different value than that specified", "rs1",
-        config.getProtocol().getMongo().getReplication().get(0).getReplSetName());
+        "/protocol/mongo/replication/replSetName has different value than that specified", "rs1",
+        config.getProtocol().getMongo().getReplication().getReplSetName().value());
     Assert
-        .assertEquals("/protocol/mongo/replication/0/role has different value than that specified",
-            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().get(0).getRole());
+        .assertEquals("/protocol/mongo/replication/role has different value than that specified",
+            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().getRole().value());
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/syncSource has different value than that specified",
-        "localhost:27017", config.getProtocol().getMongo().getReplication().get(0).getSyncSource());
+        "/protocol/mongo/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getProtocol().getMongo().getReplication().getSyncSource().value());
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not defined",
+        config.getProtocol().getMongo().getReplication().getShards() != null);
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not empty",
+        config.getProtocol().getMongo().getReplication().getShards().isEmpty());
     Assert.assertTrue("/backend not defined", config.getBackend() != null);
     Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
         .getBackendImplementation().getClass());
@@ -495,8 +503,8 @@ public class ConfigTest {
       @Override
       public List<String> getParams() {
         String[] params = new String[]{
-          "/protocol/mongo/replication/0/include={torodb: [postgres, derby]}",
-          "/protocol/mongo/replication/0/exclude={mongodb: {mmapv1, wiredtiger}}"
+          "/protocol/mongo/replication/include={torodb: [postgres, derby]}",
+          "/protocol/mongo/replication/exclude={mongodb: {mmapv1, wiredtiger}}"
         };
         return Arrays.asList(params);
       }
@@ -518,37 +526,41 @@ public class ConfigTest {
     Assert.assertTrue("/protocol/mongo not defined", config.getProtocol().getMongo() != null);
     Assert.assertTrue("/protocol/mongo/net not defined", config.getProtocol().getMongo().getNet()
         != null);
-    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
-        .getReplication() != null);
     Assert.assertEquals("/protocol/mongo/net/port has different value than that specified", Integer
         .valueOf(27019), config.getProtocol().getMongo().getNet().getPort());
-    Assert.assertEquals("/protocol/mongo/replication has not 1 element", 1, config.getProtocol()
-        .getMongo().getReplication().size());
+    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
+        .getReplication() != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/replSetName has different value than that specified", "rs1",
-        config.getProtocol().getMongo().getReplication().get(0).getReplSetName());
+        "/protocol/mongo/replication/replSetName has different value than that specified", "rs1",
+        config.getProtocol().getMongo().getReplication().getReplSetName().value());
     Assert
-        .assertEquals("/protocol/mongo/replication/0/role has different value than that specified",
-            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().get(0).getRole());
+        .assertEquals("/protocol/mongo/replication/role has different value than that specified",
+            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().getRole().value());
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/syncSource has different value than that specified",
-        "localhost:27017", config.getProtocol().getMongo().getReplication().get(0).getSyncSource());
-    Assert.assertTrue("/protocol/mongo/replication/0/include not defined", config.getProtocol()
-        .getMongo().getReplication().get(0).getInclude() != null);
-    Assert.assertTrue("/protocol/mongo/replication/0/include/torodb not defined", config
-        .getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb") != null);
+        "/protocol/mongo/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getProtocol().getMongo().getReplication().getSyncSource().value());
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not defined",
+        config.getProtocol().getMongo().getReplication().getShards() != null);
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not empty",
+        config.getProtocol().getMongo().getReplication().getShards().isEmpty());
+    Assert.assertTrue("/protocol/mongo/replication/include not defined", config.getProtocol()
+        .getMongo().getReplication().getInclude() != null);
+    Assert.assertTrue("/protocol/mongo/replication/include/torodb not defined", config
+        .getProtocol().getMongo().getReplication().getInclude().get("torodb") != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/include/torodb has different value than that specified",
+        "/protocol/mongo/replication/include/torodb has different value than that specified",
         ImmutableMap.of("postgres", ImmutableList.of(), "derby", ImmutableList.of()),
-        config.getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb"));
-    Assert.assertTrue("/protocol/mongo/replication/0/exclude not defined", config.getProtocol()
-        .getMongo().getReplication().get(0).getExclude() != null);
-    Assert.assertTrue("/protocol/mongo/replication/0/exclude/mongodb not defined", config
-        .getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb") != null);
+        config.getProtocol().getMongo().getReplication().getInclude().get("torodb"));
+    Assert.assertTrue("/protocol/mongo/replication/exclude not defined", config.getProtocol()
+        .getMongo().getReplication().getExclude() != null);
+    Assert.assertTrue("/protocol/mongo/replication/exclude/mongodb not defined", config
+        .getProtocol().getMongo().getReplication().getExclude().get("mongodb") != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/exclude/mongodb has different value than that specified",
+        "/protocol/mongo/replication/exclude/mongodb has different value than that specified",
         ImmutableMap.of("mmapv1", ImmutableList.of(), "wiredtiger", ImmutableList.of()),
-        config.getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb"));
+        config.getProtocol().getMongo().getReplication().getExclude().get("mongodb"));
     Assert.assertTrue("/backend not defined", config.getBackend() != null);
     Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
         .getBackendImplementation().getClass());
@@ -583,8 +595,8 @@ public class ConfigTest {
       @Override
       public List<String> getParams() {
         String[] params = new String[]{
-          "/protocol/mongo/replication/0/include={torodb: [{postgres: {name: awesome, unique: true}}, derby]}",
-          "/protocol/mongo/replication/0/exclude={mongodb: [{mmapv1: {keys: {\"the.old.mmapv1\": 1}}}, wiredtiger]}"
+          "/protocol/mongo/replication/include={torodb: [{postgres: {name: awesome, unique: true}}, derby]}",
+          "/protocol/mongo/replication/exclude={mongodb: [{mmapv1: {keys: {\"the.old.mmapv1\": 1}}}, wiredtiger]}"
         };
         return Arrays.asList(params);
       }
@@ -606,40 +618,44 @@ public class ConfigTest {
     Assert.assertTrue("/protocol/mongo not defined", config.getProtocol().getMongo() != null);
     Assert.assertTrue("/protocol/mongo/net not defined", config.getProtocol().getMongo().getNet()
         != null);
-    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
-        .getReplication() != null);
     Assert.assertEquals("/protocol/mongo/net/port has different value than that specified", Integer
         .valueOf(27019), config.getProtocol().getMongo().getNet().getPort());
-    Assert.assertEquals("/protocol/mongo/replication has not 1 element", 1, config.getProtocol()
-        .getMongo().getReplication().size());
+    Assert.assertTrue("/protocol/mongo/replication not defined", config.getProtocol().getMongo()
+        .getReplication() != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/replSetName has different value than that specified", "rs1",
-        config.getProtocol().getMongo().getReplication().get(0).getReplSetName());
+        "/protocol/mongo/replication/replSetName has different value than that specified", "rs1",
+        config.getProtocol().getMongo().getReplication().getReplSetName().value());
     Assert
-        .assertEquals("/protocol/mongo/replication/0/role has different value than that specified",
-            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().get(0).getRole());
+        .assertEquals("/protocol/mongo/replication/role has different value than that specified",
+            Role.HIDDEN_SLAVE, config.getProtocol().getMongo().getReplication().getRole().value());
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/syncSource has different value than that specified",
-        "localhost:27017", config.getProtocol().getMongo().getReplication().get(0).getSyncSource());
-    Assert.assertTrue("/protocol/mongo/replication/0/include not defined", config.getProtocol()
-        .getMongo().getReplication().get(0).getInclude() != null);
-    Assert.assertTrue("/protocol/mongo/replication/0/include/torodb not defined", config
-        .getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb") != null);
+        "/protocol/mongo/replication/syncSource has different value than that specified",
+        "localhost:27017", config.getProtocol().getMongo().getReplication().getSyncSource().value());
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not defined",
+        config.getProtocol().getMongo().getReplication().getShards() != null);
+    Assert.assertTrue(
+        "/protocol/mongo/replication/shards not empty",
+        config.getProtocol().getMongo().getReplication().getShards().isEmpty());
+    Assert.assertTrue("/protocol/mongo/replication/include not defined", config.getProtocol()
+        .getMongo().getReplication().getInclude() != null);
+    Assert.assertTrue("/protocol/mongo/replication/include/torodb not defined", config
+        .getProtocol().getMongo().getReplication().getInclude().get("torodb") != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/include/torodb has different value than that specified",
+        "/protocol/mongo/replication/include/torodb has different value than that specified",
         ImmutableMap.of("postgres", ImmutableList.of(new IndexFilter("awesome", true, null)),
             "derby", ImmutableList.of()),
-        config.getProtocol().getMongo().getReplication().get(0).getInclude().get("torodb"));
-    Assert.assertTrue("/protocol/mongo/replication/0/exclude not defined", config.getProtocol()
-        .getMongo().getReplication().get(0).getExclude() != null);
-    Assert.assertTrue("/protocol/mongo/replication/0/exclude/mongodb not defined", config
-        .getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb") != null);
+        config.getProtocol().getMongo().getReplication().getInclude().get("torodb"));
+    Assert.assertTrue("/protocol/mongo/replication/exclude not defined", config.getProtocol()
+        .getMongo().getReplication().getExclude() != null);
+    Assert.assertTrue("/protocol/mongo/replication/exclude/mongodb not defined", config
+        .getProtocol().getMongo().getReplication().getExclude().get("mongodb") != null);
     Assert.assertEquals(
-        "/protocol/mongo/replication/0/exclude/mongodb has different value than that specified",
+        "/protocol/mongo/replication/exclude/mongodb has different value than that specified",
         ImmutableMap.of("mmapv1", ImmutableList.of(new IndexFilter(null, null, ImmutableMap
             .<String, String>builder().put("the.old.mmapv1", "1").build())), "wiredtiger",
             ImmutableList.of()),
-        config.getProtocol().getMongo().getReplication().get(0).getExclude().get("mongodb"));
+        config.getProtocol().getMongo().getReplication().getExclude().get("mongodb"));
     Assert.assertTrue("/backend not defined", config.getBackend() != null);
     Assert.assertEquals("/backend/postgres not defined", Postgres.class, config.getBackend()
         .getBackendImplementation().getClass());
