@@ -24,16 +24,16 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 public class MutualExclusiveReplSetOrShardsValidator implements
-    ConstraintValidator<MutualExclusiveReplSetOrShards, AbstractReplication> {
+    ConstraintValidator<MutualExclusiveReplSetOrShards, AbstractReplication<?>> {
 
   @Override
   public void initialize(MutualExclusiveReplSetOrShards constraintAnnotation) {
   }
 
   @Override
-  public boolean isValid(AbstractReplication value, ConstraintValidatorContext context) {
+  public boolean isValid(AbstractReplication<?> value, ConstraintValidatorContext context) {
     if ((value.getShardList() != null && !value.getShardList().isEmpty())
-        && (value.getReplSetName().notDefault() || value.getSyncSource().notDefault())) {
+        && value.getSyncSource().notDefault()) {
       return false;
     }
     
