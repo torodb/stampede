@@ -66,7 +66,6 @@ import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * ToroDB Stampede entry point.
@@ -367,24 +366,21 @@ public class Main {
 
     AtomicInteger counter = new AtomicInteger();
     
-    Stream<? extends AbstractShardReplication> replicationConfigsStream;
     if (replicationConfig.getShardList().isEmpty()) {
-      replicationConfigsStream = Stream.of(replicationConfig);
+      return Lists.newArrayList(translateShardConfig(replicationConfig, () -> ""));
     } else {
-      replicationConfigsStream = replicationConfig.getShardList().stream();
+      return replicationConfig.getShardList().stream()
+          .map(shardConfig -> {
+            Replication mergedShardConfig = replicationConfig.mergeWith(shardConfig);
+            Supplier<String> shardIdProvider = () -> "s" + counter.incrementAndGet();
+            if (mergedShardConfig.getName().hasValue()) {
+              shardIdProvider = () -> mergedShardConfig.getName().value();
+            }
+            return translateShardConfig(
+              mergedShardConfig, shardIdProvider);
+          })
+          .collect(Collectors.toList());
     }
-    
-    return replicationConfigsStream
-        .map(shardConfig -> {
-          Replication mergedShardConfig = replicationConfig.mergeWith(shardConfig);
-          Supplier<String> shardIdProvider = () -> "s" + counter.incrementAndGet();
-          if (mergedShardConfig.getName().hasValue()) {
-            shardIdProvider = () -> mergedShardConfig.getName().value();
-          }
-          return translateShardConfig(
-            mergedShardConfig, shardIdProvider);
-        })
-        .collect(Collectors.toList());
   }
 
   private static StampedeConfig.ShardConfigBuilder translateShardConfig(

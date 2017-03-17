@@ -18,6 +18,7 @@
 
 package com.torodb.packaging.config.model.protocol.mongo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -39,7 +40,7 @@ public abstract class AbstractShardReplication {
   private Ssl ssl = new Ssl();
   private Auth auth = new Auth();
 
-  @Description("config.mongo.replication.replSetName")
+  @Description("config.mongo.replication.shard.name")
   @JsonProperty(required = true)
   public StringWithDefault getName() {
     return name;

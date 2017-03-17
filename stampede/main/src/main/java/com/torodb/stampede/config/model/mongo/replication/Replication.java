@@ -45,6 +45,11 @@ public class Replication extends AbstractReplication<ShardReplication> {
     super.setReplSetName(StringWithDefault.withDefault("rs1"));
   }
 
+  @JsonIgnore
+  public StringWithDefault getName() {
+    return super.getName();
+  }
+  
   @Description("config.mongo.replication.replSetName")
   @NotEmptySrtingWithDefault
   @JsonProperty(required = false)
