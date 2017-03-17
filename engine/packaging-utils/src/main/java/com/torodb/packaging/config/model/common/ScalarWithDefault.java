@@ -23,6 +23,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class ScalarWithDefault<T> {
 
+  public static <S extends ScalarWithDefault<?>> S merge(S specific, S common) {
+    if (specific.isDefault()) {
+      return common;
+    }
+    
+    return specific;
+  }
+
   private final T value;
   private final boolean isDefault;
   
@@ -38,20 +46,17 @@ public abstract class ScalarWithDefault<T> {
   }
 
   @JsonIgnore
+  public boolean hasValue() {
+    return value != null;
+  }
+  
+  @JsonIgnore
   public T mergeValue(ScalarWithDefault<T> common) {
     if (isDefault()) {
       return common.value();
     }
     
     return value();
-  }
-
-  public static <S extends ScalarWithDefault<?>> S merge(S specific, S common) {
-    if (specific.isDefault()) {
-      return common;
-    }
-    
-    return specific;
   }
 
   @JsonProperty(value = "default")
@@ -96,5 +101,10 @@ public abstract class ScalarWithDefault<T> {
       return false;
     }
     return true;
+  }
+  
+  @Override
+  public String toString() {
+    return "{" + "value: " + value + ", default: " + isDefault + "}";
   }
 }

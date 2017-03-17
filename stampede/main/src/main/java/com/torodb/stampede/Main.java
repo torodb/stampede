@@ -366,7 +366,6 @@ public class Main {
       Replication replicationConfig) {
 
     AtomicInteger counter = new AtomicInteger();
-    Supplier<String> shardIdProvider = () -> "s" + counter.incrementAndGet();
     
     Stream<? extends AbstractShardReplication> replicationConfigsStream;
     if (replicationConfig.getShardList().isEmpty()) {
@@ -376,8 +375,15 @@ public class Main {
     }
     
     return replicationConfigsStream
-        .map(shardConfig -> translateShardConfig(
-            replicationConfig.mergeWith(shardConfig), shardIdProvider))
+        .map(shardConfig -> {
+          Replication mergedShardConfig = replicationConfig.mergeWith(shardConfig);
+          Supplier<String> shardIdProvider = () -> "s" + counter.incrementAndGet();
+          if (mergedShardConfig.getName().hasValue()) {
+            shardIdProvider = () -> mergedShardConfig.getName().value();
+          }
+          return translateShardConfig(
+            mergedShardConfig, shardIdProvider);
+        })
         .collect(Collectors.toList());
   }
 

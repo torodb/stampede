@@ -25,18 +25,29 @@ import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.jackson.RoleWithDefaultDeserializer;
 import com.torodb.packaging.config.model.common.EnumWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
-import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"replSetName", "syncSource", "role", "ssl", "auth", "include", "exclude"})
+@JsonPropertyOrder({"name", "replSetName", "syncSource", "role", 
+    "ssl", "auth", "include", "exclude"})
 public abstract class AbstractShardReplication {
 
+  private StringWithDefault name = StringWithDefault.withDefault(null);
   private StringWithDefault replSetName = StringWithDefault.withDefault(null);
   private EnumWithDefault<Role> role = EnumWithDefault.withDefault(Role.HIDDEN_SLAVE);
   private StringWithDefault syncSource = StringWithDefault.withDefault(null);
   private Ssl ssl = new Ssl();
   private Auth auth = new Auth();
+
+  @Description("config.mongo.replication.replSetName")
+  @JsonProperty(required = true)
+  public StringWithDefault getName() {
+    return name;
+  }
+
+  public void setName(StringWithDefault name) {
+    this.name = name;
+  }
 
   @Description("config.mongo.replication.replSetName")
   @JsonProperty(required = true)
