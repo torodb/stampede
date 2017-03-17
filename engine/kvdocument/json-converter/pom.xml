@@ -7,7 +7,7 @@
         <version>0.50.1-SNAPSHOT</version>
     </parent>
     <artifactId>json-converter</artifactId>
-    
+
     <name>KVDocument: Gson Converter</name>
 
     <dependencies>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>

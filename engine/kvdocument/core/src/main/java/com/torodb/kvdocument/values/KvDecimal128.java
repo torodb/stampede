@@ -23,8 +23,9 @@ import com.torodb.kvdocument.types.Decimal128Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import javax.annotation.Nonnull;
 
-public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
+public abstract class KvDecimal128 extends KvValue<KvDecimal128> {
 
   private static final long serialVersionUID = 6351251976353558479L;
 
@@ -36,34 +37,33 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     return new DefaultKvDecimal128(value);
   }
 
+  public static KvDecimal128 getNan() {
+    return new DefaultKvDecimal128(DefaultKvDecimal128.NaN_MASK, 0);
+  }
+
+  public static DefaultKvDecimal128 getInfinity() {
+    return new DefaultKvDecimal128(DefaultKvDecimal128.INFINITY_MASK, 0);
+  }
+
+  public static DefaultKvDecimal128 getNegativeZero() {
+    return new DefaultKvDecimal128(0xb040000000000000L, 0x0000000000000000L);
+  }
+
+  @Nonnull
+  @Override
+  public KvDecimal128 getValue() {
+    return this;
+  }
+
+  @Nonnull
+  @Override
+  public Class<? extends KvDecimal128> getValueClass() {
+    return KvDecimal128.class;
+  }
+
   @Override
   public Decimal128Type getType() {
     return Decimal128Type.INSTANCE;
-  }
-
-  @Override
-  public int intValue() {
-    return (int) doubleValue();
-  }
-
-  @Override
-  public long longValue() {
-    return (long) doubleValue();
-  }
-
-  @Override
-  public double doubleValue() {
-    return getValue().doubleValue();
-  }
-
-  @Override
-  public Class<? extends BigDecimal> getValueClass() {
-    return BigDecimal.class;
-  }
-
-  @Override
-  public String toString() {
-    return getValue().toPlainString();
   }
 
   @Override
@@ -95,13 +95,20 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     }
 
     return true;
-  
   }
 
   @Override
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
+
+  public abstract boolean isNaN();
+
+  public abstract boolean isInfinite();
+
+  public abstract boolean isNegativeZero();
+
+  public abstract BigDecimal getBigDecimal();
 
   public abstract long getHigh();
 
@@ -118,7 +125,7 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     private static final int MIN_EXPONENT = -6176;
     private static final int MAX_EXPONENT = 6111;
     private static final int MAX_BIT_LENGTH = 113;
-    
+
     private static final BigInteger BIG_INT_TEN = new BigInteger("10");
     private static final BigInteger BIG_INT_ONE = new BigInteger("1");
     private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
@@ -136,34 +143,22 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     }
 
     @Override
-    public BigDecimal getValue() {
-      if (isNaN()) {
-        throw new ArithmeticException("Can not get value of NaN");
-      }
-
-      if (isInfinite()) {
-        throw new ArithmeticException("Can not get value of Infinite");
-      }
-
-      BigDecimal value = getBigDecimal();
-
-      // If the BigDecimal is 0, but the Decimal128 is negative, that means we have -0.
-      if (isNegative() && value.signum() == 0) {
-        throw new ArithmeticException("Negative zero can not be converted to a BigDecimal");
-      }
-
-      return value;
-    }
-
-    private boolean isNaN() {
+    public boolean isNaN() {
       return (high & NaN_MASK) == NaN_MASK;
     }
 
-    private boolean isInfinite() {
+    @Override
+    public boolean isInfinite() {
       return (high & INFINITY_MASK) == INFINITY_MASK;
     }
 
-    private BigDecimal getBigDecimal() {
+    @Override
+    public boolean isNegativeZero() {
+      return isNegative() && getBigDecimal().signum() == 0;
+    }
+
+    @Override
+    public BigDecimal getBigDecimal() {
       int scale = -getExponent();
 
       if (twoHighestCombinationBitsAreSet()) {
@@ -217,9 +212,10 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
 
     /**
      * Convert a bigDecimal in two longs which represent a Decimal128
+     *
      * @param initialValue bigDecimal to convert
-     * @param isNegative boolean necessary to detect -0, 
-     *          which can't be represented with a BigDecimal 
+     * @param isNegative boolean necessary to detect -0, which can't be represented with a
+     *     BigDecimal
      */
     private void bigDecimalToDecimal128(final BigDecimal initialValue, final boolean isNegative) {
       long localHigh = 0;
@@ -234,8 +230,9 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
       }
 
       if (value.unscaledValue().bitLength() > MAX_BIT_LENGTH) {
-        throw new AssertionError("Unscaled roundedValue is out of range for Decimal128 encoding:"
-            + value.unscaledValue());
+        throw new AssertionError(
+            "Unscaled roundedValue is out of range for Decimal128 encoding:"
+                + value.unscaledValue());
       }
 
       BigInteger significand = value.unscaledValue().abs();
@@ -276,18 +273,18 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
               "Exponent is out of range for Decimal128 encoding of " + initialValue);
         } else {
           BigInteger multiplier = BIG_INT_TEN.pow(diff);
-          value = new BigDecimal(initialValue.unscaledValue().multiply(multiplier),
-              initialValue.scale() + diff);
+          value = new BigDecimal( initialValue.unscaledValue().multiply(multiplier),
+                  initialValue.scale() + diff);
         }
       } else if (-initialValue.scale() < MIN_EXPONENT) {
         // Increasing a very negative exponent may require decreasing precision, which is rounding
-        // Only round exactly (by removing precision that is all zeroes).  
+        // Only round exactly (by removing precision that is all zeroes).
         // An exception is thrown if the rounding would be inexact:
         int diff = initialValue.scale() + MIN_EXPONENT;
         int undiscardedPrecision = ensureExactRounding(initialValue, diff);
         BigInteger divisor = undiscardedPrecision == 0 ? BIG_INT_ONE : BIG_INT_TEN.pow(diff);
         value = new BigDecimal(initialValue.unscaledValue().divide(divisor),
-            initialValue.scale() - diff);
+                initialValue.scale() - diff);
       } else {
         value = initialValue.round(java.math.MathContext.DECIMAL128);
         int extraPrecision = initialValue.precision() - value.precision();
@@ -320,6 +317,23 @@ public abstract class KvDecimal128 extends KvNumeric<BigDecimal> {
     public long getLow() {
       return low;
     }
-  }
 
+    @Override
+    public String toString() {
+      if (isNaN()) {
+        return "NaN";
+      }
+
+      if (isInfinite()) {
+        return "Infinity";
+      }
+
+      // If the BigDecimal is 0, but the Decimal128 is negative, that means we have -0.
+      if (isNegativeZero()) {
+        return "Negative zero";
+      }
+
+      return getBigDecimal().toString();
+    }
+  }
 }

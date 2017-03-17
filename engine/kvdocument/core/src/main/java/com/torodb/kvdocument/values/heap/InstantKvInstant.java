@@ -22,9 +22,7 @@ import com.torodb.kvdocument.values.KvInstant;
 
 import java.time.Instant;
 
-/**
- *
- */
+/** */
 public class InstantKvInstant extends KvInstant {
 
   private static final long serialVersionUID = 5305357955054275540L;
@@ -39,5 +37,4 @@ public class InstantKvInstant extends KvInstant {
   public Instant getValue() {
     return value;
   }
-
 }

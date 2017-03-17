@@ -20,29 +20,24 @@ package com.torodb.backend.derby.converters.jooq;
 
 import com.torodb.backend.converters.jooq.DataTypeForKv;
 import com.torodb.backend.converters.jooq.KvValueConverter;
-import com.torodb.backend.converters.sql.Decimal128SqlBinding;
 import com.torodb.backend.converters.sql.SqlBinding;
+import com.torodb.backend.converters.sql.StringSqlBinding;
 import com.torodb.kvdocument.types.Decimal128Type;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.values.KvDecimal128;
 
-import org.jooq.DataType;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DefaultDataType;
-import org.jooq.impl.SQLDataType;
-
 import java.math.BigDecimal;
 
-public class Decimal128ValueConverter 
-    implements KvValueConverter<BigDecimal, BigDecimal, KvDecimal128> {
+import javax.json.Json;
+import javax.json.JsonObject;
+
+public class Decimal128ValueConverter
+    implements KvValueConverter<JsonObject, String, KvDecimal128> {
 
   private static final long serialVersionUID = 1L;
 
-  public static final DataType<BigDecimal> DECIMAL128_TYPE = 
-      new DefaultDataType<BigDecimal>(SQLDialect.DERBY, SQLDataType.NUMERIC, "NUMERIC");
-
-  public static final DataTypeForKv<KvDecimal128> TYPE = DataTypeForKv.from(DECIMAL128_TYPE,
-      new Decimal128ValueConverter());
+  public static final DataTypeForKv<KvDecimal128> TYPE = DataTypeForKv.from(
+          JsonObjectConverter.TYPE, new Decimal128ValueConverter());
 
   @Override
   public KvType getErasuredType() {
@@ -50,18 +45,37 @@ public class Decimal128ValueConverter
   }
 
   @Override
-  public KvDecimal128 from(BigDecimal databaseObject) {
-    return KvDecimal128.of(databaseObject);
+  public KvDecimal128 from(JsonObject value) {
+
+    if (value.getBoolean("infinite")) {
+      return KvDecimal128.getInfinity();
+    }
+
+    if (value.getBoolean("nan")) {
+      return KvDecimal128.getNan();
+    }
+
+    if (value.getBoolean("negzero")) {
+      return KvDecimal128.getNegativeZero();
+    }
+
+    return KvDecimal128.of(new BigDecimal(value.getString("value")));
   }
 
   @Override
-  public BigDecimal to(KvDecimal128 userObject) {
-    return userObject.getValue();
+  public JsonObject to(KvDecimal128 userObject) {
+
+    return Json.createObjectBuilder()
+        .add("value", userObject.getBigDecimal())
+        .add("infinite", userObject.isInfinite() && !userObject.isNaN())
+        .add("nan", userObject.isNaN())
+        .add("negzero", userObject.isNegativeZero())
+        .build();
   }
 
   @Override
-  public Class<BigDecimal> fromType() {
-    return BigDecimal.class;
+  public Class<JsonObject> fromType() {
+    return JsonObject.class;
   }
 
   @Override
@@ -70,8 +84,7 @@ public class Decimal128ValueConverter
   }
 
   @Override
-  public SqlBinding<BigDecimal> getSqlBinding() {
-    return Decimal128SqlBinding.INSTANCE;
+  public SqlBinding<String> getSqlBinding() {
+    return StringSqlBinding.INSTANCE;
   }
-
 }

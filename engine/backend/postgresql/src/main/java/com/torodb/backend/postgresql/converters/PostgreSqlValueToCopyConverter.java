@@ -26,21 +26,27 @@ import com.torodb.kvdocument.values.KvBinary;
 import com.torodb.kvdocument.values.KvBoolean;
 import com.torodb.kvdocument.values.KvDate;
 import com.torodb.kvdocument.values.KvDecimal128;
+import com.torodb.kvdocument.values.KvDeprecated;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvDouble;
 import com.torodb.kvdocument.values.KvInstant;
 import com.torodb.kvdocument.values.KvInteger;
 import com.torodb.kvdocument.values.KvLong;
+import com.torodb.kvdocument.values.KvMaxKey;
+import com.torodb.kvdocument.values.KvMinKey;
+import com.torodb.kvdocument.values.KvMongoDbPointer;
+import com.torodb.kvdocument.values.KvMongoJavascript;
+import com.torodb.kvdocument.values.KvMongoJavascriptWithScope;
 import com.torodb.kvdocument.values.KvMongoObjectId;
+import com.torodb.kvdocument.values.KvMongoRegex;
 import com.torodb.kvdocument.values.KvMongoTimestamp;
 import com.torodb.kvdocument.values.KvNull;
 import com.torodb.kvdocument.values.KvString;
 import com.torodb.kvdocument.values.KvTime;
+import com.torodb.kvdocument.values.KvUndefined;
 import com.torodb.kvdocument.values.KvValueVisitor;
 
-/**
- *
- */
+/** */
 public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, StringBuilder> {
 
   public static final PostgreSqlValueToCopyConverter INSTANCE =
@@ -48,8 +54,7 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
 
   private static final TextEscaper ESCAPER = CopyEscaper.INSTANCE;
 
-  PostgreSqlValueToCopyConverter() {
-  }
+  PostgreSqlValueToCopyConverter() {}
 
   @Override
   public Void visit(KvBoolean value, StringBuilder arg) {
@@ -143,7 +148,10 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
 
   @Override
   public Void visit(KvMongoTimestamp value, StringBuilder arg) {
-    arg.append('(').append(value.getSecondsSinceEpoch()).append(',').append(value.getOrdinal())
+    arg.append('(')
+        .append(value.getSecondsSinceEpoch())
+        .append(',')
+        .append(value.getOrdinal())
         .append(')');
     return null;
   }
@@ -155,7 +163,62 @@ public class PostgreSqlValueToCopyConverter implements KvValueVisitor<Void, Stri
 
   @Override
   public Void visit(KvDecimal128 value, StringBuilder arg) {
-    arg.append(value.getValue().toPlainString());
+    arg.append(value.getValue().toString());
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMongoJavascript value, StringBuilder arg) {
+    ESCAPER.appendEscaped(arg, value.getValue());
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMongoJavascriptWithScope value, StringBuilder arg) {
+    ESCAPER.appendEscaped(arg, value.getJs());
+    arg.append(value.getScopeAsString());
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMinKey value, StringBuilder arg) {
+    arg.append("false");
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMaxKey value, StringBuilder arg) {
+    arg.append("true");
+    return null;
+  }
+
+  @Override
+  public Void visit(KvUndefined value, StringBuilder arg) {
+    arg.append("true");
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMongoRegex value, StringBuilder arg) {
+    ESCAPER.appendEscaped(arg, value.getPattern());
+    ESCAPER.appendEscaped(arg, ",");
+    ESCAPER.appendEscaped(arg, value.getOptionsAsText());
+    return null;
+  }
+
+  @Override
+  public Void visit(KvMongoDbPointer value, StringBuilder arg) {
+    arg.append('(');
+    ESCAPER.appendEscaped(arg, value.getNamespace());
+    arg.append(',');
+    visit(value.getId(), arg);
+    arg.append(')');
+    return null;
+  }
+
+  @Override
+  public Void visit(KvDeprecated value, StringBuilder arg) {
+    arg.append(value.toString());
     return null;
   }
 }

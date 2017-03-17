@@ -50,4 +50,19 @@ public interface KvValueVisitor<R, A> {
 
   public R visit(KvDecimal128 value, A arg);
 
+  public R visit(KvMongoJavascript value, A arg);
+
+  public R visit(KvMongoJavascriptWithScope value, A arg);
+
+  public R visit(KvMinKey value, A arg);
+
+  public R visit(KvMaxKey value, A arg);
+
+  public R visit(KvUndefined value, A arg);
+
+  public R visit(KvMongoRegex value, A arg);
+
+  public R visit(KvMongoDbPointer value, A arg);
+
+  public R visit(KvDeprecated value, A arg);
 }

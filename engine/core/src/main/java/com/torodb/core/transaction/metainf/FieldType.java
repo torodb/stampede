@@ -23,20 +23,28 @@ import com.torodb.kvdocument.types.BinaryType;
 import com.torodb.kvdocument.types.BooleanType;
 import com.torodb.kvdocument.types.DateType;
 import com.torodb.kvdocument.types.Decimal128Type;
+import com.torodb.kvdocument.types.DeprecatedType;
 import com.torodb.kvdocument.types.DocumentType;
 import com.torodb.kvdocument.types.DoubleType;
 import com.torodb.kvdocument.types.GenericType;
 import com.torodb.kvdocument.types.InstantType;
 import com.torodb.kvdocument.types.IntegerType;
+import com.torodb.kvdocument.types.JavascriptType;
+import com.torodb.kvdocument.types.JavascriptWithScopeType;
 import com.torodb.kvdocument.types.KvType;
 import com.torodb.kvdocument.types.KvTypeVisitor;
 import com.torodb.kvdocument.types.LongType;
+import com.torodb.kvdocument.types.MaxKeyType;
+import com.torodb.kvdocument.types.MinKeyType;
+import com.torodb.kvdocument.types.MongoDbPointerType;
 import com.torodb.kvdocument.types.MongoObjectIdType;
+import com.torodb.kvdocument.types.MongoRegexType;
 import com.torodb.kvdocument.types.MongoTimestampType;
 import com.torodb.kvdocument.types.NonExistentType;
 import com.torodb.kvdocument.types.NullType;
 import com.torodb.kvdocument.types.StringType;
 import com.torodb.kvdocument.types.TimeType;
+import com.torodb.kvdocument.types.UndefinedType;
 
 /**
  *
@@ -55,7 +63,15 @@ public enum FieldType {
   STRING,
   TIME,
   CHILD, 
-  DECIMAL128;
+  DECIMAL128,
+  JAVASCRIPT,
+  JAVASCRIPT_WITH_SCOPE,
+  MIN_KEY,
+  MAX_KEY,
+  UNDEFINED,
+  MONGO_REGEX,
+  MONGO_DB_POINTER,
+  DEPRECATED;
 
   private static final FromKvTypeVisitor FROM_KVTYPE_VISITOR = new FromKvTypeVisitor();
 
@@ -150,6 +166,46 @@ public enum FieldType {
     @Override
     public FieldType visit(Decimal128Type type, Void arg) {
       return DECIMAL128;
+    }
+
+    @Override
+    public FieldType visit(JavascriptType type, Void arg) {
+      return JAVASCRIPT;
+    }
+
+    @Override
+    public FieldType visit(JavascriptWithScopeType value, Void arg) {
+      return JAVASCRIPT_WITH_SCOPE;
+    }
+
+    @Override
+    public FieldType visit(MinKeyType value, Void arg) {
+      return MIN_KEY;
+    }
+
+    @Override
+    public FieldType visit(MaxKeyType value, Void arg) {
+      return MAX_KEY;
+    }
+
+    @Override
+    public FieldType visit(UndefinedType value, Void arg) {
+      return UNDEFINED;
+    }
+
+    @Override
+    public FieldType visit(MongoRegexType value, Void arg) {
+      return MONGO_REGEX;
+    }
+
+    @Override
+    public FieldType visit(MongoDbPointerType value, Void arg) {
+      return MONGO_DB_POINTER;
+    }
+
+    @Override
+    public FieldType visit(DeprecatedType value, Void arg) {
+      return DEPRECATED;
     }
 
   }

@@ -20,9 +20,7 @@ package com.torodb.kvdocument.values.heap;
 
 import com.torodb.kvdocument.values.KvString;
 
-/**
- *
- */
+/** */
 public class StringKvString extends KvString {
 
   private static final long serialVersionUID = -8684386256729659914L;

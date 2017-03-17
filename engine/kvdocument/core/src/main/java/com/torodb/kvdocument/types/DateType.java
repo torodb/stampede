@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class DateType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final DateType INSTANCE = new DateType();
 
-  private DateType() {
-  }
+  private DateType() {}
 
   @Override
   public boolean equals(Object o) {
@@ -45,5 +42,4 @@ public class DateType implements KvType {
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

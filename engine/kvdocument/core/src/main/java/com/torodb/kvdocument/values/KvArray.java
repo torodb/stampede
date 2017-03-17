@@ -89,21 +89,25 @@ public abstract class KvArray extends KvValue<KvArray> implements Iterable<KvVal
 
   @Override
   public int hashCode() {
-    return Hashing.goodFastHash(32).newHasher().putInt(size()).putInt(getElementType().hashCode())
-        .hash().asInt();
+    return Hashing.goodFastHash(32)
+        .newHasher()
+        .putInt(size())
+        .putInt(getElementType().hashCode())
+        .hash()
+        .asInt();
   }
 
   /**
    * Implementations can override this method to optimize the equality check.
    *
-   * Some implementations can optimize the equality check using specific improvements. For example
-   * an implementation that uses an ArrayList can check if another KvArray is different by checking
-   * their sizes, which is O(1) on ArrayLists instead of O(n) in general implementations.
+   * <p>Some implementations can optimize the equality check using specific improvements. For
+   * example an implementation that uses an ArrayList can check if another KvArray is different by
+   * checking their sizes, which is O(1) on ArrayLists instead of O(n) in general implementations.
    *
-   * <p/>If this method return true,
-   * {@link Iterables#elementsEqual(java.lang.Iterable, java.lang.Iterable)} will be called to
-   * check if the content of both KvArray are equal. If it return false,
-   * {@link #equals(java.lang.Object)} will return false without iterating over the KVArrays.
+   * <p>If this method return true, {@link Iterables#elementsEqual(java.lang.Iterable,
+   * java.lang.Iterable)} will be called to check if the content of both KvArray are equal. If it
+   * return false, {@link #equals(java.lang.Object)} will return false without iterating over the
+   * KVArrays.
    *
    * @param other
    * @return
@@ -115,8 +119,8 @@ public abstract class KvArray extends KvValue<KvArray> implements Iterable<KvVal
   /**
    * Two ArrayValues values are equal if their contains equal elements in the same position.
    *
-   * An easy way to implement that is to delegate on
-     * {@link Iterators#elementsEqual(java.lang.Iterator, java.lang.Iterator) }
+   * <p>An easy way to implement that is to delegate on {@link
+   * Iterators#elementsEqual(java.lang.Iterator, java.lang.Iterator) }
    *
    * @param obj
    * @return

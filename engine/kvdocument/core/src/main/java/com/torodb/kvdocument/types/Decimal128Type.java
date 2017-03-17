@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class Decimal128Type implements KvType {
 
   private static final long serialVersionUID = -2675533762531725361L;
 
   public static final Decimal128Type INSTANCE = new Decimal128Type();
 
-  private Decimal128Type() {
-  }
+  private Decimal128Type() {}
 
   @Override
   public boolean equals(Object obj) {

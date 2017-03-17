@@ -21,9 +21,7 @@ package com.torodb.kvdocument.conversion.mongowp.values;
 import com.eightkdata.mongowp.bson.BsonString;
 import com.torodb.kvdocument.values.KvString;
 
-/**
- *
- */
+/** */
 public class BsonKvString extends KvString {
 
   private static final long serialVersionUID = -871070464407449166L;
@@ -38,5 +36,4 @@ public class BsonKvString extends KvString {
   public String getValue() {
     return wrapped.getValue();
   }
-
 }

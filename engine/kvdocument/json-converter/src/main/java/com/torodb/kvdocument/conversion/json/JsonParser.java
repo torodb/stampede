@@ -36,5 +36,4 @@ public interface JsonParser {
   KvDocument createFromResource(String name);
 
   List<KvDocument> createListFromResource(String name);
-
 }

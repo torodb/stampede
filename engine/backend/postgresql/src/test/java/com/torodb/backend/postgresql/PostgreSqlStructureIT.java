@@ -43,7 +43,15 @@ public class PostgreSqlStructureIT extends AbstractStructureIntegrationSuite {
     typesDictionary.put(FieldType.NULL, "bool");
     typesDictionary.put(FieldType.TIME, "time");
     typesDictionary.put(FieldType.CHILD, "bool");
-    typesDictionary.put(FieldType.DECIMAL128, "numeric");
+    typesDictionary.put(FieldType.DECIMAL128, "\"torodb\".\"decimal_128\"");
+    typesDictionary.put(FieldType.JAVASCRIPT, "varchar");
+    typesDictionary.put(FieldType.JAVASCRIPT_WITH_SCOPE, "jsonb");
+    typesDictionary.put(FieldType.MIN_KEY, "bool");
+    typesDictionary.put(FieldType.MAX_KEY, "bool");
+    typesDictionary.put(FieldType.UNDEFINED, "bool");
+    typesDictionary.put(FieldType.MONGO_REGEX, "jsonb");
+    typesDictionary.put(FieldType.MONGO_DB_POINTER, "jsonb");
+    typesDictionary.put(FieldType.DEPRECATED, "varchar");
   }
 
   @Override

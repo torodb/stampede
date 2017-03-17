@@ -22,9 +22,7 @@ import com.torodb.kvdocument.values.KvDate;
 
 import java.time.LocalDate;
 
-/**
- *
- */
+/** */
 public class LocalDateKvDate extends KvDate {
 
   private static final long serialVersionUID = 3458232815035633802L;
@@ -39,5 +37,4 @@ public class LocalDateKvDate extends KvDate {
   public LocalDate getValue() {
     return value;
   }
-
 }
