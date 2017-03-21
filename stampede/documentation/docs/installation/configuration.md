@@ -58,6 +58,18 @@ backend:
     applicationName: "toro"
     ssl: false
 ```
+## Backend connection pooling
+
+By default ToroDB Stampede uses a connection pool with the following configuration:
+
+```json
+backend:
+  pool:
+    connectionPoolTimeout: 10000
+    connectionPoolSize: 30
+```
+
+You may tune those parameters at will. The only constraint is that `connectionPoolSize` has to be at least 20.
 
 ## Custom MongoDB connection
 
