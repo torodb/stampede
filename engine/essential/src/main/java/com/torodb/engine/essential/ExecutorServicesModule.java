@@ -20,12 +20,12 @@ package com.torodb.engine.essential;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
-import com.torodb.concurrent.DefaultConcurrentToolsFactory;
-import com.torodb.concurrent.DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction;
-import com.torodb.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction;
 import com.torodb.core.annotations.ParallelLevel;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.annotations.TorodbRunnableService;
+import com.torodb.core.concurrent.DefaultConcurrentToolsFactory;
+import com.torodb.core.concurrent.DefaultConcurrentToolsFactory.BlockerThreadFactoryFunction;
+import com.torodb.core.concurrent.DefaultConcurrentToolsFactory.ForkJoinThreadFactoryFunction;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;

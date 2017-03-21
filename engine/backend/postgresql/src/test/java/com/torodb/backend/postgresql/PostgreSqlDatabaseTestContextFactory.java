@@ -19,9 +19,9 @@
 package com.torodb.backend.postgresql;
 
 import com.torodb.backend.*;
-import com.torodb.backend.driver.postgresql.OfficialPostgreSqlDriver;
-import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
 import com.torodb.backend.meta.SchemaUpdater;
+import com.torodb.backend.postgresql.driver.OfficialPostgreSqlDriver;
+import com.torodb.backend.postgresql.driver.PostgreSqlDriverProvider;
 import com.torodb.backend.postgresql.meta.PostgreSqlSchemaUpdater;
 import com.torodb.backend.tests.common.DatabaseTestContext;
 import com.torodb.backend.tests.common.IntegrationTestBundleConfig;

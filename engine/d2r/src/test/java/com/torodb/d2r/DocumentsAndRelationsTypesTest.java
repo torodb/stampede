@@ -27,7 +27,7 @@ import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
 import com.torodb.kvdocument.types.*;
 import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.heap.*;
-import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import com.torodb.d2r.metainfo.mvcc.MvccMetainfoRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

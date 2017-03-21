@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.backend.derby.DerbyDbBackendBundle;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfigBuilder;
 
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;

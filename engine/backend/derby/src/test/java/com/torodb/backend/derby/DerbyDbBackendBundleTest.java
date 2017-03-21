@@ -24,7 +24,7 @@ import static org.junit.Assert.assertThat;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfigBuilder;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.logging.DefaultLoggerFactory;

@@ -34,11 +34,6 @@
         </dependency>
         <dependency>
             <groupId>com.torodb.engine</groupId>
-            <artifactId>metainfo-cache</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -48,13 +43,16 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine.backend.driver</groupId>
-            <artifactId>driver-derby</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derby</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.derby</groupId>
+            <artifactId>derbyclient</artifactId>
         </dependency>
 
         <dependency>

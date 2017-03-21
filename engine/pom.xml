@@ -16,8 +16,6 @@
         <module>metrics</module>
         <module>core</module>
         <module>d2r</module>
-        <module>metainfo-cache</module>
-        <module>concurrent</module>
         <module>mongodb</module>
         <module>torod</module>
         <module>kvdocument</module>

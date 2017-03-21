@@ -29,11 +29,6 @@
             <artifactId>guice-assistedinject</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>concurrent</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jool</artifactId>
         </dependency>

@@ -32,7 +32,7 @@ import com.torodb.kvdocument.types.NullType;
 import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvMongoObjectId;
 import com.torodb.kvdocument.values.KvValue;
-import com.torodb.metainfo.cache.mvcc.MvccMetainfoRepository;
+import com.torodb.d2r.metainfo.mvcc.MvccMetainfoRepository;
 import org.junit.Before;
 import org.junit.Test;
 

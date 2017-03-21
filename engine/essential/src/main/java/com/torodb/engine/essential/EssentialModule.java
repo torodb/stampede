@@ -19,14 +19,14 @@
 package com.torodb.engine.essential;
 
 import com.google.inject.AbstractModule;
-import com.torodb.concurrent.guice.ConcurrentModule;
 import com.torodb.core.BuildProperties;
 import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.concurrent.guice.ConcurrentModule;
 import com.torodb.core.guice.CoreModule;
 import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.core.metrics.MetricsModule;
-import com.torodb.metainfo.guice.MetainfModule;
+import com.torodb.d2r.guice.MetainfModule;
 
 import java.time.Clock;
 

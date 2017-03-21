@@ -12,6 +12,9 @@
     <artifactId>backend-postgresql</artifactId>
     <name>ToroDB: Backend PostgreSQL</name>
     <packaging>jar</packaging>
+    
+    <description>PostgreSQL implementation of a ToroDB backend.</description>
+    
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -32,11 +35,6 @@
         </dependency>
         <dependency>
             <groupId>com.torodb.engine</groupId>
-            <artifactId>metainfo-cache</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -46,13 +44,12 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine.backend.driver</groupId>
-            <artifactId>driver-postgresql</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
 
 
@@ -73,5 +70,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <description>PostgreSQL implementation of a ToroDB backend.</description>
 </project>
