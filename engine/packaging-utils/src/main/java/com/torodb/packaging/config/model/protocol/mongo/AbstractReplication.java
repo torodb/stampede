@@ -65,7 +65,12 @@ public abstract class AbstractReplication<T extends AbstractShardReplication>
     this.shards = shards;
   }
 
-  protected void merge(AbstractShardReplication shard, AbstractReplication<T> mergedShard) {
+  @JsonIgnore
+  public boolean isShardingReplication() {
+    return !getShardList().isEmpty();
+  }
+
+  protected void merge(AbstractShardReplication shard, AbstractShardReplication mergedShard) {
     mergedShard.setReplSetName(ScalarWithDefault.merge(shard.getReplSetName(), getReplSetName()));
     mergedShard.setSyncSource(shard.getSyncSource());
     

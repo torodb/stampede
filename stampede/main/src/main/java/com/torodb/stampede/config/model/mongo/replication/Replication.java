@@ -75,6 +75,12 @@ public class Replication extends AbstractReplication<ShardReplication> {
     return mongopassFile;
   }
 
+  /**
+   * This method replicates #getShardList, but it is needed to avoid errors on jackson, please
+   * use that method instead.
+   *
+   * @see #getShardList() 
+   */
   @Description("config.mongo.shards")
   @Valid
   @JsonProperty(required = false)
@@ -100,12 +106,10 @@ public class Replication extends AbstractReplication<ShardReplication> {
     super.setSyncSource(syncSource);
   }
   
-  public Replication mergeWith(AbstractShardReplication shard) {
-    Replication mergedShard = new Replication();
+  public ShardReplication mergeWith(AbstractShardReplication shard) {
+    ShardReplication mergedShard = new ShardReplication();
     
     merge(shard, mergedShard);
-    
-    mergedShard.setMongopassFile(getMongopassFile());
     
     return mergedShard;
   }

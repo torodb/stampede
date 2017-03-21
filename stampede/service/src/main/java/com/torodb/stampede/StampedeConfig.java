@@ -36,10 +36,11 @@ public class StampedeConfig {
   private final Injector essentialInjector;
   private final Function<BundleConfig, BackendBundle> backendBundleGenerator;
   private final ReplicationFilters userReplFilters;
+  private final boolean unsharded;
   private final List<ShardConfigBuilder> shardConfigBuilders;
   private final LoggerFactory lifecycleLoggerFactory;
 
-  public StampedeConfig(Injector essentialInjector,
+  private StampedeConfig(Injector essentialInjector,
       Function<BundleConfig, BackendBundle> backendBundleGenerator,
       ReplicationFilters userReplFilters, List<ShardConfigBuilder> shardConfigBuilders,
       LoggerFactory lf) {
@@ -48,6 +49,35 @@ public class StampedeConfig {
     this.userReplFilters = userReplFilters;
     this.shardConfigBuilders = shardConfigBuilders;
     this.lifecycleLoggerFactory = lf;
+    this.unsharded = false;
+  }
+
+  private StampedeConfig(Injector essentialInjector,
+      Function<BundleConfig, BackendBundle> backendBundleGenerator,
+      ReplicationFilters userReplFilters, ShardConfigBuilder shardConfigBuilder,
+      LoggerFactory lf) {
+    this.essentialInjector = essentialInjector;
+    this.backendBundleGenerator = backendBundleGenerator;
+    this.userReplFilters = userReplFilters;
+    this.shardConfigBuilders = Collections.singletonList(shardConfigBuilder);
+    this.lifecycleLoggerFactory = lf;
+    this.unsharded = true;
+  }
+
+  public static StampedeConfig createShardingConfig(Injector essentialInjector,
+      Function<BundleConfig, BackendBundle> backendBundleGenerator,
+      ReplicationFilters userReplFilters, List<ShardConfigBuilder> shardConfigBuilders,
+      LoggerFactory lf) {
+    return new StampedeConfig(essentialInjector, backendBundleGenerator, userReplFilters,
+        shardConfigBuilders, lf);
+  }
+
+  public static StampedeConfig createUnshardedConfig(Injector essentialInjector,
+      Function<BundleConfig, BackendBundle> backendBundleGenerator,
+      ReplicationFilters userReplFilters, ShardConfigBuilder shardConfigBuilder,
+      LoggerFactory lf) {
+    return new StampedeConfig(essentialInjector, backendBundleGenerator, userReplFilters,
+        shardConfigBuilder, lf);
   }
 
   public Injector getEssentialInjector() {
@@ -56,6 +86,10 @@ public class StampedeConfig {
 
   public ThreadFactory getThreadFactory() {
     return getEssentialInjector().getInstance(ThreadFactory.class);
+  }
+
+  public boolean isUnsharded() {
+    return unsharded;
   }
 
   /**
