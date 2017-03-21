@@ -13,7 +13,6 @@
     <packaging>pom</packaging>
     
     <modules>
-        <module>metrics</module>
         <module>core</module>
         <module>d2r</module>
         <module>mongodb</module>

@@ -23,6 +23,8 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
+import com.torodb.core.metrics.SettableGauge;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.metrics.directory.Directory;
 
 public class DirectoryToroMetricRegistry implements ToroMetricRegistry {

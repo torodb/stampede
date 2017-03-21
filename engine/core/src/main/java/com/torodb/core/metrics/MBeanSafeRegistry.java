@@ -26,6 +26,7 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ObjectNameFactory;
 import com.codahale.metrics.Timer;
+import com.torodb.core.metrics.SettableGauge;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

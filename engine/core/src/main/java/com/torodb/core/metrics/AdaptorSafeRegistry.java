@@ -25,6 +25,7 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Timer;
 import com.google.inject.Inject;
+import com.torodb.core.metrics.SettableGauge;
 import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramReservoir;
 import org.mpierce.metrics.reservoir.hdrhistogram.HdrHistogramResetOnSnapshotReservoir;
 

@@ -21,6 +21,8 @@ package com.torodb.core.metrics;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Singleton;
 import com.torodb.core.guice.EssentialToroModule;
+import com.torodb.core.metrics.DisabledMetricRegistry;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.metrics.directory.Directory;
 import com.torodb.core.metrics.directory.RootMetricDirectory;
 

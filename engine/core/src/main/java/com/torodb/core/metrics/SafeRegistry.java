@@ -24,6 +24,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
 import com.torodb.core.metrics.SettableGauge;
+import com.torodb.core.metrics.SettableGauge;
 
 import javax.annotation.concurrent.ThreadSafe;
 
