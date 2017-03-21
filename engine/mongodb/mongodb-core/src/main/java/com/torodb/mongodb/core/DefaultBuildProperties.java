@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.essential;
+package com.torodb.mongodb.core;
 
 import com.google.common.io.Resources;
 import com.torodb.core.BuildProperties;

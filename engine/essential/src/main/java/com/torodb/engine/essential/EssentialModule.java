@@ -19,7 +19,6 @@
 package com.torodb.engine.essential;
 
 import com.google.inject.AbstractModule;
-import com.torodb.core.BuildProperties;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.concurrent.guice.ConcurrentModule;
 import com.torodb.core.guice.CoreModule;
@@ -59,10 +58,6 @@ public class EssentialModule extends AbstractModule {
     install(new ConcurrentModule(lifecycleLoggerFactory));
     install(new MetainfModule());
     install(new MetricsModule(metricsConfig));
-
-    bind(BuildProperties.class)
-        .to(DefaultBuildProperties.class)
-        .asEagerSingleton();
   }
 
 }

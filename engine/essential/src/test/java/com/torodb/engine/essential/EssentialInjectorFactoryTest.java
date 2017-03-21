@@ -18,6 +18,7 @@
 
 package com.torodb.engine.essential;
 
+import com.torodb.engine.essential.EssentialInjectorFactory;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import org.junit.Test;
 
