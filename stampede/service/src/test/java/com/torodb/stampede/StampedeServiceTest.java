@@ -28,7 +28,7 @@ import com.torodb.backend.derby.driver.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.logging.DefaultLoggerFactory;
-import com.torodb.engine.essential.EssentialModule;
+import com.torodb.core.guice.EssentialModule;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;

@@ -30,7 +30,7 @@ import com.torodb.core.logging.ComponentLoggerFactory;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.mongodb.wp.MongoDbWpConfig;
-import com.torodb.engine.essential.EssentialModule;
+import com.torodb.core.guice.EssentialModule;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import org.junit.Before;
 import org.junit.Test;

@@ -10,6 +10,12 @@
     
     <name>ToroDB: MongoDB Core</name>
     <packaging>jar</packaging>
+    
+    <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssXX</maven.build.timestamp.format>
+        <build.timestamp>${maven.build.timestamp}</build.timestamp>
+    </properties>
+    
     <dependencies>
         <dependency>
             <groupId>com.torodb.engine</groupId>
@@ -62,12 +68,6 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>essential</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

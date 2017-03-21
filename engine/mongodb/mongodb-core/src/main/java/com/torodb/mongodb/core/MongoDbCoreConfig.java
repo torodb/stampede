@@ -86,8 +86,7 @@ public class MongoDbCoreConfig extends BundleConfigImpl {
       BundleConfig bundleConfig) {
     Clock clock = bundleConfig.getEssentialInjector()
         .getInstance(Clock.class);
-    BuildProperties buildProp = bundleConfig.getEssentialInjector()
-        .getInstance(BuildProperties.class);
+    BuildProperties buildProp = new DefaultBuildProperties();
     CommandClassifier commandClassifier = CommandClassifierImpl.createDefault(lf, clock, buildProp,
         mongodServerConfig);
     

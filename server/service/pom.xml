@@ -94,12 +94,6 @@
             <artifactId>packaging-utils</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>essential</artifactId>
-            <version>${torodb.engine.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

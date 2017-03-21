@@ -25,7 +25,7 @@ import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.essential.EssentialModule;
+import com.torodb.core.guice.EssentialModule;
 
 import java.time.Clock;
 

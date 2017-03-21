@@ -14,13 +14,11 @@
     
     <modules>
         <module>core</module>
-        <module>d2r</module>
         <module>mongodb</module>
         <module>torod</module>
         <module>kvdocument</module>
         <module>common</module>
         <module>backend</module>
         <module>packaging-utils</module>
-        <module>essential</module>
     </modules>
 </project>

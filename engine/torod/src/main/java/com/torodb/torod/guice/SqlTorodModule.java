@@ -29,7 +29,7 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
 import com.torodb.core.guice.EssentialToDefaultModule;
-import com.torodb.d2r.guice.D2RModule;
+import com.torodb.core.transaction.metainf.impl.guice.D2RModule;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.impl.sql.SqlTorodServer;

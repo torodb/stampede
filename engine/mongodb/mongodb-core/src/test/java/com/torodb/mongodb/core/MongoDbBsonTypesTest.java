@@ -33,7 +33,7 @@ import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.metrics.DisabledMetricRegistry;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.essential.EssentialModule;
+import com.torodb.core.guice.EssentialModule;
 import com.torodb.mongodb.commands.impl.CommandClassifierImpl;
 import com.torodb.mongodb.commands.signatures.general.FindCommand;
 import com.torodb.mongodb.commands.signatures.general.InsertCommand;
