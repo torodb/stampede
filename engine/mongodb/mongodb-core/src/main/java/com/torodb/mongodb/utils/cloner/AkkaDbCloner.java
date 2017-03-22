@@ -52,7 +52,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
-import com.torodb.concurrent.ActorSystemTorodbService;
+import com.torodb.core.concurrent.ActorSystemTorodbService;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.logging.DefaultLoggerFactory;

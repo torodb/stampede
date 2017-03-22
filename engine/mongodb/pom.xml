@@ -16,6 +16,5 @@
         <module>mongodb-core</module>
         <module>wp</module>
         <module>repl</module>
-        <module>sharding</module>
     </modules>
 </project>

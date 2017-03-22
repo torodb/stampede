@@ -23,7 +23,7 @@ import com.torodb.backend.BackendConfig;
 import com.torodb.backend.BackendConfigImpl;
 import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.TransactionIsolationLevel;
-import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
+import com.torodb.backend.postgresql.driver.PostgreSqlDriverProvider;
 import com.torodb.core.annotations.TorodbIdleService;
 import org.apache.logging.log4j.Logger;
 
