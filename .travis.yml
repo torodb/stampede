@@ -8,7 +8,13 @@ before_install:
 
 sudo: required
 dist: trusty
-script: mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
+script: |
+        if [ "$TRAVIS_EVENT_TYPE" == cron ] && [ "$TRAVIS_BRANCH" == devel ]
+        then
+            bash .travis/build-packages
+        else
+            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
+        fi
 jdk: oraclejdk8
 
 env:
@@ -39,5 +45,18 @@ cache:
     - '$HOME/.sonar/cache'
 
 after_success:
-  - if [[ $TRAVIS_REPO_SLUG = torodb/torodb ]]; then bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports'; else echo 'Codecov not notified'; fi
-  - if [[ $TRAVIS_REPO_SLUG = torodb/torodb ]]; then mvn sonar:sonar || echo 'Error while notifying SonarQube'; else echo 'SonarQube not notified'; fi
+  - |
+    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == torodb/torodb ]
+    then
+        bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports'
+    else
+        echo 'Codecov not notified'
+    fi
+  - |
+    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == torodb/torodb ]
+    then
+        mvn sonar:sonar || echo 'Error while notifying SonarQube'
+    else
+        echo 'SonarQube not notified'
+    fi
+  
