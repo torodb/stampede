@@ -16,15 +16,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding;
+package com.torodb.mongodb.repl.sharding;
 
 import com.google.inject.Injector;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.supervision.Supervisor;
-import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig.ShardConfig;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig.ShardConfig;
 import com.torodb.torod.TorodBundle;
 
 import java.util.Objects;

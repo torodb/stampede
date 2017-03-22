@@ -16,9 +16,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding.isolation.db;
+package com.torodb.mongodb.repl.sharding.isolation.db;
 
-import com.torodb.engine.mongodb.sharding.isolation.ConnDecorator;
+import com.torodb.mongodb.repl.sharding.isolation.ConnDecorator;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
 import com.torodb.torod.ReadOnlyTorodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;

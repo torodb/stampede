@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding.isolation.db;
+package com.torodb.mongodb.repl.sharding.isolation.db;
 
 import com.google.common.util.concurrent.Service;
 import com.torodb.core.bundle.AbstractBundle;

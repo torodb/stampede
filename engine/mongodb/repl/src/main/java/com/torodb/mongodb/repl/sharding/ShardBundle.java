@@ -16,14 +16,21 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding.isolation.db;
+package com.torodb.mongodb.repl.sharding;
 
-import com.torodb.torod.ReadOnlyTorodTransaction;
+import com.eightkdata.mongowp.server.api.tools.Empty;
+import com.torodb.core.bundle.AbstractBundle;
 
-public class DbIsolatorReadTrans extends DbIsolatorTrans<ReadOnlyTorodTransaction>
-    implements ReadOnlyTorodTransaction {
-  
-  public DbIsolatorReadTrans(DbIsolatorConn connection, ReadOnlyTorodTransaction decorated) {
-    super(connection, decorated);
+public abstract class ShardBundle extends AbstractBundle<Empty> {
+
+  ShardBundle(ShardBundleConfig config) {
+    super(config);
   }
+
+  @Override
+  public Empty getExternalInterface() {
+    return Empty.getInstance();
+  }
+
+
 }

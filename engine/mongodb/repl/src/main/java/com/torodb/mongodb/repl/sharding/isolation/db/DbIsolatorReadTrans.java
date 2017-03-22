@@ -16,8 +16,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding;
+package com.torodb.mongodb.repl.sharding.isolation.db;
 
-public class MongoDbShardingExtInt {
+import com.torodb.torod.ReadOnlyTorodTransaction;
 
+public class DbIsolatorReadTrans extends DbIsolatorTrans<ReadOnlyTorodTransaction>
+    implements ReadOnlyTorodTransaction {
+  
+  public DbIsolatorReadTrans(DbIsolatorConn connection, ReadOnlyTorodTransaction decorated) {
+    super(connection, decorated);
+  }
 }

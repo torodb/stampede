@@ -16,98 +16,68 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding;
+package com.torodb.mongodb.repl.sharding;
 
 import com.google.common.util.concurrent.Service;
-import com.google.inject.Key;
-import com.torodb.core.guice.Essential;
 import com.torodb.core.logging.ComponentLoggerFactory;
-import com.torodb.core.metrics.ToroMetricRegistry;
-import com.torodb.engine.mongodb.sharding.isolation.db.DbIsolatedTorodBundle;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.core.MongoDbCoreConfig;
 import com.torodb.mongodb.repl.MongoDbReplBundle;
 import com.torodb.mongodb.repl.MongoDbReplConfig;
 import com.torodb.mongodb.repl.MongoDbReplConfigBuilder;
 import com.torodb.torod.TorodBundle;
-import com.torodb.torod.TorodServer;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-public class MultiShardBundle extends ShardBundle {
+public class UnshardedShardBundle extends ShardBundle {
 
-  private final Logger logger;
-  private final String shardId;
   private final TorodBundle actualTorodBundle;
-  private final TorodBundle torodBundle;
   private final MongoDbCoreBundle coreBundle;
   private final MongoDbReplBundle replBundle;
 
-  MultiShardBundle(ShardBundleConfig config) {
+  public UnshardedShardBundle(ShardBundleConfig config) {
     super(config);
-    this.logger = config.getLifecycleLoggingFactory().apply(this.getClass());
 
     actualTorodBundle = config.getTorodBundle();
-    TorodServer actualTorod = actualTorodBundle.getExternalInterface().getTorodServer();
 
-    shardId = config.getShardId();
-    Optional<ToroMetricRegistry> shardMetricRegistry = createToroMetricRegistry(config);
-    ComponentLoggerFactory mongodLf = new ComponentLoggerFactory("MONGOD-" + shardId);
-
-    torodBundle = new DbIsolatedTorodBundle(shardId, actualTorod, mongodLf, config);
     coreBundle = new MongoDbCoreBundle(
         MongoDbCoreConfig.simpleNonServerConfig(
-            torodBundle,
-            mongodLf,
-            shardMetricRegistry,
+            actualTorodBundle,
+            new ComponentLoggerFactory("MONGOD"),
+            Optional.empty(),
             config
         )
     );
-    replBundle = new MongoDbReplBundle(createReplConfig(config, shardMetricRegistry, coreBundle));
+    replBundle = new MongoDbReplBundle(createReplConfig(config, coreBundle));
   }
 
   @Override
   protected void postDependenciesStartUp() throws Exception {
-    logger.info("Starting replication shard {}", shardId);
-
-    torodBundle.startAsync();
-    torodBundle.awaitRunning();
-
     coreBundle.startAsync();
     coreBundle.awaitRunning();
 
     replBundle.startAsync();
     replBundle.awaitRunning();
-
-    logger.info("Replication shard {} has been started", shardId);
   }
 
   @Override
   protected void preDependenciesShutDown() throws Exception {
-    logger.info("Shutting down replication shard {}", shardId);
-
     replBundle.stopAsync();
     replBundle.awaitTerminated();
 
     coreBundle.stopAsync();
     coreBundle.awaitTerminated();
-
-    torodBundle.stopAsync();
-    torodBundle.awaitTerminated();
-
-    logger.info("Replication shard {} has been shutted down", shardId);
   }
 
   @Override
   public Collection<Service> getDependencies() {
-    return Collections.emptyList();
+    return Collections.singleton(actualTorodBundle);
   }
 
   private static MongoDbReplConfig createReplConfig(
-      ShardBundleConfig config, Optional<ToroMetricRegistry> shardMetricRegistry,
+      ShardBundleConfig config,
       MongoDbCoreBundle coreBundle) {
     return new MongoDbReplConfigBuilder(config)
         .setConsistencyHandler(config.getConsistencyHandler())
@@ -115,20 +85,9 @@ public class MultiShardBundle extends ShardBundle {
         .setMongoClientConfiguration(config.getClientConfig())
         .setReplSetName(config.getReplSetName())
         .setReplicationFilters(config.getUserReplFilter())
-        .setMetricRegistry(shardMetricRegistry)
-        .setLoggerFactory(new ComponentLoggerFactory("REPL-" + config.getShardId()))
+        .setMetricRegistry(Optional.empty())
+        .setLoggerFactory(new ComponentLoggerFactory("REPL"))
         .build();
-  }
-
-  private static Optional<ToroMetricRegistry> createToroMetricRegistry(ShardBundleConfig config) {
-    ToroMetricRegistry parentRegistry = config.getEssentialInjector().getInstance(
-        Key.get(ToroMetricRegistry.class, Essential.class)
-    );
-
-    return Optional.of(parentRegistry
-        .createSubRegistry("replication")
-        .createSubRegistry("shard", config.getShardId())
-    );
   }
 
 }

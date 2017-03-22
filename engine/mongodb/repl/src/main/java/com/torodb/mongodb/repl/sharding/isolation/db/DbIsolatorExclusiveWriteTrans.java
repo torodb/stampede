@@ -16,25 +16,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding.isolation;
+package com.torodb.mongodb.repl.sharding.isolation.db;
 
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.transaction.RollbackException;
 import com.torodb.torod.ExclusiveWriteTorodTransaction;
-import com.torodb.torod.TorodConnection;
 
-public class ExclusiveWriteTransDecorator<C extends TorodConnection>
-    extends WriteTransDecorator<ExclusiveWriteTorodTransaction, C>
+@SuppressWarnings("checkstyle:LineLength")
+public class DbIsolatorExclusiveWriteTrans extends DbIsolatorWriteTrans<ExclusiveWriteTorodTransaction>
     implements ExclusiveWriteTorodTransaction {
 
-  public ExclusiveWriteTransDecorator(C connection, ExclusiveWriteTorodTransaction decorated) {
+  public DbIsolatorExclusiveWriteTrans(DbIsolatorConn connection,
+      ExclusiveWriteTorodTransaction decorated) {
     super(connection, decorated);
   }
 
   @Override
   public void renameCollection(String fromDb, String fromCollection, String toDb,
       String toCollection) throws RollbackException, UserException {
-    getDecorated().renameCollection(fromDb, fromCollection, toDb, toCollection);
+    getDecorated().renameCollection(
+        convertDatabaseName(toDb),
+        fromCollection,
+        convertDatabaseName(toDb),
+        toCollection
+    );
   }
 
 }

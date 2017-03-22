@@ -29,7 +29,7 @@ import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.guice.EssentialModule;
-import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import org.junit.Before;

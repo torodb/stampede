@@ -16,14 +16,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding.isolation.db;
+package com.torodb.mongodb.repl.sharding.isolation.db;
 
 import com.torodb.core.cursors.Cursor;
 import com.torodb.core.exceptions.user.CollectionNotFoundException;
 import com.torodb.core.exceptions.user.IndexNotFoundException;
 import com.torodb.core.language.AttributeReference;
-import com.torodb.engine.mongodb.sharding.isolation.TransDecorator;
 import com.torodb.kvdocument.values.KvValue;
+import com.torodb.mongodb.repl.sharding.isolation.TransDecorator;
 import com.torodb.torod.CollectionInfo;
 import com.torodb.torod.IndexInfo;
 import com.torodb.torod.TorodTransaction;

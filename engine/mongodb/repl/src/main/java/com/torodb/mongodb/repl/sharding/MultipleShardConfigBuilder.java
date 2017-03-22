@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.engine.mongodb.sharding;
+package com.torodb.mongodb.repl.sharding;
 
 import com.google.inject.Injector;
 import com.torodb.core.bundle.BundleConfig;
@@ -25,42 +25,42 @@ import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.torod.TorodBundle;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- *
- */
-class UnshardedConfigBuilder extends MongoDbShardingConfigBuilder {
+class MultipleShardConfigBuilder extends MongoDbShardingConfigBuilder {
 
-  private MongoDbShardingConfig.ShardConfig shardConfig;
+  private final Map<String, MongoDbShardingConfig.ShardConfig> shardConfigs = new HashMap<>();
 
-  protected UnshardedConfigBuilder(BundleConfig generalConfig) {
+  protected MultipleShardConfigBuilder(BundleConfig generalConfig) {
     super(generalConfig);
   }
 
-  protected UnshardedConfigBuilder(Injector essentialInjector, Supervisor supervisor) {
+  protected MultipleShardConfigBuilder(Injector essentialInjector, Supervisor supervisor) {
     super(essentialInjector, supervisor);
   }
-
+  
   @Override
-  public MongoDbShardingConfigBuilder addShard(MongoDbShardingConfig.ShardConfig shardConfig) {
-    if (this.shardConfig != null) {
-      throw new IllegalArgumentException("A shard with name " + shardConfig.getShardId() + " has "
-          + "been already added and this builder only supports a single shard.");
+  public MongoDbShardingConfigBuilder addShard(MongoDbShardingConfig.ShardConfig config) {
+    if (shardConfigs.containsKey(config.getShardId())) {
+      throw new IllegalArgumentException("The shard " + config.getShardId() + " has been already"
+          + "added");
     }
-    this.shardConfig = shardConfig;
+    shardConfigs.put(config.getShardId(), config);
     return this;
   }
 
   @Override
   protected MongoDbShardingConfig build(TorodBundle torodBundle, ReplicationFilters userReplFilter,
       LoggerFactory lifecycleLoggerFactory, BundleConfig generalConfig) {
-    if (shardConfig == null) {
+    if (shardConfigs.isEmpty()) {
       throw new IllegalArgumentException("At least one shard is required");
     }
 
     return new MongoDbShardingConfig(
         torodBundle,
-        shardConfig,
+        new ArrayList<>(shardConfigs.values()),
         userReplFilter,
         lifecycleLoggerFactory,
         generalConfig
