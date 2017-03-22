@@ -35,7 +35,7 @@ import java.util.Objects;
 public class MongoDbShardingConfig implements BundleConfig  {
 
   private final TorodBundle torodBundle;
-  private final boolean singleShard;
+  private final boolean unsharded;
   private final List<ShardConfig> shardConfigs;
   private final ReplicationFilters userReplFilter;
   private final BundleConfig generalConfig;
@@ -49,7 +49,7 @@ public class MongoDbShardingConfig implements BundleConfig  {
     this.userReplFilter = userReplFilter;
     this.generalConfig = generalConfig;
     this.lifecycleLoggingFactory = lifecycleLoggingFactory;
-    this.singleShard = true;
+    this.unsharded = true;
   }
 
   MongoDbShardingConfig(TorodBundle torodBundle, List<ShardConfig> shardConfigs,
@@ -60,15 +60,15 @@ public class MongoDbShardingConfig implements BundleConfig  {
     this.userReplFilter = userReplFilter;
     this.lifecycleLoggingFactory = lifecycleLoggingFactory;
     this.generalConfig = generalConfig;
-    this.singleShard = false;
+    this.unsharded = false;
   }
 
   public TorodBundle getTorodBundle() {
     return torodBundle;
   }
 
-  public boolean isSingleShard() {
-    return singleShard;
+  public boolean isUnsharded() {
+    return unsharded;
   }
 
   @DoNotChange
