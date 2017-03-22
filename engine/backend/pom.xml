@@ -20,7 +20,6 @@
     </description>
 
     <modules>
-        <module>driver</module>
         <module>common</module>
         <module>derby</module>
         <module>postgresql</module>

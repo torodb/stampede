@@ -18,9 +18,9 @@
 
 package com.torodb.mongodb.repl;
 
-import com.torodb.concurrent.ExecutorServiceShutdownHelper;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.concurrent.ExecutorServiceShutdownHelper;
 import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.Supervisor;

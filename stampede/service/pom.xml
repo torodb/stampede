@@ -23,11 +23,6 @@
             <version>${torodb.engine.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine.mongodb</groupId>
-            <artifactId>sharding</artifactId>
-            <version>${torodb.engine.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.torodb.engine.backend</groupId>
             <artifactId>backend-postgresql</artifactId>
         </dependency>
@@ -45,12 +40,6 @@
         <dependency>
             <groupId>com.torodb.engine</groupId>
             <artifactId>packaging-utils</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>essential</artifactId>
-            <version>${torodb.engine.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

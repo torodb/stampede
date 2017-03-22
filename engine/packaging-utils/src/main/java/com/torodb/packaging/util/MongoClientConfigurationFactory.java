@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.net.HostAndPort;
 import com.torodb.core.exceptions.SystemException;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Auth;
 import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
 import com.torodb.packaging.config.model.protocol.mongo.Ssl;
@@ -65,7 +65,7 @@ public class MongoClientConfigurationFactory {
       ));
 
   public static MongoClientConfiguration getMongoClientConfiguration(
-      AbstractReplication replication) {
+      AbstractShardReplication replication) {
     HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource().value())
         .withDefaultPort(27017);
 

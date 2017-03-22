@@ -21,8 +21,8 @@ package com.torodb.backend.derby;
 import com.torodb.backend.AbstractDbBackendService;
 import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.TransactionIsolationLevel;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
-import com.torodb.backend.driver.derby.DerbyDriverProvider;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfig;
+import com.torodb.backend.derby.driver.DerbyDriverProvider;
 import com.torodb.core.annotations.TorodbIdleService;
 import org.apache.logging.log4j.Logger;
 

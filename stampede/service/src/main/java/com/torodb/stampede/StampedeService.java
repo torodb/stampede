@@ -34,10 +34,10 @@ import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.RetrierGiveUpException;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.mongodb.sharding.MongoDbShardingBundle;
-import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
-import com.torodb.engine.mongodb.sharding.MongoDbShardingConfigBuilder;
 import com.torodb.mongodb.repl.ConsistencyHandler;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingBundle;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingConfigBuilder;
 import com.torodb.torod.SqlTorodBundle;
 import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
@@ -172,9 +172,14 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
   private MongoDbShardingBundle createShardingBundle(TorodBundle torodBundle,
       Map<String, ConsistencyHandler> consistencyHandler) {
 
-    @SuppressWarnings("checkstyle:LineLength")
-    MongoDbShardingConfigBuilder configBuilder = new MongoDbShardingConfigBuilder(generalBundleConfig)
-        .setTorodBundle(torodBundle)
+    MongoDbShardingConfigBuilder configBuilder;
+    if (stampedeConfig.isUnsharded()) {
+      configBuilder = MongoDbShardingConfigBuilder.createUnshardedBuilder(generalBundleConfig);
+    } else {
+      configBuilder = MongoDbShardingConfigBuilder.createShardedBuilder(generalBundleConfig);
+    }
+
+    configBuilder.setTorodBundle(torodBundle)
         .setUserReplFilter(stampedeConfig.getUserReplicationFilters())
         .setLifecycleLoggerFactory(stampedeConfig.getLifecycleLoggerFactory());
 

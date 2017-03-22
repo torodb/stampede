@@ -24,12 +24,12 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.backend.derby.DerbyDbBackendBundle;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.logging.DefaultLoggerFactory;
-import com.torodb.engine.essential.EssentialModule;
-import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
+import com.torodb.core.guice.EssentialModule;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import org.junit.Before;
@@ -47,7 +47,7 @@ public class StampedeServiceTest {
   @SuppressWarnings("checkstyle:JavadocMethod")
   @Before
   public void setUp() {
-    stampedeConfig = new StampedeConfig(
+    stampedeConfig = StampedeConfig.createShardingConfig(
         createEssentialInjector(),
         this::createBackendBundle,
         ReplicationFilters.allowAll(),
