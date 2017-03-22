@@ -18,16 +18,13 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class NonExistentType implements KvType {
 
   public static final NonExistentType INSTANCE = new NonExistentType();
   private static final long serialVersionUID = 1L;
 
-  private NonExistentType() {
-  }
+  private NonExistentType() {}
 
   @Override
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {

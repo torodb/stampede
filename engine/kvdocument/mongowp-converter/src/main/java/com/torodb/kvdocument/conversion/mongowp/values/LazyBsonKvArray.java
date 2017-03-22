@@ -25,9 +25,7 @@ import com.torodb.kvdocument.conversion.mongowp.MongoWpConverter;
 import com.torodb.kvdocument.values.KvArray;
 import com.torodb.kvdocument.values.KvValue;
 
-/**
- *
- */
+/** */
 public class LazyBsonKvArray extends KvArray {
 
   private static final long serialVersionUID = 7698461215106087731L;
@@ -40,9 +38,8 @@ public class LazyBsonKvArray extends KvArray {
 
   @Override
   public UnmodifiableIterator<KvValue<?>> iterator() {
-    return Iterators.unmodifiableIterator(Iterators.transform(wrapped.iterator(),
-        MongoWpConverter.FROM_BSON)
-    );
+    return Iterators.unmodifiableIterator(
+        Iterators.transform(wrapped.iterator(), MongoWpConverter.FROM_BSON));
   }
 
   @Override

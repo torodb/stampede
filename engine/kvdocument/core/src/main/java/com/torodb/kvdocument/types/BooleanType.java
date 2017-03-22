@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class BooleanType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final BooleanType INSTANCE = new BooleanType();
 
-  private BooleanType() {
-  }
+  private BooleanType() {}
 
   @Override
   public boolean equals(Object o) {

@@ -37,7 +37,7 @@ public class Pool implements ConnectionPoolConfig {
   private Long connectionPoolTimeout = 10L * 1000;
   @Description("config.generic.connectionPoolSize")
   @NotNull
-  @Min(3)
+  @Min(20)
   @JsonProperty(required = true)
   private Integer connectionPoolSize = 30;
   @NotNull

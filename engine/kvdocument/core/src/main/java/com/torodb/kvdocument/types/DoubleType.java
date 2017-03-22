@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class DoubleType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final DoubleType INSTANCE = new DoubleType();
 
-  private DoubleType() {
-  }
+  private DoubleType() {}
 
   @Override
   public boolean equals(Object o) {

@@ -24,15 +24,12 @@ import java.io.Serializable;
 
 import javax.annotation.Nonnull;
 
-/**
- *
- */
+/** */
 public abstract class KvValue<V> implements Serializable {
 
   private static final long serialVersionUID = -2695420893710884567L;
 
-  KvValue() {
-  }
+  KvValue() {}
 
   @Nonnull
   public abstract V getValue();
@@ -54,5 +51,4 @@ public abstract class KvValue<V> implements Serializable {
   public abstract int hashCode();
 
   public abstract <R, A> R accept(KvValueVisitor<R, A> visitor, A arg);
-
 }

@@ -52,7 +52,7 @@ public class CliConfigUtils {
   }
 
   private static Config uncatchedReadConfig(final CliConfig cliConfig) throws Exception {
-    ObjectMapper objectMapper = ConfigUtils.mapper();
+    ObjectMapper objectMapper = ConfigUtils.mapper(true);
 
     Config defaultConfig = new Config();
     if (cliConfig.getBackend() != null) {
@@ -65,10 +65,10 @@ public class CliConfigUtils {
       ObjectMapper mapper = null;
       InputStream inputStream = null;
       if (cliConfig.hasConfFile()) {
-        mapper = ConfigUtils.yamlMapper();
+        mapper = ConfigUtils.yamlMapper(true);
         inputStream = cliConfig.getConfInputStream();
       } else if (cliConfig.hasXmlConfFile()) {
-        mapper = ConfigUtils.xmlMapper();
+        mapper = ConfigUtils.xmlMapper(true);
         inputStream = cliConfig.getXmlConfInputStream();
       }
 
@@ -79,7 +79,7 @@ public class CliConfigUtils {
     }
 
     if (cliConfig.getParams() != null) {
-      YAMLMapper yamlMapper = ConfigUtils.yamlMapper();
+      YAMLMapper yamlMapper = ConfigUtils.yamlMapper(true);
       for (String paramPathValue : cliConfig.getParams()) {
         int paramPathValueSeparatorIndex = paramPathValue.indexOf('=');
         String pathAndProp = paramPathValue.substring(0, paramPathValueSeparatorIndex);

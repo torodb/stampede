@@ -63,8 +63,7 @@ public class KvBoolean extends KvValue<Boolean> {
   }
 
   /**
-   * The hashCode of a KvBoolean the same as {@link Boolean#hashCode() }
-   * applied to its value.
+   * The hashCode of a KvBoolean the same as {@link Boolean#hashCode() } applied to its value.
    *
    * @return
    */
@@ -97,5 +96,4 @@ public class KvBoolean extends KvValue<Boolean> {
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

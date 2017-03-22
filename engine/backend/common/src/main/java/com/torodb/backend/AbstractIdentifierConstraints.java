@@ -64,8 +64,16 @@ public abstract class AbstractIdentifierConstraints implements IdentifierConstra
         // No-Mongo types
         .put(FieldType.DATE, 'c') // [c]alendar
         .put(FieldType.TIME, 'm') // ti[m]e
+        .put(FieldType.JAVASCRIPT, 'j') // [j]avascript
+        .put(FieldType.JAVASCRIPT_WITH_SCOPE, 'w') // javascript [w]ith scope
+        .put(FieldType.MIN_KEY, 'k') //min [k]ey
+        .put(FieldType.MAX_KEY, 'a') //m[a]x key
+        .put(FieldType.UNDEFINED, 'u') //[u]ndefined
+        .put(FieldType.MONGO_REGEX, 'g') //Re[g]Ex
+        .put(FieldType.MONGO_DB_POINTER, 'p') //DB [p]ointer
+        .put(FieldType.DEPRECATED, 'z') //running out of available chars; z means "the last".
         .build());
-
+    //Letters left: f h o v
     ImmutableMap.Builder<FieldType, String> scalarFieldTypeIdentifiersBuilder =
         ImmutableMap.<FieldType, String>builder();
     Set<Character> fieldTypeIdentifierSet = new HashSet<>();

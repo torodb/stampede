@@ -18,34 +18,65 @@
 
 package com.torodb.packaging.config.validation;
 
-import com.torodb.packaging.config.model.protocol.mongo.Auth;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 public class RequiredParametersForAuthenticationValidator implements
-    ConstraintValidator<RequiredParametersForAuthentication, Auth> {
+    ConstraintValidator<RequiredParametersForAuthentication, AbstractReplication<?>> {
 
   @Override
   public void initialize(RequiredParametersForAuthentication constraintAnnotation) {
   }
 
   @Override
-  public boolean isValid(Auth value, ConstraintValidatorContext context) {
-    switch (value.getMode()) {
-      case cr:
-      case negotiate:
-      case scram_sha1:
-        if (value.getUser() == null || value.getSource() == null) {
-          return false;
+  public boolean isValid(AbstractReplication<?> value, ConstraintValidatorContext context) {
+    if (value != null) {
+      if (value.getShardList().isEmpty()) {
+        switch (value.getAuth().getMode().value()) {
+          case cr:
+          case negotiate:
+          case scram_sha1:
+            if (value.getAuth().getUser().value() == null 
+                || value.getAuth().getSource().value() == null) {
+              return false;
+            }
+            break;
+          case x509:
+          case disabled:
+          default:
+            break;
         }
-        break;
-      case x509:
-      case disabled:
-      default:
-        break;
+      } else {
+        for (AbstractShardReplication shard : value.getShardList()) {
+          switch (shard.getAuth().getMode().isDefault()
+              ? value.getAuth().getMode().value()
+              : shard.getAuth().getMode().value()) {
+            case cr:
+            case negotiate:
+            case scram_sha1:
+              if ((shard.getAuth().getUser().isDefault()
+                  ? value.getAuth().getUser().value()
+                      : shard.getAuth().getUser().value()) == null 
+                  || (shard.getAuth().getSource().isDefault()
+                      ? value.getAuth().getSource().value()
+                          : shard.getAuth().getSource().value()) == null) {
+                return false;
+              }
+              break;
+            case x509:
+            case disabled:
+            default:
+              break;
+          }
+        }
+      }
+    
+      return true;
     }
-
+    
     return true;
   }
 }

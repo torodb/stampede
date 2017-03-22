@@ -31,13 +31,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-public class SingleShardBundle extends ShardBundle {
+public class UnshardedShardBundle extends ShardBundle {
 
   private final TorodBundle actualTorodBundle;
   private final MongoDbCoreBundle coreBundle;
   private final MongoDbReplBundle replBundle;
 
-  public SingleShardBundle(ShardBundleConfig config) {
+  public UnshardedShardBundle(ShardBundleConfig config) {
     super(config);
 
     actualTorodBundle = config.getTorodBundle();

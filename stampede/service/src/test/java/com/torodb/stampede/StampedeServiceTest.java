@@ -47,7 +47,7 @@ public class StampedeServiceTest {
   @SuppressWarnings("checkstyle:JavadocMethod")
   @Before
   public void setUp() {
-    stampedeConfig = new StampedeConfig(
+    stampedeConfig = StampedeConfig.createShardingConfig(
         createEssentialInjector(),
         this::createBackendBundle,
         ReplicationFilters.allowAll(),

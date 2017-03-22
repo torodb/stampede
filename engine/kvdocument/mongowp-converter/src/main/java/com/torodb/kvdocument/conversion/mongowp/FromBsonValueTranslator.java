@@ -46,10 +46,20 @@ import com.torodb.kvdocument.conversion.mongowp.values.BsonKvString;
 import com.torodb.kvdocument.values.KvBinary.KvBinarySubtype;
 import com.torodb.kvdocument.values.KvBoolean;
 import com.torodb.kvdocument.values.KvDecimal128;
+import com.torodb.kvdocument.values.KvDeprecated;
+import com.torodb.kvdocument.values.KvDocument;
 import com.torodb.kvdocument.values.KvDouble;
 import com.torodb.kvdocument.values.KvInteger;
 import com.torodb.kvdocument.values.KvLong;
+import com.torodb.kvdocument.values.KvMaxKey;
+import com.torodb.kvdocument.values.KvMinKey;
+import com.torodb.kvdocument.values.KvMongoDbPointer;
+import com.torodb.kvdocument.values.KvMongoJavascript;
+import com.torodb.kvdocument.values.KvMongoJavascriptWithScope;
+import com.torodb.kvdocument.values.KvMongoObjectId;
+import com.torodb.kvdocument.values.KvMongoRegex;
 import com.torodb.kvdocument.values.KvNull;
+import com.torodb.kvdocument.values.KvUndefined;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.kvdocument.values.heap.ByteArrayKvMongoObjectId;
 import com.torodb.kvdocument.values.heap.ByteSourceKvBinary;
@@ -59,14 +69,11 @@ import com.torodb.kvdocument.values.heap.LongKvInstant;
 
 import java.util.function.Function;
 
-/**
- *
- */
-public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Void>,
-    Function<BsonValue<?>, KvValue<?>> {
+/** */
+public class FromBsonValueTranslator
+    implements BsonValueVisitor<KvValue<?>, Void>, Function<BsonValue<?>, KvValue<?>> {
 
-  private FromBsonValueTranslator() {
-  }
+  private FromBsonValueTranslator() {}
 
   public static FromBsonValueTranslator getInstance() {
     return FromBsonValueTranslatorHolder.INSTANCE;
@@ -111,13 +118,13 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
         subtype = KvBinarySubtype.UNDEFINED;
         break;
     }
-    return new ByteSourceKvBinary(subtype, value.getNumericSubType(), value.getByteSource()
-        .getDelegate());
+    return new ByteSourceKvBinary(
+        subtype, value.getNumericSubType(), value.getByteSource().getDelegate());
   }
 
   @Override
   public KvValue<?> visit(BsonDbPointer value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMongoDbPointer.of(value.getNamespace(), (KvMongoObjectId) visit(value.getId(), arg));
   }
 
   @Override
@@ -158,22 +165,23 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonJavaScript value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMongoJavascript.of(value.getValue());
   }
 
   @Override
   public KvValue<?> visit(BsonJavaScriptWithScope value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMongoJavascriptWithScope.of(
+        value.getJavaScript(), (KvDocument) visit(value.getScope(), arg));
   }
 
   @Override
   public KvValue<?> visit(BsonMax value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMaxKey.getInstance();
   }
 
   @Override
   public KvValue<?> visit(BsonMin value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvMinKey.getInstance();
   }
 
   @Override
@@ -188,7 +196,8 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonRegex value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+
+    return KvMongoRegex.of(value.getPattern(), value.getOptionsAsText());
   }
 
   @Override
@@ -198,7 +207,7 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonUndefined value, Void arg) {
-    return KvNull.getInstance();
+    return KvUndefined.getInstance();
   }
 
   @Override
@@ -208,7 +217,7 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
 
   @Override
   public KvValue<?> visit(BsonDeprecated value, Void arg) {
-    throw new UnsupportedBsonTypeException(value.getType());
+    return KvDeprecated.of(value.getValue());
   }
 
   @Override
@@ -224,5 +233,4 @@ public class FromBsonValueTranslator implements BsonValueVisitor<KvValue<?>, Voi
   private Object readResolve() {
     return FromBsonValueTranslator.getInstance();
   }
-
 }

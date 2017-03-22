@@ -27,27 +27,31 @@ import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig.ShardConfig;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.torod.TorodBundle;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
-public class MongoDbShardingConfigBuilder {
+public abstract class MongoDbShardingConfigBuilder {
 
   private TorodBundle torodBundle;
-  private final Map<String, MongoDbShardingConfig.ShardConfig> shardConfigs = new HashMap<>();
   private ReplicationFilters userReplFilter;
   private LoggerFactory lifecycleLoggerFactory;
   private final BundleConfig generalConfig;
 
-  public MongoDbShardingConfigBuilder(BundleConfig generalConfig) {
+  protected MongoDbShardingConfigBuilder(BundleConfig generalConfig) {
     this.generalConfig = generalConfig;
   }
 
-  public MongoDbShardingConfigBuilder(Injector essentialInjector, Supervisor supervisor) {
+  protected MongoDbShardingConfigBuilder(Injector essentialInjector, Supervisor supervisor) {
     this.generalConfig = new BundleConfigImpl(essentialInjector, supervisor);
   }
 
+  public static MongoDbShardingConfigBuilder createShardedBuilder(BundleConfig generalConfig) {
+    return new MultipleShardConfigBuilder(generalConfig);
+  }
+
+  public static MongoDbShardingConfigBuilder createUnshardedBuilder(BundleConfig generalConfig) {
+    return new UnshardedConfigBuilder(generalConfig);
+  }
+  
   public MongoDbShardingConfigBuilder setTorodBundle(TorodBundle torodBundle) {
     this.torodBundle = torodBundle;
     return this;
@@ -64,30 +68,19 @@ public class MongoDbShardingConfigBuilder {
     return this;
   }
 
-  public MongoDbShardingConfigBuilder addShard(ShardConfig config) {
-    if (shardConfigs.containsKey(config.getShardId())) {
-      throw new IllegalArgumentException("The shard " + config.getShardId() + " has been already"
-          + "added");
-    }
-    shardConfigs.put(config.getShardId(), config);
-    return this;
-  }
+  public abstract MongoDbShardingConfigBuilder addShard(ShardConfig config);
+
+  protected abstract MongoDbShardingConfig build(TorodBundle torodBundle,
+      ReplicationFilters userReplFilter,
+      LoggerFactory lifecycleLoggerFactory,
+      BundleConfig generalConfig);
 
   public MongoDbShardingConfig build() {
     Objects.requireNonNull(torodBundle, "The torod bundle must be not null");
     Objects.requireNonNull(userReplFilter, "The user filter must be not null");
     Objects.requireNonNull(lifecycleLoggerFactory, "The lifecycle logger factory must be not null");
-    if (shardConfigs.isEmpty()) {
-      throw new IllegalArgumentException("At least one shard is required");
-    }
 
-    return new MongoDbShardingConfig(
-        torodBundle,
-        new ArrayList<>(shardConfigs.values()),
-        userReplFilter,
-        lifecycleLoggerFactory,
-        generalConfig
-    );
+    return build(torodBundle, userReplFilter, lifecycleLoggerFactory, generalConfig);
   }
 
 }

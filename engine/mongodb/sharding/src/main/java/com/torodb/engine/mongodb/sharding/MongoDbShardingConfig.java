@@ -28,16 +28,29 @@ import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.torod.TorodBundle;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class MongoDbShardingConfig implements BundleConfig  {
 
   private final TorodBundle torodBundle;
+  private final boolean unsharded;
   private final List<ShardConfig> shardConfigs;
   private final ReplicationFilters userReplFilter;
   private final BundleConfig generalConfig;
   private final LoggerFactory lifecycleLoggingFactory;
+
+  public MongoDbShardingConfig(TorodBundle torodBundle, ShardConfig singleShard,
+      ReplicationFilters userReplFilter, LoggerFactory lifecycleLoggingFactory,
+      BundleConfig generalConfig) {
+    this.torodBundle = torodBundle;
+    this.shardConfigs = Collections.singletonList(singleShard);
+    this.userReplFilter = userReplFilter;
+    this.generalConfig = generalConfig;
+    this.lifecycleLoggingFactory = lifecycleLoggingFactory;
+    this.unsharded = true;
+  }
 
   MongoDbShardingConfig(TorodBundle torodBundle, List<ShardConfig> shardConfigs,
       ReplicationFilters userReplFilter, LoggerFactory lifecycleLoggingFactory,
@@ -47,10 +60,15 @@ public class MongoDbShardingConfig implements BundleConfig  {
     this.userReplFilter = userReplFilter;
     this.lifecycleLoggingFactory = lifecycleLoggingFactory;
     this.generalConfig = generalConfig;
+    this.unsharded = false;
   }
 
   public TorodBundle getTorodBundle() {
     return torodBundle;
+  }
+
+  public boolean isUnsharded() {
+    return unsharded;
   }
 
   @DoNotChange

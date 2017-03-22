@@ -67,7 +67,8 @@ public class DatabaseMergeStrategy
   }
 
   private static MergeStrategyPicker<ImmutableMetaSnapshot, MutableMetaDatabase, Builder, DbContext> createOnRemoveStrategy() {
-    return new FirstToApplyStrategyPicker<>(Lists.newArrayList(
+    // Fix for Eclipse compiler, please do not remove explicit generics
+    return new FirstToApplyStrategyPicker<ImmutableMetaSnapshot, MutableMetaDatabase, Builder, DbContext>(Lists.newArrayList(
         new SameIdOtherNameStrategy(),
         new SameNameOtherTypeStrategy(),
         new ShortcutDatabaseStrategy(),

@@ -193,7 +193,7 @@ public class DefaultToBackendFunctionTest {
       assert addFieldIndex >= 0;
       assert insertIndex >= 0;
       assertTrue("For a given doc part, all related add fields jobs must be executed before insert "
-          + "jobs, but in this case the add field job has index " + addFieldIndex
+          + "jobs, but in this case the add scalar job has index " + addFieldIndex
           + " and the insert job has index " + insertIndex,
           addFieldIndex < insertIndex);
     }
@@ -350,7 +350,7 @@ public class DefaultToBackendFunctionTest {
       assert addScalarIndex >= 0;
       assert insertIndex >= 0;
       assertTrue("For a given doc part, all related add fields jobs must be executed before insert "
-          + "jobs, but in this case the add field job has index " + addFieldIndex
+          + "jobs, but in this case the add scalar job has index " + addFieldIndex
           + " and the insert job has index " + insertIndex,
           addFieldIndex < insertIndex);
       assertTrue("For a given doc part, all related add scalar jobs must be executed before insert "
@@ -358,9 +358,9 @@ public class DefaultToBackendFunctionTest {
           + " and the insert job has index " + insertIndex,
           addScalarIndex < insertIndex);
       assertTrue("For a given doc part, all related create doc part jobs must be executed "
-          + "before add field jobs, but in this case the create doc part job has index "
+          + "before add scalar jobs, but in this case the create doc part job has index "
           + createDocPartIndex + " and "
-          + "the add field job has index " + addFieldIndex,
+          + "the add scalar job has index " + addFieldIndex,
           createDocPartIndex < addFieldIndex);
     }
   }

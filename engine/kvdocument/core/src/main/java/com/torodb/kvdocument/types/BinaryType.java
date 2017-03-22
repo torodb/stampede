@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class BinaryType implements KvType {
 
   public static final BinaryType INSTANCE = new BinaryType();

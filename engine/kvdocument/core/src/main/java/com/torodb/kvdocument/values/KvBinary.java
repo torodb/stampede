@@ -29,7 +29,7 @@ public abstract class KvBinary extends KvValue<KvBinary> {
   /**
    * Returns the ByteSource that contains the binary data.
    *
-   * The associated ByteSource <b>shall not</b> throw IO exceptions for
+   * <p>The associated ByteSource <b>shall not</b> throw IO exceptions for
    *
    * @return
    */
@@ -40,14 +40,14 @@ public abstract class KvBinary extends KvValue<KvBinary> {
   /**
    * Returns the category on which the binary is encoded.
    *
-   * The category is a 'subsubtype'. Most subtypes are going to accept just one category, but others
-   * could can accept some of them. Two different categories of the same subtype represents
-   * different encodecs with a common subtype. For example, the subtype
-   * {@link KvBinarySubtype#MONGO_USER_DEFINED} have several user defined categories.
-
- ToroDB is category-agnostic, which means it does not provide any special functionality on
- categories. It just stores the value to be able to return the specify user defined category
- when the KvBinary is retrieved.
+   * <p>The category is a 'subsubtype'. Most subtypes are going to accept just one category, but
+   * others could can accept some of them. Two different categories of the same subtype represents
+   * different encodecs with a common subtype. For example, the subtype {@link
+   * KvBinarySubtype#MONGO_USER_DEFINED} have several user defined categories.
+   *
+   * <p>ToroDB is category-agnostic, which means it does not provide any special functionality on
+   * categories. It just stores the value to be able to return the specify user defined category
+   * when the KvBinary is retrieved.
    *
    * @return the category on which the binary is encoded.
    */

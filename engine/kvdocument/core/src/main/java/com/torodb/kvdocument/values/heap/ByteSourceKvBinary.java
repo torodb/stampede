@@ -22,9 +22,7 @@ import com.google.common.io.ByteSource;
 import com.torodb.kvdocument.values.KvBinary;
 import com.torodb.kvdocument.values.utils.NonIoByteSource;
 
-/**
- *
- */
+/** */
 public class ByteSourceKvBinary extends KvBinary {
 
   private static final long serialVersionUID = 1856319675637762928L;
@@ -57,5 +55,4 @@ public class ByteSourceKvBinary extends KvBinary {
   public byte getCategory() {
     return category;
   }
-
 }

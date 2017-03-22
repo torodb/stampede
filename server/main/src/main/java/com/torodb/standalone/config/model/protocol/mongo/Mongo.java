@@ -22,14 +22,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.torodb.packaging.config.annotation.Description;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Net;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.config.validation.NoDuplicatedReplName;
-import com.torodb.packaging.config.validation.NotNullElements;
+import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 import com.torodb.packaging.config.validation.SslEnabledForX509Authentication;
-
-import java.util.List;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -44,10 +41,10 @@ public class Mongo {
   private Net net = new Net();
   @Valid
   @NoDuplicatedReplName
-  @NotNullElements
   @SslEnabledForX509Authentication
+  @RequiredParametersForAuthentication
   @JsonDeserialize(contentAs = Replication.class)
-  private List<AbstractReplication> replication;
+  private Replication replication;
   @Description("config.mongo.mongopassFile")
   @JsonProperty(required = true)
   private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
@@ -60,11 +57,11 @@ public class Mongo {
     this.net = net;
   }
 
-  public List<AbstractReplication> getReplication() {
+  public Replication getReplication() {
     return replication;
   }
 
-  public void setReplication(List<AbstractReplication> replication) {
+  public void setReplication(Replication replication) {
     this.replication = replication;
   }
 

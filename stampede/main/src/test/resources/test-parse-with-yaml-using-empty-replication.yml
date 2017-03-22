@@ -1,4 +1,4 @@
-replications:
+replication:
 backend:
   postgres:
     host: localhost

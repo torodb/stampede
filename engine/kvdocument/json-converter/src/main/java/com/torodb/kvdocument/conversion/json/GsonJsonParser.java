@@ -37,8 +37,7 @@ public class GsonJsonParser implements JsonParser {
 
   private static final MapToKvValueConverter converter = new MapToKvValueConverter();
   private static final HashMap<String, Object> sampleClass = new HashMap<String, Object>();
-  private static final Type type = new TypeToken<List<HashMap<String, Object>>>() {
-  }.getType();
+  private static final Type type = new TypeToken<List<HashMap<String, Object>>>() {}.getType();
 
   @Override
   public KvDocument createFromJson(String json) {
@@ -52,14 +51,14 @@ public class GsonJsonParser implements JsonParser {
 
   @Override
   public KvDocument createFrom(InputStream is) {
-    return converter.convert(gson.fromJson(new InputStreamReader(is, Charsets.UTF_8), sampleClass
-        .getClass()));
+    return converter.convert(
+        gson.fromJson(new InputStreamReader(is, Charsets.UTF_8), sampleClass.getClass()));
   }
 
   @Override
   public List<KvDocument> createListFrom(InputStream is) {
-    return converter.convert((List<Map<String, Object>>) gson.fromJson(new InputStreamReader(is,
-        Charsets.UTF_8), type));
+    return converter.convert(
+        (List<Map<String, Object>>) gson.fromJson(new InputStreamReader(is, Charsets.UTF_8), type));
   }
 
   @Override
@@ -71,5 +70,4 @@ public class GsonJsonParser implements JsonParser {
   public List<KvDocument> createListFromResource(String name) {
     return createListFrom(this.getClass().getClassLoader().getResourceAsStream(name));
   }
-
 }

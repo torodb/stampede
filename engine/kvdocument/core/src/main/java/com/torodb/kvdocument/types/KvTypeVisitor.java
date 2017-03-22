@@ -54,4 +54,19 @@ public interface KvTypeVisitor<R, A> {
 
   public R visit(Decimal128Type type, A arg);
 
+  public R visit(JavascriptType type, A arg);
+
+  public R visit(JavascriptWithScopeType value, A arg);
+
+  public R visit(MinKeyType value, A arg);
+
+  public R visit(MaxKeyType value, A arg);
+
+  public R visit(UndefinedType value, A arg);
+
+  public R visit(MongoRegexType value, A arg);
+
+  public R visit(MongoDbPointerType value, A arg);
+
+  public R visit(DeprecatedType value, A arg);
 }

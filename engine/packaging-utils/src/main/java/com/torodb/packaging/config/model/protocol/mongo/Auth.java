@@ -21,50 +21,56 @@ package com.torodb.packaging.config.model.protocol.mongo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.jackson.AuthModeWithDefaultDeserializer;
+import com.torodb.packaging.config.model.common.EnumWithDefault;
+import com.torodb.packaging.config.model.common.StringWithDefault;
 
 import javax.validation.constraints.NotNull;
 
 @JsonPropertyOrder({"mode", "user", "source"})
 public class Auth {
 
+  private EnumWithDefault<AuthMode> mode = 
+      EnumWithDefault.withDefault(AuthMode.disabled);
+  private StringWithDefault user = StringWithDefault.withDefault(null);
+  private StringWithDefault source = StringWithDefault.withDefault(null);
+  private String password;
+  
   @Description("config.mongo.replication.auth.mode")
   @NotNull
   @JsonProperty(required = true)
-  private AuthMode mode = AuthMode.disabled;
-  @Description("config.mongo.replication.auth.user")
-  @JsonProperty(required = true)
-  private String user;
-  @Description("config.mongo.replication.auth.source")
-  @JsonProperty(required = true)
-  private String source;
-  @JsonIgnore
-  private String password;
-
-  public AuthMode getMode() {
+  @JsonDeserialize(using = AuthModeWithDefaultDeserializer.class)
+  public EnumWithDefault<AuthMode> getMode() {
     return mode;
   }
 
-  public void setMode(AuthMode mode) {
+  public void setMode(EnumWithDefault<AuthMode> mode) {
     this.mode = mode;
   }
 
-  public String getUser() {
+  @Description("config.mongo.replication.auth.user")
+  @JsonProperty(required = true)
+  public StringWithDefault getUser() {
     return user;
   }
 
-  public void setUser(String user) {
+  public void setUser(StringWithDefault user) {
     this.user = user;
   }
 
-  public String getSource() {
+  @Description("config.mongo.replication.auth.source")
+  @JsonProperty(required = true)
+  public StringWithDefault getSource() {
     return source;
   }
 
-  public void setSource(String source) {
+  public void setSource(StringWithDefault source) {
     this.source = source;
   }
 
+  @JsonIgnore
   public String getPassword() {
     return password;
   }

@@ -32,9 +32,7 @@ import java.util.NoSuchElementException;
 
 import javax.annotation.Nonnegative;
 
-/**
- *
- */
+/** */
 public class LazyBsonKvDocument extends KvDocument {
 
   private static final EntryTranslateFunction ENTRY_TRANSLATE_FUNCTION =
@@ -50,8 +48,7 @@ public class LazyBsonKvDocument extends KvDocument {
   @Override
   public UnmodifiableIterator<DocEntry<?>> iterator() {
     return Iterators.unmodifiableIterator(
-        Iterators.transform(wrapped.iterator(), ENTRY_TRANSLATE_FUNCTION)
-    );
+        Iterators.transform(wrapped.iterator(), ENTRY_TRANSLATE_FUNCTION));
   }
 
   @Override
@@ -65,15 +62,14 @@ public class LazyBsonKvDocument extends KvDocument {
     return MongoWpConverter.translate(bsonValue);
   }
 
-  private static class EntryTranslateFunction implements
-      Function<BsonDocument.Entry<?>, KvDocument.DocEntry<?>> {
+  private static class EntryTranslateFunction
+      implements Function<BsonDocument.Entry<?>, KvDocument.DocEntry<?>> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public DocEntry<?> apply(@Nonnegative Entry<?> input) {
       return new MyDocEntry(input);
     }
-
   }
 
   private static class MyDocEntry<V> extends DocEntry<V> {
@@ -95,5 +91,4 @@ public class LazyBsonKvDocument extends KvDocument {
       return (KvValue<V>) MongoWpConverter.translate(entry.getValue());
     }
   }
-
 }

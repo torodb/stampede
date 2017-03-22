@@ -23,19 +23,18 @@ import com.torodb.kvdocument.types.MongoObjectIdType;
 
 import java.util.Arrays;
 
-/**
- *
- */
+/** */
 public abstract class KvMongoObjectId extends KvValue<KvMongoObjectId> {
 
   private static final long serialVersionUID = -2548014610816031841L;
 
   /**
-   * Returns an array that contains the same bytes that {@linkplain
-   * #getValue()}.
+   * Returns an array that contains the same bytes that {@linkplain #getValue()}.
+   *
+   * <p>Modifications in the given array won't affect the stored value
+   *
    * <p>
-   * Modifications in the given array won't affect the stored value
-   * <p>
+   *
    * @return
    */
   public abstract byte[] getArrayValue();
@@ -87,5 +86,4 @@ public abstract class KvMongoObjectId extends KvValue<KvMongoObjectId> {
   public <R, A> R accept(KvValueVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

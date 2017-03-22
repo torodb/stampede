@@ -19,27 +19,27 @@
 package com.torodb.packaging.config.validation;
 
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 public class NoDuplicatedReplNameValidator implements
-    ConstraintValidator<NoDuplicatedReplName, List<AbstractReplication>> {
+    ConstraintValidator<NoDuplicatedReplName, AbstractReplication<?>> {
 
   @Override
   public void initialize(NoDuplicatedReplName constraintAnnotation) {
   }
 
   @Override
-  public boolean isValid(List<AbstractReplication> value, ConstraintValidatorContext context) {
+  public boolean isValid(AbstractReplication<?> value, ConstraintValidatorContext context) {
     if (value != null) {
       Set<String> replNameSet = new HashSet<>();
-      for (AbstractReplication replication : value) {
-        if (!replNameSet.add(replication.getReplSetName())) {
+      for (AbstractShardReplication shard : value.getShardList()) {
+        if (!replNameSet.add(shard.getReplSetName().value())) {
           return false;
         }
       }
