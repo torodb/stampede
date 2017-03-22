@@ -24,7 +24,7 @@ import com.torodb.core.concurrent.guice.ConcurrentModule;
 import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.core.metrics.MetricsModule;
-import com.torodb.core.transaction.metainf.impl.guice.MetainfModule;
+import com.torodb.core.transaction.metainf.impl.MetainfModule;
 
 import java.time.Clock;
 

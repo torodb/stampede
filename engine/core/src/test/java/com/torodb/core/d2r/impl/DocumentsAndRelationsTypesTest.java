@@ -16,34 +16,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.transaction.metainf.impl;
+package com.torodb.core.d2r.impl;
 
-import com.torodb.core.transaction.metainf.impl.D2RTranslatorStack;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
+
 import com.google.common.io.ByteSource;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.d2r.*;
 import com.torodb.core.impl.TableRefFactoryImpl;
 import com.torodb.core.transaction.metainf.*;
 import com.torodb.core.transaction.metainf.MetainfoRepository.SnapshotStage;
+import com.torodb.core.transaction.metainf.impl.metainfo.mvcc.MvccMetainfoRepository;
 import com.torodb.kvdocument.types.*;
 import com.torodb.kvdocument.values.*;
 import com.torodb.kvdocument.values.heap.*;
-import com.torodb.core.transaction.metainf.impl.metainfo.mvcc.MvccMetainfoRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.File;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
 
 
 @RunWith(Parameterized.class)

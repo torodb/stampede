@@ -16,24 +16,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.transaction.metainf.impl.guice;
+package com.torodb.core.d2r.impl;
 
 import com.google.inject.PrivateModule;
-import com.google.inject.Singleton;
-import com.torodb.core.transaction.metainf.MetainfoRepository;
-import com.torodb.core.transaction.metainf.impl.metainfo.mvcc.MvccMetainfoRepository;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.torodb.core.d2r.D2RTranslator;
+import com.torodb.core.d2r.D2RTranslatorFactory;
+import com.torodb.core.d2r.R2DTranslator;
 
 /**
- * A module that binds {@link MetainfoRepository} and other metainf related stuff.
+ *
  */
-public class MetainfModule extends PrivateModule {
+public class D2RModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(MetainfoRepository.class)
-        .to(MvccMetainfoRepository.class)
-        .in(Singleton.class);
-    expose(MetainfoRepository.class);
+    install(new FactoryModuleBuilder()
+        .implement(D2RTranslator.class, D2RTranslatorStack.class)
+        .build(D2RTranslatorFactory.class)
+    );
+    expose(D2RTranslatorFactory.class);
+
+    bind(R2DTranslator.class)
+        .to(R2DTranslatorImpl.class);
+    expose(R2DTranslator.class);
   }
 
 }

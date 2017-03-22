@@ -16,9 +16,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.transaction.metainf.impl;
+package com.torodb.core.d2r.impl;
 
-import com.torodb.core.transaction.metainf.impl.D2Relational.DocConsumer;
+import com.torodb.core.d2r.impl.D2Relational.DocConsumer;
 import com.torodb.kvdocument.values.KvArray;
 import com.torodb.kvdocument.values.KvBinary;
 import com.torodb.kvdocument.values.KvBoolean;
@@ -44,7 +44,7 @@ import com.torodb.kvdocument.values.KvTime;
 import com.torodb.kvdocument.values.KvUndefined;
 import com.torodb.kvdocument.values.KvValueVisitor;
 
-public class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
+class DocumentVisitor implements KvValueVisitor<Void, DocConsumer> {
 
   @Override
   public Void visit(KvBoolean value, DocConsumer arg) {

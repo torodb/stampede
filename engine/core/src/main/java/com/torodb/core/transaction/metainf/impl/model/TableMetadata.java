@@ -21,11 +21,11 @@ package com.torodb.core.transaction.metainf.impl.model;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.torodb.core.TableRef;
+import com.torodb.core.d2r.impl.CollectionMetaInfo;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
-import com.torodb.core.transaction.metainf.impl.CollectionMetaInfo;
 
 import java.util.ArrayList;
 import java.util.EnumMap;

@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.torodb.core.transaction.metainf.impl;
+package com.torodb.core.d2r.impl;
 
 import static org.junit.Assert.*;
 
