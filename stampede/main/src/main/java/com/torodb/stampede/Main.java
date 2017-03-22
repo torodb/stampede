@@ -29,7 +29,10 @@ import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.torodb.core.BuildProperties;
+import com.torodb.core.backend.BackendBundle;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.exceptions.SystemException;
 import com.torodb.core.logging.ComponentLoggerFactory;
 import com.torodb.core.logging.LoggerFactory;
@@ -38,6 +41,7 @@ import com.torodb.engine.essential.DefaultBuildProperties;
 import com.torodb.engine.essential.EssentialModule;
 import com.torodb.engine.mongodb.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.ConsistencyHandler;
+import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
@@ -52,6 +56,7 @@ import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
+import com.torodb.stampede.config.model.mongo.replication.ShardReplication;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,6 +69,7 @@ import java.util.List;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -277,21 +283,38 @@ public class Main {
     Backend backendConfig = config.getBackend();
     Replication replicationConfig = config.getReplication();
 
-    return new StampedeConfig(
-        Guice.createInjector(new EssentialModule(
-            new ComponentLoggerFactory("LIFECYCLE"),
-            metricsConfig,
-            clock)
-        ),
-        generalConfig -> BundleFactory.createBackendBundle(
+    Injector essentialInjector = Guice.createInjector(new EssentialModule(
+        new ComponentLoggerFactory("LIFECYCLE"),
+        metricsConfig,
+        clock)
+    );
+    
+    Function<BundleConfig, BackendBundle> backendBundleGenerator = generalConfig ->
+        BundleFactory.createBackendBundle(
             backendConfig,
             generalConfig
-        ),
-        //TODO: This is a patch that should be changed once TORODB-397 is completed
-        ReplicationFiltersFactory.getReplicationFilters(config.getReplication()),
-        createShardConfigBuilders(replicationConfig),
-        LOGGER_FACTORY
-    );
+        );
+    
+    ReplicationFilters replFilters = ReplicationFiltersFactory.getReplicationFilters(
+        config.getReplication());
+
+    if (config.getReplication().isShardingReplication()) {
+      return StampedeConfig.createShardingConfig(
+          essentialInjector,
+          backendBundleGenerator,
+          replFilters,
+          createShardConfigBuilders(replicationConfig),
+          LOGGER_FACTORY
+      );
+    } else {
+      return StampedeConfig.createUnshardedConfig(
+          essentialInjector,
+          backendBundleGenerator,
+          replFilters,
+          createUnshardedShardBuilder(replicationConfig),
+          LOGGER_FACTORY
+      );
+    }
   }
 
   private static void configureLogger(CliConfig cliConfig, Config config) {
@@ -365,29 +388,41 @@ public class Main {
       Replication replicationConfig) {
 
     AtomicInteger counter = new AtomicInteger();
+
+    assert replicationConfig.isShardingReplication();
+    return replicationConfig.getShardList().stream()
+        .map(shardRepl -> mapShardReplication(replicationConfig, shardRepl, counter))
+        .collect(Collectors.toList());
+  }
+
+  private static StampedeConfig.ShardConfigBuilder createUnshardedShardBuilder(
+      Replication replicationConfig) {
+
+    return translateShardConfig(replicationConfig, () -> "unsharded");
+  }
+
+  private static StampedeConfig.ShardConfigBuilder mapShardReplication(
+      Replication replicationConfig, ShardReplication shardRepl, AtomicInteger counter) {
+
+    ShardReplication mergedShardConfig = replicationConfig.mergeWith(shardRepl);
+    Supplier<String> shardIdProvider = () -> getShardId(shardRepl, counter);
     
-    if (replicationConfig.getShardList().isEmpty()) {
-      return Lists.newArrayList(translateShardConfig(replicationConfig, () -> ""));
+    return translateShardConfig(mergedShardConfig, shardIdProvider);
+  }
+
+  private static String getShardId(ShardReplication shardRepl, AtomicInteger counter) {
+    if (shardRepl.getName().isDefault() && shardRepl.getName().value() != null) {
+      return shardRepl.getName().value();
     } else {
-      return replicationConfig.getShardList().stream()
-          .map(shardConfig -> {
-            Replication mergedShardConfig = replicationConfig.mergeWith(shardConfig);
-            Supplier<String> shardIdProvider = () -> "s" + counter.incrementAndGet();
-            if (mergedShardConfig.getName().hasValue()) {
-              shardIdProvider = () -> mergedShardConfig.getName().value();
-            }
-            return translateShardConfig(
-              mergedShardConfig, shardIdProvider);
-          })
-          .collect(Collectors.toList());
+      return "s" + counter.incrementAndGet();
     }
   }
 
   private static StampedeConfig.ShardConfigBuilder translateShardConfig(
-      Replication shardConfig,
+      AbstractShardReplication shardConfig,
       Supplier<String> shardIdProvider) {
     MongoClientConfiguration clientConf =
-          MongoClientConfigurationFactory.getMongoClientConfiguration(shardConfig);
+        MongoClientConfigurationFactory.getMongoClientConfiguration(shardConfig);
     String shardId = shardIdProvider.get();
     return new StampedeConfig.ShardConfigBuilder() {
       @Override
@@ -399,7 +434,7 @@ public class Main {
       public MongoDbShardingConfig.ShardConfig createConfig(
           ConsistencyHandler consistencyHandler) {
         return new MongoDbShardingConfig.ShardConfig(
-            shardId,
+            getShardId(),
             clientConf,
             shardConfig.getReplSetName().value(),
             consistencyHandler);

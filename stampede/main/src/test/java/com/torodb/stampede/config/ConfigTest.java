@@ -29,7 +29,7 @@ import com.torodb.stampede.CliConfig;
 import com.torodb.stampede.CliConfigUtils;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.postgres.Postgres;
-import com.torodb.stampede.config.model.mongo.replication.Replication;
+import com.torodb.stampede.config.model.mongo.replication.ShardReplication;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -482,7 +482,7 @@ public class ConfigTest {
 
     Assert.assertTrue("/replication/shards not defined", config.getReplication().getShardList()
         != null);
-    List<Replication> shards = config.getReplication().getShardList()
+    List<ShardReplication> shards = config.getReplication().getShardList()
         .stream()
         .map(shard -> config.getReplication().mergeWith(shard))
         .collect(Collectors.toList());

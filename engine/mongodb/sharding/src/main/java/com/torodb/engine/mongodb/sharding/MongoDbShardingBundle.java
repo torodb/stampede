@@ -39,9 +39,10 @@ public class MongoDbShardingBundle extends AbstractBundle<MongoDbShardingExtInt>
 
     Logger logger = bundleConfig.getLifecycleLoggingFactory().apply(this.getClass());
 
-    if (bundleConfig.getShardConfigs().size() == 1) {
-      logger.info("Starting replication with a single shard");
-      this.shards = createSingleShard(bundleConfig);
+    if (bundleConfig.isUnsharded()) {
+      logger.info("Starting replication from replica set named {}",
+          bundleConfig.getShardConfigs().get(0).getReplSetName());
+      this.shards = createUnshardedShard(bundleConfig);
     } else {
       logger.info("Starting replication with the following shards: {}",
           () -> showShardInfo(config));
@@ -96,12 +97,12 @@ public class MongoDbShardingBundle extends AbstractBundle<MongoDbShardingExtInt>
     return result;
   }
 
-  private static List<ShardBundle> createSingleShard(MongoDbShardingConfig generalConf) {
+  private static List<ShardBundle> createUnshardedShard(MongoDbShardingConfig generalConf) {
     MongoDbShardingConfig.ShardConfig shardConfig = generalConf.getShardConfigs().get(0);
 
     ShardBundleConfig shardBundleConf = toShardBundleConfig(generalConf, shardConfig);
 
-    return Collections.singletonList(new SingleShardBundle(shardBundleConf));
+    return Collections.singletonList(new UnshardedShardBundle(shardBundleConf));
   }
 
   private static ShardBundleConfig toShardBundleConfig(MongoDbShardingConfig generalConf,
