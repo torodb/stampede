@@ -44,7 +44,7 @@ public class PostgreSqlDatabaseTestContextFactory {
         .setPassword("test")
         .setDbHost("localhost")
         .setDbName("test")
-        .setDbPort(5432)
+        .setDbPort(15430)
         .setIncludeForeignKeys(false)
         .build();
 
