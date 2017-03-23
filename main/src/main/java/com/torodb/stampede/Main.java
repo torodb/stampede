@@ -1,6 +1,6 @@
 /*
- * ToroDB
- * Copyright © 2014 8Kdata Technology (www.8kdata.com)
+ * ToroDB Stampede
+ * Copyright © 2016 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,13 +15,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.torodb.stampede;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
 import com.beust.jcommander.internal.Lists;
-import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -42,6 +40,7 @@ import com.torodb.mongodb.core.DefaultBuildProperties;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
+import com.torodb.mongowp.client.wrapper.MongoClientConfiguration;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;

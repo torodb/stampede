@@ -22,6 +22,10 @@
     
     <properties>
         <torodb.engine.version>0.50.1-SNAPSHOT</torodb.engine.version>
+        
+        <license.header.license>agpl</license.header.license>
+        <license.header.project.name>ToroDB Stampede</license.header.project.name>
+        <license.header.project.inceptionYear>2016</license.header.project.inceptionYear>
     </properties>
     
     <dependencyManagement>
@@ -44,4 +48,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>

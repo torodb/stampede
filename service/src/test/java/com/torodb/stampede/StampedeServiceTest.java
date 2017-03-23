@@ -1,6 +1,6 @@
 /*
- * ToroDB
- * Copyright © 2014 8Kdata Technology (www.8kdata.com)
+ * ToroDB Stampede
+ * Copyright © 2016 8Kdata Technology (www.8kdata.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,10 +15,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 package com.torodb.stampede;
 
-import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -27,11 +25,12 @@ import com.torodb.backend.derby.DerbyDbBackendBundle;
 import com.torodb.backend.derby.driver.DerbyDbBackendConfigBuilder;
 import com.torodb.core.backend.BackendBundle;
 import com.torodb.core.bundle.BundleConfig;
-import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.guice.EssentialModule;
-import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
+import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
+import com.torodb.mongowp.client.wrapper.MongoClientConfiguration;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
