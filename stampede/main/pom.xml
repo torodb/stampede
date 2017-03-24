@@ -266,7 +266,7 @@
                                 <id>docker-assembler-push-s3</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build-nofork</goal>
+                                    <goal>build</goal>
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
@@ -381,7 +381,7 @@
                                 <id>docker-base</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build-nofork</goal>
+                                    <goal>build</goal>
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
@@ -423,7 +423,7 @@
                                 <id>docker-push</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build-nofork</goal>
+                                    <goal>build</goal>
                                     <goal>push</goal>
                                 </goals>
                                 <configuration>
@@ -545,7 +545,7 @@
                                 <id>docker-snapbuilder</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build-nofork</goal>
+                                    <goal>build</goal>
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
@@ -734,7 +734,7 @@
                                 <id>docker-rpmbuilder</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build-nofork</goal>
+                                    <goal>build</goal>
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
@@ -982,7 +982,7 @@
                                 <id>docker-debbuilder</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>build-nofork</goal>
+                                    <goal>build</goal>
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
