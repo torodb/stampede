@@ -323,8 +323,8 @@ public class ConfigUtils {
 
   public static <T> JsonNode getParam(T config, String pathAndProp)
       throws Exception {
-    XmlMapper xmlMapper = xmlMapper(true);
-    JsonNode configNode = xmlMapper.valueToTree(config);
+    ObjectMapper mapper = mapper(false);
+    JsonNode configNode = mapper.valueToTree(config);
 
     if (JsonPointer.compile(pathAndProp).equals(JsonPointer.compile("/"))) {
       return configNode;
