@@ -29,6 +29,14 @@ In addition to the previous limitations, just some kind of indexes are supported
 * All keys path with the exception to the paths resolving in scalar value (eg: `db.test.createIndex({"a": 1})` will not index value of key `a` for the document `{"a": [1,2,3]}`)
 * Index properties `sparse` and `background` are ignored
 
+## When ToroDB Stampede might not be the right choice
+
+As good as Stampede is, there are certain use-cases for which it is a bad choice or simply will not work:
+
+* Pattern "key as values". When keys contain values, potentially thousands of different values may appear in keys, leading to an equally high number of columns (which might break with some RDBMS which have limits to the number of columns per row, like PostgreSQL) and/or tables, which might be terribly inconvenient and slow.
+* Too many fields per document, several of them optional and only some appearing per document, which might lead to thousands of columns. Some RDBMSs do not support such a high number of columns (like PostgreSQL).
+
+
 [TODO]: <> (not supported types, we need a list)
 
 [Versions]: <> (this section doesn't make any sense currently)
