@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class InstantType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final InstantType INSTANCE = new InstantType();
 
-  private InstantType() {
-  }
+  private InstantType() {}
 
   @Override
   public boolean equals(Object o) {
@@ -45,5 +42,4 @@ public class InstantType implements KvType {
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

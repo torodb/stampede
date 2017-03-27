@@ -10,6 +10,12 @@
     
     <name>ToroDB: MongoDB Core</name>
     <packaging>jar</packaging>
+    
+    <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssXX</maven.build.timestamp.format>
+        <build.timestamp>${maven.build.timestamp}</build.timestamp>
+    </properties>
+    
     <dependencies>
         <dependency>
             <groupId>com.torodb.engine</groupId>
@@ -46,13 +52,12 @@
             <artifactId>wp-layer</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-stream_2.12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
         </dependency>
         
         <dependency>
@@ -65,11 +70,29 @@
             <artifactId>log4j-slf4j-impl</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>essential</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>2.1.12</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 </project>

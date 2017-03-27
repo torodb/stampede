@@ -22,9 +22,7 @@ import com.torodb.kvdocument.values.KvTime;
 
 import java.time.LocalTime;
 
-/**
- *
- */
+/** */
 public class LocalTimeKvTime extends KvTime {
 
   private static final long serialVersionUID = 5071341549302666673L;

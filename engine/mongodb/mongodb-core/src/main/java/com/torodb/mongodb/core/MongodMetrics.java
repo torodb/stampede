@@ -21,11 +21,9 @@ package com.torodb.mongodb.core;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.eightkdata.mongowp.server.api.Command;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
@@ -34,7 +32,6 @@ import javax.inject.Singleton;
 @Singleton
 public class MongodMetrics {
 
-  private static final MetricNameFactory factory = new MetricNameFactory("Mongod");
   private final ToroMetricRegistry registry;
   private final Map<Command<?, ?>, Timer> commandsTimerMap = new ConcurrentHashMap<>();
   private final Meter commands;
@@ -45,27 +42,21 @@ public class MongodMetrics {
   private final Meter updateUpserted;
 
   @Inject
-  public MongodMetrics(ToroMetricRegistry registry) {
-    this.registry = registry;
-    commands = registry.meter(factory.createMetricName("commands"));
-    inserts = registry.meter(factory.createMetricName("inserts"));
-    deletes = registry.meter(factory.createMetricName("deletes"));
+  public MongodMetrics(ToroMetricRegistry parentRegistry) {
+    this.registry = parentRegistry.createSubRegistry("Mongod");
 
-    updateModified = registry.meter(factory.createMetricName("updateModified"));
-    updateMatched = registry.meter(factory.createMetricName("updateMatched"));
-    updateUpserted = registry.meter(factory.createMetricName("updateUpserted"));
-  }
+    commands = registry.meter("commands");
+    inserts = registry.meter("inserts");
+    deletes = registry.meter("deletes");
 
-  public void createMetrics(Set<Command<?, ?>> commands) {
-    for (Command<?, ?> command : commands) {
-      commandsTimerMap.put(command, registry.timer(factory.createMetricName(command.getCommandName()
-          + "Timer")));
-    }
+    updateModified = registry.meter("updateModified");
+    updateMatched = registry.meter("updateMatched");
+    updateUpserted = registry.meter("updateUpserted");
   }
 
   public Timer getTimer(Command<?, ?> command) {
-    return commandsTimerMap.computeIfAbsent(command, c -> registry.timer(factory.createMetricName(
-        c.getCommandName() + "Timer")));
+    return commandsTimerMap.computeIfAbsent(command, c -> registry.timer(
+        c.getCommandName() + "Timer"));
   }
 
   public Meter getCommands() {

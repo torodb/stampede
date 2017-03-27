@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class LongType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final LongType INSTANCE = new LongType();
 
-  private LongType() {
-  }
+  private LongType() {}
 
   @Override
   public boolean equals(Object o) {

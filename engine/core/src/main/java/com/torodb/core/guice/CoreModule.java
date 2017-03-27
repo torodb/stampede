@@ -18,12 +18,14 @@
 
 package com.torodb.core.guice;
 
-import com.google.inject.AbstractModule;
+import com.google.inject.Exposed;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.impl.TableRefFactoryImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.SmartRetrier;
 import com.torodb.core.transaction.InternalTransactionManager;
@@ -34,10 +36,21 @@ import java.util.concurrent.ThreadFactory;
  * A module that binds core classes (like {@link Retrier} or {@link InternalTransactionManager} to
  * their default values.
  */
-public class CoreModule extends AbstractModule {
+public class CoreModule extends EssentialToroModule {
 
+  private final LoggerFactory lifecycleLoggerFactory;
+
+  public CoreModule(LoggerFactory lifecycleLoggerFactory) {
+    this.lifecycleLoggerFactory = lifecycleLoggerFactory;
+  }
+ 
   @Override
   protected void configure() {
+    expose(TableRefFactory.class);
+    expose(Retrier.class);
+    expose(InternalTransactionManager.class);
+    exposeEssential(LoggerFactory.class);
+
     bind(TableRefFactory.class)
         .to(TableRefFactoryImpl.class)
         .asEagerSingleton();
@@ -58,6 +71,9 @@ public class CoreModule extends AbstractModule {
 
     bind(InternalTransactionManager.class)
         .in(Singleton.class);
+
+    bindEssential(LoggerFactory.class)
+        .toInstance(DefaultLoggerFactory.getInstance());
   }
 
   private static int millisToWait(int attempts, int millis) {
@@ -73,9 +89,10 @@ public class CoreModule extends AbstractModule {
   }
 
   @Provides
+  @Exposed
   @Singleton
   protected Shutdowner createShutdowner(ThreadFactory threadFactory) {
-    Shutdowner s = new Shutdowner(threadFactory);
+    Shutdowner s = new Shutdowner(threadFactory, lifecycleLoggerFactory);
 
     return s;
   }

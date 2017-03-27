@@ -75,3 +75,19 @@ Any unsupported index in ToroDB Stampede (text , 2dsphere, 2d, hashed, ...) is i
 
 !!! danger "Exclusion removal"
 	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will not create the previously excluded indexes. ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.
+
+## Replicate from a MongoDB Sharded Cluster
+
+
+In the replication section of the yml config file add a shards item with the list of shards's configurations, one for each shard:
+
+```json
+replication:
+  shards:
+    - replSetName: shard1
+      syncSource: localhost:27020
+    - replSetName: shard2
+      syncSource: localhost:27030
+    - replSetName: shard3
+      syncSource: localhost:27040
+```

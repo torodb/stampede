@@ -24,21 +24,22 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.inject.Inject;
 
 public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArgument, Empty> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DropCollectionReplImpl.class);
+  private final Logger logger;
 
   private final CommandFilterUtil filterUtil;
 
   @Inject
-  public DropCollectionReplImpl(CommandFilterUtil filterUtil) {
+  public DropCollectionReplImpl(CommandFilterUtil filterUtil, LoggerFactory lf) {
     this.filterUtil = filterUtil;
+    this.logger = lf.apply(this.getClass());
   }
 
   @Override
@@ -53,17 +54,17 @@ public class DropCollectionReplImpl extends ReplCommandImpl<CollectionCommandArg
     }
 
     try {
-      LOGGER.info("Dropping collection {}.{}", req.getDatabase(), arg.getCollection());
+      logger.info("Dropping collection {}.{}", req.getDatabase(), arg.getCollection());
 
       if (trans.existsCollection(req.getDatabase(), arg.getCollection())) {
         trans.dropCollection(req.getDatabase(), arg.getCollection());
       } else {
-        LOGGER.info("Trying to drop collection {}.{} but it has not been found. "
+        logger.info("Trying to drop collection {}.{} but it has not been found. "
             + "This is normal when reapplying oplog during a recovery. Ignoring operation",
             req.getDatabase(), arg.getCollection());
       }
     } catch (UserException ex) {
-      reportErrorIgnored(LOGGER, command, ex);
+      reportErrorIgnored(logger, command, ex);
     }
 
     return Status.ok();

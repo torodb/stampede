@@ -19,7 +19,6 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.base.Preconditions;
-import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex.Builder;
 
 import java.util.ArrayList;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  *
@@ -98,9 +98,8 @@ public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex imp
   }
 
   @Override
-  @DoNotChange
-  public Iterable<ImmutableMetaDocPartIndexColumn> getAddedMetaDocPartIndexColumns() {
-    return addedColumns;
+  public Stream<? extends ImmutableMetaDocPartIndexColumn> streamAddedMetaDocPartIndexColumns() {
+    return addedColumns.stream();
   }
 
   @Override
@@ -120,6 +119,11 @@ public class WrapperMutableMetaDocPartIndex extends AbstractMetaDocPartIndex imp
   @Override
   public int size() {
     return addedColumnsByIdentifier.size();
+  }
+
+  @Override
+  public Stream<? extends MetaDocPartIndexColumn> streamColumns() {
+    return addedColumns.stream();
   }
 
   @Override

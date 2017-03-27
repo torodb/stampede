@@ -37,9 +37,10 @@ import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.torodb.concurrent.akka.BatchFlow;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.concurrent.akka.BatchFlow;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
@@ -51,7 +52,6 @@ import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatch;
 import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchChecker;
 import com.torodb.mongodb.repl.oplogreplier.batch.OplogBatchFilter;
 import com.torodb.mongodb.repl.oplogreplier.fetcher.OplogFetcher;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
@@ -72,7 +72,7 @@ import javax.inject.Inject;
 
 public class DefaultOplogApplier implements OplogApplier {
 
-  private static final Logger LOGGER = LogManager.getLogger(DefaultOplogApplier.class);
+  private final Logger logger;
   private final BatchLimits batchLimits;
   private final AnalyzedOplogBatchExecutor batchExecutor;
   private final OplogManager oplogManager;
@@ -85,8 +85,9 @@ public class DefaultOplogApplier implements OplogApplier {
   @Inject
   public DefaultOplogApplier(BatchLimits batchLimits, OplogManager oplogManager,
       AnalyzedOplogBatchExecutor batchExecutor, BatchAnalyzerFactory batchAnalyzerFactory,
-      ConcurrentToolsFactory concurrentToolsFactory, Shutdowner shutdowner,
+      ConcurrentToolsFactory concurrentToolsFactory, Shutdowner shutdowner, LoggerFactory lf,
       OplogApplierMetrics metrics, OplogBatchFilter batchFilter, OplogBatchChecker batchChecker) {
+    this.logger = lf.apply(this.getClass());
     this.batchExecutor = batchExecutor;
     this.batchLimits = batchLimits;
     this.oplogManager = oplogManager;
@@ -135,7 +136,7 @@ public class DefaultOplogApplier implements OplogApplier {
         .whenComplete((done, t) -> {
           fetcher.close();
           if (done != null) {
-            LOGGER.trace("Oplog replication stream finished normally");
+            logger.trace("Oplog replication stream finished normally");
           } else {
             Throwable cause;
             if (t instanceof CompletionException) {
@@ -145,11 +146,11 @@ public class DefaultOplogApplier implements OplogApplier {
             }
             //the completable future has been cancelled
             if (cause instanceof CancellationException) {
-              LOGGER.debug("Oplog replication stream has been cancelled");
+              logger.debug("Oplog replication stream has been cancelled");
               killSwitch.shutdown();
             } else { //in this case the exception should came from the stream
               cause = Throwables.getRootCause(cause);
-              LOGGER.error("Oplog replication stream finished exceptionally: " + cause
+              logger.warn("Oplog replication stream finished exceptionally: " + cause
                   .getLocalizedMessage(), cause);
               //the stream should be finished exceptionally, but just in case we
               //notify the kill switch to stop the stream.
@@ -179,9 +180,9 @@ public class DefaultOplogApplier implements OplogApplier {
 
   @Override
   public void close() throws Exception {
-    LOGGER.trace("Waiting until actor system terminates");
+    logger.trace("Waiting until actor system terminates");
     Await.result(actorSystem.terminate(), Duration.Inf());
-    LOGGER.trace("Actor system terminated");
+    logger.trace("Actor system terminated");
   }
 
   private Source<OplogBatch, NotUsed> createOplogSource(OplogFetcher fetcher) {
@@ -255,7 +256,7 @@ public class DefaultOplogApplier implements OplogApplier {
       return;
     }
     if (batchExecutionMillis <= 0) {
-      LOGGER.debug("Unexpected time execution: {}" + batchExecutionMillis);
+      logger.debug("Unexpected time execution: {}" + batchExecutionMillis);
     }
     metrics.getMaxDelay().update(batchExecutionMillis);
     metrics.getApplicationCost().update((1000L * batchExecutionMillis) / rawBatchSize);

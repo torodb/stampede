@@ -21,6 +21,8 @@ package com.torodb.packaging.config.model.protocol.mongo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.model.common.BooleanWithDefault;
+import com.torodb.packaging.config.model.common.StringWithDefault;
 
 import javax.validation.constraints.NotNull;
 
@@ -28,106 +30,106 @@ import javax.validation.constraints.NotNull;
     "trustStorePassword", "keyStoreFile", "keyStorePassword", "keyPassword"})
 public class Ssl {
 
+  private BooleanWithDefault enabled = BooleanWithDefault.withDefault(false);
+  private BooleanWithDefault allowInvalidHostnames = BooleanWithDefault.withDefault(false);
+  private BooleanWithDefault fipsMode = BooleanWithDefault.withDefault(false);
+  private StringWithDefault caFile = StringWithDefault.withDefault(null);
+  private StringWithDefault trustStoreFile = StringWithDefault.withDefault(null);
+  private StringWithDefault trustStorePassword = StringWithDefault.withDefault(null);
+  private StringWithDefault keyStoreFile = StringWithDefault.withDefault(null);
+  private StringWithDefault keyStorePassword = StringWithDefault.withDefault(null);
+  private StringWithDefault keyPassword = StringWithDefault.withDefault(null);
+  
   @Description("config.mongo.replication.ssl.enabled")
   @NotNull
   @JsonProperty(required = true)
-  private Boolean enabled = false;
-  @Description("config.mongo.replication.ssl.allowInvalidHostnames")
-  @NotNull
-  @JsonProperty(required = true)
-  private Boolean allowInvalidHostnames = false;
-  @Description("config.mongo.replication.ssl.fipsMode")
-  @NotNull
-  @JsonProperty(required = true)
-  private Boolean fipsMode = false;
-  @Description("config.mongo.replication.ssl.caFile")
-  @JsonProperty(required = true)
-  private String caFile;
-  @Description("config.mongo.replication.ssl.trustStoreFile")
-  @JsonProperty(required = true)
-  private String trustStoreFile;
-  @Description("config.mongo.replication.ssl.trustStorePassword")
-  @JsonProperty(required = true)
-  private String trustStorePassword;
-  @Description("config.mongo.replication.ssl.keyStoreFile")
-  @JsonProperty(required = true)
-  private String keyStoreFile;
-  @Description("config.mongo.replication.ssl.keyStorePassword")
-  @JsonProperty(required = true)
-  private String keyStorePassword;
-  @Description("config.mongo.replication.ssl.keyPassword")
-  @JsonProperty(required = true)
-  private String keyPassword;
-
-  public Boolean getEnabled() {
+  public BooleanWithDefault getEnabled() {
     return enabled;
   }
 
-  public void setEnabled(Boolean enabled) {
+  public void setEnabled(BooleanWithDefault enabled) {
     this.enabled = enabled;
   }
 
-  public Boolean getAllowInvalidHostnames() {
+  @Description("config.mongo.replication.ssl.allowInvalidHostnames")
+  @NotNull
+  @JsonProperty(required = true)
+  public BooleanWithDefault getAllowInvalidHostnames() {
     return allowInvalidHostnames;
   }
 
-  public void setAllowInvalidHostnames(Boolean allowInvalidHostnames) {
+  public void setAllowInvalidHostnames(BooleanWithDefault allowInvalidHostnames) {
     this.allowInvalidHostnames = allowInvalidHostnames;
   }
 
-  public Boolean getFipsMode() {
+  @Description("config.mongo.replication.ssl.fipsMode")
+  @NotNull
+  @JsonProperty(required = true)
+  public BooleanWithDefault getFipsMode() {
     return fipsMode;
   }
 
-  public void setFipsMode(Boolean fipsMode) {
+  public void setFipsMode(BooleanWithDefault fipsMode) {
     this.fipsMode = fipsMode;
   }
 
-  public String getCaFile() {
+  @Description("config.mongo.replication.ssl.caFile")
+  @JsonProperty(required = true)
+  public StringWithDefault getCaFile() {
     return caFile;
   }
 
-  public void setCaFile(String cAFile) {
-    caFile = cAFile;
+  public void setCaFile(StringWithDefault caFile) {
+    this.caFile = caFile;
   }
 
-  public String getTrustStoreFile() {
+  @Description("config.mongo.replication.ssl.trustStoreFile")
+  @JsonProperty(required = true)
+  public StringWithDefault getTrustStoreFile() {
     return trustStoreFile;
   }
 
-  public void setTrustStoreFile(String trustStoreFile) {
+  public void setTrustStoreFile(StringWithDefault trustStoreFile) {
     this.trustStoreFile = trustStoreFile;
   }
 
-  public String getTrustStorePassword() {
+  @Description("config.mongo.replication.ssl.trustStorePassword")
+  @JsonProperty(required = true)
+  public StringWithDefault getTrustStorePassword() {
     return trustStorePassword;
   }
 
-  public void setTrustStorePassword(String trustStorePassword) {
+  public void setTrustStorePassword(StringWithDefault trustStorePassword) {
     this.trustStorePassword = trustStorePassword;
   }
 
-  public String getKeyStoreFile() {
+  @Description("config.mongo.replication.ssl.keyStoreFile")
+  @JsonProperty(required = true)
+  public StringWithDefault getKeyStoreFile() {
     return keyStoreFile;
   }
 
-  public void setKeyStoreFile(String keyStoreFile) {
+  public void setKeyStoreFile(StringWithDefault keyStoreFile) {
     this.keyStoreFile = keyStoreFile;
   }
 
-  public String getKeyStorePassword() {
+  @Description("config.mongo.replication.ssl.keyStorePassword")
+  @JsonProperty(required = true)
+  public StringWithDefault getKeyStorePassword() {
     return keyStorePassword;
   }
 
-  public void setKeyStorePassword(String keyStorePassword) {
+  public void setKeyStorePassword(StringWithDefault keyStorePassword) {
     this.keyStorePassword = keyStorePassword;
   }
 
-  public String getKeyPassword() {
+  @Description("config.mongo.replication.ssl.keyPassword")
+  @JsonProperty(required = true)
+  public StringWithDefault getKeyPassword() {
     return keyPassword;
   }
 
-  public void setKeyPassword(String keyPassword) {
+  public void setKeyPassword(StringWithDefault keyPassword) {
     this.keyPassword = keyPassword;
   }
 }

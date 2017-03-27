@@ -20,6 +20,7 @@ package com.torodb.core.transaction.metainf;
 
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -34,4 +35,7 @@ public interface MetaSnapshot {
 
   @Nullable
   public MetaDatabase getMetaDatabaseByIdentifier(String dbIdentifier);
+
+  @Nonnull
+  public abstract ImmutableMetaSnapshot immutableCopy();
 }

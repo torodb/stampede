@@ -20,19 +20,18 @@ package com.torodb.torod.pipeline;
 
 import com.torodb.core.TableRef;
 import com.torodb.core.annotations.DoNotChange;
+import com.torodb.core.transaction.metainf.ChangedElement;
 import com.torodb.core.transaction.metainf.FieldType;
 import com.torodb.core.transaction.metainf.ImmutableMetaDocPart;
 import com.torodb.core.transaction.metainf.ImmutableMetaField;
 import com.torodb.core.transaction.metainf.ImmutableMetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.ImmutableMetaScalar;
-import com.torodb.core.transaction.metainf.MetaElementState;
 import com.torodb.core.transaction.metainf.MetaField;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
 import com.torodb.core.transaction.metainf.MetaIndex;
 import com.torodb.core.transaction.metainf.MetaScalar;
 import com.torodb.core.transaction.metainf.MutableMetaDocPart;
 import com.torodb.core.transaction.metainf.MutableMetaDocPartIndex;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -124,8 +123,8 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
   }
 
   @Override
-  public Iterable<? extends ImmutableMetaField> getAddedMetaFields() {
-    return delegate.getAddedMetaFields();
+  public Stream<? extends ImmutableMetaField> streamAddedMetaFields() {
+    return delegate.streamAddedMetaFields();
   }
 
   @Override
@@ -149,8 +148,8 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
   }
 
   @Override
-  public Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars() {
-    return delegate.getAddedMetaScalars();
+  public Stream<? extends ImmutableMetaScalar> streamAddedMetaScalars() {
+    return delegate.streamAddedMetaScalars();
   }
 
   @Override
@@ -176,8 +175,8 @@ public class BatchMetaDocPart implements MutableMetaDocPart {
 
   @Override
   @SuppressWarnings("checkstyle:LineLength")
-  public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes() {
-    return delegate.getModifiedMetaDocPartIndexes();
+  public Stream<ChangedElement<ImmutableMetaIdentifiedDocPartIndex>> streamModifiedMetaDocPartIndexes() {
+    return delegate.streamModifiedMetaDocPartIndexes();
   }
 
   @Override

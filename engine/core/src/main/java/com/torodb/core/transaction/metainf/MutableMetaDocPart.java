@@ -19,7 +19,6 @@
 package com.torodb.core.transaction.metainf;
 
 import com.torodb.core.annotations.DoNotChange;
-import org.jooq.lambda.tuple.Tuple2;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -70,13 +69,11 @@ public interface MutableMetaDocPart extends MetaDocPart {
   public abstract ImmutableMetaScalar addMetaScalar(String identifier, FieldType type) throws
       IllegalArgumentException;
 
-  @DoNotChange
-  public abstract Iterable<? extends ImmutableMetaField> getAddedMetaFields();
+  public abstract Stream<? extends ImmutableMetaField> streamAddedMetaFields();
 
   public abstract ImmutableMetaField getAddedFieldByIdentifier(String identifier);
 
-  @DoNotChange
-  public abstract Iterable<? extends ImmutableMetaScalar> getAddedMetaScalars();
+  public abstract Stream<? extends ImmutableMetaScalar> streamAddedMetaScalars();
 
   /**
    * Add a non existent index to this doc part
@@ -94,15 +91,12 @@ public interface MutableMetaDocPart extends MetaDocPart {
    */
   public boolean removeMetaDocPartIndexByIdentifier(String indexId);
 
-  @DoNotChange
   @SuppressWarnings("checkstyle:LineLength")
-  public Iterable<Tuple2<ImmutableMetaIdentifiedDocPartIndex, MetaElementState>> getModifiedMetaDocPartIndexes();
+  public Stream<ChangedElement<ImmutableMetaIdentifiedDocPartIndex>> streamModifiedMetaDocPartIndexes();
 
   @DoNotChange
   public Iterable<MutableMetaDocPartIndex> getAddedMutableMetaDocPartIndexes();
 
   public MutableMetaDocPartIndex getOrCreatePartialMutableDocPartIndexForMissingIndexAndNewField(
       MetaIndex missingIndex, List<String> identifiers, MetaField newField);
-
-  public abstract ImmutableMetaDocPart immutableCopy();
 }

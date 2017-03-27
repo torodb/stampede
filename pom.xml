@@ -78,6 +78,7 @@
     <properties>
         <torodb.engine.version>0.50.1-SNAPSHOT</torodb.engine.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <log4j.version>2.7</log4j.version>
         <jackson.version>2.6.3</jackson.version>
         <mongowp.version>0.50.1-SNAPSHOT</mongowp.version>
@@ -485,9 +486,6 @@
                         </goals>
                         <configuration>
                             <trimStackTrace>false</trimStackTrace>
-                            <excludes>
-                                <exclude>%regex[.*integration.*]</exclude>
-                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
@@ -636,7 +634,7 @@
                 <plugin>
                     <groupId>io.fabric8</groupId>
                     <artifactId>docker-maven-plugin</artifactId>
-                    <version>0.19.0</version>
+                    <version>0.20.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
@@ -716,28 +714,6 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.19.1</version>
-                        <executions>
-                            <execution>
-                                <id>integration-tests</id>
-                                <phase>integration-test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <trimStackTrace>false</trimStackTrace>
-                                    <skip>false</skip>
-                                    <includes>
-                                        <include>%regex[.*integration.*]</include>
-                                    </includes>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <version>2.19.1</version>
                         <executions>
@@ -746,25 +722,8 @@
                                     <goal>integration-test</goal>
                                     <goal>verify</goal>
                                 </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>1.12</version>
-                        <executions>
-                            <execution>
-                                <id>add-test-source</id>
-                                <phase>generate-test-sources</phase>
-                                <goals>
-                                    <goal>add-test-source</goal>
-                                </goals>
                                 <configuration>
-                                    <sources>
-                                        <source>src/test-integration/java</source>
-                                    </sources>
+                                    <trimStackTrace>false</trimStackTrace>
                                 </configuration>
                             </execution>
                         </executions>

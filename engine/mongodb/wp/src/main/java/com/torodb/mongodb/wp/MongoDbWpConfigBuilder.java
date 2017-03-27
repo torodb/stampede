@@ -18,7 +18,7 @@
 
 package com.torodb.mongodb.wp;
 
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 
 

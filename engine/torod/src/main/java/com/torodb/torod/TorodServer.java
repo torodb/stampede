@@ -18,7 +18,10 @@
 
 package com.torodb.torod;
 
+import com.torodb.common.util.Empty;
 import com.torodb.core.services.TorodbService;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  *
@@ -27,7 +30,7 @@ public interface TorodServer extends TorodbService {
 
   public TorodConnection openConnection();
 
-  public void disableDataImportMode();
+  public CompletableFuture<Empty> disableDataImportMode(String dbName);
 
-  public void enableDataImportMode();
+  public CompletableFuture<Empty> enableDataImportMode(String dbName);
 }

@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class MongoObjectIdType implements KvType {
 
   public static final MongoObjectIdType INSTANCE = new MongoObjectIdType();
@@ -32,7 +30,7 @@ public class MongoObjectIdType implements KvType {
   }
 
   @Override
-  public <R, A> R accept(KvTypeVisitor<R, A> visitor,A arg) {
+  public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
 }

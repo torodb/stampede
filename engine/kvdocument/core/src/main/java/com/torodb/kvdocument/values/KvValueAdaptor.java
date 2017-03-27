@@ -18,9 +18,7 @@
 
 package com.torodb.kvdocument.values;
 
-/**
- *
- */
+/** */
 public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
 
   public R defaultCase(KvValue<?> value, A arg) {
@@ -102,4 +100,43 @@ public class KvValueAdaptor<R, A> implements KvValueVisitor<R, A> {
     return defaultCase(value, arg);
   }
 
+  @Override
+  public R visit(KvMongoJavascript value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMongoJavascriptWithScope value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMinKey value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMaxKey value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvUndefined value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMongoRegex value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvMongoDbPointer value, A arg) {
+    return defaultCase(value, arg);
+  }
+
+  @Override
+  public R visit(KvDeprecated value, A arg) {
+    return defaultCase(value, arg);
+  }
 }

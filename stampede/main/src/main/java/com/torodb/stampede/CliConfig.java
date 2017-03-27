@@ -125,7 +125,9 @@ public class CliConfig {
   @Parameter(names = {"--application-name"}, descriptionKey =
       "config.backend.postgres.applicationName")
   private String applicationName;
-
+  @Parameter(names = {"--backend-ssl"}, descriptionKey = "config.backend.postgres.ssl")
+  private Boolean backendSsl;
+  
   public boolean isVersion() {
     return version;
   }
@@ -302,6 +304,10 @@ public class CliConfig {
     return applicationName;
   }
 
+  public Boolean getBackendSsl() {
+    return backendSsl;
+  }
+  
   public void addParams() {
     if (logLevel != null) {
       addParam("/logging/level", logLevel);
@@ -322,7 +328,7 @@ public class CliConfig {
       addParam("/replication/ssl/enabled", sslEnabled ? "true" : "false");
     }
     if (sslAllowInvalidHostnames != null) {
-      addParam("/replication/ssl/allowInvalidHostnames", 
+      addParam("/replication/ssl/allowInvalidHostnames",
           sslAllowInvalidHostnames ? "true" : "false");
     }
     if (sslFipsMode != null) {
@@ -382,6 +388,9 @@ public class CliConfig {
     }
     if (applicationName != null) {
       addParam("/backend/" + backend + "/applicationName", applicationName);
+    }
+    if (backendSsl != null) {
+      addParam("/backend/" + backend + "/ssl", backendSsl ? "true" : "false");
     }
   }
 

@@ -11,11 +11,9 @@
                 <port>27019</port>
             </net>
             <replication>
-                <replication>
-                    <replSetName>rs1</replSetName>
-                    <role>HIDDEN_SLAVE</role>
-                    <syncSource>localhost:27017</syncSource>
-                </replication>
+                <replSetName>rs1</replSetName>
+                <role>HIDDEN_SLAVE</role>
+                <syncSource>localhost:27017</syncSource>
             </replication>
         </mongo>
     </protocol>

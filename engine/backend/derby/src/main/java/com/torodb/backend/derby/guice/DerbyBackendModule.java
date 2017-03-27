@@ -37,10 +37,10 @@ import com.torodb.backend.derby.DerbyMetaDataWriteInterface;
 import com.torodb.backend.derby.DerbyReadInterface;
 import com.torodb.backend.derby.DerbyStructureInterface;
 import com.torodb.backend.derby.DerbyWriteInterface;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfig;
+import com.torodb.backend.derby.driver.DerbyDriverProvider;
+import com.torodb.backend.derby.driver.OfficialDerbyDriver;
 import com.torodb.backend.derby.schema.DerbySchemaUpdater;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
-import com.torodb.backend.driver.derby.DerbyDriverProvider;
-import com.torodb.backend.driver.derby.OfficialDerbyDriver;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.core.backend.BackendService;
@@ -50,6 +50,7 @@ import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.guice.EssentialToDefaultModule;
 
 import javax.inject.Singleton;
 
@@ -63,11 +64,14 @@ public class DerbyBackendModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    install(new BackendModule());
     expose(BackendService.class);
     expose(ReservedIdGenerator.class);
     expose(SnapshotUpdater.class);
     expose(BackendTransactionJobFactory.class);
+
+    install(new BackendModule());
+
+    install(new EssentialToDefaultModule());
 
     bind(BackendConfig.class)
         .toInstance(config);

@@ -25,15 +25,23 @@ import com.torodb.backend.derby.converters.jooq.BinaryValueConverter;
 import com.torodb.backend.derby.converters.jooq.BooleanValueConverter;
 import com.torodb.backend.derby.converters.jooq.DateValueConverter;
 import com.torodb.backend.derby.converters.jooq.Decimal128ValueConverter;
+import com.torodb.backend.derby.converters.jooq.DeprecatedValueConverter;
 import com.torodb.backend.derby.converters.jooq.DoubleValueConverter;
 import com.torodb.backend.derby.converters.jooq.InstantValueConverter;
 import com.torodb.backend.derby.converters.jooq.IntegerValueConverter;
 import com.torodb.backend.derby.converters.jooq.LongValueConverter;
+import com.torodb.backend.derby.converters.jooq.MaxKeyValueConverter;
+import com.torodb.backend.derby.converters.jooq.MinKeyValueConverter;
+import com.torodb.backend.derby.converters.jooq.MongoDbPointerValueConverter;
+import com.torodb.backend.derby.converters.jooq.MongoJavascriptValueConverter;
+import com.torodb.backend.derby.converters.jooq.MongoJavascriptWithScopeValueConverter;
 import com.torodb.backend.derby.converters.jooq.MongoObjectIdValueConverter;
+import com.torodb.backend.derby.converters.jooq.MongoRegexValueConverter;
 import com.torodb.backend.derby.converters.jooq.MongoTimestampValueConverter;
 import com.torodb.backend.derby.converters.jooq.NullValueConverter;
 import com.torodb.backend.derby.converters.jooq.StringValueConverter;
 import com.torodb.backend.derby.converters.jooq.TimeValueConverter;
+import com.torodb.backend.derby.converters.jooq.UndefinedValueConverter;
 import com.torodb.core.transaction.metainf.FieldType;
 import org.jooq.SQLDialect;
 
@@ -58,6 +66,14 @@ public class DerbyDataTypeProvider extends AbstractDataTypeProvider {
             .put(FieldType.MONGO_OBJECT_ID, MongoObjectIdValueConverter.TYPE)
             .put(FieldType.MONGO_TIME_STAMP, MongoTimestampValueConverter.TYPE)
             .put(FieldType.BINARY, BinaryValueConverter.TYPE)
+            .put(FieldType.JAVASCRIPT, MongoJavascriptValueConverter.TYPE)
+            .put(FieldType.JAVASCRIPT_WITH_SCOPE, MongoJavascriptWithScopeValueConverter.TYPE)
+            .put(FieldType.MIN_KEY, MinKeyValueConverter.TYPE)
+            .put(FieldType.MAX_KEY, MaxKeyValueConverter.TYPE)
+            .put(FieldType.UNDEFINED, UndefinedValueConverter.TYPE)
+            .put(FieldType.MONGO_REGEX, MongoRegexValueConverter.TYPE)
+            .put(FieldType.MONGO_DB_POINTER, MongoDbPointerValueConverter.TYPE)
+            .put(FieldType.DEPRECATED, DeprecatedValueConverter.TYPE)
             .build()
     );
   }

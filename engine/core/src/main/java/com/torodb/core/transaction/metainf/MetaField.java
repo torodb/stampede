@@ -47,4 +47,6 @@ public interface MetaField {
   public default String defautToString() {
     return "field{" + "name:" + getName() + ", type:" + getType() + ", id:" + getIdentifier() + '}';
   }
+
+  public abstract ImmutableMetaField immutableCopy();
 }

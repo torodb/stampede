@@ -19,13 +19,14 @@
 package com.torodb.mongodb.repl;
 
 
-import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.collect.Lists;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
+import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
+import com.torodb.mongodb.repl.guice.ReplEssentialOverrideModule;
 import org.junit.Before;
 
 import java.util.List;
@@ -59,16 +60,25 @@ public class ReplCoreBundleTest extends AbstractReplBundleTest<ReplCoreBundle>{
 
   public static ReplCoreBundle createBundle(BundleConfig generalConfig,
       MongoDbCoreBundle mongoDbCoreBundle) {
-    return createBundle(generalConfig, mongoDbCoreBundle, HostAndPort.fromParts("localhost", 27017));
+    return createBundle(
+        generalConfig,
+        mongoDbCoreBundle,
+        HostAndPort.fromParts("localhost", 27017)
+    );
   }
 
   public static ReplCoreBundle createBundle(BundleConfig generalConfig,
       MongoDbCoreBundle mongoDbCoreBundle, HostAndPort seed) {
 
+    ReplEssentialOverrideModule essentialOverrideModule = new TestReplEssentialOverrideModule(
+        generalConfig.getEssentialInjector()
+    );
+
     return new ReplCoreBundle(new ReplCoreConfig(
         MongoClientConfiguration.unsecure(seed),
         new ToroDbReplicationFilters(),
         mongoDbCoreBundle,
+        essentialOverrideModule,
         generalConfig.getEssentialInjector(),
         generalConfig.getSupervisor())
     );

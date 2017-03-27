@@ -45,11 +45,6 @@
         </dependency>
         <dependency>
             <groupId>com.torodb.engine</groupId>
-            <artifactId>metainfo-cache</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -79,23 +74,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>d2r</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>concurrent</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.inject.extensions</groupId>

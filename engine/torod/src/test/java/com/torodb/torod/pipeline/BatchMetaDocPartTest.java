@@ -110,8 +110,8 @@ public class BatchMetaDocPartTest {
     assertNotNull(docPart.getMetaFieldByIdentifier(fieldId));
     assertNotNull(docPart.getMetaFieldByNameAndType(fieldName, fieldType));
 
-    assertFalse(Iterables.isEmpty(docPart.getAddedMetaFields()));
-    assertFalse(Iterables.isEmpty(delegate.getAddedMetaFields()));
+    assertFalse(!docPart.streamAddedMetaFields().findAny().isPresent());
+    assertFalse(!delegate.streamAddedMetaFields().findAny().isPresent());
     assertFalse(Iterables.isEmpty(docPart.getOnBatchModifiedMetaFields()));
 
     verify(testChangeConsumer).accept(docPart);

@@ -20,9 +20,7 @@ package com.torodb.kvdocument.types;
 
 import javax.annotation.concurrent.Immutable;
 
-/**
- *
- */
+/** */
 @Immutable
 public class ArrayType implements KvType {
 
@@ -54,8 +52,8 @@ public class ArrayType implements KvType {
       return false;
     }
     final ArrayType other = (ArrayType) obj;
-    if (this.elementType != other.elementType && (this.elementType == null || !this.elementType
-        .equals(other.elementType))) {
+    if (this.elementType != other.elementType
+        && (this.elementType == null || !this.elementType.equals(other.elementType))) {
       return false;
     }
     return true;
@@ -70,5 +68,4 @@ public class ArrayType implements KvType {
   public String toString() {
     return "Array<" + elementType + '>';
   }
-
 }

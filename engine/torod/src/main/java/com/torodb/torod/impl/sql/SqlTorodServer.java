@@ -21,6 +21,7 @@ package com.torodb.torod.impl.sql;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
+import com.torodb.common.util.Empty;
 import com.torodb.core.TableRefFactory;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.backend.BackendService;
@@ -29,10 +30,12 @@ import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.R2DTranslator;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.transaction.InternalTransactionManager;
+import com.torodb.core.transaction.metainf.ImmutableMetaDatabase;
 import com.torodb.core.transaction.metainf.ImmutableMetaSnapshot;
 import com.torodb.torod.TorodServer;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -103,15 +106,23 @@ public class SqlTorodServer extends IdleTorodbService implements TorodServer {
   }
 
   @Override
-  public void enableDataImportMode() {
+  public CompletableFuture<Empty> enableDataImportMode(String dbName) {
     ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
-    backend.enableDataImportMode(snapshot);
+    ImmutableMetaDatabase metaDb = snapshot.getMetaDatabaseByName(dbName);
+    if (metaDb == null) {
+      return CompletableFuture.completedFuture(Empty.getInstance());
+    }
+    return backend.enableDataImportMode(metaDb);
   }
 
   @Override
-  public void disableDataImportMode() {
+  public CompletableFuture<Empty> disableDataImportMode(String dbName) {
     ImmutableMetaSnapshot snapshot = internalTransactionManager.takeMetaSnapshot();
-    backend.disableDataImportMode(snapshot);
+    ImmutableMetaDatabase metaDb = snapshot.getMetaDatabaseByName(dbName);
+    if (metaDb == null) {
+      return CompletableFuture.completedFuture(Empty.getInstance());
+    }
+    return backend.disableDataImportMode(metaDb);
   }
 
   D2RTranslatorFactory getD2RTranslatorFactory() {

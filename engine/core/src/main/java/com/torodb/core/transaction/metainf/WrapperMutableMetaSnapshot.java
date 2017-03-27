@@ -19,7 +19,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.collect.Maps;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.d2r.D2RLoggerFactory;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -28,12 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
 
-  private static final Logger LOGGER = LogManager.getLogger(WrapperMutableMetaSnapshot.class);
+  private static final Logger LOGGER = D2RLoggerFactory.get(WrapperMutableMetaSnapshot.class);
   private final ImmutableMetaSnapshot wrapped;
   private final HashMap<String, Tuple2<MutableMetaDatabase, MetaElementState>> dbsByName;
   private final Map<String, Tuple2<MutableMetaDatabase, MetaElementState>> aliveMap;
@@ -49,8 +46,17 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
     aliveMap = Maps.filterValues(dbsByName, tuple -> tuple.v2().isAlive());
   }
 
+  public static WrapperMutableMetaSnapshot createEmpty() {
+    return new WrapperMutableMetaSnapshot(new ImmutableMetaSnapshot(Collections.emptyMap()));
+  }
+
   protected WrapperMutableMetaDatabase createMetaDatabase(ImmutableMetaDatabase immutable) {
     return new WrapperMutableMetaDatabase(immutable, this::onMetaDatabaseChange);
+  }
+
+  @Override
+  public ImmutableMetaSnapshot getOrigin() {
+    return wrapped;
   }
 
   @Override
@@ -73,9 +79,10 @@ public class WrapperMutableMetaSnapshot implements MutableMetaSnapshot {
   }
 
   @Override
-  public Iterable<Tuple2<MutableMetaDatabase, MetaElementState>> getModifiedDatabases() {
-    return Maps.filterValues(dbsByName, tuple -> tuple.v2().hasChanged())
-        .values();
+  public Stream<ChangedElement<MutableMetaDatabase>> streamModifiedDatabases() {
+    return dbsByName.values().stream()
+        .filter(tuple -> tuple.v2().hasChanged())
+        .map(PojoChangedElement::new);
   }
 
   @Override

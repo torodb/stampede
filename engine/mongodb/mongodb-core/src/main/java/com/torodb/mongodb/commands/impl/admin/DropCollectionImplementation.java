@@ -25,22 +25,29 @@ import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.impl.CollectionCommandArgument;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.core.WriteMongodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.inject.Inject;
 
 public class DropCollectionImplementation implements
     WriteTorodbCommandImpl<CollectionCommandArgument, Empty> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DropCollectionImplementation.class);
+  private final Logger logger;
+
+  @Inject
+  public DropCollectionImplementation(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   public Status<Empty> apply(Request req,
       Command<? super CollectionCommandArgument, ? super Empty> command,
       CollectionCommandArgument arg, WriteMongodTransaction context) {
     try {
-      logDropCommand(arg);
+      logDropCommand(req, arg);
 
       context.getTorodTransaction().dropCollection(req.getDatabase(), arg.getCollection());
     } catch (UserException ex) {
@@ -51,10 +58,10 @@ public class DropCollectionImplementation implements
     return Status.ok();
   }
 
-  private void logDropCommand(CollectionCommandArgument arg) {
+  private void logDropCommand(Request req, CollectionCommandArgument arg) {
     String collection = arg.getCollection();
 
-    LOGGER.info("Drop collection {}", collection);
+    logger.info("Drop collection {}.{}", req.getDatabase(), collection);
   }
 
 }

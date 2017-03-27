@@ -52,9 +52,11 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.torodb.common.util.RetryHelper.ExceptionHandler;
-import com.torodb.concurrent.ActorSystemTorodbService;
+import com.torodb.core.concurrent.ActorSystemTorodbService;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.DefaultLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.Retrier.Hint;
 import com.torodb.core.retrier.RetrierAbortException;
@@ -82,7 +84,6 @@ import com.torodb.mongodb.utils.ListIndexesRequester;
 import com.torodb.mongodb.utils.NamespaceUtil;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Clock;
@@ -114,9 +115,9 @@ import java.util.function.Function;
 @Beta
 public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
 
-  private static final Logger LOGGER = LogManager.getLogger(AkkaDbCloner.class);
+  private final Logger logger;
   /**
-   * The number of parallel task that can be used to clone each collection
+   * The number of parallel task that can be used to clone each collection.
    */
   private final int maxParallelInsertTasks;
   /**
@@ -131,12 +132,13 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
   public AkkaDbCloner(ThreadFactory threadFactory,
       ConcurrentToolsFactory concurrentToolsFactory,
       int maxParallelInsertTasks, int cursorBatchBufferSize,
-      CommitHeuristic commitHeuristic, Clock clock, Retrier retrier) {
+      CommitHeuristic commitHeuristic, Clock clock, Retrier retrier, LoggerFactory loggerFactory) {
     super(threadFactory,
         () -> concurrentToolsFactory.createExecutorService(
             "db-cloner", false),
         "akka-db-cloner"
     );
+    this.logger = loggerFactory.apply(this.getClass());
 
     this.maxParallelInsertTasks = maxParallelInsertTasks;
     Preconditions.checkArgument(maxParallelInsertTasks >= 1, "The number of parallel insert "
@@ -151,7 +153,10 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    if (logger == null) { //just in case it is called by the super constructor
+      return DefaultLoggerFactory.get(this.getClass());
+    }
+    return logger;
   }
 
   @Override
@@ -161,24 +166,12 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
     Preconditions.checkState(isRunning(), "This db cloner is not running");
 
     if (!remoteClient.isRemote() && opts.getDbToClone().equals(dstDb)) {
-      LOGGER.warn("Trying to clone a database to itself! Ignoring it");
+      logger.warn("Trying to clone a database to itself! Ignoring it");
       return;
     }
     String fromDb = opts.getDbToClone();
 
-    CursorResult<Entry> listCollections;
-    try (MongoConnection remoteConnection = remoteClient.openConnection()) {
-      listCollections = ListCollectionsRequester.getListCollections(
-          remoteConnection,
-          fromDb,
-          null
-      );
-    } catch (MongoException ex) {
-      throw new CloningException(
-          "It was impossible to get information from the remote server",
-          ex
-      );
-    }
+    CursorResult<Entry> listCollections = getRemoteCollections(remoteClient, fromDb);
 
     if (!opts.getWritePermissionSupplier().get()) {
       throw new NotMasterException("Destiny database cannot be written");
@@ -190,56 +183,84 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       throw new NotMasterException("Destiny database cannot be written "
           + "after get collections info");
     }
+    
+    cloneDatabase(collsToClone, dstDb, remoteClient, localServer, opts);
+  }
 
-    try {
-      for (Entry entry : collsToClone) {
-        prepareCollection(localServer, dstDb, entry);
-      }
-    } catch (RollbackException ex) {
-      throw new AssertionError("Unexpected rollback exception", ex);
-    }
+  private void cloneDatabase(List<Entry> collsToClone, String dstDb, MongoClient remoteClient,
+      MongodServer localServer, CloneOptions opts) throws MongoException {
 
-    Materializer materializer = ActorMaterializer.create(getActorSystem());
-
+    prepareCollections(collsToClone, localServer, dstDb);
+    
     try (MongoConnection remoteConnection = remoteClient.openConnection()) {
       if (opts.isCloneData()) {
-        for (Entry entry : collsToClone) {
-          LOGGER.info("Cloning collection data {}.{} into {}.{}",
-              fromDb, entry.getCollectionName(), dstDb,
-              entry.getCollectionName());
-
-          try {
-            cloneCollection(localServer, remoteConnection, dstDb,
-                opts, materializer, entry);
-          } catch (CompletionException completionException) {
-            Throwable cause = completionException.getCause();
-            if (cause instanceof RollbackException) {
-              throw (RollbackException) cause;
-            }
-
-            throw completionException;
-          }
-        }
+        cloneData(collsToClone, remoteConnection, dstDb, localServer, opts);
       }
       if (opts.isCloneIndexes()) {
-        for (Entry entry : collsToClone) {
-          LOGGER.info("Cloning collection indexes {}.{} into {}.{}",
-              fromDb, entry.getCollectionName(), dstDb,
-              entry.getCollectionName());
+        cloneIndexes(collsToClone, remoteConnection, dstDb, localServer, opts);
+      }
+    }
+  }
 
-          try {
-            cloneIndex(localServer, dstDb, dstDb, remoteConnection,
-                opts, entry.getCollectionName(),
-                entry.getCollectionName());
-          } catch (CompletionException completionException) {
-            Throwable cause = completionException.getCause();
-            if (cause instanceof RollbackException) {
-              throw (RollbackException) cause;
-            }
+  private CursorResult<Entry> getRemoteCollections(MongoClient remoteClient, String fromDb) {
+    try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+      return ListCollectionsRequester.getListCollections(
+          remoteConnection,
+          fromDb,
+          null
+      );
+    } catch (MongoException ex) {
+      throw new CloningException(
+          "It was impossible to get information from the remote server",
+          ex
+      );
+    }
+  }
 
-            throw completionException;
-          }
+  private void cloneData(List<Entry> collsToClone, MongoConnection remoteConnection, String dstDb,
+      MongodServer localServer, CloneOptions opts) throws MongoException {
+
+    String fromDb = opts.getDbToClone();
+    Materializer materializer = ActorMaterializer.create(getActorSystem());
+    
+    for (Entry entry : collsToClone) {
+      logger.info("Cloning collection data {}.{} into {}.{}",
+          fromDb, entry.getCollectionName(), dstDb,
+          entry.getCollectionName());
+
+      try {
+        cloneCollection(localServer, remoteConnection, dstDb,
+            opts, materializer, entry);
+      } catch (CompletionException completionException) {
+        Throwable cause = completionException.getCause();
+        if (cause instanceof RollbackException) {
+          throw (RollbackException) cause;
         }
+
+        throw completionException;
+      }
+    }
+  }
+
+  private void cloneIndexes(List<Entry> collsToClone, MongoConnection remoteConnection, 
+      String dstDb, MongodServer localServer, CloneOptions opts) {
+    String fromDb = opts.getDbToClone();
+    for (Entry entry : collsToClone) {
+      logger.info("Cloning collection indexes {}.{} into {}.{}",
+          fromDb, entry.getCollectionName(), dstDb,
+          entry.getCollectionName());
+
+      try {
+        cloneIndex(localServer, dstDb, dstDb, remoteConnection,
+            opts, entry.getCollectionName(),
+            entry.getCollectionName());
+      } catch (CompletionException completionException) {
+        Throwable cause = completionException.getCause();
+        if (cause instanceof RollbackException) {
+          throw (RollbackException) cause;
+        }
+
+        throw completionException;
       }
     }
   }
@@ -330,7 +351,7 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       throw new AssertionError("Detected an inconsistency between inserted documents ( "
           + insertedDocs + ") andrequested documents to insert (" + requestedDocs + ")");
     }
-    LOGGER.info("{} documents have been cloned to {}.{}", insertedDocs, toDb, toCol);
+    logger.info("{} documents have been cloned to {}.{}", insertedDocs, toDb, toCol);
   }
 
   private Flow<BsonDocument, Pair<Integer, Integer>, NotUsed> createCloneDocsWorker(
@@ -418,31 +439,42 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       String collName = collEntry.getCollectionName();
 
       if (opts.getCollsToIgnore().contains(collName)) {
-        LOGGER.debug("Not cloning {} because is marked as an ignored collection", collName);
+        logger.debug("Not cloning {} because is marked as an ignored collection", collName);
         continue;
       }
 
       if (!NamespaceUtil.isUserWritable(fromDb, collName)) {
-        LOGGER.info("Not cloning {} because is a not user writable", collName);
+        logger.info("Not cloning {} because is a not user writable", collName);
         continue;
       }
       if (NamespaceUtil.isNormal(fromDb, collName)) {
-        LOGGER.info("Not cloning {} because it is not normal", collName);
+        logger.info("Not cloning {} because it is not normal", collName);
         continue;
       }
       if (!opts.getCollectionFilter().test(collName)) {
-        LOGGER.info("Not cloning {} because it didn't pass the given filter predicate", collName);
+        logger.info("Not cloning {} because it didn't pass the given filter predicate", collName);
         continue;
       }
       if (NamespaceUtil.isViewCollection(collEntry.getType())) {
-        LOGGER.info("Not cloning {} because it is a view", collName);
+        logger.info("Not cloning {} because it is a view", collName);
         continue;
       }
       
-      LOGGER.info("Collection {}.{} will be cloned", fromDb, collName);
+      logger.info("Collection {}.{} will be cloned", fromDb, collName);
       collsToClone.add(collEntry);
     }
     return collsToClone;
+  }
+
+  private void prepareCollections(List<Entry> collsToClone, MongodServer localServer,
+      String dstDb) {
+    try {
+      for (Entry entry : collsToClone) {
+        prepareCollection(localServer, dstDb, entry);
+      }
+    } catch (RollbackException ex) {
+      throw new AssertionError("Unexpected rollback exception", ex);
+    }
   }
 
   private void prepareCollection(MongodServer localServer, String dstDb, Entry colEntry)
@@ -451,8 +483,8 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
       retrier.retry(() -> {
         try (WriteMongodTransaction transaction = createWriteMongodTransaction(localServer)) {
           dropCollection(transaction, dstDb, colEntry.getCollectionName());
-          createCollection(transaction, dstDb, colEntry.getCollectionName(), colEntry
-              .getCollectionOptions());
+          createCollection(transaction, dstDb, colEntry.getCollectionName(),
+              colEntry.getCollectionOptions());
           transaction.commit();
           return null;
         } catch (UserException ex) {
@@ -514,11 +546,11 @@ public class AkkaDbCloner extends ActorSystemTorodbService implements DbCloner {
           .getReason();
 
       if (reason.isPresent()) {
-        LOGGER.info("Index {}.{} didn't pass the index filter. {}", toCol, indexEntry.getName(),
+        logger.info("Index {}.{} didn't pass the index filter. {}", toCol, indexEntry.getName(),
             reason.get().apply(indexEntry));
         continue;
       }
-      LOGGER.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
+      logger.info("Index {}.{}.{} will be cloned", fromDb, fromCol, indexEntry.getName());
       indexesToClone.add(indexEntry);
     }
     return indexesToClone;

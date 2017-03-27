@@ -22,6 +22,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.server.api.oplog.OplogOperation;
 import com.torodb.core.annotations.TorodbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.RunnableTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.transaction.RollbackException;
@@ -32,7 +33,6 @@ import com.torodb.mongodb.repl.OplogManager;
 import com.torodb.mongodb.repl.OplogManager.OplogManagerPersistException;
 import com.torodb.mongodb.repl.OplogManager.WriteOplogTransaction;
 import com.torodb.mongodb.repl.oplogreplier.OplogOperationApplier.OplogApplyingException;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
@@ -42,7 +42,7 @@ import javax.annotation.Nonnull;
 
 class ReplSyncApplier extends RunnableTorodbService {
 
-  private static final Logger LOGGER = LogManager.getLogger(ReplSyncApplier.class);
+  private final Logger logger;
   private final SyncServiceView callback;
   private final OplogOperationApplier oplogOpApplier;
   private final OplogManager oplogManager;
@@ -55,8 +55,10 @@ class ReplSyncApplier extends RunnableTorodbService {
       @Nonnull OplogOperationApplier oplogOpApplier,
       @Nonnull MongodServer server,
       @Nonnull OplogManager oplogManager,
-      @Nonnull SyncServiceView callback) {
+      @Nonnull SyncServiceView callback,
+      @Nonnull LoggerFactory loggerFactory) {
     super(callback, threadFactory);
+    this.logger = loggerFactory.apply(this.getClass());
     this.callback = callback;
     this.connection = server.openConnection();
     this.oplogOpApplier = oplogOpApplier;
@@ -65,7 +67,7 @@ class ReplSyncApplier extends RunnableTorodbService {
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    return logger;
   }
 
   @Override
@@ -102,7 +104,7 @@ class ReplSyncApplier extends RunnableTorodbService {
         try {
           for (OplogOperation opToApply : callback.takeOps()) {
             lastOperation = opToApply;
-            LOGGER.trace("Executing {}", opToApply);
+            logger.trace("Executing {}", opToApply);
             try {
               boolean done = false;
               while (!done) {
@@ -115,25 +117,25 @@ class ReplSyncApplier extends RunnableTorodbService {
                   transaction.commit();
                   done = true;
                 } catch (RollbackException ex) {
-                  LOGGER.debug("Recived a rollback exception while applying an oplog op", ex);
+                  logger.debug("Recived a rollback exception while applying an oplog op", ex);
                 }
               }
             } catch (OplogApplyingException ex) {
               if (!callback.failedToApply(opToApply, ex)) {
-                LOGGER.error(serviceName() + " stopped because one operation "
+                logger.error(serviceName() + " stopped because one operation "
                     + "cannot be executed", ex);
                 break;
               }
             } catch (UserException ex) {
               if (callback.failedToApply(opToApply, ex)) {
 
-                LOGGER.error(serviceName() + " stopped because one operation "
+                logger.error(serviceName() + " stopped because one operation "
                     + "cannot be executed", ex);
                 break;
               }
             } catch (Throwable ex) {
               if (callback.failedToApply(opToApply, ex)) {
-                LOGGER.error(serviceName() + " stopped because "
+                logger.error(serviceName() + " stopped because "
                     + "an unknown error", ex);
                 break;
               }
@@ -141,7 +143,7 @@ class ReplSyncApplier extends RunnableTorodbService {
             callback.markAsApplied(opToApply);
           }
         } catch (InterruptedException ex) {
-          LOGGER.debug("Interrupted applier thread while applying an operator");
+          logger.debug("Interrupted applier thread while applying an operator");
         }
       }
       if (lastOperation != null) {
@@ -150,7 +152,7 @@ class ReplSyncApplier extends RunnableTorodbService {
           oplogTransaction.addOperation(lastOperation);
         } catch (OplogManagerPersistException ex) {
           if (callback.failedToApply(lastOperation, ex)) {
-            LOGGER.error(serviceName() + " stopped because "
+            logger.error(serviceName() + " stopped because "
                 + "the last applied operation couldn't "
                 + "be persisted", ex);
             break;

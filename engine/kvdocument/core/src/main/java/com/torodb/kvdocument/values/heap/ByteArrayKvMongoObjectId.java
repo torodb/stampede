@@ -34,7 +34,8 @@ public class ByteArrayKvMongoObjectId extends KvMongoObjectId {
 
   private final byte[] value;
 
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+  @SuppressFBWarnings(
+      value = "EI_EXPOSE_REP2",
       justification = "We know this can be dangerous, but it improves the efficiency and, by"
       + "contract, the iterable shall be immutable")
   public ByteArrayKvMongoObjectId(@NotMutable byte[] value) {

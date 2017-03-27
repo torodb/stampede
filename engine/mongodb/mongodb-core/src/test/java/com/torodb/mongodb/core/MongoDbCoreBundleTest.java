@@ -21,17 +21,15 @@ package com.torodb.mongodb.core;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import com.eightkdata.mongowp.server.api.impl.NameBasedCommandLibrary;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.essential.EssentialModule;
-import com.torodb.mongodb.commands.impl.EmptyCommandClassifier;
+import com.torodb.core.guice.EssentialModule;
 import com.torodb.torod.MemoryTorodBundle;
 import com.torodb.torod.TorodBundle;
 import org.junit.After;
@@ -39,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.time.Clock;
+import java.util.Optional;
 
 
 public class MongoDbCoreBundleTest {
@@ -57,6 +56,7 @@ public class MongoDbCoreBundleTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )
@@ -68,9 +68,12 @@ public class MongoDbCoreBundleTest {
     torodBundle.startAsync();
     torodBundle.awaitRunning();
 
-    MongoDbCoreConfig config = new MongoDbCoreConfig(torodBundle,
-        new NameBasedCommandLibrary("test", ImmutableMap.of()),
-        new EmptyCommandClassifier(), essentialInjector, supervisor);
+    MongoDbCoreConfig config = MongoDbCoreConfig.simpleNonServerConfig(
+        torodBundle,
+        DefaultLoggerFactory.getInstance(),
+        Optional.empty(),
+        new BundleConfigImpl(essentialInjector, supervisor)
+    );
 
     bundle = new MongoDbCoreBundle(config);
   }

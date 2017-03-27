@@ -65,8 +65,7 @@ public abstract class KvDocument extends KvValue<KvDocument> implements Iterable
 
   @Override
   public String toString() {
-    StringBuilder toStringBuilder = new StringBuilder(
-        Iterables.toString(this));
+    StringBuilder toStringBuilder = new StringBuilder(Iterables.toString(this));
 
     toStringBuilder.setCharAt(0, '{');
     toStringBuilder.setCharAt(toStringBuilder.length() - 1, '}');
@@ -75,7 +74,6 @@ public abstract class KvDocument extends KvValue<KvDocument> implements Iterable
   }
 
   /**
-   *
    * @param key
    * @return the value associated with that key or null if there is no entry with that key
    */
@@ -266,32 +264,28 @@ public abstract class KvDocument extends KvValue<KvDocument> implements Iterable
         throw new IllegalStateException("This builder has been already used");
       }
     }
-    
+
     public Builder putNullValue(String key) {
       return putValue(key, KvNull.getInstance());
     }
-
   }
 
-  protected static class FromEntryMap implements
-      Function<Map.Entry<String, KvValue<?>>, DocEntry<?>> {
+  protected static class FromEntryMap
+      implements Function<Map.Entry<String, KvValue<?>>, DocEntry<?>> {
 
     public static final FromEntryMap INSTANCE = new FromEntryMap();
 
-    private FromEntryMap() {
-    }
+    private FromEntryMap() {}
 
     @Override
     public DocEntry<?> apply(@Nonnull Map.Entry<String, KvValue<?>> input) {
       return new SimpleDocEntry<>(input.getKey(), input.getValue());
     }
-
   }
 
   private static class ExtractKeyFunction implements Function<DocEntry<?>, String> {
 
-    public ExtractKeyFunction() {
-    }
+    public ExtractKeyFunction() {}
 
     @Override
     public String apply(@Nonnull DocEntry<?> input) {

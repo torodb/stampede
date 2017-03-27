@@ -25,14 +25,15 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.torodb.backend.derby.DerbyDbBackendBundle;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfigBuilder;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfigBuilder;
 
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.bundle.BundleConfigImpl;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.essential.EssentialModule;
+import com.torodb.core.guice.EssentialModule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +55,7 @@ public class SqlTorodBundleTest {
     };
     Injector essentialInjector = Guice.createInjector(
         new EssentialModule(
+            DefaultLoggerFactory.getInstance(),
             () -> true,
             Clock.systemUTC()
         )
@@ -87,7 +89,7 @@ public class SqlTorodBundleTest {
   @Test
   public void testStartAndStop() {
     torodBundle.start()
-        .thenCompose((o) -> torodBundle.stop())
+        .thenCompose((Object ignore) -> torodBundle.stop())
         .join();
     assertThat(torodBundle.state(), is(Service.State.TERMINATED));
   }

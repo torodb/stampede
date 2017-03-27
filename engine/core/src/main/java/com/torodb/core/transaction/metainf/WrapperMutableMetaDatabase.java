@@ -19,8 +19,7 @@
 package com.torodb.core.transaction.metainf;
 
 import com.google.common.collect.Maps;
-import com.torodb.core.annotations.DoNotChange;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.d2r.D2RLoggerFactory;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -30,12 +29,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
 
-  private static final Logger LOGGER = LogManager.getLogger(WrapperMutableMetaDatabase.class);
+  private static final Logger LOGGER = D2RLoggerFactory.get(WrapperMutableMetaDatabase.class);
   private final ImmutableMetaDatabase wrapped;
   private final HashMap<String, Tuple2<MutableMetaCollection, MetaElementState>> collectionsByName;
   private final Consumer<WrapperMutableMetaDatabase> changeConsumer;
@@ -62,6 +58,11 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
   }
 
   @Override
+  public ImmutableMetaDatabase getOrigin() {
+    return wrapped;
+  }
+
+  @Override
   public WrapperMutableMetaCollection addMetaCollection(String colName, String colId) throws
       IllegalArgumentException {
     if (getMetaCollectionByName(colName) != null) {
@@ -84,11 +85,11 @@ public class WrapperMutableMetaDatabase implements MutableMetaDatabase {
     return result;
   }
 
-  @DoNotChange
   @Override
-  public Iterable<Tuple2<MutableMetaCollection, MetaElementState>> getModifiedCollections() {
-    return Maps.filterValues(collectionsByName, tuple -> tuple.v2().hasChanged())
-        .values();
+  public Stream<ChangedElement<MutableMetaCollection>> streamModifiedCollections() {
+    return collectionsByName.values().stream()
+        .filter(tuple -> tuple.v2().hasChanged())
+        .map(PojoChangedElement::new);
   }
 
   @Override

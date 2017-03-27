@@ -23,6 +23,7 @@ import com.eightkdata.mongowp.Status;
 import com.eightkdata.mongowp.bson.utils.DefaultBsonValues;
 import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.commands.impl.ReadTorodbCommandImpl;
 import com.torodb.mongodb.commands.pojos.CollectionOptions;
 import com.torodb.mongodb.commands.pojos.CollectionOptions.AutoIndexMode;
@@ -32,19 +33,21 @@ import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListC
 import com.torodb.mongodb.commands.signatures.admin.ListCollectionsCommand.ListCollectionsResult.Entry;
 import com.torodb.mongodb.core.MongodTransaction;
 import com.torodb.mongodb.utils.NamespaceUtil;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.inject.Singleton;
+import javax.annotation.concurrent.ThreadSafe;
+import javax.inject.Inject;
 
-/**
- *
- */
-@Singleton
+@ThreadSafe
 public class ListCollectionsImplementation implements
     ReadTorodbCommandImpl<ListCollectionsArgument, ListCollectionsResult> {
 
-  private static final Logger LOGGER = LogManager.getLogger(ListCollectionsImplementation.class);
+  private final Logger logger;
+
+  @Inject
+  public ListCollectionsImplementation(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   private static final CollectionOptions DEFAULT_COLLECTION_OPTIONS =
       new CollectionOptions.Builder()
@@ -61,7 +64,7 @@ public class ListCollectionsImplementation implements
       ListCollectionsArgument arg, MongodTransaction context) {
 
     if (arg.getFilter() != null && !arg.getFilter().isEmpty()) {
-      LOGGER.debug("Recived a {} with the unsupported filter {}", command.getCommandName(), arg
+      logger.debug("Recived a {} with the unsupported filter {}", command.getCommandName(), arg
           .getFilter());
       return Status.from(ErrorCode.COMMAND_FAILED, command.getCommandName()
           + " with filters are not supported right now");

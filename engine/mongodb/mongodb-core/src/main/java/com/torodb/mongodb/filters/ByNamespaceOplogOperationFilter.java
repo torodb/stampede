@@ -57,8 +57,7 @@ public class ByNamespaceOplogOperationFilter implements OplogOperationFilter {
   }
 
   private String getNamespaceReason(OplogOperation op, String db, String col) {
-    return "Skipping operation " + op + " because it affects the filtered namespace " + db + "."
-        + col;
+    return "It affects the filtered namespace " + db + "." + col;
   }
 
   private FilterResult<OplogOperation> filterByDatabase(OplogOperation op, String db) {
@@ -67,7 +66,7 @@ public class ByNamespaceOplogOperationFilter implements OplogOperationFilter {
   }
 
   private String getDatabaseReason(OplogOperation op, String db) {
-    return "Skipping operation " + op + " because it affects the filtered database " + db;
+    return "It affects the filtered database " + db;
   }
 
   private class OplogOperationSwitch

@@ -20,7 +20,6 @@ package com.torodb.core.transaction.metainf;
 
 import com.google.common.collect.Maps;
 import com.torodb.core.TableRef;
-import com.torodb.core.annotations.DoNotChange;
 import org.jooq.lambda.Seq;
 import org.jooq.lambda.tuple.Tuple2;
 
@@ -77,6 +76,11 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
   }
 
   @Override
+  public ImmutableMetaCollection getOrigin() {
+    return wrapped;
+  }
+
+  @Override
   public WrapperMutableMetaDocPart addMetaDocPart(TableRef tableRef, String tableId) throws
       IllegalArgumentException {
     if (getMetaDocPartByTableRef(tableRef) != null) {
@@ -97,9 +101,8 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
   }
 
   @Override
-  @DoNotChange
-  public Iterable<? extends WrapperMutableMetaDocPart> getModifiedMetaDocParts() {
-    return modifiedMetaDocParts;
+  public Stream<? extends WrapperMutableMetaDocPart> streamModifiedMetaDocParts() {
+    return modifiedMetaDocParts.stream();
   }
 
   @Override
@@ -131,9 +134,10 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
   }
 
   @Override
-  public Iterable<Tuple2<MutableMetaIndex, MetaElementState>> getModifiedMetaIndexes() {
-    return Maps.filterValues(indexesByName, tuple -> tuple.v2().hasChanged())
-        .values();
+  public Stream<ChangedElement<MutableMetaIndex>> streamModifiedMetaIndexes() {
+    return indexesByName.values().stream()
+        .filter(tuple -> tuple.v2().hasChanged())
+        .map(PojoChangedElement::new);
   }
 
   @Override
@@ -218,66 +222,6 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
   }
 
   @Override
-  public Optional<? extends MetaIndex> getAnyMissedIndex(MetaCollection oldCol,
-      MutableMetaDocPart newStructure, ImmutableMetaDocPart oldStructure,
-      ImmutableMetaField newField) {
-    return oldCol.streamContainedMetaIndexes()
-        .filter(oldIndex -> oldIndex
-            .getMetaIndexFieldByTableRefAndName(oldStructure.getTableRef(), newField.getName())
-            != null && (getMetaIndexByName(oldIndex.getName()) == null || Seq.seq(oldIndex
-            .iteratorMetaDocPartIndexesIdentifiers(newStructure))
-            .filter(identifiers -> identifiers.contains(newField.getIdentifier()))
-            .anyMatch(identifiers -> newStructure.streamIndexes()
-                .noneMatch(newDocPartIndex -> oldIndex.isMatch(newStructure, identifiers,
-                    newDocPartIndex)))))
-        .findAny();
-  }
-
-  @Override
-  public Optional<ImmutableMetaIndex> getAnyMissedIndex(ImmutableMetaCollection oldCol,
-      ImmutableMetaIdentifiedDocPartIndex newRemovedDocPartIndex) {
-    return oldCol.streamContainedMetaIndexes()
-        .flatMap(oldIndex -> oldIndex.streamTableRefs()
-            .map(tableRef -> oldCol.getMetaDocPartByTableRef(tableRef))
-            .filter(oldDocPart -> oldDocPart != null && oldIndex.isCompatible(oldDocPart,
-                newRemovedDocPartIndex) && Seq.seq(getModifiedMetaIndexes())
-                    .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED && newIndex
-                        .v1().getName().equals(oldIndex.getName())))
-            .map(tableRef -> oldIndex))
-        .findAny();
-  }
-
-  @Override
-  public Optional<? extends MetaIndex> getAnyRelatedIndex(ImmutableMetaCollection oldCol,
-      MetaDocPart newStructure, ImmutableMetaIdentifiedDocPartIndex newDocPartIndex) {
-    Optional<? extends MetaIndex> anyNewRelatedIndex =
-        Seq.seq(getModifiedMetaIndexes())
-            .map(modIndex -> modIndex.v1())
-            .filter(newIndex -> newIndex.isCompatible(newStructure, newDocPartIndex))
-            .findAny();
-
-    if (anyNewRelatedIndex.isPresent()) {
-      return anyNewRelatedIndex;
-    }
-
-    Optional<ImmutableMetaIndex> anyOldRelatedIndex = oldCol.streamContainedMetaIndexes()
-        .filter(oldIndex -> oldIndex.isCompatible(newStructure, newDocPartIndex))
-        .findAny();
-
-    return anyOldRelatedIndex;
-  }
-
-  @Override
-  public Optional<ImmutableMetaIndex> getAnyConflictingIndex(
-      ImmutableMetaCollection oldStructure, MutableMetaIndex newIndex) {
-    return oldStructure.streamContainedMetaIndexes()
-        .filter(index -> index.isMatch(newIndex) && Seq.seq(getModifiedMetaIndexes())
-            .noneMatch(modifiedIndex -> modifiedIndex.v2() == MetaElementState.REMOVED
-                && modifiedIndex.v1().getName().equals(index.getName())))
-        .findAny();
-  }
-
-  @Override
   public Optional<ImmutableMetaDocPart> getAnyDocPartWithMissedDocPartIndex(
       ImmutableMetaCollection oldStructure, MutableMetaIndex newIndex) {
     return newIndex.streamTableRefs()
@@ -288,10 +232,10 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
                 .noneMatch(docPartIndex -> newIndex.isMatch(docPart, identifiers, docPartIndex)))
             .anyMatch(identifiers -> {
               MutableMetaDocPart newDocPart = getMetaDocPartByTableRef(docPart.getTableRef());
-              return Seq.seq(newDocPart.getModifiedMetaDocPartIndexes())
-                  .filter(docPartIndex -> docPartIndex.v2() != MetaElementState.REMOVED)
+              return Seq.seq(newDocPart.streamModifiedMetaDocPartIndexes())
+                  .filter(docPartIndex -> docPartIndex.getChange() != MetaElementState.REMOVED)
                   .noneMatch(docPartIndex -> newIndex.isMatch(newDocPart, identifiers,
-                      docPartIndex.v1()));
+                      docPartIndex.getElement()));
             }))
         .findAny();
   }
@@ -305,14 +249,15 @@ public class WrapperMutableMetaCollection implements MutableMetaCollection {
         .flatMap(oldDocPart -> oldDocPart.streamIndexes()
             .filter(oldDocPartIndex -> newRemovedIndex.isCompatible(oldDocPart, oldDocPartIndex)
                 && Seq.seq(getMetaDocPartByTableRef(oldDocPart.getTableRef())
-                    .getModifiedMetaDocPartIndexes())
-                    .noneMatch(newDocPartIndex -> newDocPartIndex.v2() == MetaElementState.REMOVED
-                        && newDocPartIndex.v1().getIdentifier().equals(oldDocPartIndex
+                    .streamModifiedMetaDocPartIndexes())
+                    .noneMatch(newDocPartIndex ->
+                        newDocPartIndex.getChange() == MetaElementState.REMOVED
+                        && newDocPartIndex.getElement().getIdentifier().equals(oldDocPartIndex
                             .getIdentifier())) && oldStructure.streamContainedMetaIndexes()
                 .noneMatch(oldIndex -> oldIndex.isCompatible(oldDocPart, oldDocPartIndex) && Seq
-                    .seq(getModifiedMetaIndexes())
-                    .noneMatch(newIndex -> newIndex.v2() == MetaElementState.REMOVED && newIndex
-                        .v1().getName().equals(oldIndex.getName()))
+                    .seq(streamModifiedMetaIndexes())
+                    .noneMatch(newIndex -> newIndex.getChange() == MetaElementState.REMOVED
+                        && newIndex.getElement().getName().equals(oldIndex.getName()))
                 )
             )
         )

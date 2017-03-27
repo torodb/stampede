@@ -12,6 +12,9 @@
     <artifactId>backend-postgresql</artifactId>
     <name>ToroDB: Backend PostgreSQL</name>
     <packaging>jar</packaging>
+
+    <description>PostgreSQL implementation of a ToroDB backend.</description>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -32,11 +35,6 @@
         </dependency>
         <dependency>
             <groupId>com.torodb.engine</groupId>
-            <artifactId>metainfo-cache</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -46,18 +44,12 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine.backend.driver</groupId>
-            <artifactId>driver-postgresql</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-assistedinject</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
 
 
@@ -78,5 +70,59 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <description>PostgreSQL implementation of a ToroDB backend.</description>
+
+
+    <profiles>
+        <profile>
+            <id>integration</id>
+            <properties>
+                <docker.container.postgresql>postgres:9.4</docker.container.postgresql>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <executions>
+                            <execution>
+                                <id>start-backend-pg</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <images>
+                                        <image>
+                                            <name>${docker.container.postgresql}</name>
+                                            <alias>backend-pg</alias>
+                                            <run>
+                                                <namingStrategy>alias</namingStrategy>
+                                                <ports>
+                                                    <port>15430:5432</port>
+                                                </ports>
+                                                <env>
+                                                    <POSTGRES_USER>test</POSTGRES_USER>
+                                                    <POSTGRES_PASSWORD>test</POSTGRES_PASSWORD>
+                                                    <POSTGRES_DB>test</POSTGRES_DB>
+                                                </env>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>stop-backend-pg</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>stop</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

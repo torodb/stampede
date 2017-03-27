@@ -21,10 +21,11 @@ package com.torodb.mongodb.repl;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Stage;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
-import com.torodb.engine.essential.EssentialModule;
+import com.torodb.core.guice.EssentialModule;
 
 import java.time.Clock;
 
@@ -43,6 +44,7 @@ public class TestBundleConfig implements BundleConfig {
   private final Injector essentialInjector = Guice.createInjector(
       Stage.PRODUCTION,
       new EssentialModule(
+          DefaultLoggerFactory.getInstance(),
           () -> true,
           Clock.systemUTC()
       )

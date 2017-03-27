@@ -20,23 +20,26 @@ package com.torodb.standalone;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.internal.Console;
+import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
 import com.google.inject.Guice;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.exceptions.SystemException;
+import com.torodb.core.guice.EssentialModule;
+import com.torodb.core.logging.ComponentLoggerFactory;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.metrics.MetricsConfig;
-import com.torodb.core.modules.BundleConfig;
-import com.torodb.engine.essential.EssentialModule;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.wp.MongoDbWpBundle;
 import com.torodb.mongodb.wp.MongoDbWpConfig;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
-import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
+import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
 import com.torodb.packaging.config.model.protocol.mongo.Net;
 import com.torodb.packaging.config.util.BackendImplementationVisitor;
@@ -45,21 +48,23 @@ import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
 import com.torodb.standalone.config.model.Config;
 import com.torodb.standalone.config.model.backend.Backend;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Clock;
+import java.util.List;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 /**
  * ToroDB Server entry point.
  */
 public class Main {
 
-  private static final Logger LOGGER = LogManager.getLogger(Main.class);
+  private static final LoggerFactory LOGGER_FACTORY = new ComponentLoggerFactory("SERVER");
+  private static final Logger LOGGER = LOGGER_FACTORY.apply(Main.class);
 
   /**
    * The main method that runs ToroDB Server.
@@ -104,20 +109,30 @@ public class Main {
     parseToropassFile(config);
     
     if (config.getProtocol().getMongo().getReplication() != null) {
-      for (AbstractReplication replication : config.getProtocol().getMongo().getReplication()) {
-        if (replication.getAuth().getUser() != null) {
-          HostAndPort syncSource = HostAndPort.fromString(replication.getSyncSource())
+      List<AbstractShardReplication> shards;
+      if (config.getProtocol().getMongo().getReplication().getShards().isEmpty()) {
+        shards = Lists.newArrayList(config.getProtocol().getMongo().getReplication());
+      } else {
+        shards = config.getProtocol().getMongo().getReplication().getShards()
+            .stream()
+            .map(shard -> (AbstractShardReplication) 
+                config.getProtocol().getMongo().getReplication().mergeWith(shard))
+            .collect(Collectors.toList());
+      }
+      for (AbstractShardReplication shard : shards) {
+        if (shard.getAuth().getUser() != null) {
+          HostAndPort syncSource = HostAndPort.fromString(shard.getSyncSource().value())
               .withDefaultPort(27017);
           ConfigUtils.parseMongopassFile(new MongoPasswordConfig() {
 
             @Override
             public void setPassword(String password) {
-              replication.getAuth().setPassword(password);
+              shard.getAuth().setPassword(password);
             }
 
             @Override
             public String getUser() {
-              return replication.getAuth().getUser();
+              return shard.getAuth().getUser().value();
             }
 
             @Override
@@ -127,7 +142,7 @@ public class Main {
 
             @Override
             public String getPassword() {
-              return replication.getAuth().getPassword();
+              return shard.getAuth().getPassword();
             }
 
             @Override
@@ -142,9 +157,9 @@ public class Main {
 
             @Override
             public String getDatabase() {
-              return replication.getAuth().getSource();
+              return shard.getAuth().getSource().value();
             }
-          });
+          }, LOGGER);
         }
       }
     }
@@ -169,7 +184,7 @@ public class Main {
       Clock clock = Clock.systemDefaultZone();
       Service server;
       if (config.getProtocol().getMongo().getReplication() == null || config.getProtocol()
-          .getMongo().getReplication().isEmpty()) {
+          .getMongo().getReplication().getShards().isEmpty()) {
         Service toroDbServer = new ServerService(createServerConfig(config));
 
         toroDbServer.startAsync();
@@ -211,13 +226,18 @@ public class Main {
     backendConfig.setConnectionPoolConfig(config.getGeneric());
 
     return new ServerConfig(
-        Guice.createInjector(new EssentialModule(metricsConfig, clock)),
+        Guice.createInjector(new EssentialModule(
+            new ComponentLoggerFactory("LIFECYCLE"),
+            metricsConfig,
+            clock)
+        ),
         generalConfig -> BundleFactory.createBackendBundle(
             backendConfig,
             generalConfig
         ),
         getSelfHostAndPort(config),
-        (generalConfig, coreBundle) -> createMongoDbWpBundle(config, coreBundle, generalConfig)
+        (generalConfig, coreBundle) -> createMongoDbWpBundle(config, coreBundle, generalConfig),
+        LOGGER_FACTORY
     );
   }
 
@@ -286,7 +306,7 @@ public class Main {
 
       public void parseToropassFile(BackendPasswordConfig value) {
         try {
-          ConfigUtils.parseToropassFile(value);
+          ConfigUtils.parseToropassFile(value, LOGGER);
         } catch (Exception ex) {
           throw new SystemException(ex);
         }

@@ -19,15 +19,13 @@
 package com.torodb.backend.derby;
 
 import com.torodb.backend.AbstractDbBackendService;
+import com.torodb.backend.BackendLoggerFactory;
 import com.torodb.backend.TransactionIsolationLevel;
-import com.torodb.backend.driver.derby.DerbyDbBackendConfig;
-import com.torodb.backend.driver.derby.DerbyDriverProvider;
+import com.torodb.backend.derby.driver.DerbyDbBackendConfig;
+import com.torodb.backend.derby.driver.DerbyDriverProvider;
 import com.torodb.core.annotations.TorodbIdleService;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.Nonnull;
@@ -39,7 +37,7 @@ import javax.sql.DataSource;
  */
 public class DerbyDbBackend extends AbstractDbBackendService<DerbyDbBackendConfig> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DerbyDbBackend.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(DerbyDbBackend.class);
 
   private final DerbyDriverProvider driverProvider;
 

@@ -18,14 +18,14 @@
 
 package com.torodb.mongodb.repl;
 
-import com.torodb.concurrent.ExecutorServiceShutdownHelper;
 import com.torodb.core.annotations.TorodbIdleService;
 import com.torodb.core.concurrent.ConcurrentToolsFactory;
+import com.torodb.core.concurrent.ExecutorServiceShutdownHelper;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.IdleTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.commands.pojos.MemberState;
 import com.torodb.mongodb.repl.guice.MongoDbRepl;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.lambda.fi.util.function.CheckedFunction;
 import org.jooq.lambda.fi.util.function.CheckedSupplier;
@@ -44,9 +44,8 @@ import javax.inject.Inject;
 @ThreadSafe
 public class ReplCoordinatorStateMachine extends IdleTorodbService {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(ReplCoordinatorStateMachine.class);
   private static final String THREAD_PREFIX = "repl-coord-";
+  private final Logger logger;
   private final ExecutorServiceShutdownHelper shutdownHelper;
   private final ConcurrentToolsFactory concurrentToolsFactory;
   private final ReplMetrics metrics;
@@ -64,12 +63,14 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
   public ReplCoordinatorStateMachine(
       @TorodbIdleService ThreadFactory threadFactory,
       @MongoDbRepl Supervisor supervisor,
+      LoggerFactory loggerFactory,
       ConcurrentToolsFactory concurrentToolsFactory,
       ExecutorServiceShutdownHelper shutdownHelper,
       RecoveryService.RecoveryServiceFactory recoveryServiceFactory,
       OplogApplierService.OplogApplierServiceFactory oplogReplierFactory,
       ReplMetrics metrics) {
     super(threadFactory);
+    this.logger = loggerFactory.apply(this.getClass());
     this.shutdownHelper = shutdownHelper;
     this.state = ReplCoordinatorState.STARTUP;
     this.recoveryServiceFactory = recoveryServiceFactory;
@@ -237,7 +238,7 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
     ReplCoordinatorState oldState = state;
     try {
       if (oldState == ReplCoordinatorState.IDLE) {
-        LOGGER.info("Starting {} mode", triedState.name()
+        logger.info("Starting {} mode", triedState.name()
             .toUpperCase(Locale.ENGLISH));
         return startStateFunction.apply(callback);
       }
@@ -247,19 +248,19 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
               + ReplCoordinatorState.class.getSimpleName() + ": "
               + oldState);
         case STARTUP:
-          LOGGER.debug("Trying to start the mode {} when the "
+          logger.debug("Trying to start the mode {} when the "
               + "current mode is {}. {} service must be started "
               + "before any change are accepted.", triedState,
               oldState, serviceName());
           break;
         case RECOVERY:
         case SECONDARY:
-          LOGGER.debug("Trying to start the mode {} when the "
+          logger.debug("Trying to start the mode {} when the "
               + "current mode is {}. Stop that state before "
               + "trying to change it", triedState, oldState);
           break;
         case TERMINATED:
-          LOGGER.debug("Trying to start the mode {} when the "
+          logger.debug("Trying to start the mode {} when the "
               + "current mode is {}. No more state changes are "
               + "acepted ", triedState, oldState);
           break;
@@ -267,7 +268,7 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
       return new StateChange(oldState, triedState,
           new RejectionCause(RejectionType.ILLEGAL_CHANGE));
     } catch (Throwable ex) {
-      LOGGER.warn("Unexpected error while being on " + state + " state "
+      logger.warn("Unexpected error while being on " + state + " state "
           + "and trying to start " + triedState, ex);
 
       setState(ReplCoordinatorState.ERROR);
@@ -288,17 +289,17 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
     ReplCoordinatorState oldState = state;
     try {
       if (state == toStopState) {
-        LOGGER.info("Stopping {} mode", toStopState.name()
+        logger.info("Stopping {} mode", toStopState.name()
             .toUpperCase(Locale.ENGLISH));
         return stopStateFunction.get();
       } else {
-        LOGGER.debug("Trying to stop the state {} while being on "
+        logger.debug("Trying to stop the state {} while being on "
             + "state {}", toStopState, state);
         return new StateChange(oldState, toStopState,
             new RejectionCause(RejectionType.ILLEGAL_CHANGE));
       }
     } catch (Throwable ex) {
-      LOGGER.debug("Unexpected error while being on " + state + " state"
+      logger.debug("Unexpected error while being on " + state + " state"
           + " and trying to stop it", ex);
 
       setState(ReplCoordinatorState.ERROR);
@@ -347,10 +348,10 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
 
   private StateChange stopRecoveryModePrivate() {
     assert state == ReplCoordinatorState.RECOVERY;
-    LOGGER.debug("Shutting down recovery service");
+    logger.debug("Shutting down recovery service");
     recoveryService.stopAsync();
     recoveryService.awaitTerminated();
-    LOGGER.debug("Recovery service has been shutted down");
+    logger.debug("Recovery service has been shutted down");
 
     recoveryService = null;
     setState(ReplCoordinatorState.IDLE);
@@ -359,10 +360,10 @@ public class ReplCoordinatorStateMachine extends IdleTorodbService {
 
   private StateChange stopSecondaryModePrivate() {
     assert state == ReplCoordinatorState.SECONDARY;
-    LOGGER.debug("Shutting down secondary service");
+    logger.debug("Shutting down secondary service");
     oplogReplierService.stopAsync();
     oplogReplierService.awaitTerminated();
-    LOGGER.debug("Secondary service has been shutted down");
+    logger.debug("Secondary service has been shutted down");
 
     oplogReplierService = null;
     setState(ReplCoordinatorState.IDLE);

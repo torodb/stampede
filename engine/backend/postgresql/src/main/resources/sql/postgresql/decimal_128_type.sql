@@ -1,0 +1,1 @@
+CREATE TYPE torodb.decimal_128 AS (value numeric, is_infinity boolean, is_nan boolean, is_negative_zero boolean);

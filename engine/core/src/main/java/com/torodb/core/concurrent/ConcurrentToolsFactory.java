@@ -18,6 +18,8 @@
 
 package com.torodb.core.concurrent;
 
+import org.apache.logging.log4j.Logger;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,19 +31,18 @@ public interface ConcurrentToolsFactory {
 
   public int getDefaultMaxThreads();
 
-  public StreamExecutor createStreamExecutor(String prefix, boolean blockerTasks, int maxThreads);
+  public StreamExecutor createStreamExecutor(Logger logger, String prefix, boolean blockerTasks,
+      int maxThreads);
 
-  public default StreamExecutor createStreamExecutor(String prefix, boolean blockerTasks) {
-    return ConcurrentToolsFactory.this.createStreamExecutor(prefix, blockerTasks,
+  public default StreamExecutor createStreamExecutor(Logger logger, String prefix,
+      boolean blockerTasks) {
+    return ConcurrentToolsFactory.this.createStreamExecutor(logger, prefix, blockerTasks,
         getDefaultMaxThreads());
   }
 
   /**
    * Creates an {@link ScheduledExecutorService} with the given number of max threads.
    *
-   * @param prefix
-   * @param maxThreads
-   * @return
    */
   public ScheduledExecutorService createScheduledExecutorServiceWithMaxThreads(String prefix,
       int maxThreads);
@@ -49,21 +50,16 @@ public interface ConcurrentToolsFactory {
   /**
    * Creates an executor service with the given number of max threads.
    *
-   * @param prefix
-   * @param maxThreads
-   * @return
    */
   public ExecutorService createExecutorServiceWithMaxThreads(String prefix, int maxThreads);
 
   /**
    * Creates an executor service with the a parallelism number of threads.
    *
-   * @param prefix
    * @param blockerTasks if executed task can block or not
    * @param parallelism  the aproximated number of threads that the executor service should have. It
    *                     may be treated as a min number of threads or as {@link ForkJoinPool} treat
    *                     parallelism.
-   * @return
    */
   public ExecutorService createExecutorService(String prefix, boolean blockerTasks,
       int parallelism);

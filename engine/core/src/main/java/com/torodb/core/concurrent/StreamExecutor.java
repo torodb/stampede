@@ -19,6 +19,7 @@
 package com.torodb.core.concurrent;
 
 import com.google.common.util.concurrent.Service;
+import com.torodb.common.util.Empty;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +40,7 @@ public interface StreamExecutor extends Service {
    * @param runnables
    * @return a CompletableFuture that will be done on once all runnables finish.
    */
-  public CompletableFuture<?> executeRunnables(Stream<Runnable> runnables);
+  public CompletableFuture<Empty> executeRunnables(Stream<Runnable> runnables);
 
   /**
    * Executes the given callables, returning a future that will be done once all callables finish.
@@ -49,7 +50,7 @@ public interface StreamExecutor extends Service {
    * @param callables
    * @return a CompletableFuture that will be done on once all callables finish.
    */
-  public <I> CompletableFuture<?> execute(Stream<Callable<I>> callables);
+  public <I> CompletableFuture<Empty> execute(Stream<Callable<I>> callables);
 
   /**
    * Executes the given callables, returning a future that will be done once all callables finish.

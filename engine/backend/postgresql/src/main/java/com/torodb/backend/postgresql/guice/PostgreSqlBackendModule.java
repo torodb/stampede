@@ -28,8 +28,6 @@ import com.torodb.backend.MetaDataWriteInterface;
 import com.torodb.backend.ReadInterface;
 import com.torodb.backend.StructureInterface;
 import com.torodb.backend.WriteInterface;
-import com.torodb.backend.driver.postgresql.OfficialPostgreSqlDriver;
-import com.torodb.backend.driver.postgresql.PostgreSqlDriverProvider;
 import com.torodb.backend.guice.BackendModule;
 import com.torodb.backend.meta.SchemaUpdater;
 import com.torodb.backend.postgresql.PostgreSqlDataTypeProvider;
@@ -42,6 +40,8 @@ import com.torodb.backend.postgresql.PostgreSqlMetrics;
 import com.torodb.backend.postgresql.PostgreSqlReadInterface;
 import com.torodb.backend.postgresql.PostgreSqlStructureInterface;
 import com.torodb.backend.postgresql.PostgreSqlWriteInterface;
+import com.torodb.backend.postgresql.driver.OfficialPostgreSqlDriver;
+import com.torodb.backend.postgresql.driver.PostgreSqlDriverProvider;
 import com.torodb.backend.postgresql.meta.PostgreSqlSchemaUpdater;
 import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.IdentifierConstraints;
@@ -50,6 +50,7 @@ import com.torodb.core.d2r.DefaultIdentifierFactory;
 import com.torodb.core.d2r.IdentifierFactory;
 import com.torodb.core.d2r.ReservedIdGenerator;
 import com.torodb.core.dsl.backend.BackendTransactionJobFactory;
+import com.torodb.core.guice.EssentialToDefaultModule;
 
 import javax.inject.Singleton;
 
@@ -63,11 +64,14 @@ public class PostgreSqlBackendModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    install(new BackendModule());
     expose(BackendService.class);
     expose(ReservedIdGenerator.class);
     expose(SnapshotUpdater.class);
     expose(BackendTransactionJobFactory.class);
+
+    install(new BackendModule());
+
+    install(new EssentialToDefaultModule());
 
     bind(BackendConfig.class)
         .toInstance(backendConfig);

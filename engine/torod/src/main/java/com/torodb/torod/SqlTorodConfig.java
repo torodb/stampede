@@ -20,7 +20,7 @@ package com.torodb.torod;
 
 import com.google.inject.Injector;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.modules.BundleConfigImpl;
+import com.torodb.core.bundle.BundleConfigImpl;
 import com.torodb.core.supervision.Supervisor;
 
 

@@ -30,9 +30,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-/**
- *
- */
 public interface TorodTransaction extends AutoCloseable {
 
   public boolean isClosed();
@@ -67,12 +64,6 @@ public interface TorodTransaction extends AutoCloseable {
    * }, but the returned cursor iterates on tuples whose first element is the did of the document
    * that fullfil the query and the second is the value of the referenced attribute that this
    * document has.
-   *
-   * @param dbName
-   * @param colName
-   * @param attRef
-   * @param values
-   * @return
    */
   public Cursor<Tuple2<Integer, KvValue<?>>> findByAttRefInProjection(String dbName,
       String colName, AttributeReference attRef, Collection<KvValue<?>> values);
@@ -80,11 +71,6 @@ public interface TorodTransaction extends AutoCloseable {
   /**
    * Given a namespace and a cursor of dids, consumes the cursor and returns a new cursor that fetch
    * all iterated dids.
-   *
-   * @param dbName
-   * @param colName
-   * @param didCursor
-   * @return
    */
   public TorodCursor fetch(String dbName, String colName, Cursor<Integer> didCursor);
 

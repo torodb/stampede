@@ -26,9 +26,7 @@ import com.torodb.kvdocument.values.KvValue;
 
 import java.util.LinkedHashMap;
 
-/**
- *
- */
+/** */
 public class MapKvDocument extends KvDocument {
 
   private static final long serialVersionUID = -5654643148723237245L;
@@ -42,8 +40,7 @@ public class MapKvDocument extends KvDocument {
   @Override
   public UnmodifiableIterator<DocEntry<?>> iterator() {
     return Iterators.unmodifiableIterator(
-        Iterators.transform(map.entrySet().iterator(), KvDocument.FromEntryMap.INSTANCE)
-    );
+        Iterators.transform(map.entrySet().iterator(), KvDocument.FromEntryMap.INSTANCE));
   }
 
   @Override

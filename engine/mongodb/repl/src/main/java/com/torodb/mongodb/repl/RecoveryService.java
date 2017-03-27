@@ -36,6 +36,7 @@ import com.google.common.net.HostAndPort;
 import com.google.inject.assistedinject.Assisted;
 import com.torodb.core.annotations.TorodbRunnableService;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.core.services.RunnableTorodbService;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.core.supervision.SupervisorDecision;
@@ -64,7 +65,6 @@ import com.torodb.mongodb.utils.DbCloner.CloningException;
 import com.torodb.torod.SharedWriteTorodTransaction;
 import com.torodb.torod.TorodConnection;
 import com.torodb.torod.TorodServer;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
@@ -79,7 +79,7 @@ import javax.inject.Inject;
 public class RecoveryService extends RunnableTorodbService {
 
   private static final int MAX_ATTEMPTS = 10;
-  private static final Logger LOGGER = LogManager.getLogger(RecoveryService.class);
+  private final Logger logger;
   private final Callback callback;
   private final OplogManager oplogManager;
   private final SyncSourceProvider syncSourceProvider;
@@ -103,8 +103,10 @@ public class RecoveryService extends RunnableTorodbService {
       MongodServer server,
       OplogApplier oplogApplier,
       NamespaceFilter namespaceFilter,
-      IndexFilter indexFilter) {
+      IndexFilter indexFilter,
+      LoggerFactory lf) {
     super(callback, threadFactory);
+    this.logger = lf.apply(this.getClass());
     this.callback = callback;
     this.oplogManager = oplogManager;
     this.syncSourceProvider = syncSourceProvider;
@@ -119,12 +121,12 @@ public class RecoveryService extends RunnableTorodbService {
 
   @Override
   protected void startUp() {
-    LOGGER.info("Starting RECOVERY service");
+    logger.info("Starting RECOVERY service");
   }
 
   @Override
   protected Logger getLogger() {
-    return LOGGER;
+    return logger;
   }
 
   @Override
@@ -138,16 +140,16 @@ public class RecoveryService extends RunnableTorodbService {
         attempt++;
         if (attempt > 1) {
           long millisToSleep = getMillisToSleep(attempt);
-          LOGGER.debug("Waiting {} millis after the {}th attempt", millisToSleep, attempt - 1);
+          logger.debug("Waiting {} millis after the {}th attempt", millisToSleep, attempt - 1);
           Thread.sleep(millisToSleep);
         }
         try {
           finished = initialSync();
         } catch (TryAgainException ex) {
-          LOGGER.warn("Error while trying to recover (attempt: "
+          logger.warn("Error while trying to recover (attempt: "
               + attempt + ")", ex);
         } catch (FatalErrorException ex) {
-          LOGGER.error("Fatal error while trying to recover", ex);
+          logger.error("Fatal error while trying to recover", ex);
         }
       }
 
@@ -173,14 +175,14 @@ public class RecoveryService extends RunnableTorodbService {
      */
 
     //TODO: Support fastsync (used to restore a node by copying the data from other up-to-date node)
-    LOGGER.info("Starting initial sync");
+    logger.info("Starting initial sync");
 
     callback.setConsistentState(false);
 
     HostAndPort syncSource;
     try {
       syncSource = syncSourceProvider.newSyncSource();
-      LOGGER.info("Using node " + syncSource + " to replicate from");
+      logger.info("Using node " + syncSource + " to replicate from");
     } catch (NoSyncSourceFoundException ex) {
       throw new TryAgainException("No sync source");
     }
@@ -192,7 +194,7 @@ public class RecoveryService extends RunnableTorodbService {
       throw new TryAgainException(ex);
     }
     try {
-      LOGGER.debug("Remote client obtained");
+      logger.debug("Remote client obtained");
 
       MongoConnection remoteConnection = remoteClient.openConnection();
 
@@ -202,28 +204,28 @@ public class RecoveryService extends RunnableTorodbService {
         OpTime lastRemoteOptime1 = lastClonedOp.getOpTime();
 
         try (WriteOplogTransaction oplogTransaction = oplogManager.createWriteTransaction()) {
-          LOGGER.info("Remote database cloning started");
+          logger.info("Remote database cloning started");
           oplogTransaction.truncate();
-          LOGGER.info("Local databases dropping started");
+          logger.info("Local databases dropping started");
           Status<?> status = dropDatabases();
           if (!status.isOk()) {
             throw new TryAgainException("Error while trying to drop collections: "
                 + status);
           }
-          LOGGER.info("Local databases dropping finished");
+          logger.info("Local databases dropping finished");
           if (!isRunning()) {
-            LOGGER.warn("Recovery stopped before it can finish");
+            logger.warn("Recovery stopped before it can finish");
             return false;
           }
-          LOGGER.info("Remote database cloning started");
+          logger.info("Remote database cloning started");
           cloneDatabases(remoteClient);
-          LOGGER.info("Remote database cloning finished");
+          logger.info("Remote database cloning finished");
 
           oplogTransaction.forceNewValue(lastClonedOp.getHash(), lastClonedOp.getOpTime());
         }
 
         if (!isRunning()) {
-          LOGGER.warn("Recovery stopped before it can finish");
+          logger.warn("Recovery stopped before it can finish");
           return false;
         }
 
@@ -232,34 +234,34 @@ public class RecoveryService extends RunnableTorodbService {
         try (TorodConnection connection = torodServer.openConnection();
             SharedWriteTorodTransaction trans = connection.openWriteTransaction(false)) {
           OpTime lastRemoteOptime2 = reader.getLastOp().getOpTime();
-          LOGGER.info("First oplog application started");
+          logger.info("First oplog application started");
           applyOplog(reader, lastRemoteOptime1, lastRemoteOptime2);
           trans.commit();
-          LOGGER.info("First oplog application finished");
+          logger.info("First oplog application finished");
 
           if (!isRunning()) {
-            LOGGER.warn("Recovery stopped before it can finish");
+            logger.warn("Recovery stopped before it can finish");
             return false;
           }
 
           OplogOperation lastOperation = reader.getLastOp();
           OpTime lastRemoteOptime3 = lastOperation.getOpTime();
-          LOGGER.info("Second oplog application started");
+          logger.info("Second oplog application started");
           applyOplog(reader, lastRemoteOptime2, lastRemoteOptime3);
           trans.commit();
-          LOGGER.info("Second oplog application finished");
+          logger.info("Second oplog application finished");
 
           if (!isRunning()) {
-            LOGGER.warn("Recovery stopped before it can finish");
+            logger.warn("Recovery stopped before it can finish");
             return false;
           }
 
-          LOGGER.info("Index rebuild started");
+          logger.info("Index rebuild started");
           rebuildIndexes();
           trans.commit();
-          LOGGER.info("Index rebuild finished");
+          logger.info("Index rebuild finished");
           if (!isRunning()) {
-            LOGGER.warn("Recovery stopped before it can finish");
+            logger.warn("Recovery stopped before it can finish");
             return false;
           }
 
@@ -279,28 +281,35 @@ public class RecoveryService extends RunnableTorodbService {
 
       callback.setConsistentState(true);
 
-      LOGGER.info("Initial sync finished");
+      logger.info("Initial sync finished");
     } finally {
       remoteClient.close();
     }
     return true;
   }
 
-  private void enableDataImportMode() throws UserException {
-    LOGGER.debug("Starting data import mode");
-    server.getTorodServer().enableDataImportMode();
-    LOGGER.trace("Data import mode started");
+  private void enableDataImportMode(String db) {
+    logger.trace("Starting data import mode on {}", db);
+    server.getTorodServer().enableDataImportMode(db).join();
+    logger.debug("Data import mode started on {}", db);
   }
 
-  private void disableDataImportMode() throws UserException {
-    LOGGER.debug("Ending data import mode");
-    server.getTorodServer().disableDataImportMode();
-    LOGGER.trace("Data import mode ended");
+  private void disableDataImportMode(String db) {
+    logger.trace("Ending data import mode on {}", db);
+    server.getTorodServer().disableDataImportMode(db)
+        .whenComplete((empty, error) -> {
+          if (error == null) {
+            logger.debug("Data import mode on database {} ended", db);
+          } else {
+            logger.error("Error while disabling import mode on database " + db, error);
+          }
+        })
+        .join();
   }
 
   @Override
   protected void shutDown() {
-    LOGGER.info("Recived a request to stop the recovering service");
+    logger.info("Recived a request to stop the recovering service");
   }
 
   private Status<?> dropDatabases() throws RollbackException, UserException, RollbackException {
@@ -322,60 +331,60 @@ public class RecoveryService extends RunnableTorodbService {
   private void cloneDatabases(@Nonnull MongoClient remoteClient) throws CloningException,
       MongoException, UserException {
 
-    enableDataImportMode();
-    try {
-      Stream<String> dbNames;
-      try (MongoConnection remoteConnection = remoteClient.openConnection()) {
-        RemoteCommandResponse<ListDatabasesReply> remoteResponse = remoteConnection.execute(
-            ListDatabasesCommand.INSTANCE,
-            "admin",
-            true,
-            Empty.getInstance()
-        );
-        if (!remoteResponse.isOk()) {
-          throw remoteResponse.asMongoException();
-        }
+    streamRemoteDatabases(remoteClient)
+        .map(ListDatabasesReply.DatabaseEntry::getName)
+        .filter(this::isReplicable)
+        .forEach(databaseName -> cloneDatabase(databaseName, remoteClient));
+  }
 
-        dbNames = remoteResponse.getCommandReply().get().getDatabases().stream().map(db -> db
-            .getName());
+  private Stream<ListDatabasesReply.DatabaseEntry> streamRemoteDatabases(MongoClient remoteClient)
+      throws MongoException {
+    try (MongoConnection remoteConnection = remoteClient.openConnection()) {
+      RemoteCommandResponse<ListDatabasesReply> remoteResponse = remoteConnection.execute(
+          ListDatabasesCommand.INSTANCE,
+          "admin",
+          true,
+          Empty.getInstance()
+      );
+      if (!remoteResponse.isOk()) {
+        throw remoteResponse.asMongoException();
       }
 
-      dbNames.filter(this::isReplicable)
-          .forEach(databaseName -> {
-            MyWritePermissionSupplier writePermissionSupplier =
-                new MyWritePermissionSupplier(databaseName);
+      return remoteResponse.getCommandReply().get()
+          .getDatabases()
+          .stream();
+    }
+  }
 
-            CloneOptions options = new CloneOptions(
-                true,
-                true,
-                true,
-                false,
-                databaseName,
-                Collections.<String>emptySet(),
-                writePermissionSupplier,
-                (colName) -> namespaceFilter.filter(new Namespace(databaseName, colName)),
-                indexFilter
-            );
+  private void cloneDatabase(String databaseName, MongoClient remoteClient) {
+    MyWritePermissionSupplier writePermissionSupplier =
+        new MyWritePermissionSupplier(databaseName);
 
-            try {
-              cloner.cloneDatabase(databaseName, remoteClient, server, options);
-            } catch (MongoException ex) {
-              throw new CloningException(ex);
-            }
-          });
+    CloneOptions options = new CloneOptions(
+        true,
+        true,
+        true,
+        false,
+        databaseName,
+        Collections.<String>emptySet(),
+        writePermissionSupplier,
+        (colName) -> namespaceFilter.filter(new Namespace(databaseName, colName)),
+        indexFilter
+    );
+
+    try {
+      enableDataImportMode(databaseName);
+      cloner.cloneDatabase(databaseName, remoteClient, server, options);
+    } catch (MongoException ex) {
+      throw new CloningException(ex);
     } finally {
-      disableDataImportMode();
+      disableDataImportMode(databaseName);
     }
   }
 
   /**
    * Applies all the oplog operations stored on the remote server whose optime is higher than
    * <em>from</em> but lower or equal than <em>to</em>.
-   *
-   * @param myOplog
-   * @param remoteOplog
-   * @param to
-   * @param from
    */
   private void applyOplog(
       OplogReader remoteOplog,
@@ -412,7 +421,7 @@ public class RecoveryService extends RunnableTorodbService {
       lastAppliedOptime = oplogTrans.getLastAppliedOptime();
     }
     if (!lastAppliedOptime.equals(to)) {
-      LOGGER.warn("Unexpected optime for last operation to apply. "
+      logger.warn("Unexpected optime for last operation to apply. "
           + "Expected " + to + ", but " + lastAppliedOptime
           + " found");
     }
@@ -420,7 +429,7 @@ public class RecoveryService extends RunnableTorodbService {
 
   private void rebuildIndexes() {
     //TODO: Check if this is necessary
-    LOGGER.debug("Rebuild index is not implemented yet, so indexes have not been rebuild");
+    logger.debug("Rebuild index is not implemented yet, so indexes have not been rebuild");
   }
 
   private boolean isReplicable(String databaseName) {

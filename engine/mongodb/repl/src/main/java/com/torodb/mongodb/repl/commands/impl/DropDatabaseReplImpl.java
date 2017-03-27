@@ -23,19 +23,20 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.eightkdata.mongowp.server.api.tools.Empty;
 import com.torodb.core.exceptions.user.UserException;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.inject.Inject;
 
 public class DropDatabaseReplImpl extends ReplCommandImpl<Empty, Empty> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DropDatabaseReplImpl.class);
+  private final Logger logger;
   private final CommandFilterUtil filterUtil;
 
   @Inject
-  public DropDatabaseReplImpl(CommandFilterUtil filterUtil) {
+  public DropDatabaseReplImpl(CommandFilterUtil filterUtil, LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
     this.filterUtil = filterUtil;
   }
 
@@ -49,17 +50,17 @@ public class DropDatabaseReplImpl extends ReplCommandImpl<Empty, Empty> {
     }
     
     try {
-      LOGGER.info("Dropping database {}", req.getDatabase());
+      logger.info("Dropping database {}", req.getDatabase());
 
       if (trans.existsDatabase(req.getDatabase())) {
         trans.dropDatabase(req.getDatabase());
       } else {
-        LOGGER.info("Trying to drop database " + req.getDatabase() + " but it has not been found. "
+        logger.info("Trying to drop database " + req.getDatabase() + " but it has not been found. "
             + "This is normal since the database could have a collection being filtered "
             + "or we are reapplying oplog during a recovery. Ignoring operation");
       }
     } catch (UserException ex) {
-      reportErrorIgnored(LOGGER, command, ex);
+      reportErrorIgnored(logger, command, ex);
     }
 
     return Status.ok();

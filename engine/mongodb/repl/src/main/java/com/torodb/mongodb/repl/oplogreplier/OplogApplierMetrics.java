@@ -20,15 +20,11 @@ package com.torodb.mongodb.repl.oplogreplier;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.torodb.core.metrics.MetricNameFactory;
 import com.torodb.core.metrics.ToroMetricRegistry;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.inject.Inject;
 
-/**
- *
- */
 @ThreadSafe
 public class OplogApplierMetrics {
 
@@ -38,20 +34,20 @@ public class OplogApplierMetrics {
   private final Histogram applicationCost;
 
   @Inject
-  public OplogApplierMetrics(ToroMetricRegistry registry) {
-    MetricNameFactory factory = new MetricNameFactory("OplogApplier");
+  public OplogApplierMetrics(ToroMetricRegistry parentRegistry) {
+    ToroMetricRegistry registry = parentRegistry.createSubRegistry("OplogApplier");
 
-    maxDelay = registry.histogram(factory.createMetricName("maxDelay"));
-    registry.gauge(factory.createMetricName("maxDelayUnits")).setValue("milliseconds");
+    maxDelay = registry.histogram("maxDelay");
+    registry.gauge("maxDelayUnits").setValue("milliseconds");
 
-    applied = registry.meter(factory.createMetricName("applied"));
-    registry.gauge(factory.createMetricName("appliedUnit")).setValue("ops");
+    applied = registry.meter("applied");
+    registry.gauge("appliedUnit").setValue("ops");
 
-    batchSize = registry.histogram(factory.createMetricName("batchSize"));
-    registry.gauge(factory.createMetricName("batchSizeUnit")).setValue("ops/batch");
+    batchSize = registry.histogram("batchSize");
+    registry.gauge("batchSizeUnit").setValue("ops/batch");
 
-    applicationCost = registry.histogram(factory.createMetricName("applicationCost"));
-    registry.gauge(factory.createMetricName("applicationCostUnit")).setValue("microseconds/op");
+    applicationCost = registry.histogram("applicationCost");
+    registry.gauge("applicationCostUnit").setValue("microseconds/op");
   }
 
   public Histogram getMaxDelay() {

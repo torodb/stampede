@@ -23,13 +23,12 @@ import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendExtInt;
 import com.torodb.core.backend.BackendService;
 import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
-import com.torodb.core.modules.AbstractBundle;
-import org.apache.logging.log4j.LogManager;
+import com.torodb.core.bundle.AbstractBundle;
 import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractBackendBundle extends AbstractBundle<BackendExtInt>
     implements BackendBundle {
-  private static final Logger LOGGER = LogManager.getLogger(AbstractBackendBundle.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(AbstractBackendBundle.class);
 
   public AbstractBackendBundle(BackendConfig bundleConfig) {
     super(bundleConfig);

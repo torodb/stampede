@@ -18,16 +18,13 @@
 
 package com.torodb.mongodb.repl.oplogreplier.analyzed;
 
+import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.kvdocument.values.KvValue;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/**
- *
- */
 public class ErrorAnalyzedOpTest extends AbstractAnalyzedOpTest<ErrorAnalyzedOp> {
 
-  private static final Logger LOGGER = LogManager.getLogger(ErrorAnalyzedOpTest.class);
+  private static final Logger LOGGER = DefaultLoggerFactory.get(ErrorAnalyzedOpTest.class);
 
   @Override
   ErrorAnalyzedOp getAnalyzedOp(KvValue<?> mongoDocId) {

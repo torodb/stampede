@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class StringType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final StringType INSTANCE = new StringType();
 
-  private StringType() {
-  }
+  private StringType() {}
 
   @Override
   public boolean equals(Object o) {
@@ -45,5 +42,4 @@ public class StringType implements KvType {
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

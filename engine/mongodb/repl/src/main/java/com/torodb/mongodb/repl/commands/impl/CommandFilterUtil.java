@@ -19,11 +19,11 @@
 package com.torodb.mongodb.repl.commands.impl;
 
 import com.eightkdata.mongowp.server.api.Command;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.filters.DatabaseFilter;
 import com.torodb.mongodb.filters.FilterResult;
 import com.torodb.mongodb.filters.NamespaceFilter;
 import com.torodb.mongodb.language.Namespace;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -36,12 +36,14 @@ import javax.inject.Inject;
 @ThreadSafe
 public class CommandFilterUtil {
 
-  private static final Logger LOGGER = LogManager.getLogger(CommandFilterUtil.class);
+  private final Logger logger;
   private final NamespaceFilter namespaceFilter;
   private final DatabaseFilter dbFilter;
 
   @Inject
-  public CommandFilterUtil(NamespaceFilter namespaceFilter, DatabaseFilter dbFilter) {
+  public CommandFilterUtil(NamespaceFilter namespaceFilter, DatabaseFilter dbFilter, 
+      LoggerFactory lf) {
+    this.logger = lf.apply(this.getClass());
     this.namespaceFilter = namespaceFilter;
     this.dbFilter = dbFilter;
   }
@@ -49,7 +51,7 @@ public class CommandFilterUtil {
   protected boolean testDbFilter(String db, Command<?, ?> command) {
     FilterResult<String> filterResult = dbFilter.apply(db);
     if (!filterResult.isSuccessful()) {
-      LOGGER.debug("Ignoring command {} on {}. Reason {}",
+      logger.debug("Ignoring command {} on {}. Reason {}",
           () -> command.getCommandName(),
           () -> db,
           filterResult.getReasonAsSupplier(db)
@@ -73,7 +75,7 @@ public class CommandFilterUtil {
   private void log(FilterResult<Namespace> filterResult, Command<?, ?> command, String db,
       String col) {
     if (!filterResult.isSuccessful()) {
-      LOGGER.debug("Ignoring command {} on {}.{}. Reason: {}",
+      logger.debug("Ignoring command {} on {}.{}. Reason: {}",
           () -> command.getCommandName(),
           () -> db,
           () -> col,

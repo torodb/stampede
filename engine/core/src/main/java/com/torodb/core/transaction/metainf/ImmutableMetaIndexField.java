@@ -55,7 +55,7 @@ public class ImmutableMetaIndexField implements MetaIndexField {
   }
 
   @Override
-  public String getName() {
+  public String getFieldName() {
     return name;
   }
 
@@ -133,8 +133,14 @@ public class ImmutableMetaIndexField implements MetaIndexField {
 
   @Override
   public boolean isMatch(MetaIndexField otherIndexField) {
-    return otherIndexField.getTableRef().equals(getTableRef()) && otherIndexField.getName().equals(
-        getName()) && otherIndexField.getOrdering() == getOrdering();
+    return otherIndexField.getTableRef().equals(getTableRef()) 
+        && otherIndexField.getFieldName().equals(getFieldName())
+        && otherIndexField.getOrdering() == getOrdering();
+  }
+
+  @Override
+  public ImmutableMetaIndexField immutableCopy() {
+    return this;
   }
 
 }

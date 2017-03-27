@@ -18,9 +18,9 @@
 
 package com.torodb.core.transaction.metainf;
 
-import com.torodb.core.annotations.DoNotChange;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 /**
  *
@@ -59,14 +59,6 @@ public interface MutableMetaDocPartIndex extends MetaDocPartIndex {
   public abstract ImmutableMetaDocPartIndexColumn addMetaDocPartIndexColumn(String identifier,
       FieldIndexOrdering ordering) throws IllegalArgumentException;
 
-  @DoNotChange
   @SuppressWarnings("checkstyle:LineLength")
-  public abstract Iterable<? extends ImmutableMetaDocPartIndexColumn> getAddedMetaDocPartIndexColumns();
-
-  /**
-   * @throws IllegalArgumentException if this index does not contains all column from position 0 to
-   *                                  the position for the column with maximum position
-   */
-  public abstract ImmutableMetaIdentifiedDocPartIndex immutableCopy(String identifier) throws
-      IllegalArgumentException;
+  public Stream<? extends ImmutableMetaDocPartIndexColumn> streamAddedMetaDocPartIndexColumns();
 }

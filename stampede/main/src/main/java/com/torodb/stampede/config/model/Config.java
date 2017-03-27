@@ -23,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.torodb.core.annotations.DoNotChange;
 import com.torodb.core.metrics.MetricsConfig;
 import com.torodb.packaging.config.annotation.Description;
+import com.torodb.packaging.config.validation.MutualExclusiveReplSetOrShards;
+import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
+import com.torodb.packaging.config.validation.SslEnabledForX509Authentication;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.logging.Logging;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
@@ -42,8 +45,10 @@ public class Config implements MetricsConfig {
   @NotNull
   @JsonProperty(required = true)
   private Boolean metricsEnabled = false;
-  @NotNull
   @Valid
+  @MutualExclusiveReplSetOrShards
+  @SslEnabledForX509Authentication
+  @RequiredParametersForAuthentication
   @JsonProperty(required = true)
   private Replication replication = new Replication();
   @Description("config.backend")
@@ -71,11 +76,13 @@ public class Config implements MetricsConfig {
     this.metricsEnabled = metricsEnabled;
   }
 
+  //TODO: This is a patch that should be changed once TORODB-397 is completed
   @DoNotChange
+  @MutualExclusiveReplSetOrShards
   public Replication getReplication() {
     return replication;
   }
-
+  
   public void setReplication(Replication replication) {
     this.replication = replication;
   }

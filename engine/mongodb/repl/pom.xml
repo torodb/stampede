@@ -29,16 +29,6 @@
             <artifactId>guice-assistedinject</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>concurrent</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>jool</artifactId>
         </dependency>
@@ -66,13 +56,6 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>d2r</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>com.torodb.engine.backend</groupId>
             <artifactId>backend-derby</artifactId>
             <version>${project.version}</version>
@@ -87,12 +70,6 @@
         <dependency>
             <groupId>com.google.truth</groupId>
             <artifactId>truth</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.torodb.engine</groupId>
-            <artifactId>essential</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

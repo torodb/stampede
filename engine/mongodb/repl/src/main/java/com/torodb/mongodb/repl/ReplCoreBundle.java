@@ -22,17 +22,17 @@ import com.eightkdata.mongowp.client.core.CachedMongoClientFactory;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
-import com.torodb.core.modules.AbstractBundle;
+import com.torodb.core.bundle.AbstractBundle;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.repl.filters.ToroDbReplicationFilters;
 import com.torodb.mongodb.repl.guice.ReplCoreModule;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Collection;
 
 public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
 
-  private static final Logger LOGGER = LogManager.getLogger(ReplCoreBundle.class);
+  private final Logger logger;
   private final ReplCoreConfig replCoreConfig;
   private final OplogManager oplogManager;
   private final CachedMongoClientFactory mongoClientFactory;
@@ -44,8 +44,11 @@ public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
     super(replCoreConfig);
     this.replCoreConfig = replCoreConfig;
 
-    Injector injector = replCoreConfig.getEssentialInjector()
-        .createChildInjector(new ReplCoreModule(replCoreConfig));
+    Injector injector = replCoreConfig.getEssentialInjector().createChildInjector(
+            replCoreConfig.getEssentialOverrideModule(),
+            new ReplCoreModule(replCoreConfig)
+        );
+    logger = injector.getInstance(LoggerFactory.class).apply(this.getClass());
     oplogManager = injector.getInstance(OplogManager.class);
     mongoClientFactory = injector.getInstance(CachedMongoClientFactory.class);
     oplogReaderProvider = injector.getInstance(OplogReaderProvider.class);
@@ -55,22 +58,22 @@ public class ReplCoreBundle extends AbstractBundle<ReplCoreExtInt> {
 
   @Override
   protected void postDependenciesStartUp() throws Exception {
-    LOGGER.debug("Starting oplog manager");
+    logger.debug("Starting oplog manager");
     oplogManager.startAsync();
     oplogManager.awaitRunning();
-    LOGGER.debug("Oplog manager started");
+    logger.debug("Oplog manager started");
   }
 
   @Override
   protected void preDependenciesShutDown() throws Exception {
-    LOGGER.debug("Shutting down oplog manager");
+    logger.debug("Shutting down oplog manager");
     oplogManager.stopAsync();
     oplogManager.awaitTerminated();
-    LOGGER.debug("Oplog manager Shutted down");
+    logger.debug("Oplog manager Shutted down");
 
-    LOGGER.debug("Closing remote connections");
+    logger.debug("Closing remote connections");
     mongoClientFactory.invalidateAll();
-    LOGGER.debug("Remote connections have been closed");
+    logger.debug("Remote connections have been closed");
   }
 
   @Override

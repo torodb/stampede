@@ -20,9 +20,9 @@ package com.torodb.torod;
 
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
+import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.d2r.MemoryRidGenerator;
 import com.torodb.core.d2r.ReservedIdGenerator;
-import com.torodb.core.modules.BundleConfig;
 import com.torodb.torod.guice.MemoryTorodModule;
 import com.torodb.torod.pipeline.InsertPipelineFactory;
 
@@ -33,7 +33,7 @@ import java.util.Collections;
  * A {@link TorodBundle torod bundle} that uses a memory backend, intended to be used on
  * testing.
  */
-public class MemoryTorodBundle extends TorodBundle {
+public class MemoryTorodBundle extends AbstractTorodBundle {
 
   private final TorodServer torodServer;
   private final ReservedIdGenerator reservedIdGenerator;

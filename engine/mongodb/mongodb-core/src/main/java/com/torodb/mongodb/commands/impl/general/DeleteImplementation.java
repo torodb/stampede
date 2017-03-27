@@ -26,6 +26,7 @@ import com.eightkdata.mongowp.server.api.Command;
 import com.eightkdata.mongowp.server.api.Request;
 import com.torodb.core.language.AttributeReference;
 import com.torodb.core.language.AttributeReference.Builder;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.kvdocument.values.KvValue;
 import com.torodb.mongodb.commands.impl.WriteTorodbCommandImpl;
 import com.torodb.mongodb.commands.signatures.general.DeleteCommand.DeleteArgument;
@@ -33,21 +34,23 @@ import com.torodb.mongodb.commands.signatures.general.DeleteCommand.DeleteStatem
 import com.torodb.mongodb.core.MongodMetrics;
 import com.torodb.mongodb.core.WriteMongodTransaction;
 import com.torodb.torod.SharedWriteTorodTransaction;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- *
- */
 @Singleton
 public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgument, Long> {
 
-  private static final Logger LOGGER = LogManager.getLogger(DeleteImplementation.class);
+  private final Logger logger;
+
+  @Inject
+  public DeleteImplementation(LoggerFactory loggerFactory) {
+    this.logger = loggerFactory.apply(this.getClass());
+  }
 
   @Override
   public Status<Long> apply(Request req, Command<? super DeleteArgument, ? super Long> command,
@@ -94,13 +97,13 @@ public class DeleteImplementation implements WriteTorodbCommandImpl<DeleteArgume
   }
 
   private void logDeleteCommand(DeleteArgument arg) {
-    if (LOGGER.isTraceEnabled()) {
+    if (logger.isTraceEnabled()) {
       String collection = arg.getCollection();
       String filter = StreamSupport.stream(arg.getStatements().spliterator(), false)
           .map(statement -> statement.getQuery().toString())
           .collect(Collectors.joining(","));
 
-      LOGGER.trace("Delete from {} filter {}", collection, filter);
+      logger.trace("Delete from {} filter {}", collection, filter);
     }
   }
 

@@ -31,8 +31,6 @@ import com.torodb.core.transaction.metainf.MetaCollection;
 import com.torodb.core.transaction.metainf.MetaDatabase;
 import com.torodb.core.transaction.metainf.MetaDocPart;
 import com.torodb.core.transaction.metainf.MetaIdentifiedDocPartIndex;
-import com.torodb.core.transaction.metainf.MetaSnapshot;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.jooq.Meta;
@@ -56,8 +54,7 @@ import javax.inject.Singleton;
 @Singleton
 public abstract class AbstractStructureInterface implements StructureInterface {
 
-  private static final Logger LOGGER =
-      LogManager.getLogger(AbstractStructureInterface.class);
+  private static final Logger LOGGER = BackendLoggerFactory.get(AbstractStructureInterface.class);
 
   private final DbBackendService dbBackend;
   private final MetaDataReadInterface metaDataReadInterface;
@@ -157,11 +154,10 @@ public abstract class AbstractStructureInterface implements StructureInterface {
       String toSchemaName);
 
   @Override
-  public void createIndex(DSLContext dsl, String indexName,
-      String schemaName, String tableName,
-      List<Tuple2<String, Boolean>> columnList, boolean unique
-  ) throws UserException {
-    if (!dbBackend.isOnDataInsertMode()) {
+  public void createIndex(DSLContext dsl, String indexName, String schemaName, String tableName,
+      List<Tuple2<String, Boolean>> columnList, boolean unique)
+      throws UserException {
+    if (!dbBackend.isOnDataInsertMode(schemaName)) {
       Preconditions.checkArgument(!columnList.isEmpty(), "Can not create index on 0 columns");
 
       String statement = getCreateIndexStatement(indexName, schemaName, tableName, columnList,
@@ -287,7 +283,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
   public Stream<Function<DSLContext, String>> streamRootDocPartTableIndexesCreation(
       String schemaName, String tableName, TableRef tableRef) {
     List<Function<DSLContext, String>> result = new ArrayList<>(1);
-    if (!dbBackend.isOnDataInsertMode()) {
+    if (!dbBackend.isOnDataInsertMode(schemaName)) {
       String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName,
           metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
 
@@ -304,7 +300,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
   public Stream<Function<DSLContext, String>> streamDocPartTableIndexesCreation(String schemaName,
       String tableName, TableRef tableRef, String foreignTableName) {
     List<Function<DSLContext, String>> result = new ArrayList<>(4);
-    if (!dbBackend.isOnDataInsertMode()) {
+    if (!dbBackend.isOnDataInsertMode(schemaName)) {
       String primaryKeyStatement = getAddDocPartTablePrimaryKeyStatement(schemaName, tableName,
           metaDataReadInterface.getPrimaryKeyInternalFields(tableRef));
       result.add((dsl) -> {
@@ -313,7 +309,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
       });
     }
 
-    if (!dbBackend.isOnDataInsertMode()) {
+    if (!dbBackend.isOnDataInsertMode(schemaName)) {
       String readIndexStatement = getCreateDocPartTableIndexStatement(schemaName, tableName,
           metaDataReadInterface.getReadInternalFields(tableRef));
       result.add((dsl) -> {
@@ -323,7 +319,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
       });
     }
 
-    if (!dbBackend.isOnDataInsertMode()) {
+    if (!dbBackend.isOnDataInsertMode(schemaName)) {
       if (dbBackend.includeForeignKeys()) {
         String foreignKeyStatement = getAddDocPartTableForeignKeyStatement(schemaName, tableName,
             metaDataReadInterface.getReferenceInternalFields(tableRef),
@@ -351,7 +347,7 @@ public abstract class AbstractStructureInterface implements StructureInterface {
   }
 
   @Override
-  public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaSnapshot snapshot) {
+  public Stream<Function<DSLContext, String>> streamDataInsertFinishTasks(MetaDatabase db) {
     return Collections.<Function<DSLContext, String>>emptySet().stream();
   }
 

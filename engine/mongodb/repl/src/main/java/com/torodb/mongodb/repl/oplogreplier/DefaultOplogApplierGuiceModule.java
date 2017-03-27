@@ -22,6 +22,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.torodb.core.logging.LoggerFactory;
 import com.torodb.mongodb.core.MongodServer;
 import com.torodb.mongodb.filters.ByNamespaceOplogOperationFilter;
 import com.torodb.mongodb.filters.DatabaseFilter;
@@ -50,6 +51,8 @@ public class DefaultOplogApplierGuiceModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    requireBinding(LoggerFactory.class);
+    
     expose(OplogApplier.class);
     expose(AnalyzedOplogBatchExecutor.class);
 
@@ -106,12 +109,12 @@ public class DefaultOplogApplierGuiceModule extends PrivateModule {
   }
 
   @Provides
-  public OplogBatchFilter createOplogBatchFilter() {
+  public OplogBatchFilter createOplogBatchFilter(LoggerFactory lf) {
     ToroDbReplicationFilters replFilters = config.getReplCoreBundle()
         .getExternalInterface()
         .getReplicationFilters();
     DatabaseFilter dbFilter = replFilters.getDatabaseFilter();
     NamespaceFilter nsFilter = replFilters.getNamespaceFilter();
-    return new OplogBatchFilter(new ByNamespaceOplogOperationFilter(dbFilter, nsFilter));
+    return new OplogBatchFilter(new ByNamespaceOplogOperationFilter(dbFilter, nsFilter), lf);
   }
 }

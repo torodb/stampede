@@ -21,11 +21,14 @@ package com.torodb.mongodb.repl;
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Injector;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.LoggerFactory;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.core.supervision.Supervisor;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 
+import java.util.Optional;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -37,16 +40,22 @@ public class MongoDbReplConfig implements BundleConfig {
   private final ReplicationFilters userReplFilter;
   private final String replSetName;
   private final ConsistencyHandler consistencyHandler;
+  private final Optional<ToroMetricRegistry> metricRegistry;
+  private final LoggerFactory loggerFactory;
   private final BundleConfig generalConfig;
 
-  protected MongoDbReplConfig(MongoDbCoreBundle coreBundle,
-      MongoClientConfiguration mongoClientConfiguration, ReplicationFilters replicationFilters,
-      String replSetName, ConsistencyHandler consistencyHandler, BundleConfig generalConfig) {
+  public MongoDbReplConfig(MongoDbCoreBundle coreBundle,
+      MongoClientConfiguration mongoClientConfiguration, ReplicationFilters userReplFilter,
+      String replSetName, ConsistencyHandler consistencyHandler, 
+      Optional<ToroMetricRegistry> metricRegistry,
+      LoggerFactory loggerFactory, BundleConfig generalConfig) {
     this.coreBundle = coreBundle;
     this.mongoClientConfiguration = mongoClientConfiguration;
-    this.userReplFilter = replicationFilters;
+    this.userReplFilter = userReplFilter;
     this.replSetName = replSetName;
     this.consistencyHandler = consistencyHandler;
+    this.metricRegistry = metricRegistry;
+    this.loggerFactory = loggerFactory;
     this.generalConfig = generalConfig;
   }
 
@@ -68,6 +77,14 @@ public class MongoDbReplConfig implements BundleConfig {
 
   public ConsistencyHandler getConsistencyHandler() {
     return consistencyHandler;
+  }
+
+  public Optional<ToroMetricRegistry> getMetricRegistry() {
+    return metricRegistry;
+  }
+
+  public LoggerFactory getLoggerFactory() {
+    return loggerFactory;
   }
 
   @Override

@@ -18,17 +18,14 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class TimeType implements KvType {
 
   private static final long serialVersionUID = 1L;
 
   public static final TimeType INSTANCE = new TimeType();
 
-  private TimeType() {
-  }
+  private TimeType() {}
 
   @Override
   public boolean equals(Object o) {
@@ -45,5 +42,4 @@ public class TimeType implements KvType {
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }

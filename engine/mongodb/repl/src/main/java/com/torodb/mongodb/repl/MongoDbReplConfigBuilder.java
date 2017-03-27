@@ -20,9 +20,13 @@ package com.torodb.mongodb.repl;
 
 import com.eightkdata.mongowp.client.wrapper.MongoClientConfiguration;
 import com.google.common.base.Preconditions;
-import com.torodb.core.modules.BundleConfig;
+import com.torodb.core.bundle.BundleConfig;
+import com.torodb.core.logging.LoggerFactory;
+import com.torodb.core.metrics.ToroMetricRegistry;
 import com.torodb.mongodb.core.MongoDbCoreBundle;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
+
+import java.util.Optional;
 
 public class MongoDbReplConfigBuilder {
 
@@ -31,6 +35,8 @@ public class MongoDbReplConfigBuilder {
   private ReplicationFilters replicationFilters;
   private String replSetName;
   private ConsistencyHandler consistencyHandler;
+  private Optional<ToroMetricRegistry> metricRegistry;
+  private LoggerFactory loggerFactory;
   private final BundleConfig generalConfig;
 
   public MongoDbReplConfigBuilder(BundleConfig generalConfig) {
@@ -63,6 +69,16 @@ public class MongoDbReplConfigBuilder {
     return this;
   }
 
+  public MongoDbReplConfigBuilder setMetricRegistry(Optional<ToroMetricRegistry> metricRegistry) {
+    this.metricRegistry = metricRegistry;
+    return this;
+  }
+
+  public MongoDbReplConfigBuilder setLoggerFactory(LoggerFactory loggerFactory) {
+    this.loggerFactory = loggerFactory;
+    return this;
+  }
+
   public MongoDbReplConfig build() {
     Preconditions.checkNotNull(coreBundle, "core bundle must be not null");
     Preconditions.checkNotNull(mongoClientConfiguration, "mongo client configuration must be not "
@@ -71,8 +87,11 @@ public class MongoDbReplConfigBuilder {
     Preconditions.checkNotNull(replSetName, "replSetName must be not null");
     Preconditions.checkNotNull(consistencyHandler, "consistency handler must be not null");
     Preconditions.checkNotNull(generalConfig, "general config must be not null");
+    Preconditions.checkNotNull(metricRegistry, "metric registry must be not null");
+    Preconditions.checkNotNull(loggerFactory, "logger factory must be not null");
+
     return new MongoDbReplConfig(coreBundle, mongoClientConfiguration, replicationFilters,
-        replSetName, consistencyHandler, generalConfig);
+        replSetName, consistencyHandler, metricRegistry, loggerFactory, generalConfig);
   }
 
 }

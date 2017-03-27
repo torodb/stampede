@@ -18,20 +18,16 @@
 
 package com.torodb.kvdocument.types;
 
-/**
- *
- */
+/** */
 public class MongoTimestampType implements KvType {
 
   public static final MongoTimestampType INSTANCE = new MongoTimestampType();
   private static final long serialVersionUID = 1L;
 
-  private MongoTimestampType() {
-  }
+  private MongoTimestampType() {}
 
   @Override
   public <R, A> R accept(KvTypeVisitor<R, A> visitor, A arg) {
     return visitor.visit(this, arg);
   }
-
 }
