@@ -28,7 +28,7 @@ script: mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false v
 
 after_success:
   - |
-    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == gortiz/stampede ]
+    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == torodb/stampede ]
     then
         bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports'
     else
