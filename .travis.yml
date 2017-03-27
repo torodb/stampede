@@ -1,4 +1,7 @@
 language: java
+sudo: required
+dist: trusty
+jdk: oraclejdk8
 
 before_install:
   - wget https://archive.apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
@@ -6,57 +9,29 @@ before_install:
   - export M2_HOME=$PWD/apache-maven-3.2.2
   - export PATH=$M2_HOME/bin:$PATH
 
-sudo: required
-dist: trusty
-script: |
-        if [ "$TRAVIS_EVENT_TYPE" == cron ] && [ "$TRAVIS_BRANCH" == devel ]
-        then
-            bash .travis/build-packages
-        else
-            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
-        fi
-jdk: oraclejdk8
-
-env:
-  # the SONAR_TOKEN variable
-  - secure: "eQaksffQhrlaAKEFWIGR7Wbo01QKscfPl7MOQHQAytP74uU6in1VcPITdHr2UgTH/PhjMJ5Uevw7mrzDN+pDE8csNxVF7JozEAIh6DYhmBmmBOYu3+AypDqdtaBOmgAPkTLxSthiy5hsmOgCjfXPGrWqpQJ918n0RtdIL1p7W4L5N3I2yDcQOpFSXXizWADpGH/fErhihKdepNCco0JCfxLmpFa+i+goqsF1EEJPb2Ylz4LYhlez2NqULGQWio2+ucrYLDZHFTrdRyQ9Tq/RA62zdynmWQAYuE5nYmO1vmvk2mR+xQpIyevvAQY4RmffYKkK/Hq334H8rIH7etCn/e0fzaLnOveyIttoG0yaqpY/mPIZkOQBV0pSjCFONvt0gsgFfPYv5sHvRBM2dj1knwOLqwhqseR6en8+TaqeP2aYj/ittU3+7QJ9yHorfAYG14ofxm+Ue4o9wJ5FsyAzw5IpYnu28WRGy7+7kFfzo1prNh7dlqjDKrBMeK292seVPH+RDMaIs2ZAzfUZElhOtqvXGsuBfDtO2FG7L9ke+tbVB/z/srM0cXPJW0xcPdoeVgoH5+CyLTaR4+8tT0recQwfKrl7zluwKk+zWmxCs5BuV+JHcWrgC+sD0iKvOHbf/w+s5bLOs0kB4YjoiUZ0pK+9NphR/Mew7shnTFZi63o="
-  # TODO: Add a SONAR_GITHUB_TOKEN to support Sonar on pull requests (or wait until they improve their compatibility)
-
 addons:
-  sonarqube:
-    branches:
-      - devel
-      - master
   apt:
     packages:
       - oracle-java8-installer
-  postgresql: "9.4"
-
-services:
-  - postgresql
+   
+cache:
+  directories:
+  - $HOME/.m2/repository
+  
+before_cache:
+  - rm -f $HOME/.m2/repository/com/torodb
 
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH
-  - psql -c "create user test password 'test';" -U postgres
-  - psql -c "create database test owner test;" -U postgres
 
-cache:
-  directories:
-    - '$HOME/.sonar/cache'
+script: mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
 
 after_success:
   - |
-    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == torodb/torodb ]
+    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == gortiz/stampede ]
     then
         bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports'
     else
         echo 'Codecov not notified'
-    fi
-  - |
-    if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == torodb/torodb ]
-    then
-        mvn sonar:sonar || echo 'Error while notifying SonarQube'
-    else
-        echo 'SonarQube not notified'
     fi
   
