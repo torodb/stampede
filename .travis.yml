@@ -24,7 +24,13 @@ before_cache:
 before_script:
   - export GIT_BRANCH=$TRAVIS_BRANCH
 
-script: mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
+script: |
+        if [ "$TRAVIS_EVENT_TYPE" == cron ] && [ "$TRAVIS_BRANCH" == devel ]
+        then
+            bash .travis/build-packages
+        else
+            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
+        fi
 
 after_success:
   - |
