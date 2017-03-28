@@ -93,6 +93,7 @@
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
+                                    <showLogs>true</showLogs>
                                     <images>
                                         <image>
                                             <name>${docker.container.postgresql}</name>
@@ -107,6 +108,26 @@
                                                     <POSTGRES_PASSWORD>test</POSTGRES_PASSWORD>
                                                     <POSTGRES_DB>test</POSTGRES_DB>
                                                 </env>
+                                                <wait>
+                                                    <time>600000</time>
+                                                    <log>Database started</log>
+                                                </wait>
+                                                <cmd>
+                                                    <arg>bash</arg>
+                                                    <arg>-c</arg>
+                                                    <arg>
+                                                        echo "localhost:*:test:test:test" > ~/.pgpass;
+                                                        chmod 400 ~/.pgpass;
+                                                        (
+                                                            while ! psql -h localhost -U test -d test;
+                                                            do
+                                                                sleep 1;
+                                                            done;
+                                                            echo "Database started";
+                                                        ) &amp;
+                                                        ./docker-entrypoint.sh postgres
+                                                    </arg>
+                                                </cmd>
                                             </run>
                                         </image>
                                     </images>
