@@ -790,11 +790,7 @@
                                                     then
                                                         rpmbuild -bs "$SPEC_FILE";
                                                         cp -a "$HOME/rpmbuild" "/rpm/.";
-                                                        if ! copr-cli list-packages ${package.name}&gt;/dev/null 2&gt;&amp;1;
-                                                        then
-                                                            copr-cli create --chroot fedora-25-i386 --chroot fedora-25-x86_64 ${package.name};
-                                                        fi;
-                                                        copr-cli build --nowait ${package.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
+                                                        copr-cli build --nowait ${copr.name} $HOME/rpmbuild/SRPMS/*.src.rpm;
                                                     else
                                                         rpmbuild -ba "$SPEC_FILE";
                                                         cp -a "$HOME/rpmbuild" "/rpm/.";
