@@ -1,10 +1,10 @@
-<h1>Installation from source code</h1>
+<h1>Installation From Source Code</h1>
 
-The installation from the source code is quite similar to the binary installation, but it is necessary to build ToroDB Stampede from the sources first.
+Before starting, make sure the [prerequisites](prerequisites.md) are met.
 
 ## Linux/macOS
 
-Download source code.
+Download source code using Git:
 
 ```no-highlight
 cd /tmp
@@ -12,21 +12,20 @@ cd /tmp
 git clone https://github.com/torodb/torodb.git
 ```
 
-Compile source code.
+Compile source code and build the distribution using Apache Maven:
 
 ```no-highlight
 cd torodb
 
 mvn clean package -P assembler,prod
 ```
-
-As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory with the next content.
+Create the [`.toropass` file](prerequisites.md#create-toropass-file) in the home directory (be sure the put the right password in):
 
 ```no-highlight
 echo "localhost:5432:torod:torodb:<password>" > ~/.toropass
 ```
 
-Extract and launch ToroDB Stampede (replace `$TOROHOME` with final ToroDB Stampede directory).
+Extract and launch ToroDB Stampede (replace `$TOROHOME` with the desired ToroDB Stampede installation directory).
 
 ```no-highlight
 cd "$TOROHOME"
@@ -38,13 +37,13 @@ torodb-stampede-1.0.0-beta1/bin/torodb-stampede
 
 ## Windows
 
-Download source code in some temporal directory.
+Download source code in a temporary directory:
 
 ```no-highlight
 C:\tmp\>git clone https://github.com/torodb/torodb.git
 ```
 
-Compile source code.
+Compile source code and build the distribution using Apache Maven:
 
 ```no-highlight
 C:\tmp\>cd torodb
@@ -52,16 +51,16 @@ C:\tmp\>cd torodb
 C:\tmp\torodb>mvn clean package -P assembler,prod
 ```
 
-As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory `%HOME%\.toropass` with the next content.
+Create the [`.toropass` file](prerequisites.md#create-toropass-file) in the home directory (be sure the put the right password in):
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>
 ```
 
-Uncompress the Zip file located in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-1.0.0-beta1.zip` in the final ToroDB Stampede directory (replace `%TOROHOME%` with final ToroDB Stampede directory), and then execute the command:
+Decompress the Zip file in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-1.0.0-beta1.zip` (replace `%TOROHOME%` with the desired ToroDB Stampede installation directory) and  execute the following command:
 
 ```no-highlight
 C:\>%TOROHOME%\bin\torodb-stampede
 ```
 
-or simply, double click on the `torodb-stampede.bat` file located in folder `bin`.
+Alternatively, double-click on the `torodb-stampede.bat` file in the `bin` folder.

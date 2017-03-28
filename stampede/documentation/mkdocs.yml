@@ -4,24 +4,25 @@ pages:
   - 'Welcome': index.md
   - 'About': about.md
   - 'Quickstart': quickstart.md
-  - Installation and configuration:
-    - 'Previous requirements': installation/previous-requirements.md
-    - 'Installation with Docker': installation/docker.md
-    - 'Installation with binaries': installation/binaries.md
-    - 'Installation with SNAP': installation/snap.md
-    - 'Installation for Ubuntu/Debian': installation/deb.md
-    - 'Installation for Fedora/CentOS': installation/rpm.md
-    - 'Installation from source code': installation/source-code.md
-    - 'Configuration': installation/configuration.md
-    - 'PostgreSQL configuration tips': installation/postgresql-configuration-tips.md
-    - 'Java Virtual Machine configuration tips': installation/jvm-configuration-tips.md
-  - 'How to use?': how-to-use.md
+  - Installation:
+    - 'Prerequisites': installation/prerequisites.md
+    - 'Installation With Docker': installation/docker.md
+    - 'Installation With Binaries': installation/binaries.md
+    - 'Installation From Source Code': installation/source-code.md
+  - Configuration:
+    - 'Options or File': configuration/index.md
+    - 'PostgreSQL Connectivity': configuration/postgresql-connectivity.md
+    - 'MongoDB Connectivity': configuration/mongodb-connectivity.md
+    - 'Replication Exclusion': configuration/replication-exclusion.md
+    - 'Options Reference': configuration/options-reference.md
+    - 'PostgreSQL Configuration Tips': configuration/postgresql-configuration-tips.md
+    - 'JVM Configuration Tips': configuration/jvm-configuration-tips.md
+  - 'The Relational Schema': relational-schema.md
+  - 'Trouble Shooting': trouble-shooting.md
   - 'Metrics': metrics.md
   - 'FAQ': faq.md
   - 'Glossary': glossary.md
-  - 'Appendix': appendix.md
 extra_css:
   - css/8kdata.css
 markdown_extensions:
   - admonition:
-google_analytics: ['UA-44578894-3', 'www.torodb.com']

@@ -1,4 +1,4 @@
-<h1>Appendix</h1>
+<h1>Options Reference</h1>
 
 ## CLI options
 
