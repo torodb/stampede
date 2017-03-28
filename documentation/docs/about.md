@@ -4,7 +4,8 @@ Connected to a MongoDB replica set, ToroDB Stampede is able to replicate the NoS
 
 ![ToroDB Stampede Structure](images/toro_stampede_structure.jpg)
 
-There are other solutions that are able to store the JSON document in a relational table using PostgreSQL JSON support, but it doesn't solve the real problem of 'how to really use that data'. ToroDB Stampede replicates the document structure in different relational tables and stores the document data in different tuples using those tables.
+There are other solutions that are able to store the JSON document in a relational table using PostgreSQL JSON support, but it doesn't solve the real problem of 'how to really use that data'. 
+ToroDB Stampede replicates the document structure in different relational tables and stores the document data in different tuples using those tables.
 
 ![Mapping example](images/toro_stampede_mapping.jpg)
 
@@ -28,6 +29,16 @@ In addition to the previous limitations, just some kind of indexes are supported
 * Simple indexes of one key
 * All keys path with the exception to the paths resolving in scalar value (eg: `db.test.createIndex({"a": 1})` will not index value of key `a` for the document `{"a": [1,2,3]}`)
 * Index properties `sparse` and `background` are ignored
+
+## When ToroDB Stampede might not be the right choice
+
+As good as Stampede is, there are certain use-cases for which it is a bad choice or simply will not work:
+
+* Pattern "key as values". When keys contain values, potentially thousands of different values may appear in keys, leading to an equally high number of columns 
+(which might break with some RDBMS which have limits to the number of columns per row, see next point) and/or tables, which might be terribly inconvenient and slow.
+* Too many fields per document, several of them optional and only some appearing per document, which might lead to thousands of columns. 
+Some RDBMSs do not support such a high number of columns. For PostgreSQL this limit is around 1600 columns.
+
 
 [TODO]: <> (not supported types, we need a list)
 
