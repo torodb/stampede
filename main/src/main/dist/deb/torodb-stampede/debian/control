@@ -10,5 +10,5 @@ Homepage: @{assembler.url}
 Package: @{package.name}
 Architecture: all
 Depends: openjdk-8-jdk-headless, postgresql-client-9.6 | postgresql-client-9.5 | postgresql-client-9.4 | postgresql-client, mongodb-org-shell | mongodb-clients, openssl, ${misc:Depends}
-Description: @{assembler.fullName}
-  @{project.parent.description}
+Description: @{assembler.summary}
+  @{assembler.description_twospaces}

@@ -1,7 +1,7 @@
 name: "@{assembler.name}"
 version: "@{project.version}"
-summary: "@{project.name}"
-description: "@{project.description}"
+summary: "@{assembler.summary}"
+description: "@{assembler.description_oneline}"
 grade: @{snap.grade}
 confinement: @{snap.confinement}
 apps:
