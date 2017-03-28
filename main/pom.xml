@@ -156,7 +156,6 @@
                             <id>dist-main-jar</id>
                             <phase>package</phase>
                             <goals>
-                                <goal>jar</goal>
                             </goals>
                             <configuration>
                                 <outputDirectory>${project.build.directory}/dist/lib/</outputDirectory>
@@ -167,7 +166,7 @@
                                         <classpathMavenRepositoryLayout>true</classpathMavenRepositoryLayout>
                                         <useUniqueVersions>false</useUniqueVersions>
                                         <classpathPrefix>./</classpathPrefix>
-                                        <mainClass>${mainClass}</mainClass>
+                                        <mainClass>${assembler.mainClass}</mainClass>
                                     </manifest>
                                 </archive>
                             </configuration>
@@ -233,6 +232,9 @@
                         <executions>
                             <execution>
                                 <id>dist-main-jar</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -369,6 +371,9 @@
                         <executions>
                             <execution>
                                 <id>dist-main-jar</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -512,6 +517,9 @@
                         <executions>
                             <execution>
                                 <id>dist-main-jar</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -701,6 +709,9 @@
                         <executions>
                             <execution>
                                 <id>dist-main-jar</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -949,6 +960,9 @@
                         <executions>
                             <execution>
                                 <id>dist-main-jar</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
