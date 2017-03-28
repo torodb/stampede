@@ -1,6 +1,6 @@
 <h1>Configuring the PostgreSQL Connection</h1>
 
-By default ToroDB Stampede connects to PostgreSQL using the following configuration:
+ToroDB Stampede uses the following defaults to connect to PostgreSQL:
 
 ```json
 backend:
@@ -13,35 +13,24 @@ backend:
     applicationName: "toro"
     ssl: false
 ```
+The [Options Reference](options-reference.md#postgresql-configuration) explains these settings in detail.
 
-You may change this configuration depending on your requisites.
-You can enabled SSL connection setting `ssl: true` in configuration file.
-To provide the PostgreSQL user's password that ToroDB Stampede will use to connect to PostgreSQL 
-you can specify parameter `--ask-for-password` to make ToroDB Stampede prompt for the password while starting up  
-or you create a PostgreSQL credentials configuration file `~/.toropass`, using the `.pgpass` file format. 
-The right format is one or more lines formatted as `<host>:<port>:<database>:<user>:<password>`.
+## Password Configuration
 
-```no-highlight
-echo "localhost:5432:torod:torodb:torodb" > ~/.toropass
-chmod 400 ~/.toropass
-```
+There are two ways to provide the PostgreSQL password:
 
-You may change the `.toropass` path using the `toropassFile` parameter in ToroDB Stampede configuration file. For example:
+* Use the `--ask-for-password` option to enter the password manually at startup
+* Use a `toropassFile` as follows:  
 
-```json
-backend:
-  postgres:
-    host: localhost
-    port: 5432
-    database: torod
-    user: torodb
-    toropassFile: /secret/mytoropass
-    applicationName: "toro"
-    ssl: false
-```
-## Backend connection pooling
+    1. Create a file in [`.pgpass` format](https://wiki.postgresql.org/wiki/Pgpass): `<host>:<port>:<database>:<user>:<password>`  
+    `echo "localhost:5432:torod:torodb:torodb" > ~/.toropass`
+    1. Make sure the file's permissions are restrictive  
+    `chmod 400 ~/.toropass`
+    1. If you don't want to use the default location (`~/.toropass`) move the file and configure the path in the YAML configuration setting `toropassFile`.
 
-By default ToroDB Stampede uses a connection pool with the following configuration:
+## Backend Connection Pooling
+
+ToroDB Stampede uses a connection pool for the backend connections. Its size and timeout (if no connection is available) can be adjusted. The default configuration is as follows:
 
 ```json
 backend:
@@ -50,4 +39,4 @@ backend:
     connectionPoolSize: 30
 ```
 
-You may tune those parameters at will. The only constraint is that `connectionPoolSize` has to be at least 20.
+The [Options Reference](options-reference.md#torodb-stampede-pool-configuration) explains these settings in detail.
