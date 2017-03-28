@@ -20,6 +20,10 @@ sudo torodb-stampede.setup
 
 You will be prompted to provide superuser credentials (if you didn't created ToroDB's database and user yourself), ToroDB's user credentials and MongoDB credentials.
 
+!!! info "Manage ToroDB Stampede service"
+    To manage ToroDB Stampede service please refer to [manage systemd service section](binaries#manage-systemd-service). 
+    Replace service name from *torodb-stampede* to *snap.torodb-stampede.daemon.service*.
+
 ## Install package torodb-stampede-postgres
 
 Just run:
@@ -35,6 +39,10 @@ sudo torodb-stampede.setup
 ```
 
 You will be prompted to provide MongoDB credentials.
+
+!!! info "Manage ToroDB Stampede service"
+    To manage ToroDB Stampede service please refer to [manage systemd service section](binaries#manage-systemd-service). 
+    Replace service name from *torodb-stampede* to *snap.torodb-stampede-postgres.daemon.service*.
 
 ## Nightly build packages
 
