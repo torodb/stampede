@@ -7,27 +7,28 @@ This package is handy if you want to minimize configuration steps but have te re
 
 ## Install package torodb-stampede
 
-Just run:
+Just run as root user:
 
 ### For Fedora 21 / CentOS
 
-```
-sudo yum -y install yum-plugin-copr
-sudo yum -y copr enable 8kdata/torodb
-sudo yum -y install torodb-stampede
+```no-highlight
+yum -y install yum-plugin-copr
+yum -y copr enable eightkdata/torodb
+yum -y install torodb-stampede
 ```
 
 ### For Fedora >= 22
-```
-sudo dnf -y install dnf-plugins-core
-sudo dnf -y copr enable 8kdata/torodb
-sudo dnf -y install torodb-stampede
+
+```no-highlight
+dnf -y install dnf-plugins-core
+dnf -y copr enable eightkdata/torodb
+dnf -y install torodb-stampede
 ```
 
 And then to setup ToroDB Stampede run interactive script as root user:
 
-```
-sudo torodb-stampede-setup
+```no-highlight
+torodb-stampede-setup
 ```
 
 You will be prompted to provide superuser credentials (if you didn't created ToroDB's database and user yourself), ToroDB's user credentials and MongoDB credentials.
@@ -37,27 +38,28 @@ You will be prompted to provide superuser credentials (if you didn't created Tor
 
 ## Install package torodb-stampede-postgres
 
-Just run:
+Just run as root user:
 
 ### For Fedora 21 / CentOS
 
-```
-sudo yum -y install yum-plugin-copr
-sudo yum -y copr enable 8kdata/torodb
-sudo yum -y install torodb-stampede-postgres
+```no-highlight
+yum -y install yum-plugin-copr
+yum -y copr enable eightkdata/torodb
+yum -y install torodb-stampede-postgres
 ```
 
 ### For Fedora >= 22
-```
-sudo dnf -y install dnf-plugins-core
-sudo dnf -y copr enable 8kdata/torodb
-sudo dnf -y install torodb-stampede-postgres
+
+```no-highlight
+dnf -y install dnf-plugins-core
+dnf -y copr enable eightkdata/torodb
+dnf -y install torodb-stampede-postgres
 ```
 
 And then to setup ToroDB Stampede run interactive script as root user:
 
-```
-sudo torodb-stampede-setup
+```no-highlight
+torodb-stampede-setup
 ```
 
 You will be prompted to provide MongoDB credentials.
@@ -67,20 +69,20 @@ You will be prompted to provide MongoDB credentials.
 
 ## Nightly build packages
 
-To install latest unstable nightly build packages just use torodb-dev repository:
-
+To install latest unstable nightly build packages just use torodb-dev repository (as root):
 
 ### For Fedora 21 / CentOS
 
-```
-sudo yum -y install yum-plugin-copr
-sudo yum -y copr enable 8kdata/torodb-dev
-sudo yum -y install torodb-stampede
+```no-highlight
+yum -y install yum-plugin-copr
+yum -y copr enable eightkdata/torodb-dev
+yum -y install torodb-stampede
 ```
 
 ### For Fedora >= 22
-```
-sudo dnf -y install dnf-plugins-core
-sudo dnf -y copr enable 8kdata/torodb-dev
-sudo dnf -y install torodb-stampede
+
+```no-highlight
+dnf -y install dnf-plugins-core
+dnf -y copr enable eightkdata/torodb-dev
+dnf -y install torodb-stampede
 ```
