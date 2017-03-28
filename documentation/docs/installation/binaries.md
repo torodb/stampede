@@ -18,48 +18,58 @@ export TOROHOME="$(pwd)/torodb-stampede-1.0.0-beta1"
 
 ### Configure as a Linux systemd service
 
-You can install ToroDB Stampede as a systemd service following the next steps. This must be executed as root or using sudo command if Ubuntu is being used.
+You can install ToroDB Stampede as a systemd service following the next steps:
 
 ```no-highlight
-ln -s "$TOROHOME/bin/torodb-stampede" /usr/bin/.
+sudo ln -s "$TOROHOME/bin/torodb-stampede" /usr/bin/.
 
-useradd -M -d "$TOROHOME" torodb
+sudo useradd -M -d "$TOROHOME" torodb
 
-cp "$TOROHOME/systemd/torodb-stampede.service.sample" /lib/systed/system/torodb-stampede.service
+sudo cp "$TOROHOME/systemd/torodb-stampede.service.sample" /lib/systed/system/torodb-stampede.service
 ```
 
-Enable and start the newly created ToroDB Stampede service:
+#### Manage systemd service
+
+##### Starting the service
+
+Make shure you have enable ToroDB Stampede service. To enable the service just run:
 
 ```no-highlight
-systemctl enable torodb-stampede
-
-systemctl start torodb-stampede
+sudo systemctl enable torodb-stampede
 ```
+
+To start the service run:
+
+```no-highlight
+sudo systemctl start torodb-stampede
+```
+
+##### Stopping the service
 
 To stop ToroDB Stampede service:
 
 ```no-highlight
-systemctl stop torodb-stampede
+sudo systemctl stop torodb-stampede
 ```
 
-#### Accessing to logs
+##### Accessing logs
 
 To view logs of ToroDB Stampede service:
 
 ```no-highlight
-journalctl --no-pager -u torodb-stampede
+sudo journalctl --no-pager -u torodb-stampede
 ```
 
 Following logs:
 
 ```no-highlight
-journalctl --no-pager -u torodb-stampede -f
+sudo journalctl --no-pager -u torodb-stampede -f
 ```
 
 View all logs:
 
 ```no-highlight
-journalctl --no-tail --no-pager -u torodb-stampede
+sudo journalctl --no-tail --no-pager -u torodb-stampede
 ```
 
 

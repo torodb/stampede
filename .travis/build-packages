@@ -69,7 +69,7 @@ output=json
 " > ~/.aws/config
 
 set -x
-mvn package -f stampede/main/pom.xml -P assembler -Ds3.push=true -DskipTests
+mvn package -f main/pom.xml -P assembler -Ds3.push=true -DskipTests
 set +x
 
 
@@ -93,7 +93,7 @@ echo "
 " > ~/.m2/settings.xml
 
 set -x
-mvn package -f stampede/main/pom.xml -P docker -Ddocker.skip.push=false -DskipTests
+mvn package -f main/pom.xml -P docker -Ddocker.skip.push=false -DskipTests
 set +x
 
 
@@ -139,16 +139,16 @@ allow_unsigned_uploads = 0
 " > ~/.dput.cf
 
 set -x
-mvn package -f stampede/main/pom.xml -P deb -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede
-mvn package -f stampede/main/pom.xml -P deb -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
+mvn package -f main/pom.xml -P deb -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede
+mvn package -f main/pom.xml -P deb -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
 set +x
 
 
 echo "Building snap package"
 
 set -x
-mvn package -f stampede/main/pom.xml -P snap -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede
-mvn package -f stampede/main/pom.xml -P snap -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
+mvn package -f main/pom.xml -P snap -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede
+mvn package -f main/pom.xml -P snap -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
 set +x
 
 
@@ -164,6 +164,6 @@ copr_url = https://copr.fedorainfracloud.org
 " > ~/.config/copr
 
 set -x
-mvn package -f stampede/main/pom.xml -P rpm -Dcopr.push=true -DskipTests -Dpackage.name=torodb-stampede
-mvn package -f stampede/main/pom.xml -P rpm -Dcopr.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
+mvn package -f main/pom.xml -P rpm -Dcopr.push=true -DskipTests -Dpackage.name=torodb-stampede
+mvn package -f main/pom.xml -P rpm -Dcopr.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
 set +x
