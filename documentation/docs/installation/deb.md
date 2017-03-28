@@ -9,15 +9,15 @@ ToroDB Stampede can be installed from a PPA repository in two flavours:
 Just run:
 
 ```
-add-apt-repository -y ppa:8kdata
-apt update
-apt install torodb-stampede
+sudo add-apt-repository -y ppa:8kdata
+sudo apt update
+sudo apt install torodb-stampede
 ```
 
 And then to setup ToroDB Stampede run interactive script as root user:
 
 ```
-sudo torodb-stampede.setup
+sudo torodb-stampede-setup
 ```
 
 You will be prompted to provide superuser credentials (if you didn't created ToroDB's database and user yourself), ToroDB's user credentials and MongoDB credentials.
@@ -27,15 +27,15 @@ You will be prompted to provide superuser credentials (if you didn't created Tor
 Just run:
 
 ```
-add-apt-repository -y ppa:8kdata
-apt update
-apt install torodb-stampede-postgres
+sudo add-apt-repository -y ppa:8kdata
+sudo apt update
+sudo apt install torodb-stampede-postgres
 ```
 
 And then to setup ToroDB Stampede run interactive script as root user:
 
 ```
-sudo torodb-stampede.setup
+sudo torodb-stampede-setup
 ```
 
 You will be prompted to provide MongoDB credentials.
@@ -45,8 +45,8 @@ You will be prompted to provide MongoDB credentials.
 To install latest unstable nightly build packages just use ppa-dev repository:
 
 ```
-add-apt-repository -y ppa:8kdata/ppa-dev
-apt update
-apt install torodb-stampede
+sudo add-apt-repository -y ppa:8kdata/ppa-dev
+sudo apt update
+sudo apt install torodb-stampede
 ```
 

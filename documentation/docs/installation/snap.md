@@ -9,7 +9,7 @@ ToroDB Stampede can be installed from SNAP public store in two flavours:
 Just run:
 
 ```
-snap install torodb-stampede
+sudo snap install torodb-stampede
 ```
 
 And then to setup ToroDB Stampede run interactive script as root user:
@@ -25,7 +25,7 @@ You will be prompted to provide superuser credentials (if you didn't created Tor
 Just run:
 
 ```
-snap install torodb-stampede-postgres
+sudo snap install torodb-stampede-postgres
 ```
 
 And then to setup ToroDB Stampede run interactive script as root user:
@@ -41,5 +41,5 @@ You will be prompted to provide MongoDB credentials.
 To install latest unstable nightly build packages just add `--edge` and `--devmode` parameter to `snap` command:
 
 ```
-snap install torodb-stampede --edge --devmode
+sudo snap install torodb-stampede --edge --devmode
 ```
