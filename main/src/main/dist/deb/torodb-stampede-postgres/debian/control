@@ -11,5 +11,5 @@ Conflicts: @{assembler.name}
 Package: @{package.name}
 Architecture: all
 Depends: openjdk-8-jdk-headless, postgresql-9.6 | postgresql-9.5 | postgresql-9.4 | postgresql (>=9.4), mongodb-org-shell | mongodb-clients, openssl, ${misc:Depends}
-Description: @{assembler.fullName}
-  @{project.parent.description}
+Description: @{assembler.summary}
+  @{assembler.description_twospaces}

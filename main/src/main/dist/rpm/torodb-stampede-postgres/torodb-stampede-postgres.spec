@@ -1,7 +1,7 @@
 Name:           @{package.name}
 Version:        @{assembler.version}
 Release:        @{assembler.revision}
-Summary:        @{project.name}
+Summary:        @{assembler.summary}
 License:        @{assembler.licenses}
 URL:            @{assembler.url}
 Source0: assembler.tar
@@ -17,7 +17,7 @@ Requires: openssl
 Conflicts: @{assembler.name}
 
 %description
-@{project.description}
+@{assembler.description}
 
 %prep
 %setup -q -n assembler

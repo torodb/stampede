@@ -501,6 +501,25 @@
                         </executions>
                     </plugin>
                     <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>snap-description-oneline</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>bsh-property</goal>
+                                </goals>
+                                <configuration>
+                                    <source>
+                                        project.getProperties().setProperty("assembler.description_oneline",
+                                            project.getProperties().getProperty("assembler.description").replace("\"", "\\\"").replace("\n", "\\n"));
+                                    </source>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <artifactId>maven-resources-plugin</artifactId>
                         <executions>
                             <execution>
@@ -628,11 +647,29 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>buildnumber-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>create_deb_date</id>
+                                <id>create_rpm_date</id>
                                 <phase>prepare-package</phase>
                                 <goals>
                                     <goal>create-timestamp</goal>
@@ -671,24 +708,6 @@
                                     <regex>-</regex>
                                     <replacement>_</replacement>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>dist-copy-dependencies</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>properties-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>read-packaging-properties</id>
                             </execution>
                         </executions>
                     </plugin>
@@ -820,6 +839,36 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>dist-copy-dependencies</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-specific-packaging-properties</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${project.build.directory}/dist/deb/packaging.properties</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>read-packaging-properties</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>buildnumber-maven-plugin</artifactId>
                         <executions>
@@ -864,35 +913,22 @@
                                     <replacement></replacement>
                                 </configuration>
                             </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
                             <execution>
-                                <id>dist-copy-dependencies</id>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>properties-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>read-specific-packaging-properties</id>
+                                <id>snap-description-oneline</id>
                                 <phase>prepare-package</phase>
                                 <goals>
-                                    <goal>read-project-properties</goal>
+                                    <goal>bsh-property</goal>
                                 </goals>
                                 <configuration>
-                                    <files>
-                                        <file>${project.build.directory}/dist/deb/packaging.properties</file>
-                                    </files>
+                                    <source>
+                                        project.getProperties().setProperty("assembler.description_twospaces",
+                                            project.getProperties().getProperty("assembler.description")
+                                            .replaceFirst("^\n", ".\n")
+                                            .replace("\n", "\n  ")
+                                            .replaceAll("\n  \n", "\n  .\n")
+                                            .replaceFirst("\n  $", "\n  ."));
+                                    </source>
                                 </configuration>
-                            </execution>
-                            <execution>
-                                <id>read-packaging-properties</id>
                             </execution>
                         </executions>
                     </plugin>
