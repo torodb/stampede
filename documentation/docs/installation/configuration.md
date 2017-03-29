@@ -91,9 +91,86 @@ replication:
     caFile: mycafile.pem
 ```
 
-## Exclude replication
+## Filtering replication
 
-By default ToroDB Stampede replicates all databases and collections available in your MongoDB. You can exclude a whole database or some collection changing ToroDB Stampede configuration.
+By default ToroDB Stampede replicates all databases and collections available in your MongoDB. 
+You can specify some filters that allow to include a single database, include only some collections, 
+exclude a whole database or exclude some collections changing ToroDB Stampede configuration.
+Exclusions always override inclusions so that if you exclude something it will prevail over an inclusion.
+
+!!! info
+    Lets assume for our examples that you have two databases, *films* and *music*, and each one has two collections, *title* and *performer*. 
+
+### Include only a MongoDB database or collection
+
+In the replication section of the yml config file add an include item with the database to include:
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include: 
+    <database name>: "*"
+```
+
+or if you want to include just some collections:
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include: 
+    <database name>:
+      - <collection name 1>
+      - <collection name 2>
+```
+
+If you want to include only the database called *film* but not the specific collection *performer* from same *film* database, you should write: 
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include:
+    film: "performer"
+```
+
+!!! danger "Inclusion removal"
+    If you stop ToroDB Stampede, remove an inclusion, and restart ToroDB Stampede, the replication process will replicate operations on this database/collection
+     without replicating previously data form not included database/collection, reaching an inconsistent state.
+    
+    It is recommended to delete ToroDB Stampede database and restart the whole replication process from scratch.
+
+### Include only a MongoDB collection and a specific index inside that collection
+
+Sometimes you may want be sure that only specific indexes created in MongoDB have to be replicated by ToroDB Stampede. 
+MongoDB indexes can be included in ToroDB Stampede allowing you to save disk space and remove unuseful indexes. You just need to add the index name in the include section.
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include: 
+    <database name>:
+      <collection name>:
+        - name: <index name>
+```
+
+If you want to include only collection *performer* from *film* database with the index called *city*, you should write: 
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include: 
+    film: 
+      performer:
+        - name: "city"
+```
+
+!!! danger "Inclusion removal"
+    If you stop ToroDB Stampede, remove an inclusion, and restart ToroDB Stampede, the replication process will not create the previously not included indexes. 
+    ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.
 
 ### Exclude a MongoDB database or collection
 
@@ -115,11 +192,11 @@ replication:
   syncSource: localhost:27017
   exclude: 
     <database name>:
-    	- <collection name 1>
-    	- <collection name 2>
+      - <collection name 1>
+      - <collection name 2>
 ```
 
-For example, if you have two databases, *films* and *music*, and each one has two collections, *title* and *performer*. The configuration to exclude the whole *music* database, but in *film* database only *performer* collection, you should write:  
+The configuration to exclude the whole *music* database, but in *film* database only *performer* collection, you should write:  
 
 ```json
 replication:
@@ -128,19 +205,21 @@ replication:
   exclude: 
     music: "*"
     film: 
-        - performer
+      - performer
 ```
 
 In this case the only collection replicated is *title* from *film* database.
 
 !!! danger "Exclusion removal"
-	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will replicate operations on this database/collection without replicating previously data form this database/collection, reaching an inconsistent state.
-	
-	It is recommended to delete ToroDB Stampede database and restart the whole replication process from scratch.     
+    If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will replicate operations on this database/collection
+     without replicating previously data form this database/collection, reaching an inconsistent state.
+    
+    It is recommended to delete ToroDB Stampede database and restart the whole replication process from scratch.
 
 ### Exclude a MongoDB index
 
-Some index created in MongoDB for OLTP operations can be useless for OLAP and analytics operations. MongoDB indexes can be excluded in ToroDB Stampede allowing you to save disk space. You just need to add the index name  in the exclude section.
+Some index created in MongoDB for OLTP operations can be useless for OLAP and analytics operations. 
+MongoDB indexes can be excluded in ToroDB Stampede allowing you to save disk space. You just need to add the index name  in the exclude section.
 
 ```json
 replication:
@@ -148,8 +227,8 @@ replication:
   syncSource: localhost:27017
   exclude: 
     <database name>:
-    	<collection name>:
-    		- name: <index name>
+      <collection name>:
+        - name: <index name>
 ```
 
 If you want to exclude the index called *city* on collection *performer* from *film* database, you should write: 
@@ -160,14 +239,50 @@ replication:
   syncSource: localhost:27017
   exclude: 
     film: 
-        performer:
-        	- name: city
+      performer:
+        - name: city
 ```
 
-Any unsupported index in ToroDB Stampede (text , 2dsphere, 2d, hashed, ...) is ignored and is not created in the relational database, and you don't need to exclude it.  
+Any unsupported index in ToroDB Stampede (text , 2dsphere, 2d, hashed, ...) is ignored and is not created in the relational database, and you don't need to exclude it.
 
 !!! danger "Exclusion removal"
-	If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will not create the previously excluded indexes. ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.
+    If you stop ToroDB Stampede, remove an exclusion, and restart ToroDB Stampede, the replication process will not create the previously excluded indexes. 
+    ToroDB Stampede only creates indexes at the initial recovery process and when a create index command is found in the oplog replication process.
+
+### Include only a MongoDB database but not a specific collection
+
+You can combine the include and exclude sections to indicate that only a particular database have to be included, but exclude a particular collection in the database.
+
+If you want to include only the database called *film* but not the specific collection *performer* from same *film* database, you should write: 
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include:
+    film: "*"
+  exclude: 
+    film: "performer"
+```
+
+### Include only a MongoDB collection in a database but not a specific index inside that collection
+
+You can combine the include and exclude sections to indicate that only a particular collection have to included with all indexes excluding just one.
+
+If you want to include only collection *performer* from *film* database but not the index called *city*, you should write: 
+
+```json
+replication:
+  replSetName: rs1
+  syncSource: localhost:27017
+  include: 
+    film: 
+      performer: "*"
+  exclude: 
+    film: 
+      performer:
+        - name: "city"
+```
 
 ## Replicate from a MongoDB Sharded Cluster
 
