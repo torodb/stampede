@@ -311,8 +311,8 @@
                                                     cd /dist
                                                     if [ "${s3.push}" == "true" ];
                                                     then
-                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".tar.bz2 "$S3_PATH"/"$FINAL_NAME".tar.bz2
-                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".zip "$S3_PATH"/"$FINAL_NAME".zip
+                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".tar.bz2 "$S3_PATH"/"$FINAL_NAME".tar.bz2 --grants "read=uri=http://acs.amazonaws.com/groups/global/AllUsers"
+                                                        aws --profile "$S3_PROFILE" s3 cp "$FINAL_NAME".zip "$S3_PATH"/"$FINAL_NAME".zip --grants "read=uri=http://acs.amazonaws.com/groups/global/AllUsers"
                                                     fi;
                                                     echo "'setup s3 finished'";
                                                     </arg>
