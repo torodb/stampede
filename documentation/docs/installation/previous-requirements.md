@@ -36,7 +36,7 @@ createdatabase -O torodb torod
 
 #### macOS/Windows
 
-In macOS and Windows the user and database can be created using an administration connection with `psql` command.
+In macOS and Windows the user and database can be created using an administration connection with `psql` command (do not forget to change `<password>` with the chosen passowrd).
 
 ```no-highlight
 CREATE USER torodb WITH PASSWORD '<password>';
@@ -46,12 +46,26 @@ CREATE DATABASE torod OWNER torodb;
 
 ### Create .toropass file
 
-The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. The example assumes local connection with default port is being used, but it can be changed by the user too.
+The access configuration to the PostgreSQL database will be detailed in the `.toropass` file stored in the home directory. 
+The example assumes local connection with default port is being used, but it can be changed by the user too.
 
-#### Linux/macOS/Windows
-
-Create `.toropass` file in the home path with the content below.
+Create `.toropass` file in the home path with the content below (do not forget to change `<password>` with the chosen passowrd).
 
 ```no-highlight
 localhost:5432:torod:torodb:<password>
+```
+
+#### Linux/macOS
+
+```no-highlight
+read -s -p "Enter password:" PASSWORD
+echo
+echo "localhost:5432:torod:torodb:$PASSWORD" > "$HOME/.toropass"
+```
+
+#### Windows
+
+```no-highlight
+set PASSWORD=<password>
+echo localhost:5432:torod:torodb:%PASSWORD%>%HOMEDRIVE%%HOMEPATH%\.toropass
 ```
