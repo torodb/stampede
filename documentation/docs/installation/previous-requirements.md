@@ -11,15 +11,6 @@ ToroDB Stampede's correct operation depends on a number of known dependencies, i
 | PostgreSQL | ToroDB Stampede correct operation relies on the existence of a backend, right now it should be PostgreSQL. | [more info](https://wiki.postgresql.org/wiki/Detailed_installation_guides) |
 | Java | ToroDB Stampede has been written in Java so a Java Virtual Machine is required for it's execution. | [more info](https://java.com/en/download/help/index_installing.xml) |
 
-Among the previous dependencies, if we want to compile the source code other requisites are mandatory.
-
-| | Description | External links |
-|-|-------------|----------------|
-| Git | It is the distributed version control system (DVCS) used to keep ToroDB Stampede source code up to date and synchronized between its committers. | [more info](https://git-scm.com/downloads) |
-| Maven | Dependency management and construction tasks has been delegated to Apache Maven, so it is necessary to compile the source code. | [more info](http://maven.apache.org/install.html) | 
-| Docker | An open-source project that automates the deployment of Linux applications inside software containers. It allow to run a ToroDB Stampede and to test it in a controlled environment. | [more info](https://docs.docker.com/) | 
-| Docker Compose | A tool for defining and running multi-container Docker applications. It allow to run test scenarios like a ToroDB Stampede replicating from a MongoDB and connected to a PostgreSQL. | [more info](https://docs.docker.com/compose/install/) | 
-
 ## Backend setup
 
 ### PostgreSQL configuration
