@@ -84,7 +84,7 @@ did  |  rid  | seq | zipcode_s | coord_e |                street_s              
 
 #### primer_address_coord
 
-The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metada](how-to-use.md#metadata).
+The table `primer_address_coord` is a special case, like `primer_grades`, because those paths contain an array. That is the reason why a column `seq` is used in those tables, indicating the position of the element in the original arrays. To understand better the metadata columns it is recommended to read the chapter [metadata](how-to-use.md#metadata).
 
 ```no-highlight
 did  |  rid  |  pid  | seq |     v_d      
@@ -163,19 +163,28 @@ The different data types used by ToroDB Stampede are represented in the table be
 
 | Postfix | What does it mean? |
 |---------|--------------------|
+| _a | This represents MongoDB's MAX_KEY type, stored with a true value. |
 | _b | Boolean value, stored as a boolean in PostgreSQL. |
 | _c | A date (with time) value in format ISO-8601, stored with PostgreSQL type date. |
 | _d | A 64-bit IEEE 754 floating point, stored with PostgreSQL type double precision. |
 | _e | A child element, it can be an object or an array, stored with PostgreSQL type boolean with a value of false to indicate a child object and true to indicate a child array. |
+| _g | A PostgreSQL jsonb type, composed of two strings meaning the pattern and the evaluation options for a RegEx in MongoDB's style. |
 | _i | A 32-bit signed two's complement integer, stored with PostgreSQL type integer. |
+| _j | This represents the MONGO_JAVASCRIPT type, stored with PostgreSQL type character varying. |
+| _k | This represents MongoDB's MIN_KEY type, stored with a false value. |
 | _l | A 64-bit signed two's complement integer, stored with PostgreSQL type bigint. |
-| _n | A null value, stored with PostgreSQL type boolean (nullable). It cannot take value false, just true or null. When the value is true means the JSON document has value null for that path, when it is null it means the path has another value or does not exist for that document. |
 | _m | A time value in format ISO-8601, stored with PostgreSQL type time. |
+| _n | A null value, stored with PostgreSQL type boolean (nullable). It cannot take value false, just true or null. When the value is true means the JSON document has value null for that path, when it is null it means the path has another value or does not exist for that document. |
+| _p | This represents the MONGO_DB_POINTER type, and it is stored as a PostgreSQL jsonb, composed of two strings meaning the namespace and the objectId. |
+| _q | This represents MongoDB's Decimal128 type. It's stored as a PostgreSQL type containing a numeric value and three booleans that specify whether the value is or isn't infinite, NaN or negative zero. |
 | _r | Binary object, it is an array of bytes stored in PostgreSQL as bytea. |
 | _s | An array of UTF-8 characters representing a text, stored with PostgreSQL type character varying. |
 | _t | Number of milliseconds from 1970-01-01T00:00:00Z, stored with PostgreSQL type timestamptz. |
-| _x | This represent the MONGO_OBJECT_ID and it is stored as a PostgreSQL bytea. |
-| _y | This represent the MONGO_TIMESTAMP and it is stored as a PostgreSQL composite type formed by an integer column secs and an integer column counter. |
+| _u | This represents the undefined type, stored with a true value. |
+| _w | This represents the MONGO_JAVASCRIPT_WITH_SCOPE type, stored with PostgreSQL type jsonb. |
+| _x | This represents the MONGO_OBJECT_ID and it is stored as a PostgreSQL bytea. |
+| _y | This represents the MONGO_TIMESTAMP and it is stored as a PostgreSQL composite type formed by an integer column secs and an integer column counter. |
+| _z | This represents the DEPRECATED type. We assign a String to represent it, so it is stored with PostgreSQL type character varying. |
 
 __Notes about MONGO_OBJECT_ID__: ObjectIds are small, likely unique, fast to generate, and ordered. ObjectId values consists of 12-bytes, where the first four bytes are a timestamp that reflect the ObjectId’s creation, specifically:
 
@@ -186,7 +195,7 @@ __Notes about MONGO_OBJECT_ID__: ObjectIds are small, likely unique, fast to gen
 
 ### Data conflict resolution
 
-Because the JSON documents nature, it can happen that the same path contains different data types or even in some documents the path doesn't exist. That is not a problem for the JSON document but it is for a relational storage where each column should have an associated data type.
+Because of JSON documents nature, it can happen that the same path contains different data types or even in some documents the path doesn't exist. That is not a problem for the JSON document but it is for a relational storage where each column should have an associated data type.
 
 To solve this problem in ToroDB Stampede, each data type has a different column. For example, in the `primer_grades` table there are two different columns for the `score` key. One is `score_i` that represents the integer values and another one is `score_n` that represents when that value contains null in the original document (because it is mandatory to detect when null value was given and when the path was not given).
 
