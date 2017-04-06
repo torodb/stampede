@@ -42,6 +42,8 @@ development environment, take a look to our
 
 ## Release History
 
+* 1.0.0-beta2
+    * Released on April 06th 2017
 * 1.0.0-beta1
     * Released on December 30th 2016
 
