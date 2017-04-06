@@ -20,8 +20,6 @@ Not everything could be perfect and there are some known limitations from ToroDB
 * If character `\0` is used in a string it will be escaped because PostgreSQL doesn't support it.
 * Command `applyOps` reception will stop the replication server.
 * Command `collMod` reception will be ignored.
-* MongoDB sharding environment are not supported currently.
-* Decimal128 data type is not fully supported, if NaN, +Infinite or -Infinite representations are used Stampede stops and logs the error.
 
 In addition to the previous limitations, just some kind of indexes are supported:
 
