@@ -18,13 +18,13 @@ Download source code.
 ```no-highlight
 cd /tmp
 
-git clone https://github.com/torodb/torodb.git
+git clone https://github.com/torodb/stampede.git
 ```
 
 Compile source code.
 
 ```no-highlight
-cd torodb
+cd stampede
 
 mvn clean package -P assembler,prod
 ```
@@ -40,9 +40,9 @@ Extract and launch ToroDB Stampede (replace `$TOROHOME` with final ToroDB Stampe
 ```no-highlight
 cd "$TOROHOME"
 
-tar xjf "$TOROHOME/stampede/main/target/dist/torodb-stampede-1.0.0-beta1.tar.bz2"
+tar xjf "$TOROHOME/stampede/main/target/dist/torodb-stampede-1.0.0-beta2.tar.bz2"
 
-torodb-stampede-1.0.0-beta1/bin/torodb-stampede
+torodb-stampede-1.0.0-beta2/bin/torodb-stampede
 ```
 
 ## Windows
@@ -50,15 +50,15 @@ torodb-stampede-1.0.0-beta1/bin/torodb-stampede
 Download source code in some temporal directory.
 
 ```no-highlight
-C:\tmp\>git clone https://github.com/torodb/torodb.git
+C:\tmp\>git clone https://github.com/torodb/stampede.git
 ```
 
 Compile source code.
 
 ```no-highlight
-C:\tmp\>cd torodb
+C:\tmp\>cd stampede
 
-C:\tmp\torodb>mvn clean package -P assembler,prod
+C:\tmp\stampede>mvn clean package -P assembler,prod
 ```
 
 As explained in [previous requirements](previous-requirements.md#create-toropass-file) section, create `.toropass` file at current user home directory `%HOME%\.toropass` with the next content.
@@ -67,7 +67,7 @@ As explained in [previous requirements](previous-requirements.md#create-toropass
 localhost:5432:torod:torodb:<password>
 ```
 
-Uncompress the Zip file located in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-1.0.0-beta1.zip` in the final ToroDB Stampede directory (replace `%TOROHOME%` with final ToroDB Stampede directory), and then execute the command:
+Uncompress the Zip file located in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-1.0.0-beta2.zip` in the final ToroDB Stampede directory (replace `%TOROHOME%` with final ToroDB Stampede directory), and then execute the command:
 
 ```no-highlight
 C:\>%TOROHOME%\bin\torodb-stampede

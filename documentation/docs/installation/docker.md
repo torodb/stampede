@@ -24,7 +24,7 @@ docker run -ti torodb/stampede
 The docker compose file must be downloaded and executed.
 
 ```no-highlight
-wget https://raw.githubusercontent.com/torodb/torodb/master/stampede/main/src/main/dist/docker/compose/torodb-stampede-fullstack/docker-compose.yml
+wget https://raw.githubusercontent.com/torodb/stampede/master/main/src/main/dist/docker/compose/torodb-stampede-fullstack/docker-compose.yml
 
 docker-compose up
 ```
