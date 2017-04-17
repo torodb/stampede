@@ -715,6 +715,7 @@
                                     <value>${project.version}</value>
                                     <regex>-</regex>
                                     <replacement>_</replacement>
+                                    <failIfNoMatch>false</failIfNoMatch>
                                 </configuration>
                             </execution>
                         </executions>
@@ -919,6 +920,7 @@
                                     <value>${project.version}</value>
                                     <regex>-SNAPSHOT</regex>
                                     <replacement></replacement>
+                                    <failIfNoMatch>false</failIfNoMatch>
                                 </configuration>
                             </execution>
                             <execution>
