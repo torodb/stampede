@@ -18,6 +18,7 @@
     <modules>
         <module>service</module>
         <module>main</module>
+        <module>reporting</module>
     </modules>
     
     <properties>
