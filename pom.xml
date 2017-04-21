@@ -22,7 +22,7 @@
     </modules>
     
     <properties>
-        <torodb.engine.version>0.50.1</torodb.engine.version>
+        <torodb.engine.version>0.50.2-SNAPSHOT</torodb.engine.version>
         
         <license.header.license>agpl</license.header.license>
         <license.header.project.name>ToroDB Stampede</license.header.project.name>
