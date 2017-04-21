@@ -46,6 +46,11 @@
                 <version>${torodb.engine.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>com.torodb.engine.backend</groupId>
+                <artifactId>backend-mysql</artifactId>
+                <version>${torodb.engine.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     

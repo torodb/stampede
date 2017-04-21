@@ -30,6 +30,7 @@ import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.ConnectionPoolConfig;
 import com.torodb.stampede.config.jackson.BackendDeserializer;
 import com.torodb.stampede.config.jackson.BackendSerializer;
+import com.torodb.stampede.config.model.backend.mysql.MySql;
 import com.torodb.stampede.config.model.backend.postgres.Postgres;
 
 import javax.validation.Valid;
@@ -42,6 +43,7 @@ public class Backend extends AbstractBackend {
   public static final ImmutableMap<String, Class<? extends BackendImplementation>> BACKEND_CLASSES =
       ImmutableMap.<String, Class<? extends BackendImplementation>>builder()
           .put("postgres", Postgres.class)
+          .put("mysql", MySql.class)
           .build();
 
   @Description("config.pool")
@@ -68,7 +70,10 @@ public class Backend extends AbstractBackend {
   @NotNull
   @Valid
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-  @JsonSubTypes({@JsonSubTypes.Type(name = "postgres", value = Postgres.class)})
+  @JsonSubTypes({
+      @JsonSubTypes.Type(name = "postgres", value = Postgres.class),
+      @JsonSubTypes.Type(name = "mysql", value = MySql.class)
+      })
   @JsonProperty(required = true)
   public BackendImplementation getBackendImplementation() {
     return super.getBackendImplementation();
