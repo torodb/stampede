@@ -1,8 +1,16 @@
-<h1>Installation with binaries</h1>
+# Installation with binaries
 
 One of the recommended ways to use ToroDB Stampede is through the binary distribution. It means that a precompiled distribution is downloaded and then executed using command tools.
 
-## Linux/macOS
+## Linux 
+
+Install a beta build of torodb-stampede in seconds on [Ubuntu and other snap supported Linux distributions](https://snapcraft.io/docs/core/install) with:
+
+$ snap install torodb-stampede-postgres --edge
+
+Installing a snap is very quick. Snaps are secure and isolated with all of their dependencies. Snaps also auto update when a new version is released.
+
+## Linux/macOS manual install
 
 Given that [previous requirements](previous-requirements.md) are met and default configuration is used, the only step needed to launch ToroDB Stampede is to download distribution from the next [link](http://todo) and execute it.
 
@@ -42,7 +50,7 @@ To stop ToroDB Stampede service:
 $ systemctl stop torodb-stampede
 ```
 
-#### Accessing to logs
+#### Accessing to logs
 
 To view logs of ToroDB Stampede service:
 
