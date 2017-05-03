@@ -1,0 +1,3 @@
+TOROCONFIG=/etc/@{assembler.name}/@{assembler.name}.yml
+TOROPASSFILE=/etc/@{assembler.name}/.toropass
+MONGOPASSFILE=/etc/@{assembler.name}/.mongopass

@@ -1,43 +1,59 @@
-# ToroDB
+# ToroDB Stampede
 
-[![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.torodb:torodb-pom)](https://sonarqube.com/dashboard/index/com.torodb:torodb-pom)
+> Transform your NoSQL data from a MongoDB replica set into a relational database in PostgreSQL.
 
-ToroDB is a technology designed to fulfill the gap between document oriented
-and SQL databases. There are two products that use this technology: ToroDB
-Server and ToroDB Stampede. Both platforms are open source and any feedback,
-contributions, help and/or patches are very welcome. Please join the
-[torodb-dev][2] mailing list for further discussion.
+There are other solutions that are able to store the JSON document in a 
+relational table using PostgreSQL JSON support, but it doesn't solve the real 
+problem of 'how to really use that data'. ToroDB Stampede replicates the 
+document structure in different relational tables and stores the document data
+in different tuples using those tables.
 
-For more information, please see [ToroDB's website][1]
+![](documentation/docs/images/tables_distribution.jpeg)
 
-## ToroDB Server
-It is a MongoDB-compatible server that supports speaks the MongoDB Wire 
-Protocol (and therefore can be used with the same drivers used to connect to 
-any standard MongoDB server) but stores your data into a reliable and trusted 
-ACID database. 
+## Installation
 
-More information about ToroDB Server can be found on [its own folder](/server)
-in this repository.
+Due to the use of different external systems like MongoDB and PostgreSQL, the
+installation requires some previous steps. Take a look at out 
+[quickstart][1] in the
+documentation.
 
-## ToroDB Stampede
-ToroDB Stampede is a business analytic solution that replicates your data in 
-real time from a MongoDB replica set into a SQL database, allowing you to use
-any business intelligence products (like [Tableau][3] or [Pentaho][4]) to 
-analyze NoSQL data.
+## Usage example
 
-More information about ToroDB Stampede can be found on 
-[its own folder](/stampede) in this repository.
+MongoDB is a great idea, but sooner or later some kind of business 
+intelligence, or complex aggregated queries are required. At this point MongoDB
+is not so powerful and ToroDB Stampede borns to solve that problem (see 
+[our post about that][2]).
 
-## Code QA
- * Master branch build status: [![Master branch build status](https://travis-ci.org/torodb/torodb.svg?branch=master)](https://travis-ci.org/torodb/torodb) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.torodb:torodb-pom)](https://sonarqube.com/dashboard/index/com.torodb:torodb-pom)
- * Devel branch build status :  [![Devel branch build status](https://travis-ci.org/torodb/torodb.svg?branch=devel)](https://travis-ci.org/torodb/torodb) [![Quality Gate](https://sonarqube.com/api/badges/gate?key=com.torodb:torodb-pom:devel)](https://sonarqube.com/dashboard/index/com.torodb:torodb-pom:devel)
+The kind of replication done by ToroDB Stampede allows the execution of 
+aggregated queries in a relational backend (PostgreSQL) with a noticeable time 
+improvement.
 
-## Are you a developer? Want to contribute? Questions about the source code?
+A deeper explanation is available in our 
+[how to use][3] section in the 
+documentation.
 
-Please see [CONTRIBUTING][5].
+## Development setup
 
-[1]: http://www.torodb.com
-[2]: https://groups.google.com/forum/#!forum/torodb-dev
-[3]: http://www.tableau.com
-[4]: http://www.pentaho.com/
-[5]: https://github.com/torodb/torodb/blob/master/CONTRIBUTING.md
+As it was said in the installation section, the requirements of external 
+systems can make more difficult to explain briefly how to setup the development 
+environment here. So if you want to take a look on how to prepare your 
+development environment, take a look to our 
+[documentation][4].
+
+## Release History
+
+* 1.0.0-beta2
+    * Released on April 06th 2017
+* 1.0.0-beta1
+    * Released on December 30th 2016
+
+## Meta
+
+ToroDB – [@nosqlonsql](https://twitter.com/nosqlonsql) – info@8kdata.com
+
+Distributed under the GNU AGPL v3 license. See ``LICENSE`` for more information.
+
+[1]: https://www.torodb.com/stampede/docs/quickstart
+[2]: https://www.8kdata.com/blog/the-conundrum-of-bi-aggregate-queries-on-mongodb/
+[3]: https://www.torodb.com/stampede/docs/how-to-use
+[4]: https://www.torodb.com/stampede/docs/installation/previous-requirements/

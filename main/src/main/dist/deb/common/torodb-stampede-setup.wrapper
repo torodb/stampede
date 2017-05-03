@@ -1,0 +1,12 @@
+#!/bin/bash
+
+. "/etc/default/@{assembler.name}"
+
+export TOROCONFIG
+export TOROPASSFILE
+export MONGOPASSFILE
+export TOROCMD="/usr/bin/@{assembler.name}"
+export INTERACTIVE=true
+export TORO_USER=torodb
+
+exec "/usr/lib/@{assembler.name}/bin/@{assembler.name}-setup" "$@"

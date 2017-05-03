@@ -1,0 +1,169 @@
+#!/bin/bash
+
+set -e +x +v +o history
+
+function finish {
+    rm -f ~/.aws/config
+    
+    if [ -f ~/.m2/settings.xml ]
+    then
+      rm ~/.m2/settings.xml
+    fi
+    if [ -f ~/.m2/settings.xml.bak ]
+    then
+      mv ~/.m2/settings.xml.bak ~/.m2/settings.xml
+    fi
+    
+    if [ -f ~/.ssh/id_rsa ]
+    then
+      rm -f ~/.ssh/id_rsa
+    fi
+    if [ -f ~/.ssh/id_rsa.bak ]
+    then
+      mv ~/.ssh/id_rsa.bak ~/.ssh/id_rsa
+    fi
+    if [ -f ~/.ssh/id_rsa.pub ]
+    then
+      rm -f ~/.ssh/id_rsa.pub
+    fi
+    if [ -f ~/.ssh/id_rsa.pub.bak ]
+    then
+      mv ~/.ssh/id_rsa.pub.bak ~/.ssh/id_rsa.pub
+    fi
+    
+    if [ -f ~/.ssh/sign ]
+    then
+      rm -f ~/.ssh/sign
+    fi
+    if [ -f ~/.ssh/sign.bak ]
+    then
+      mv ~/.ssh/sign.bak ~/.ssh/sign
+    fi
+    if [ -f ~/.ssh/sign.pub ]
+    then
+      rm -f ~/.ssh/sign.pub
+    fi
+    if [ -f ~/.ssh/sign.pub.bak ]
+    then
+      mv ~/.ssh/sign.pub.bak ~/.ssh/sign.pub
+    fi
+    
+    gpg --delete-secret-key --batch --yes "$launchpad_sign_public_key_fingerprint" || true
+    gpg --delete-key --batch --yes "$launchpad_sign_public_key_fingerprint" || true
+    
+    rm -f ~/.config/copr
+}
+
+trap finish SIGINT SIGTERM EXIT
+
+
+echo "Building binary package"
+
+mkdir -p ~/.aws
+echo "
+[default]
+aws_access_key_id=$aws_access_key_id
+aws_secret_access_key=$aws_secret_access_key
+region=eu-west-1
+output=json
+" > ~/.aws/config
+
+set -x
+mvn package -f main/pom.xml -P assembler -Ds3.push=true -DskipTests
+set +x
+
+
+echo "Building docker package"
+
+mkdir -p ~/.m2
+if [ -f ~/.m2/settings.xml ]
+then
+  mv ~/.m2/settings.xml ~/.m2/settings.xml.bak
+fi
+echo "
+<settings>
+  <servers>
+    <server>
+      <id>docker.io</id>
+      <username>$docker_username</username>
+      <password>$docker_password</password>
+    </server>
+  </servers>
+</settings>
+" > ~/.m2/settings.xml
+
+set -x
+mvn package -f main/pom.xml -P docker -Ddocker.skip.push=false -DskipTests
+set +x
+
+
+echo "Building deb package"
+
+if [ -f ~/.ssh/id_rsa ]
+then
+  mv ~/.ssh/id_rsa ~/.ssh/id_rsa.bak
+fi
+if [ -f ~/.ssh/id_rsa.pub ]
+then
+  mv ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.pub.bak
+fi
+
+echo "$launchpad_private_key" > ~/.ssh/id_rsa
+echo "$launchpad_public_key" > ~/.ssh/id_rsa.pub
+chmod 600 ~/.ssh/id_rsa
+chmod 644 ~/.ssh/id_rsa.pub
+
+echo "$launchpad_sign_private_key" > ~/.ssh/sign
+echo "$launchpad_sign_public_key" > ~/.ssh/sign.pub
+chmod 600 ~/.ssh/sign
+chmod 644 ~/.ssh/sign.pub
+
+gpg --import ~/.ssh/sign.pub
+gpg --import ~/.ssh/sign
+echo "$(echo "$launchpad_sign_public_key_fingerprint"|tr -d '[:space:]'):6:"|gpg --import-ownertrust
+
+echo "
+[8kdata-release]
+fqdn = ppa.launchpad.net
+method = ftp
+incoming = ~8kdata/ubuntu/ppa/
+login = anonymous
+allow_unsigned_uploads = 0
+
+[8kdata-devel]
+fqdn = ppa.launchpad.net
+method = ftp
+incoming = ~8kdata/ubuntu/ppa-dev/
+login = anonymous
+allow_unsigned_uploads = 0
+" > ~/.dput.cf
+
+set -x
+mvn package -f main/pom.xml -P deb -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede
+mvn package -f main/pom.xml -P deb -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
+set +x
+
+
+echo "Building snap package"
+
+set -x
+mvn package -f main/pom.xml -P snap -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede
+mvn package -f main/pom.xml -P snap -Dlaunchpad.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
+set +x
+
+
+echo "Building rpm package"
+
+mkdir -p ~/.config
+echo "
+[copr-cli]
+login = $copr_login
+username = $copr_user
+token = $copr_token
+copr_url = https://copr.fedorainfracloud.org
+" > ~/.config/copr
+
+set -x
+mvn package -f main/pom.xml -P rpm -Dcopr.push=true -DskipTests -Dpackage.name=torodb-stampede
+mvn package -f main/pom.xml -P rpm -Dcopr.push=true -DskipTests -Dpackage.name=torodb-stampede-postgres
+set +x

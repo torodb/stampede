@@ -1,0 +1,15 @@
+Source: @{package.name}
+Section: database
+Priority: optional
+Maintainer: @{assembler.maintainer}
+Build-Depends: debhelper (>= 9), openjdk-8-jdk-headless, help2man
+Standards-Version: 3.9.8
+Vcs-browser: @{assembler.url_src}
+Homepage: @{assembler.url}
+Conflicts: @{assembler.name}
+
+Package: @{package.name}
+Architecture: all
+Depends: openjdk-8-jdk-headless, postgresql-9.6 | postgresql-9.5 | postgresql-9.4 | postgresql (>=9.4), mongodb-org-shell | mongodb-clients, openssl, ${misc:Depends}
+Description: @{assembler.summary}
+  @{assembler.description_twospaces}

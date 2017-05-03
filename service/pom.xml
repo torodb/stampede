@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.torodb.stampede</groupId>
+        <artifactId>stampede-pom</artifactId>
+        <version>1.0.0-beta2</version>
+    </parent>
+
+    <artifactId>stampede-service</artifactId>
+
+    <name>ToroDB: Stampede service</name>
+    <description>ToroDB stampede service project. Contains DI dependencies and services configuration.</description>
+
+    <properties>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZZ</maven.build.timestamp.format>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.torodb.engine.mongodb</groupId>
+            <artifactId>repl</artifactId>
+            <version>${torodb.engine.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.engine.backend</groupId>
+            <artifactId>backend-postgresql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.engine.backend</groupId>
+            <artifactId>backend-derby</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.torodb.engine</groupId>
+            <artifactId>packaging-utils</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

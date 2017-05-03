@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="component">default</Property>
+    </Properties>
+    <Appenders>
+        <Console name="3RDPARTY" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{hh:mm:ss.SSS} %highlight{%-5level} 3RDPARTY   %-30.-30replace{'%t'}{\s}{-} %-30.30logger{1.} - %msg%n"/>
+        </Console>
+        <Console name="CONSOLE" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{hh:mm:ss.SSS} %highlight{%-5level} %-10.-10map{component} %-30.-30replace{'%t'}{\s}{-} %-30.30logger{1.} - %msg%n"/>
+        </Console>
+        <Async name="ASYNC">
+            <AppenderRef ref="router"/>
+        </Async>
+        <Routing name="router">
+            <Routes pattern="$${map:component}">
+                <Route key="default" ref="3RDPARTY"/>
+                <Route ref="CONSOLE"/>
+            </Routes>
+        </Routing>
+    </Appenders>
+    <Loggers>
+        <!-- 8kData & ToroDB code -->
+
+        <Logger name="com.torodb" level="DEBUG" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+        
+        <Logger name="com.torodb.mongodb.repl" level="TRACE" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+        
+        <Logger name="com.torodb.mongodb.repl.topology" level="DEBUG" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+        
+        <Logger name="com.torodb.core.retrier" level="TRACE" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+
+        <Logger name="com.eightkdata" level="TRACE" additivity="false">
+            <AppenderRef ref="ASYNC"/>
+        </Logger>
+
+        <!-- Third party libraries -->
+
+        <Logger name="com.zaxxer.hikari" level="WARN" additivity="false"/>
+        <Logger name="org.jooq" level="WARN" additivity="false"/>
+        <Logger name="org.mongodb" level="WARN" additivity="false"/>
+        <Logger name="org.hibernate" level="WARN" additivity="false"/>
+        <Logger name="org.postgresql" level="WARN" additivity="false"/>
+        <Logger name="org.jboss" level="WARN" additivity="false"/>
+        <Logger name="io.netty" level="WARN" additivity="false"/>
+        <Logger name="akka" level="OFF" additivity="false"/>
+
+        <!-- Root -->
+
+        <Root level="WARN">
+            <AppenderRef ref="ASYNC"/>
+        </Root>
+    </Loggers>
+</Configuration>

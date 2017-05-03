@@ -1,0 +1,77 @@
+#!/bin/bash
+
+. "$(dirname "$0")/environment.wrapper"
+
+for bypass_parameter in -l --print-config -lx --print-xml-config\
+    -lp --print-param -hp --help-param
+do
+    if echo ' '"$@"' ' | grep -q -- "\s$bypass_parameter\s"
+    then
+        exec "$SNAP/bin/@{assembler.name}.wrapper" "$@"
+    fi
+done
+
+TORO_PARAMS="$("$SNAP/bin/@{assembler.name}.wrapper" "$@" \
+    -lp /backend/postgres/host \
+    -lp /backend/postgres/port)"
+POSTGRES_HOST="$(echo "$TORO_PARAMS"|cut -d ',' -f 1)"
+POSTGRES_PORT="$(echo "$TORO_PARAMS"|cut -d ',' -f 2)"
+POSTGRES_OPTS="-c port=$POSTGRES_PORT -c listen_addresses=$POSTGRES_HOST -c unix_socket_directories=$SNAP_COMMON/postgresql/9.6/main/"
+
+if [ ! -f "$SNAP_COMMON/.postgres_setup_completed_$PGVERSION" ] \
+  && [ ! -f "$SNAP_COMMON/.postgres_setup_$PGVERSION" ]
+then
+    function setup_cleanup {
+        rm "$SNAP_COMMON/.postgres_setup_$PGVERSION"
+        echo "Something goes wrong during setup of PostgreSQL. For more details look into log $SNAP_COMMON/postgresql/9.6/postgresql-main.log" >&2
+    }
+    
+    trap cleanup ERR
+    
+    > "$SNAP_COMMON/.postgres_setup_$PGVERSION"
+    echo "Setting up PostgreSQL"
+    PGPASSFILE="$([ -z "$PGPASSFILE" ] && echo "$HOME/.pgpass" || echo "$PGPASSFILE")"
+    if [ ! -f "$SNAP_COMMON/.pgpostgrespass" ]
+    then
+        base64 < /dev/urandom | tr -dc A-Za-z0-9_ | head -c 10 | xargs > "$SNAP_COMMON/.pgpostgrespass"
+        chmod 0600 "$SNAP_COMMON/.pgpostgrespass"
+    fi
+    echo "$POSTGRES_HOST:$POSTGRES_PORT:*:$(whoami):$(cat "$SNAP_COMMON/.pgpostgrespass")" > "$SNAP_COMMON/.pgpass"
+    chmod 0600 "$SNAP_COMMON/.pgpass"
+    rm -Rf "$SNAP_COMMON/postgresql/9.6/main"
+    mkdir -p "$SNAP_COMMON/postgresql/9.6/main"
+    initdb -D "$SNAP_COMMON/postgresql/9.6/main" --pwfile="$SNAP_COMMON/.pgpostgrespass" --auth-host=md5 --auth-local=peer > "$SNAP_COMMON/postgresql/9.6/postgresql-main.log"
+    pg_ctl start -l "$SNAP_COMMON/postgresql/9.6/postgresql-main.log" -D "$SNAP_COMMON/postgresql/9.6/main" -o "$POSTGRES_OPTS"
+    count=5
+    while [ $count -gt 0 ] && ! bash -c "PGPASSFILE=$SNAP_COMMON/.pgpass psql -w -U '$(whoami)' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d template1 -c 'SELECT 1'" >> "$SNAP_COMMON/postgresql/9.6/postgresql-main.log" 2>&1
+    do
+        sleep 1
+        count=$((count-1))
+    done
+    [ $count -gt 0 ]
+    cd "$SNAP_DATA"
+    INTERACTIVE=false ADMIN_USER="$(whoami)" "$SNAP/bin/@{assembler.name}-setup" "$@"
+    > "$SNAP_COMMON/.postgres_setup_completed_$PGVERSION"
+    rm "$SNAP_COMMON/.postgres_setup_$PGVERSION"
+
+    trap - ERR
+fi
+
+if ! bash -c "PGPASSFILE=$SNAP_COMMON/.pgpass psql -w -U '$(whoami)' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d template1 -c 'SELECT 1'" > /dev/null 2>&1
+then
+    echo "Restarting PostgreSQL"
+    pg_ctl restart -l "$SNAP_COMMON/postgresql/9.6/postgresql-main.log" -D "$SNAP_COMMON/postgresql/9.6/main" -o "$POSTGRES_OPTS"
+    count=5
+    while [ $count -gt 0 ] && ! bash -c "PGPASSFILE=$SNAP_COMMON/.pgpass psql -w -U '$(whoami)' -h '$POSTGRES_HOST' -p '$POSTGRES_PORT' -d template1 -c 'SELECT 1'" >> "$SNAP_COMMON/postgresql/9.6/postgresql-main.log" 2>&1
+    do
+        sleep 1
+        count=$((count-1))
+    done
+    if ! [ $count -gt 0 ]
+    then
+        echo "Something goes wrong during restart of PostgreSQL. For more details look into log $SNAP_COMMON/postgresql/9.6/postgresql-main.log" >&2
+        exit 1
+    fi
+fi
+
+exec "$SNAP/bin/@{assembler.name}.wrapper" "$@"

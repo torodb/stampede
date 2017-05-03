@@ -1,0 +1,104 @@
+name: "@{assembler.name}"
+version: "@{project.version}"
+summary: "@{assembler.summary}"
+description: "@{assembler.description_oneline}"
+grade: @{snap.grade}
+confinement: @{snap.confinement}
+apps:
+  daemon:
+    command: bin/@{assembler.name}.wrapper
+    daemon: simple
+    restart-condition: always
+    plugs:
+      - home
+      - network
+      - network-bind
+  run:
+    command: bin/@{assembler.name}.wrapper
+    plugs:
+      - home
+      - network
+      - network-bind
+  setup:
+    command: bin/@{assembler.name}-setup.wrapper
+    plugs:
+      - home
+      - network
+parts:
+  @{assembler.name}:
+    plugin: dump
+    source: .
+    stage-packages:
+      - locales
+      - libc-bin
+      - coreutils
+      - iputils-ping
+      - openjdk-8-jdk-headless
+      - postgresql-client
+      - mongodb-clients
+      - openssl
+    organize:
+      assembler/assembler/bin: bin
+      assembler/assembler/doc: doc
+      assembler/assembler/conf: conf
+      assembler/assembler/lib: lib
+    stage:
+      - bin
+      - doc
+      - conf
+      - lib
+      - bin/chmod
+      - bin/chown
+      - bin/ping
+      - usr/bin/whoami
+      - usr/bin/base64
+      - usr/bin/localedef
+      - usr/share/i18n
+      - usr/lib/jvm/java-8-openjdk-*/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - -usr/lib/jvm/java-8-openjdk-*/jre/lib/security/cacerts
+      - etc/java-*
+      - etc/ssl/certs/java
+      - usr/lib/postgresql/*/bin/psql
+      - usr/lib/*-linux-gnu/libpq.so*
+      - usr/bin/mongo
+      - usr/lib/*-linux-gnu/libyaml-cpp*
+      - usr/lib/*-linux-gnu/libboost_*
+      - usr/lib/*-linux-gnu/libpcrecpp*
+      - usr/lib/*-linux-gnu/libcrypto*
+      - usr/lib/*-linux-gnu/libssl*
+      - usr/lib/*-linux-gnu/libunwind*
+      - usr/lib/libtcmalloc*
+      - usr/lib/libv8*
+      - usr/bin/openssl
+    snap:
+      - bin
+      - doc
+      - conf
+      - lib
+      - bin/chmod
+      - bin/chown
+      - bin/ping
+      - usr/bin/whoami
+      - usr/bin/base64
+      - usr/bin/localedef
+      - usr/share/i18n
+      - usr/lib/jvm/java-8-openjdk-*/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/bin
+      - usr/lib/jvm/java-8-openjdk-*/jre/lib
+      - -usr/lib/jvm/java-8-openjdk-*/jre/lib/security/cacerts
+      - etc/java-*
+      - etc/ssl/certs/java
+      - usr/lib/postgresql/*/bin/psql
+      - usr/lib/*-linux-gnu/libpq*
+      - usr/bin/mongo
+      - usr/lib/*-linux-gnu/libyaml-cpp*
+      - usr/lib/*-linux-gnu/libboost_*
+      - usr/lib/*-linux-gnu/libpcrecpp*
+      - usr/lib/*-linux-gnu/libcrypto*
+      - usr/lib/*-linux-gnu/libssl*
+      - usr/lib/*-linux-gnu/libunwind*
+      - usr/lib/libtcmalloc*
+      - usr/lib/libv8*
+      - usr/bin/openssl
