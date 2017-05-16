@@ -50,7 +50,7 @@ then
             -d "$TORODB_BACKEND_DATABASE" \
             -c "SELECT 1" > /dev/null 2>&1
         then
-            @{assembler.name}-setup root \
+            @{assembler.name}-setup \
                 --backend-host "$TORODB_BACKEND_HOST" \
                 --backend-port "$TORODB_BACKEND_PORT" \
                 --backend-database "$TORODB_BACKEND_DATABASE" \
