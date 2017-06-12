@@ -153,4 +153,4 @@ db.restaurants.aggregate(
 [...]
 ```
 
-[TODO]: <> (Change the name of the dataset to not expose spanish names)
+[TODO]: <> (Change the name of the dataset (aka "primer dataset") to not expose spanish names)
