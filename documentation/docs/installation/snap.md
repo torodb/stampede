@@ -1,8 +1,10 @@
 <h1>Installation with SNAP</h1>
 ToroDB Stampede can be installed from SNAP public store in two flavours:
 
-* torodb-stampede: in this package ToroDB Stampede comes alone without the backend included so you will have to provide one.
-* torodb-stampede-postgres: in this package ToroDB Stampede comes with a PostgreSQL so you will be able to start using it with minimal configuration.
+* **torodb-stampede**  
+  This package contains only ToroDB Stampede without any backend (you have to provide one).
+* **torodb-stampede-postgres**  
+  This package contains ToroDB Stampede and a PostgreSQL backend so you can easily start with minimal configuration.
 
 ## Install package torodb-stampede
 
@@ -32,7 +34,7 @@ Just run:
 sudo snap install torodb-stampede-postgres
 ```
 
-And then to setup ToroDB Stampede run interactive script as root user:
+And then to setup ToroDB Stampede run the interactive script as root user:
 
 ```
 sudo torodb-stampede.setup
@@ -46,7 +48,7 @@ You will be prompted to provide MongoDB credentials.
 
 ## Nightly build packages
 
-To install latest unstable nightly build packages just add `--edge` and `--devmode` parameter to `snap` command:
+To install latest unstable nightly build packages just add `--edge` and `--devmode` parameter to the `snap` command:
 
 ```
 sudo snap install torodb-stampede --edge --devmode
