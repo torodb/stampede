@@ -41,12 +41,13 @@ import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
 import com.torodb.mongowp.client.wrapper.MongoClientConfiguration;
+import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
-import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
 import com.torodb.packaging.config.util.BackendImplementationVisitor;
+import com.torodb.packaging.config.util.BackendImplementationVisitorWithDefault;
 import com.torodb.packaging.config.util.BundleFactory;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
@@ -358,25 +359,17 @@ public class Main {
   }
 
   private static void parseToropassFile(Config config) {
-    BackendImplementationVisitor<?, ?> visitor = new BackendImplementationVisitor<Void, Void>() {
+    BackendImplementationVisitor<?, ?> visitor = 
+        new BackendImplementationVisitorWithDefault<Void, Void>() {
       @Override
-      public Void visit(AbstractDerby value, Void arg) {
-        parseToropassFile(value);
-        return null;
-      }
-
-      @Override
-      public Void visit(AbstractPostgres value, Void arg) {
-        parseToropassFile(value);
-        return null;
-      }
-
-      public void parseToropassFile(BackendPasswordConfig value) {
+      public <T extends BackendImplementation & BackendPasswordConfig> 
+          Void defaultVisit(T value, Void arg) {
         try {
           ConfigUtils.parseToropassFile(value, LOGGER);
         } catch (Exception ex) {
           throw new SystemException(ex);
         }
+        return null;
       }
     };
 

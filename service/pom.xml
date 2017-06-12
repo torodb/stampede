@@ -26,6 +26,10 @@
             <groupId>com.torodb.engine.backend</groupId>
             <artifactId>backend-postgresql</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.torodb.engine.backend</groupId>
+            <artifactId>backend-mysql</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
