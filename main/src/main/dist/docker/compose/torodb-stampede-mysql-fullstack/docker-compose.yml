@@ -1,0 +1,64 @@
+version: '2'
+services:
+  torodb-stampede:
+    image: torodb/stampede:1.0.0-beta2-SNAPSHOT-mysql
+    links:
+      - mysql
+      - mongodb
+    environment:
+      - POSTGRES_PASSWORD
+      - TORODB_SETUP=false
+      - TORODB_SYNC_SOURCE=mongodb:27017
+      - TORODB_BACKEND=mysql
+      - TORODB_BACKEND_HOST=mysql
+      - TORODB_BACKEND_PORT=3306
+      - TORODB_BACKEND_DATABASE
+      - TORODB_BACKEND_USER
+      - TORODB_BACKEND_PASSWORD
+      - DEBUG
+    entrypoint:
+      - /bin/bash
+      - "-c"
+      - sleep 10;
+        /maven/bin/entry-point torodb-stampede --backend mysql
+  mysql:
+    image: mysql:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=pippo1
+      - MYSQL_USER=torodb
+      - MYSQL_PASSWORD=torodb
+      - MYSQL_DATABASE=torod
+    ports:
+      - "13306:3306"
+    entrypoint:
+      - /bin/bash
+      - "-c"
+      - (
+            while ! mysql -h localhost -u torodb -ptorodb -D torod -e 'SELECT 1';
+            do
+                sleep 1;
+            done;
+            set -e;
+            mysql -h localhost -u root -ppippo1 -D torod -e "GRANT ALL PRIVILEGES ON *.* TO 'torodb'@'%'";
+            mysql -h localhost -u root -ppippo1 -D torod -e "FLUSH PRIVILEGES";
+        ) &
+        ./entrypoint.sh mysqld
+  mongodb:
+    image: mongo:3.4
+    ports:
+      - "28017:27017"
+    entrypoint:
+      - /bin/bash
+      - "-c"
+      - mongo --nodb --eval '
+            var db; 
+            while (!db) { 
+                try { 
+                  db = new Mongo("mongodb:27017").getDB("local"); 
+                } catch(ex) {} 
+                sleep(3000); 
+            }; 
+            rs.initiate({_id:"rs1",members:[{_id:0,host:"mongodb:27017"}]});
+        ' 1>/dev/null 2>&1 & 
+        mongod --replSet rs1
+        
