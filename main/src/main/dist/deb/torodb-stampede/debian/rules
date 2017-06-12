@@ -18,7 +18,7 @@ override_dh_auto_install:
 	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}								  $(TARGET_DIR)/usr/lib/@{assembler.name}/bin/@{assembler.name}
 	install -p -D -m755 $(BUILD_DIR)/bin/@{assembler.name}-setup						  $(TARGET_DIR)/usr/lib/@{assembler.name}/bin/@{assembler.name}-setup
 	cp -a $(BUILD_DIR)/lib																			 $(TARGET_DIR)/usr/share/@{assembler.name}
-	install -p -D -m 644 $(BUILD_DIR)/systemd/@{assembler.name}-postgres.service	 $(TARGET_DIR)/lib/systemd/system/@{assembler.name}.service
+	install -p -D -m 644 $(BUILD_DIR)/systemd/@{assembler.name}.service	 $(TARGET_DIR)/lib/systemd/system/@{assembler.name}.service
 	install -p -D -m 644 $(BUILD_DIR)/logrotate/@{assembler.name}						 $(TARGET_DIR)/etc/logrotate.d/@{assembler.name}
 	install -p -D -m 644 $(BUILD_DIR)/conf/@{assembler.name}.yml						  $(TARGET_DIR)/etc/@{assembler.name}/@{assembler.name}.yml
 	install -p -D -m 644 $(BUILD_DIR)/default/@{assembler.name}.default				 $(TARGET_DIR)/etc/default/@{assembler.name}

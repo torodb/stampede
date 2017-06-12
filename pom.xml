@@ -9,7 +9,7 @@
 
     <groupId>com.torodb.stampede</groupId>
     <artifactId>stampede-pom</artifactId>
-    <version>1.0.0-beta2-SNAPSHOT</version>
+    <version>1.0.0-beta3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ToroDB: Stampede</name>
@@ -18,10 +18,11 @@
     <modules>
         <module>service</module>
         <module>main</module>
+        <module>reporting</module>
     </modules>
     
     <properties>
-        <torodb.engine.version>0.50.1-SNAPSHOT</torodb.engine.version>
+        <torodb.engine.version>0.50.2-SNAPSHOT</torodb.engine.version>
         
         <license.header.license>agpl</license.header.license>
         <license.header.project.name>ToroDB Stampede</license.header.project.name>

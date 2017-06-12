@@ -8,6 +8,9 @@ before_install:
   - tar xf apache-maven-3.2.2-bin.tar.gz
   - export M2_HOME=$PWD/apache-maven-3.2.2
   - export PATH=$M2_HOME/bin:$PATH
+#Required to use Codacy
+  - sudo apt-get install jq
+  - wget -O ~/codacy-coverage-reporter-assembly-latest.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
 
 addons:
   apt:
@@ -29,15 +32,18 @@ script: |
         then
             bash .travis/build-packages
         else
-            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
+            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false --update-snapshots verify
         fi
 
 after_success:
   - |
     if [ "$TRAVIS_EVENT_TYPE" != cron ] && [ "$TRAVIS_REPO_SLUG" == torodb/stampede ]
     then
-        bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports'
+        # Upload reports to Codecov
+        bash <(curl -s https://codecov.io/bash) || echo 'Codecov did not collect coverage reports';
+        # Upload reports to Codacy
+        java -cp ~/codacy-coverage-reporter-assembly-latest.jar com.codacy.CodacyCoverageReporter -l Java -r reporting/target/site/jacoco-aggregate/jacoco.xml || echo 'Codacy report fail'
     else
-        echo 'Codecov not notified'
+        echo 'Skipping a metrics reports because this repo/build is not permitted'
     fi
   
