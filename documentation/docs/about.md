@@ -18,7 +18,7 @@ Currently, ToroDB Stampede only supports the free open-source database [PostgreS
 
 ### MongoDB
 
-ToroDB Stampede only supports MongoDB 3.2 at the moment.
+ToroDB Stampede only supports MongoDB 3.2 and 3.4 at the moment.
 
 The following MongoDB features are not yet supported:
 
