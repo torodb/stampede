@@ -12,8 +12,7 @@ ToroDB Stampede requires a Java 8 runtime environment.
 
 The following is a short step-by-step guide to install MongoDB with a single-node replica set. In case of doubt, refer to the [MongoDB installation guide](https://docs.mongodb.com/manual/administration/install-community/) and the [rs.initiate command](https://docs.mongodb.com/manual/reference/method/rs.initiate/) for further details.
 
-1. Download [MongoDB 3.2 community server](https://www.mongodb.com/download-center#previous).  
-    **Note:** MongoDB 3.4 is not supported.
+1. Download [MongoDB 3.4 community server](https://www.mongodb.com/download-center).  
 1. Create a directory for the MongoDB data files (e.g., `/tmp/mongo/`).
 1. Start MongoDB (`mongod` or `mongod.exe`) with the following parameters:  
     `--dbpath /tmp/mongo/ --replSet rs1`  
@@ -153,3 +152,5 @@ db.restaurants.aggregate(
 { "_id" : "10022", "count" : 485 }
 [...]
 ```
+
+[TODO]: <> (Change the name of the dataset (aka "primer dataset") to not expose spanish names)
