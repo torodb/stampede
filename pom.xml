@@ -69,6 +69,7 @@
             <id>docs</id>
             <properties>
                 <s3.push>false</s3.push>
+                <docs.version>${project.version}</docs.version>
             </properties>
             <build>
                 <plugins>
@@ -127,7 +128,7 @@
                                         <argument>s3</argument>
                                         <argument>sync</argument>
                                         <argument>${project.build.directory}/documentation</argument>
-                                        <argument>s3://torodb.com/files/var/www/torodb/stampede/docs/${project.version}</argument>
+                                        <argument>s3://torodb.com/files/var/www/torodb/stampede/docs/${docs.version}</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
