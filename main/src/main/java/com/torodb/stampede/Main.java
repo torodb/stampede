@@ -304,7 +304,8 @@ public class Main {
           backendBundleGenerator,
           replFilters,
           createShardConfigBuilders(replicationConfig),
-          LOGGER_FACTORY
+          LOGGER_FACTORY,
+          config.getBufferOffHeap()
       );
     } else {
       return StampedeConfig.createUnshardedConfig(
@@ -312,7 +313,8 @@ public class Main {
           backendBundleGenerator,
           replFilters,
           createUnshardedShardBuilder(replicationConfig),
-          LOGGER_FACTORY
+          LOGGER_FACTORY,
+          config.getBufferOffHeap()
       );
     }
   }

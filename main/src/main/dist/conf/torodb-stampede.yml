@@ -25,6 +25,20 @@
 # Enable or disable metrics system
 metricsEnabled: false
 
+#Configure the bufferOffHeap properties
+bufferOffHeap:
+  # Enabled or disabled the bufferOffHeap system
+  enabled: false
+  # Absolute path to locate the bufferOffHeap files
+  path: /tmp/
+  # Max size of the bufferOffHeap files in MB
+  maxSize: 10240
+  # Rolling cycle, valid values are:
+  # - MINUTELY
+  # - HOURLY
+  # - DAILY
+  rollCycle: DAILY
+
 # MongoDB replication configuration
 replication:
   # The name of the MongoDB Replica Set where this instance will attach

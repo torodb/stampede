@@ -29,6 +29,8 @@ import com.torodb.core.guice.EssentialModule;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
+import com.torodb.mongodb.repl.oplogreplier.config.BufferOffHeapConfig;
+import com.torodb.mongodb.repl.oplogreplier.config.BufferRollCycle;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
 import com.torodb.mongowp.client.wrapper.MongoClientConfiguration;
 import org.junit.Before;
@@ -51,7 +53,8 @@ public class StampedeServiceTest {
         this::createBackendBundle,
         ReplicationFilters.allowAll(),
         createShards(1),
-        DefaultLoggerFactory.getInstance()
+        DefaultLoggerFactory.getInstance(),
+        createBufferOffHeapConfig()
     );
   }
 
@@ -116,5 +119,30 @@ public class StampedeServiceTest {
       result.add(scb);
     }
     return result;
+  }
+
+  private BufferOffHeapConfig createBufferOffHeapConfig() {
+    BufferOffHeapConfig bufferConfig = new BufferOffHeapConfig() {
+      @Override
+      public Boolean getEnabled() {
+        return true;
+      }
+
+      @Override
+      public String getPath() {
+        return "/tmp/";
+      }
+
+      @Override
+      public int getMaxSize() {
+        return 10024;
+      }
+
+      @Override
+      public BufferRollCycle getRollCycle() {
+        return BufferRollCycle.HOURLY;
+      }
+    };
+    return bufferConfig;
   }
 }
