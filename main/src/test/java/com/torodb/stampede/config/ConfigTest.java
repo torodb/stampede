@@ -19,9 +19,10 @@ package com.torodb.stampede.config;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.torodb.packaging.config.model.common.ListOfStringWithDefault;
 import com.torodb.packaging.config.model.generic.LogLevel;
-import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
+import com.torodb.packaging.config.model.protocol.mongo.FilterList.IndexFilter;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.stampede.CliConfig;
@@ -55,6 +56,28 @@ public class ConfigTest {
   public void testPrintXmlConf() throws Exception {
     ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
     Config config = new Config();
+    ConfigUtils.printXmlConfig(config, byteArrayConsole);
+    ConfigUtils.readConfigFromXml(Config.class, new String(byteArrayConsole
+        .getByteArrayOutputStream().toByteArray()));
+  }
+
+  @Test
+  public void testPrintConfMultipleSyncSources() throws Exception {
+    ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
+    Config config = new Config();
+    config.getReplication().setSyncSource(new ListOfStringWithDefault(
+        Arrays.asList("localhost:27017", "localhost:27018"), false));
+    ConfigUtils.printYamlConfig(config, byteArrayConsole);
+    ConfigUtils.readConfigFromYaml(Config.class, new String(byteArrayConsole
+        .getByteArrayOutputStream().toByteArray()));
+  }
+
+  @Test
+  public void testPrintXmlConfMultipleSyncSources() throws Exception {
+    ByteArrayConsole byteArrayConsole = new ByteArrayConsole();
+    Config config = new Config();
+    config.getReplication().setSyncSource(new ListOfStringWithDefault(
+        Arrays.asList("localhost:27017", "localhost:27018"), false));
     ConfigUtils.printXmlConfig(config, byteArrayConsole);
     ConfigUtils.readConfigFromXml(Config.class, new String(byteArrayConsole
         .getByteArrayOutputStream().toByteArray()));
@@ -228,7 +251,7 @@ public class ConfigTest {
     Assert.assertEquals("/replication/role has different value than that specified",
         Role.HIDDEN_SLAVE, config.getReplication().getRole().value());
     Assert.assertEquals("/replication/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource().value());
+        Arrays.asList("localhost:27017"), config.getReplication().getSyncSource().value());
     Assert.assertNotNull("/replication/include not defined", config.getReplication().getInclude());
     Assert.assertTrue("/replication/include empty", !config.getReplication().getInclude().isEmpty());
     Assert.assertNotNull("/replication/exclude not defined", config.getReplication().getExclude());
@@ -334,7 +357,7 @@ public class ConfigTest {
     Assert.assertEquals("/replication/role has different value than that specified",
         Role.HIDDEN_SLAVE, config.getReplication().getRole().value());
     Assert.assertEquals("/replication/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource().value());
+        Arrays.asList("localhost:27017"), config.getReplication().getSyncSource().value());
     Assert.assertTrue("/replication/include defined", config.getReplication().getInclude()
         == null);
     Assert.assertTrue("/replication/exclude defined", config.getReplication().getExclude()
@@ -410,7 +433,7 @@ public class ConfigTest {
     Assert.assertEquals("/replication/role has different value than that specified",
         Role.HIDDEN_SLAVE, config.getReplication().getRole().value());
     Assert.assertEquals("/replication/syncSource has different value than that specified",
-        "localhost:27017", config.getReplication().getSyncSource().value());
+        Arrays.asList("localhost:27017"), config.getReplication().getSyncSource().value());
     Assert.assertTrue("/replication/include not defined", config.getReplication().getInclude()
         != null);
     Assert.assertTrue("/replication/include/torodb not defined", config.getReplication()
@@ -451,12 +474,18 @@ public class ConfigTest {
         != null);
     Assert.assertTrue("/replication/shards empty", !config.getReplication().getShardList().isEmpty());
     Assert.assertEquals("/replication/shards has different size that specified", 3, config.getReplication().getShardList().size());
-    Assert.assertEquals("/replication/shards/0/syncSource has different value than that specified", "localhost:27020", config.getReplication().getShardList().get(0).getSyncSource().value());
-    Assert.assertEquals("/replication/shards/0/replSetName has different value than that specified", "shard1", config.getReplication().getShardList().get(0).getReplSetName().value());
-    Assert.assertEquals("/replication/shards/1/syncSource has different value than that specified", "localhost:27030", config.getReplication().getShardList().get(1).getSyncSource().value());
-    Assert.assertEquals("/replication/shards/1/replSetName has different value than that specified", "shard2", config.getReplication().getShardList().get(1).getReplSetName().value());
-    Assert.assertEquals("/replication/shards/2/syncSource has different value than that specified", "localhost:27040", config.getReplication().getShardList().get(2).getSyncSource().value());
-    Assert.assertEquals("/replication/shards/2/replSetName has different value than that specified", "shard3", config.getReplication().getShardList().get(2).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/0/syncSource has different value than that specified", 
+        Arrays.asList("localhost:27020"), config.getReplication().getShardList().get(0).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/0/replSetName has different value than that specified", 
+        "shard1", config.getReplication().getShardList().get(0).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/1/syncSource has different value than that specified", 
+        Arrays.asList("localhost:27030"), config.getReplication().getShardList().get(1).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/1/replSetName has different value than that specified", 
+        "shard2", config.getReplication().getShardList().get(1).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/2/syncSource has different value than that specified", 
+        Arrays.asList("localhost:27040"), config.getReplication().getShardList().get(2).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/2/replSetName has different value than that specified", 
+        "shard3", config.getReplication().getShardList().get(2).getReplSetName().value());
   }
 
   @Test
@@ -487,22 +516,38 @@ public class ConfigTest {
         .collect(Collectors.toList());
     
     Assert.assertEquals("/replication/shards has different size that specified", 3, shards.size());
-    Assert.assertEquals("/replication/shards/0/syncSource has different value than that specified", "localhost:27020", shards.get(0).getSyncSource().value());
-    Assert.assertEquals("/replication/shards/0/replSetName has different value than that specified", "shard1", shards.get(0).getReplSetName().value());
-    Assert.assertEquals("/replication/shards/0/auth/mode has different value than that specified", AuthMode.disabled, shards.get(0).getAuth().getMode().value());
-    Assert.assertEquals("/replication/shards/0/ssl/enabled has different value than that specified", false, shards.get(0).getSsl().getEnabled().value());
-    Assert.assertEquals("/replication/shards/1/syncSource has different value than that specified", "localhost:27030", shards.get(1).getSyncSource().value());
-    Assert.assertEquals("/replication/shards/1/replSetName has different value than that specified", "shard2", shards.get(1).getReplSetName().value());
-    Assert.assertEquals("/replication/shards/1/auth/mode has different value than that specified", AuthMode.negotiate, shards.get(1).getAuth().getMode().value());
-    Assert.assertEquals("/replication/shards/1/auth/source has different value than that specified", "usersShard1", shards.get(1).getAuth().getSource().value());
-    Assert.assertEquals("/replication/shards/1/auth/user has different value than that specified", "userShard", shards.get(1).getAuth().getUser().value());
-    Assert.assertEquals("/replication/shards/1/ssl/enabled has different value than that specified", true, shards.get(1).getSsl().getEnabled().value());
-    Assert.assertEquals("/replication/shards/2/syncSource has different value than that specified", "localhost:27040", shards.get(2).getSyncSource().value());
-    Assert.assertEquals("/replication/shards/2/replSetName has different value than that specified", "shard3", shards.get(2).getReplSetName().value());
-    Assert.assertEquals("/replication/shards/2/auth/mode has different value than that specified", AuthMode.negotiate, shards.get(2).getAuth().getMode().value());
-    Assert.assertEquals("/replication/shards/2/auth/source has different value than that specified", "usersShard2", shards.get(2).getAuth().getSource().value());
-    Assert.assertEquals("/replication/shards/2/auth/user has different value than that specified", "userShard2", shards.get(2).getAuth().getUser().value());
-    Assert.assertEquals("/replication/shards/2/ssl/enabled has different value than that specified", true, shards.get(1).getSsl().getEnabled().value());
+    Assert.assertEquals("/replication/shards/0/syncSource has different value than that specified", 
+        Arrays.asList("localhost:27020"), shards.get(0).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/0/replSetName has different value than that specified", 
+        "shard1", shards.get(0).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/0/auth/mode has different value than that specified", 
+        AuthMode.disabled, shards.get(0).getAuth().getMode().value());
+    Assert.assertEquals("/replication/shards/0/ssl/enabled has different value than that specified", 
+        false, shards.get(0).getSsl().getEnabled().value());
+    Assert.assertEquals("/replication/shards/1/syncSource has different value than that specified", 
+        Arrays.asList("localhost:27030"), shards.get(1).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/1/replSetName has different value than that specified", 
+        "shard2", shards.get(1).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/1/auth/mode has different value than that specified", 
+        AuthMode.negotiate, shards.get(1).getAuth().getMode().value());
+    Assert.assertEquals("/replication/shards/1/auth/source has different value than that specified", 
+        "usersShard1", shards.get(1).getAuth().getSource().value());
+    Assert.assertEquals("/replication/shards/1/auth/user has different value than that specified", 
+        "userShard", shards.get(1).getAuth().getUser().value());
+    Assert.assertEquals("/replication/shards/1/ssl/enabled has different value than that specified", 
+        true, shards.get(1).getSsl().getEnabled().value());
+    Assert.assertEquals("/replication/shards/2/syncSource has different value than that specified", 
+        Arrays.asList("localhost:27040"), shards.get(2).getSyncSource().value());
+    Assert.assertEquals("/replication/shards/2/replSetName has different value than that specified", 
+        "shard3", shards.get(2).getReplSetName().value());
+    Assert.assertEquals("/replication/shards/2/auth/mode has different value than that specified", 
+        AuthMode.negotiate, shards.get(2).getAuth().getMode().value());
+    Assert.assertEquals("/replication/shards/2/auth/source has different value than that specified", 
+        "usersShard2", shards.get(2).getAuth().getSource().value());
+    Assert.assertEquals("/replication/shards/2/auth/user has different value than that specified", 
+        "userShard2", shards.get(2).getAuth().getUser().value());
+    Assert.assertEquals("/replication/shards/2/ssl/enabled has different value than that specified", 
+        true, shards.get(1).getSsl().getEnabled().value());
   }
 
 }
