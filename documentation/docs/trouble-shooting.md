@@ -26,3 +26,37 @@ Once installed Homebrew, `wget` can be installed as follows:
 ```
 brew install wget
 ```
+
+## Duplication errors in the logs
+
+When Stampede is in recovery mode and, during the data importation, new data are inserted in the source, 
+ it's possible that Stampede reapplies the last batch of data. This would lead to error messages similar to:
+  
+```
+  2017-06-21 16:43:03 CEST [21807-1] torodb@torod ERROR:  duplicate key value violates unique constraint "test__id_x_a_idx"
+  2017-06-21 16:43:03 CEST [21807-2] torodb@torod DETAIL:  Key (_id_x)=(\x594a858188b38a7816e4cfb9) already exists.
+  2017-06-21 16:43:03 CEST [21807-3] torodb@torod CONTEXT:  COPY test, line 1
+  2017-06-21 16:43:03 CEST [21807-4] torodb@torod STATEMENT:  COPY "test"."test" ("did","_id_x","x_d","a_s") FROM STDIN
+
+```
+
+  Fortunately, there is nothing to worry about this situation.
+  
+## Unexpected optime errors
+
+Sometimes, the following error is shown:
+
+```
+
+Unexpected optime for last operation to apply. Expected {t: { "$timestamp": { "t": 1497464377, "i": 12} }, i: 30}, but {t: { "$timestamp": { "t": 1497464377, "i": 6} }, i: 30} found
+
+```
+
+This is due to the way in which the last applied operation time is calculated. 
+There is a comparison between a time which has been calculated taking into
+account all the operations in the oplog batch, and a time which only took
+into account replicated operations (that is, filtering out operations that 
+have been excluded by replication filters).
+
+So, when this log appears (DEBUG mode) is because the last operations of an
+ oplog batch are operations that are excluded by replication filters.
