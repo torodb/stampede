@@ -9,26 +9,26 @@
 
     <groupId>com.torodb.stampede</groupId>
     <artifactId>stampede-pom</artifactId>
-    <version>1.0.0-beta2</version>
+    <version>1.0.0-beta3</version>
     <packaging>pom</packaging>
 
     <name>ToroDB: Stampede</name>
     <description>ToroDB stampede project.</description>
-        
+
     <modules>
         <module>service</module>
         <module>main</module>
         <module>reporting</module>
     </modules>
-    
+
     <properties>
-        <torodb.engine.version>0.50.1</torodb.engine.version>
-        
+        <torodb.engine.version>0.50.2</torodb.engine.version>
+
         <license.header.license>agpl</license.header.license>
         <license.header.project.name>ToroDB Stampede</license.header.project.name>
         <license.header.project.inceptionYear>2016</license.header.project.inceptionYear>
     </properties>
-    
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -49,7 +49,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -58,7 +58,7 @@
             </plugin>
         </plugins>
     </build>
-    
+
     <profiles>
         <profile>
             <id>docs</id>
