@@ -65,6 +65,8 @@ Another way to configure the system is through configuration file or setting con
 |--------|-|
 | /replication/replSetName | Overwrites the default value of the MongoDB Replica Set used for replication. |
 | /replication/syncSource | Overwrites the default connection address for the MongoDB Replica Set used for replication (host:port) |
+| /replication/include/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unique=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
+| /replication/exclude/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unique=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
 
 ### Replication SSL configuration
 
@@ -87,9 +89,40 @@ Another way to configure the system is through configuration file or setting con
 | /replication/auth/mode | Specifies the authentication mode, that can take one of the next values.<ul><li>disabled: Disable authentication mechanism.</li><li>negotiate: The client will negotiate best mechanism to authenticate. With server version 3.0 or above, the driver will authenticate using the SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate using the Challenge Response mechanism.</li><li>cr: Challenge Response authentication</li><li>x509: X.509 authentication</li><li>scram_sha1: SCRAM-SHA-1 SASL authentication</li></ul> |
 | /replication/auth/user | User to be authenticated. |
 | /replication/auth/source | The source database where the user is present. |
-| /replication/include/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unqiue=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
-| /replication/exclude/`<string>` | A map of databases and/or collections and/or indexes to exclusively replicate.<ul><li>Each entry represent a database name under which a list of collection names can be specified.</li><li>Each collection can contain a list of indexes each formed by one or more of those fields:<ul><li>name=<string> the index name</li><li>unqiue=<boolean> true when index is unique, false otherwise</li><li>keys/<string>=<string> the name of the field indexed and the index direction or type</ul><li>Character '\*' can be used to denote "any-character" and character '\' to escape characters.</li></ul> |
 | /replication/mongopassFile | Path to the file with MongoDB access configuration in `.pgpass` syntax. |
+
+### Replication configuration for shards
+
+| Parameter |  |
+|--------|-|
+| /replication/shards/<index>/replSetName | Overwrites the default value of the MongoDB Replica Set used for replication. |
+| /replication/shards/<index>/syncSource | Overwrites the default connection address for the MongoDB Replica Set used for replication (host:port). If this parameter is specified leave empty `/replication/syncSource`. |
+
+### Replication SSL configuration for shards
+
+Any parameter not specified here will default to the value specified in the configuration under `/replication/ssl`.
+
+| Parameter |  |
+|--------|-|
+| /replication/shards/<index>/ssl/enabled | If `false` the SSL/TLS layer is disabled if `true` it is enabled. |
+| /replication/shards/<index>/ssl/allowInvalidHostnames | If `true` hostname verification is disabled, if `false` it is enabled. | 
+| /replication/shards/<index>/ssl/trustStoreFile | The path to the Java Key Store file containing the Certification Authority. If CAFile is specified it will be used instead. | 
+| /replication/shards/<index>/ssl/trustStorePassword | The password of the Java Key Store file containing the Certification Authority. |
+| /replication/shards/<index>/ssl/keyStoreFile | The path to the Java Key Store file containing the certificate and private key used to authenticate client. |
+| /replication/shards/<index>/ssl/keyStorePassword | The password of the Java Key Store file containing and private key used to authenticate client. |
+| /replication/shards/<index>/ssl/keyPassword | The password of the private key used to authenticate client. |
+| /replication/shards/<index>/ssl/fipsMode | If `true` enable FIPS 140-2 mode. |
+| /replication/shards/<index>/ssl/caFile | The path to the Certification Authority in PEM format. |
+
+### Replication authentication configuration for shards
+
+Any parameter not specified here will default to the value specified in the configuration under `/replication/auth`.
+
+| Parameter |  |
+|--------|-|
+| /replication/shards/<index>/auth/mode | Specifies the authentication mode, that can take one of the next values.<ul><li>disabled: Disable authentication mechanism.</li><li>negotiate: The client will negotiate best mechanism to authenticate. With server version 3.0 or above, the driver will authenticate using the SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate using the Challenge Response mechanism.</li><li>cr: Challenge Response authentication</li><li>x509: X.509 authentication</li><li>scram_sha1: SCRAM-SHA-1 SASL authentication</li></ul> |
+| /replication/shards/<index>/auth/user | User to be authenticated. |
+| /replication/shards/<index>/auth/source | The source database where the user is present. |
 
 ### PostgreSQL configuration
 
