@@ -23,6 +23,7 @@ import com.beust.jcommander.internal.Lists;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.CreationException;
@@ -40,7 +41,7 @@ import com.torodb.mongodb.core.DefaultBuildProperties;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
-import com.torodb.mongowp.client.wrapper.MongoClientConfiguration;
+import com.torodb.mongowp.client.wrapper.MongoClientConfigurationProperties;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
@@ -51,7 +52,7 @@ import com.torodb.packaging.config.util.BackendImplementationVisitorWithDefault;
 import com.torodb.packaging.config.util.BundleFactory;
 import com.torodb.packaging.config.util.ConfigUtils;
 import com.torodb.packaging.util.Log4jUtils;
-import com.torodb.packaging.util.MongoClientConfigurationFactory;
+import com.torodb.packaging.util.MongoClientConfigurationPropertiesFactory;
 import com.torodb.packaging.util.ReplicationFiltersFactory;
 import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.Backend;
@@ -165,7 +166,7 @@ public class Main {
       }
       for (AbstractShardReplication shard : shards) {
         if (shard.getAuth().getUser() != null) {
-          HostAndPort syncSource = HostAndPort.fromString(shard.getSyncSource().value())
+          HostAndPort syncSource = HostAndPort.fromString(shard.getSyncSource().value().get(0))
               .withDefaultPort(27017);
           ConfigUtils.parseMongopassFile(new MongoPasswordConfig() {
   
@@ -415,8 +416,9 @@ public class Main {
   private static StampedeConfig.ShardConfigBuilder translateShardConfig(
       AbstractShardReplication shardConfig,
       Supplier<String> shardIdProvider) {
-    MongoClientConfiguration clientConf =
-        MongoClientConfigurationFactory.getMongoClientConfiguration(shardConfig);
+    MongoClientConfigurationProperties clientConfProperties =
+        MongoClientConfigurationPropertiesFactory
+          .getMongoClientConfigurationProperties(shardConfig);
     String shardId = shardIdProvider.get();
     return new StampedeConfig.ShardConfigBuilder() {
       @Override
@@ -429,7 +431,10 @@ public class Main {
           ConsistencyHandler consistencyHandler) {
         return new MongoDbShardingConfig.ShardConfig(
             getShardId(),
-            clientConf,
+            shardConfig.getSyncSource().value()
+              .stream().map(syncSource -> HostAndPort.fromString(syncSource))
+              .collect(ImmutableList.toImmutableList()),
+            clientConfProperties,
             shardConfig.getReplSetName().value(),
             consistencyHandler);
       }
