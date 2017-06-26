@@ -34,7 +34,7 @@ replication:
       syncSource: localhost:27040
 ```
 
-If `/replication/shards/<index>/replSetName` is not specified `/replication/replSetName` will be used. This mechanism of property value merging is valid for properties in the following sections:
+If `/replication/shards/<index>/replSetName` is not specified, `/replication/replSetName` will be used. This mechanism of property value merging is valid for properties in the following sections:
 
 * `/replication/shards/<index>/ssl` will default to `/replication/ssl`
 * `/replication/shards/<index>/auth` will default to `/replication/auth`
@@ -90,7 +90,7 @@ keytool -import -alias rootCA -keystore rootCA.jks -storepass trustme -trustcace
 
 ## Authenticate against MongoDB
 
-If [MongoDB is configured to authenticate clients](https://docs.mongodb.com/manual/core/authentication-mechanisms/) you will have to create a user with role `__system` since ToroDB Stempede need to send spcial read only internal commands
+If [MongoDB is configured to authenticate clients](https://docs.mongodb.com/manual/core/authentication-mechanisms/) you will have to create a user with role `__system` since ToroDB Stampede need to send special read only internal commands
 to the MongoDB Replica Set members.
 
 ```
@@ -138,7 +138,7 @@ keytool -noprompt -importkeystore -deststorepass trustme -destkeypass nosqlonsql
 keytool -list -v -keystore mongodb-client.jks -storepass trustme -keypass nosqlonsql
 ```
 
-To create the user that authenticate with X.509 mechanism:
+To create the user that is authenticated with X.509 mechanism:
 
 ```
 db.getSiblingDB("$external").createUser({user: "DC=localclient,CN=localclient,O=8Kdata,L=Madrid,ST=Spain,C=ES", roles: [{role: "__system", db: "admin"}]})
