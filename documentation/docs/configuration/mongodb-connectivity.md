@@ -41,8 +41,8 @@ If `/replication/shards/<index>/replSetName` is not specified `/replication/repl
 
 ## Connect using Secure Socket Layer
 
-To enable SSL connectivity to MongoDB you have to make shure [MongoDB is correctly configured](https://docs.mongodb.com/manual/tutorial/configure-ssl/). 
-If the MongoDB certificate is not issued by a known Certification Authority you have to copy the CA file in a path accessible by ToroDB Stamepde. 
+To enable SSL connectivity to MongoDB you have to make sure [MongoDB is correctly configured](https://docs.mongodb.com/manual/tutorial/configure-ssl/). 
+If the MongoDB certificate is not issued by a known Certification Authority you have to copy the CA file in a path accessible by ToroDB Stampede. 
 For this example we assume the CA file is `rootCA.pem`. For testing purpose you may want to set property `/replication/ssl/allowInvalidHostnames` to `true`
 to skip host name validation check for the server certificate.
 
