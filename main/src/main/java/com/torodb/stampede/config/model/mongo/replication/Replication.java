@@ -20,13 +20,16 @@ package com.torodb.stampede.config.model.mongo.replication;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.collect.ImmutableList;
 import com.torodb.packaging.config.annotation.Description;
 import com.torodb.packaging.config.model.common.EnumWithDefault;
+import com.torodb.packaging.config.model.common.ListOfStringWithDefault;
 import com.torodb.packaging.config.model.common.StringWithDefault;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractReplication;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
 import com.torodb.packaging.config.model.protocol.mongo.Role;
 import com.torodb.packaging.config.util.ConfigUtils;
+import com.torodb.packaging.config.validation.NotEmptyListOfSrtingWithDefault;
 import com.torodb.packaging.config.validation.NotEmptySrtingWithDefault;
 
 import java.util.List;
@@ -40,7 +43,7 @@ public class Replication extends AbstractReplication<ShardReplication> {
   private String mongopassFile = ConfigUtils.getUserHomeFilePath(".mongopass");
 
   public Replication() {
-    super.setSyncSource(StringWithDefault.withDefault("localhost:27017"));
+    super.setSyncSource(ListOfStringWithDefault.withDefault(ImmutableList.of("localhost:27017")));
     super.setReplSetName(StringWithDefault.withDefault("rs1"));
   }
 
@@ -62,9 +65,9 @@ public class Replication extends AbstractReplication<ShardReplication> {
   }
 
   @Description("config.mongo.replication.syncSource")
-  @NotEmptySrtingWithDefault
+  @NotEmptyListOfSrtingWithDefault
   @JsonProperty(required = false)
-  public StringWithDefault getSyncSource() {
+  public ListOfStringWithDefault getSyncSource() {
     return super.getSyncSource();
   }
   
@@ -101,7 +104,7 @@ public class Replication extends AbstractReplication<ShardReplication> {
   }
 
   @Override
-  public void setSyncSource(StringWithDefault syncSource) {
+  public void setSyncSource(ListOfStringWithDefault syncSource) {
     super.setSyncSource(syncSource);
   }
   
