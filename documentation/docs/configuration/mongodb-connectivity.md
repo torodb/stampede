@@ -10,12 +10,11 @@ replication:
   syncSource: localhost:27017
   auth:
     mode: negotiate
-    user: mymongouser
-    source: mymongosource
+    user: stampede
+    source: admin
   ssl:
     enabled: true
-    allowInvalidHostnames: false
-    caFile: mycafile.pem
+    caFile: rootCA.pem
 ```
 
 ## Replicate from a MongoDB Sharded Cluster
@@ -44,7 +43,7 @@ If `/replication/shards/<index>/replSetName` is not specified `/replication/repl
 
 To enable SSL connectivity to MongoDB you have to make shure [MongoDB is correctly configured](https://docs.mongodb.com/manual/tutorial/configure-ssl/). 
 If the MongoDB certificate is not issued by a known Certification Authority you have to copy the CA file in a path accessible by ToroDB Stamepde. 
-For this example we assume this path is `/tmp/mongodb-cert.crt`. For testing purpose you may want to set property `/replication/ssl/allowInvalidHostnames` to `true`
+For this example we assume the CA file is `rootCA.pem`. For testing purpose you may want to set property `/replication/ssl/allowInvalidHostnames` to `true`
 to skip host name validation check for the server certificate.
 
 ```json
@@ -53,8 +52,20 @@ replication:
   syncSource: localhost:27017
   ssl:
     enabled: true
-    allowInvalidHostnames: true
-    caFile: /tmp/mongodb-cert.crt
+    caFile: rootCA.pem
+```
+
+To create a self signed Certification Authority private key and certificate and a self signed Server private key and certificate:
+
+```
+openssl genrsa -out rootCA.key 2048
+openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.pem  -subj '/C=ES/ST=Spain/L=Madrid/O=8Kdata/CN=8Kdata'
+openssl x509 -in rootCA.pem -text -noout
+openssl genrsa -out mongodb-server.key
+openssl req -new -key mongodb-server.key -out mongodb-server.csr -subj '/C=ES/ST=Spain/L=Madrid/O=8Kdata/CN=localserver/DC=localserver'
+openssl x509 -req -in mongodb-server.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out mongodb-server.crt -days 365 -sha256  -extensions san_env -extfile <(printf "[san_env]\nsubjectAltName=IP:127.0.0.1,DNS:localserver")
+openssl x509 -in mongodb-server.crt -text -noout
+cat mongodb-server.crt mongodb-server.key > mongodb-server.pem
 ```
 
 If you prefer you may use a Java Key Store file that contain the same Certification Authority certificate:
@@ -66,31 +77,15 @@ replication:
   ssl:
     enabled: true
     allowInvalidHostnames: true
-    trustStoreFile: /tmp/mongodb-cert.jks
+    trustStoreFile: rootCA.jks
     trustStorePassword: trustme
 ```
 
-To create a self signed Certification Authority private key and certificate and a self signed Server private key and certificate:
+To import the root certificate into a Java Key Store file:
 
 ```
-openssl genrsa -out /tmp/rootCA.key 2048
-openssl req -x509 -new -nodes -key /tmp/rootCA.key -sha256 -days 1024 -out /tmp/rootCA.pem  -subj '/C=ES/ST=Spain/L=Madrid/O=8Kdata/CN=8Kdata'
-openssl x509 -in /tmp/rootCA.pem -text -noout
-openssl genrsa -out server.key
-openssl req -new -key /tmp/mongodb-server.key -out /tmp/mongodb-server.csr -subj '/C=ES/ST=Spain/L=Madrid/O=8Kdata/CN=localserver/DC=localserver'
-openssl x509 -req -in /tmp/mongodb-server.csr -CA /tmp/rootCA.pem -CAkey /tmp/rootCA.key -CAcreateserial -out /tmp/mongodb-server.crt -days 365 -sha256  -extensions san_env -extfile <(printf "[san_env]\nsubjectAltName=IP:127.0.0.1,DNS:localserver")
-openssl x509 -in /tmp/mongodb-server.crt -text -noout
-cat /tmp/mongodb-server.crt /tmp/mongodb-server.key > /tmp/mongodb-server.pem
-```
-
-```json
-replication:
-  replSetName: rs1
-  ssl:
-    enabled: true
-    allowInvalidHostnames: true
-    trustStoreFile: /tmp/mongodb-cert.jks
-    trustStorePassword: trustme
+openssl x509 -outform der -in rootCA.pem -out rootCA.der
+keytool -import -alias rootCA -keystore rootCA.jks -storepass trustme -trustcacerts -noprompt -file rootCA.der
 ```
 
 ## Authenticate against MongoDB
@@ -99,7 +94,7 @@ If [MongoDB is configured to authenticate clients](https://docs.mongodb.com/manu
 to the MongoDB Replica Set members.
 
 ```
-db.getSiblingDB("admin").createUser({user: "stampede", password: "nosqlonsql", roles: [{role: "__system", db: "admin"}]})
+db.getSiblingDB("admin").createUser({user: "stampede", pwd: "nosqlonsql", roles: [{role: "__system", db: "admin"}]})
 ```
 
 You can then configure ToroDB Stampede to authenticate against MongoDB:
@@ -114,7 +109,7 @@ replication:
     source: admin
 ```
 
-You will have to have a file `~/.mongopass` (or file specified by `/replication/mongopassFile` property) containing following line:
+You will need to add following entry to file `~/.mongopass` (or file specified by `/replication/mongopassFile` property):
 
 ```
 localhost:27017:admin:stampede:nosqlonsql
@@ -128,19 +123,19 @@ import them in a Java Key Store file and create a user with role `__system` in t
 To create the client private key and certificate.
 
 ```
-openssl genrsa -out /tmp/mongodb-client.key
-openssl req -new -key /tmp/mongodb-client.key -out /tmp/mongodb-client.csr -subj '/C=ES/ST=Spain/L=Madrid/O=8Kdata/CN=localclient/DC=localclient'
-openssl x509 -req -in /tmp/mongodb-client.csr -CA /tmp/rootCA.pem -CAkey /tmp/rootCA.key -CAcreateserial -out /tmp/mongodb-client.crt -days 365 -sha256  -extensions san_env -extfile <(printf "[san_env]\nsubjectAltName=IP:127.0.0.1,DNS:localclient")
-openssl x509 -in /tmp/mongodb-client.crt -text -noout
-cat /tmp/mongodb-client.crt /tmp/mongodb-client.key > /tmp/mongodb-client.pem
+openssl genrsa -out mongodb-client.key
+openssl req -new -key mongodb-client.key -out mongodb-client.csr -subj '/C=ES/ST=Spain/L=Madrid/O=8Kdata/CN=localclient/DC=localclient'
+openssl x509 -req -in mongodb-client.csr -CA rootCA.pem -CAkey rootCA.key -CAcreateserial -out mongodb-client.crt -days 365 -sha256  -extensions san_env -extfile <(printf "[san_env]\nsubjectAltName=IP:127.0.0.1,DNS:localclient")
+openssl x509 -in mongodb-client.crt -text -noout
+cat mongodb-client.crt mongodb-client.key > mongodb-client.pem
 ```
 
-To create the Java Trust Store file `/tmp/mongodb-client.jks` that contains the client certificate and private key starting from PEM files:
+To create the Java Trust Store file `mongodb-client.jks` that contains the client certificate and private key starting from PEM files:
 
 ```
-openssl pkcs12 -export -in /tmp/mongodb-client.crt -inkey /tmp/mongodb-client.key -out /tmp/mongodb-client.p12 -name localclient -passout file:<(echo nosqlonsql)
-keytool -noprompt -importkeystore -deststorepass trustme -destkeypass nosqlonsql -destkeystore /tmp/mongodb-client.jks -srckeystore /tmp/mongodb-client.p12 -srcstoretype PKCS12 -srcstorepass nosqlonsql
-keytool -list -v -keystore /tmp/mongodb-client.jks -storepass trustme -keypass nosqlonsql
+openssl pkcs12 -export -in mongodb-client.crt -inkey mongodb-client.key -out mongodb-client.p12 -name localclient -passout file:<(echo nosqlonsql)
+keytool -noprompt -importkeystore -deststorepass trustme -destkeypass nosqlonsql -destkeystore mongodb-client.jks -srckeystore mongodb-client.p12 -srcstoretype PKCS12 -srcstorepass nosqlonsql
+keytool -list -v -keystore mongodb-client.jks -storepass trustme -keypass nosqlonsql
 ```
 
 To create the user that authenticate with X.509 mechanism:
@@ -159,12 +154,12 @@ replication:
     mode: x509
   ssl:
     enabled: true
-    caFile: /tmp/mongodb-cert.crt
-    keyStoreFile: /tmp/mongodb-client.jks
+    caFile: rootCA.pem
+    keyStoreFile: mongodb-client.jks
     keyStorePassword: trustme
     keyPassword: nosqlonsql
 ```
 
-* `/tmp/rootCA.prm` and `/tmp/rootCA.key` should be the certificate and private key of the same Certification Authority used to generate the server certificate.
+* `rootCA.pem` and `rootCA.key` should be the certificate and private key of the same Certification Authority used to generate the server certificate.
 
 In this case you do not have to add any entry to the file `~/.mongopass`.
