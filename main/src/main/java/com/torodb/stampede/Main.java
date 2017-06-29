@@ -45,6 +45,7 @@ import com.torodb.packaging.config.model.backend.BackendPasswordConfig;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.packaging.config.model.backend.postgres.AbstractPostgres;
 import com.torodb.packaging.config.model.protocol.mongo.AbstractShardReplication;
+import com.torodb.packaging.config.model.protocol.mongo.AuthMode;
 import com.torodb.packaging.config.model.protocol.mongo.MongoPasswordConfig;
 import com.torodb.packaging.config.util.BackendImplementationVisitor;
 import com.torodb.packaging.config.util.BundleFactory;
@@ -220,7 +221,21 @@ public class Main {
               + "Please add following line to file " + postgres.getToropassFile() + ":\n"
               + postgres.getHost() + ":" + postgres.getPort() + ":"
               + postgres.getDatabase() + ":" + postgres.getUser() + ":<password>\n"
-              + "Replace <password> for database user " + postgres.getUser() + "'s password");
+              + "Replace <password> with the password of backend user " + postgres.getUser());
+        }
+      }
+
+      for (AbstractShardReplication shard : shards) {
+        if (shard.getAuth().getMode().value() != AuthMode.disabled
+            && config.getReplication().getAuth().getPassword() == null) {
+          throw new SystemException("No password provided for database user " 
+              + shard.getAuth().getUser().value() + ".\n\n"
+              + "Please add following line to file " 
+              + config.getReplication().getMongopassFile() + ":\n"
+              + shard.getSyncSource().value() + ":" + shard.getAuth().getSource().value() 
+              + ":" + shard.getAuth().getUser().value() + ":<password>\n"
+              + "Replace <password> with the password of mongodb user " 
+              + shard.getAuth().getUser().value());
         }
       }
 
