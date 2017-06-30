@@ -1,3 +1,13 @@
+## Release Notes for Stampede 1.0.0-beta3
+
+### Changes
+
+
+### Bugs Fixed
+
+* Stampede use wrong format for dates before year 1 using PostgreSQL's COPY.
+* Stampede give an internal error when MongoDB password is not found and authentication is enabled.
+
 ## Release Notes for Stampede 1.0.0-beta2
 
 ### Changes
