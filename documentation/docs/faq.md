@@ -69,6 +69,8 @@ MongoWP is based on Netty, a great asynchronous network I/O framework for the JV
 
 * [HikariCP](http://brettwooldridge.github.io/HikariCP/). The fastest Java connection pooler.
 
+* [Chronicle Queue](http://chronicle.software/products/chronicle-queue/). A distributed unbounded persisted queue. 
+
 There are also many other Java libraries used by ToroDB like [ThreeTen](http://www.threeten.org/), [Guava](https://github.com/google/guava), [Guice](https://github.com/google/guice), [Findbugs](http://findbugs.sourceforge.net/), [jCommander](http://jcommander.org/), [Jackson](http://wiki.fasterxml.com/JacksonHome) and some others. We also use [Travis](https://travis-ci.org/) for CI tests.
 
 ToroDB has the deepest gratitude to all the above projects, that are great components, and every other bit of open source that directly or indirectly helps building or running ToroDB.

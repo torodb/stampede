@@ -17,6 +17,10 @@ Usage: `torodb-stampede [options]`
 | --backend-port | The port that will be used to connect. |
 | --backend-ssl | Enable SSL for backend connection. |
 | --backend-user | The user that will be used to connect. |
+| --offHeapBuffer-enabled | If set to `true`, it enabled the use of the off heap buffer system., if `false` it's disabled. |
+| --offHeapBuffer-path | Absolute path to locate the off heap buffer files. |
+| --offHeapBuffer-rollcycle | The Rolling cycle determines how often you create a new data file. The values can be: `DAILY`, `HOURLY` or `MINUTELY`.  |
+| --offHeapBuffer-maxFiles | Max number of files to store for the off heap buffer. |
 | -c, --conf | Configuration file in YAML format. |
 | --connection-pool-size | Maximum number of connections to establish to the database. It must be higher or equal than 3. |
 | --connection-pool-timeout | The timeout in milliseconds after which retrieve a connection from the pool will fail. |
@@ -58,6 +62,15 @@ Another way to configure the system is through configuration file or setting con
 | /logging/packages/<package-name> | Overwrites the default level for the given package name. | 
 | /logging/file | Overwrites the default value for the log output file path. |
 | /metricsEnabled | With value `true` enables the metrics system, and `false` disables it. |
+
+### Off Heap Buffer configuration
+
+| Parameter |  |
+|--------|-|
+| /offHeapBuffer/enabled | If set to `true`, it enabled the use of the off heap buffer system., if `false` it's disabled. |
+| /offHeapBuffer/path | Absolute path to locate the off heap buffer files. |
+| /offHeapBuffer/rollCycle | The Rolling cycle determines how often you create a new data file. The values can be: `DAILY`, `HOURLY` or `MINUTELY`. | 
+| /offHeapBuffer/maxFiles | Max number of files to store for the off heap buffer. |
 
 ### Replication configuration
 

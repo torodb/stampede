@@ -24,6 +24,7 @@ import com.beust.jcommander.converters.IParameterSplitter;
 import com.torodb.packaging.config.model.backend.BackendImplementation;
 import com.torodb.packaging.config.model.backend.derby.AbstractDerby;
 import com.torodb.stampede.config.model.backend.Backend;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -72,15 +73,15 @@ public class CliConfig {
   @Parameter(names = {"--enable-metrics"}, descriptionKey = "config.generic.enableMetrics")
   private Boolean metricsEnabled;
 
-  @Parameter(names = {"--bufferOffHeap-enabled"}, descriptionKey = "config.bufferOffHeap.enabled")
-  private Boolean bufferOffHeapEnabled;
-  @Parameter(names = {"--bufferOffHeap-path"}, descriptionKey = "config.bufferOffHeap.path")
-  private String bufferOffHeapPath;
-  @Parameter(names = {"--bufferOffHeap-maxsize"}, descriptionKey = "config.bufferOffHeap.maxsize")
-  private String bufferOffHeapMaxSize;
+  @Parameter(names = {"--offHeapBuffer-enabled"}, descriptionKey = "config.offHeapBuffer.enabled")
+  private Boolean offHeapBufferEnabled;
+  @Parameter(names = {"--offHeapBuffer-path"}, descriptionKey = "config.offHeapBuffer.path")
+  private String offHeapBufferPath;
   @Parameter(names = {
-      "--bufferOffHeap-rollcycle"}, descriptionKey = "config.bufferOffHeap.rollcycle")
-  private String bufferOffHeapRollCycle;
+      "--offHeapBuffer-rollcycle"}, descriptionKey = "config.offHeapBuffer.rollcycle")
+  private String offHeapBufferRollCycle;
+  @Parameter(names = {"--offHeapBuffer-maxFiles"}, descriptionKey = "config.offHeapBuffer.maxFiles")
+  private String offHeapBufferMaxFiles;
 
   @Parameter(names = {"--repl-set-name"}, descriptionKey = "config.mongo.replication.replSetName")
   private String replSetName;
@@ -242,20 +243,20 @@ public class CliConfig {
     return metricsEnabled;
   }
 
-  public Boolean getBufferOffHeapEnabled() {
-    return bufferOffHeapEnabled;
+  public Boolean getOffHeapBufferEnabled() {
+    return offHeapBufferEnabled;
   }
 
-  public String getBufferOffHeapPath() {
-    return bufferOffHeapPath;
+  public String getOffHeapBufferPath() {
+    return offHeapBufferPath;
   }
 
-  public String getBufferOffHeapMaxSize() {
-    return bufferOffHeapMaxSize;
+  public String getOffHeapBufferMaxFiles() {
+    return offHeapBufferMaxFiles;
   }
 
-  public String getBufferOffHeapRollCycle() {
-    return bufferOffHeapRollCycle;
+  public String getOffHeapBufferRollCycle() {
+    return offHeapBufferRollCycle;
   }
 
   public String getReplSetName() {
@@ -356,17 +357,17 @@ public class CliConfig {
     if (metricsEnabled != null) {
       addParam("/metricsEnabled", metricsEnabled ? "true" : "false");
     }
-    if (bufferOffHeapEnabled != null) {
-      addParam("/bufferOffHeapEnabled", bufferOffHeapEnabled ? "true" : "false");
+    if (offHeapBufferEnabled != null) {
+      addParam("/offHeapBufferEnabled", offHeapBufferEnabled ? "true" : "false");
     }
-    if (bufferOffHeapPath != null) {
-      addParam("/bufferOffHeapPath", bufferOffHeapPath);
+    if (offHeapBufferPath != null) {
+      addParam("/offHeapBufferPath", offHeapBufferPath);
     }
-    if (bufferOffHeapMaxSize != null) {
-      addParam("/bufferOffHeapMaxSize", bufferOffHeapMaxSize);
+    if (offHeapBufferMaxFiles != null) {
+      addParam("/offHeapBufferMaxFiles", offHeapBufferMaxFiles);
     }
-    if (bufferOffHeapRollCycle != null) {
-      addParam("/bufferOffHeapRollCycle", bufferOffHeapRollCycle);
+    if (offHeapBufferRollCycle != null) {
+      addParam("/offHeapBufferRollCycle", offHeapBufferRollCycle);
     }
     if (replSetName != null) {
       addParam("/replication/replSetName", replSetName);

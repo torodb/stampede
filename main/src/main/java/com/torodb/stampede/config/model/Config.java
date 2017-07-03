@@ -26,13 +26,14 @@ import com.torodb.packaging.config.validation.MutualExclusiveReplSetOrShards;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 import com.torodb.packaging.config.validation.SslEnabledForX509Authentication;
 import com.torodb.stampede.config.model.backend.Backend;
-import com.torodb.stampede.config.model.cache.BufferOffHeap;
+import com.torodb.stampede.config.model.cache.OffHeapBuffer;
 import com.torodb.stampede.config.model.logging.Logging;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
+
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"logging", "metricsEnabled", "bufferOffHeap", "replication", "backend"})
+@JsonPropertyOrder({"logging", "metricsEnabled", "offHeapBuffer", "replication", "backend"})
 public class Config implements MetricsConfig {
 
   @Description("config.logging")
@@ -46,8 +47,8 @@ public class Config implements MetricsConfig {
   @JsonProperty(required = true)
   private Boolean metricsEnabled = false;
 
-  @Description("config.bufferOffHeap")
-  private BufferOffHeap bufferOffHeap = new BufferOffHeap();
+  @Description("config.offHeapBuffer")
+  private OffHeapBuffer offHeapBuffer = new OffHeapBuffer();
 
   @Valid
   @MutualExclusiveReplSetOrShards
@@ -82,13 +83,13 @@ public class Config implements MetricsConfig {
   }
 
 
-  public BufferOffHeap getBufferOffHeap() {
-    return bufferOffHeap;
+  public OffHeapBuffer getOffHeapBuffer() {
+    return offHeapBuffer;
   }
 
-  public void setBufferOffHeap(BufferOffHeap bufferOffHeap) {
-    if (bufferOffHeap != null) {
-      this.bufferOffHeap = bufferOffHeap;
+  public void setOffHeapBuffer(OffHeapBuffer offHeapBuffer) {
+    if (offHeapBuffer != null) {
+      this.offHeapBuffer = offHeapBuffer;
     }
   }
 

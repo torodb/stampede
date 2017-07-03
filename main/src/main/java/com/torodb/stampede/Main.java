@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package com.torodb.stampede;
 
 import com.beust.jcommander.JCommander;
@@ -58,7 +59,9 @@ import com.torodb.stampede.config.model.Config;
 import com.torodb.stampede.config.model.backend.Backend;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
 import com.torodb.stampede.config.model.mongo.replication.ShardReplication;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -306,7 +309,7 @@ public class Main {
           replFilters,
           createShardConfigBuilders(replicationConfig),
           LOGGER_FACTORY,
-          config.getBufferOffHeap()
+          config.getOffHeapBuffer()
       );
     } else {
       return StampedeConfig.createUnshardedConfig(
@@ -315,7 +318,7 @@ public class Main {
           replFilters,
           createUnshardedShardBuilder(replicationConfig),
           LOGGER_FACTORY,
-          config.getBufferOffHeap()
+          config.getOffHeapBuffer()
       );
     }
   }

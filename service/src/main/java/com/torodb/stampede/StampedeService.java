@@ -180,7 +180,7 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
     configBuilder.setTorodBundle(torodBundle)
         .setUserReplFilter(stampedeConfig.getUserReplicationFilters())
         .setLifecycleLoggerFactory(stampedeConfig.getLifecycleLoggerFactory())
-        .setBufferOffHeapConfig(stampedeConfig.getBufferOffHeapConfig());
+        .setOffHeapBufferConfig(stampedeConfig.getOffHeapBufferConfig());
 
     stampedeConfig.getShardConfigBuilders().forEach(shardConfBuilder ->
         addShard(configBuilder, shardConfBuilder, consistencyHandler)

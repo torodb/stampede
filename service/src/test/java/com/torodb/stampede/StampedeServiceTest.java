@@ -30,8 +30,8 @@ import com.torodb.core.guice.EssentialModule;
 import com.torodb.core.logging.DefaultLoggerFactory;
 import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.filters.ReplicationFilters;
-import com.torodb.mongodb.repl.oplogreplier.config.BufferOffHeapConfig;
-import com.torodb.mongodb.repl.oplogreplier.config.BufferRollCycle;
+import com.torodb.mongodb.repl.oplogreplier.offheapbuffer.OffHeapBufferConfig;
+import com.torodb.mongodb.repl.oplogreplier.offheapbuffer.BufferRollCycle;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
 import com.torodb.mongowp.client.wrapper.MongoClientConfigurationProperties;
 import org.junit.Before;
@@ -55,7 +55,7 @@ public class StampedeServiceTest {
         ReplicationFilters.allowAll(),
         createShards(1),
         DefaultLoggerFactory.getInstance(),
-        createBufferOffHeapConfig()
+        createOffHeapBufferConfig()
     );
   }
 
@@ -121,8 +121,8 @@ public class StampedeServiceTest {
     return result;
   }
 
-  private BufferOffHeapConfig createBufferOffHeapConfig() {
-    BufferOffHeapConfig bufferConfig = new BufferOffHeapConfig() {
+  private OffHeapBufferConfig createOffHeapBufferConfig() {
+    OffHeapBufferConfig bufferConfig = new OffHeapBufferConfig() {
       @Override
       public Boolean getEnabled() {
         return true;
@@ -130,12 +130,12 @@ public class StampedeServiceTest {
 
       @Override
       public String getPath() {
-        return "/tmp/";
+        return "";
       }
 
       @Override
-      public int getMaxSize() {
-        return 10024;
+      public int getMaxFiles() {
+        return 5;
       }
 
       @Override
