@@ -17,6 +17,7 @@ pages:
     - 'PostgreSQL Connectivity': configuration/postgresql-connectivity.md
     - 'MongoDB Connectivity': configuration/mongodb-connectivity.md
     - 'Filtered Replication': configuration/filtered-replication.md
+    - 'Off Heap Buffer': configuration/bufferOffHeap.md
     - 'Options Reference': configuration/options-reference.md
     - 'PostgreSQL Configuration Tips': configuration/postgresql-configuration-tips.md
     - 'JVM Configuration Tips': configuration/jvm-configuration-tips.md

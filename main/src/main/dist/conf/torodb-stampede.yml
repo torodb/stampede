@@ -25,6 +25,21 @@
 # Enable or disable metrics system
 metricsEnabled: false
 
+#Configure the offHeapBuffer properties
+offHeapBuffer:
+  # Enabled or disabled the offHeapBuffer system
+  enabled: false
+  # Absolute path to locate the offHeapBuffer files
+  path: /tmp/
+  # Rolling cycle, valid values are:
+  # - SECONDLY
+  # - MINUTELY
+  # - HOURLY
+  # - DAILY
+  rollCycle: DAILY
+  # Max number of files to store for the off heap buffer
+  maxFiles: 5
+
 # MongoDB replication configuration
 replication:
   # The name of the MongoDB Replica Set where this instance will attach
