@@ -62,11 +62,11 @@ Download the latest ToroDB Stampede **binary distribution** from the [downloads 
 On Linux, this can be done with the following commands:
 
 ```no-highlight
-wget "https://www.torodb.com/download/torodb-stampede-1.0.0-beta2.tar.bz2"
+wget "https://www.torodb.com/download/torodb-stampede-latest.tar.bz2"
 
-tar xjf torodb-stampede-1.0.0-beta2.tar.bz2
+tar xjf torodb-stampede-*.tar.bz2
 
-torodb-stampede-1.0.0-beta2/bin/torodb-stampede --ask-for-password
+torodb-stampede-*/bin/torodb-stampede --ask-for-password
 ```
 
 ToroDB Stampede will ask for the password of the `torodb` PostgreSQL user you just created.
