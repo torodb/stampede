@@ -23,8 +23,7 @@
 set -e
 
 # resolve links - $0 may be a softlink
-PRG="$0"
-PRG=`which $PRG`
+PRG="$(which "$0" 2>/dev/null||echo "$0")"
 
 while [ -h "$PRG" ]; do
   ls=`ls -ld "$PRG"`
