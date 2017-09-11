@@ -1,10 +1,11 @@
 <h1>Welcome to the ToroDB Stampede documentation</h1>
 
-This documentation has different chapters that explain various topics at different levels of abstraction. __You can read it from beginning to end, or you can jump to the preferred section anytime__.
+This documentation has different chapters, which explain various topics at different levels of abstraction. __Each chapter can be read independently__.
 
-To make it easier for you, here you have a few tips:
+Contents
 
-* You have no idea what ToroDB Stampede does or why do you need it? we understand and that's the reason why we prepared the [about](about.md) section, just for you :-)
-* You want to make an easy and quick test? [quickstart](quickstart.md) will be your starting point.
-* You know how to launch ToroDB Stampede and now you want to make a custom configuration?, then start reading [previous requirements](installation/previous-requirements.md) section and following chapters, and of course, don't forget the [appendix](appendix.md) with all the available options.
-* Maybe you want to have a deeper understanding about how ToroDB Stampede maps NoSQL data into relational data, then your read will be the [how to use](how-to-use.md) section.
+* The [about](about.md) section gives you an overview what ToroDB Stampede is and why you need it.
+* The [quickstart guide](quickstart.md) leads you through your first ToroDB Stampede installation.
+* The chapters [Installation](installation/prerequisites.md) and [Configuration](configuration/index.md) cover more details for a production setup.
+* [The Relational Schema](relational-schema.md) explains the JSON to SQL mapping so you know how to query your data.
+* The [Glossary](glossary.md) and [FAQ](faq.md) complete the documentation.

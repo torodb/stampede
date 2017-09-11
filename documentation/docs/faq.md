@@ -6,11 +6,11 @@ Toro means bull in Spanish. ToroDB was founded in Madrid, Spain, by [8Kdata](htt
 
 ## If ToroDB uses PostgreSQL, why not just base it on jsonb?
 
-jsonb is a really cool data type for PostgreSQL, with a rich function set support that allows JSON data in a regular column, and it supports advanced indexing. jsonb was intended to allow adding some unstructured column(s) to your relational tables, and it fits really well for that purpose. But ToroDB's design and goals go way beyond jsonb's:
+jsonb is a really cool PostgreSQL data type to store JSON documents in a column. It supports reach feature set that includes advanced indexing. jsonb is intended to better support unstructured column(s) in relational tables. But ToroDB's design and goals go way beyond jsonb's:
 
 * Transform your unstructured data to a relational design, that leads to significant improvements in storage/IO/cache, having data partitioned by "type" and automatic data normalization.
 
-* Provide native support for a NoSQL API --like ToroDB does with MongoDB's wire protocol and query API-- so you could directly use your MongoDB drivers, code and tools to interface with the database.
+* Provide native support for a NoSQL API—like ToroDB does with MongoDB's wire protocol and query API—so you could directly use your MongoDB drivers, code and tools to interface with the database.
 
 * Offer replication and sharding the same way NoSQL does (like replicating from a MongoDB replica set).
 
@@ -69,6 +69,8 @@ MongoWP is based on Netty, a great asynchronous network I/O framework for the JV
 
 * [HikariCP](http://brettwooldridge.github.io/HikariCP/). The fastest Java connection pooler.
 
+* [Chronicle Queue](http://chronicle.software/products/chronicle-queue/). A distributed unbounded persisted queue. 
+
 There are also many other Java libraries used by ToroDB like [ThreeTen](http://www.threeten.org/), [Guava](https://github.com/google/guava), [Guice](https://github.com/google/guice), [Findbugs](http://findbugs.sourceforge.net/), [jCommander](http://jcommander.org/), [Jackson](http://wiki.fasterxml.com/JacksonHome) and some others. We also use [Travis](https://travis-ci.org/) for CI tests.
 
 ToroDB has the deepest gratitude to all the above projects, that are great components, and every other bit of open source that directly or indirectly helps building or running ToroDB.
@@ -85,27 +87,4 @@ ToroDB Stampede doesn't support all index types. Some indexes are supported or p
   * **2d indexes**: Are not supported and are not created.
   * **Hashed indexes**: Are not supported and are not created.
 
-Any created index can be explicitly [excluded in the configuration](installation/configuration.md#exclude-a-mongodb-index)     
-
-## The command wget is not found in macOS
-
-By default macOS hasn't the wget tool in the terminal, if you want to use it [Homebrew](http://brew.sh) can be used.
-
-Once installed Homebrew, it can be installed with `brew install wget`.
-
-## No pg_hba.conf entry
-
-Depending on the running Linux distribution and PostgreSQL installation, the error below could appear.
-
-```
-FATAL: no pg_hba.conf entry for host "...", user "...", database "...", SSL off
-```
-
-This happens because some installations of PostgreSQL are configured with strict security policies. So PostgreSQL reject host connections through TCP. The `pg_hba.conf` file (usually located in the PostgreSQL's data directory or configuration directory) must be edited with a rule that allows access to the database for the ToroDB Stampede user.
-
-```
-  host    torod   torodb      127.0.0.1/32    md5
-  host    torod   torodb      ::1/128         md5
-```
-
-__Make sure that new rules precede any other rule for same host that apply to all users (eg: 127.0.0.1/32). For more informations on `pg_hba.conf` refer to the [Official PostgreSQL documentation](https://www.postgresql.org/docs/current/static/auth-pg-hba-conf.html)__.
+Any created index can be explicitly [excluded in the configuration](/configuration/filtered-replication/#exclude-ignore-a-database-collections-or-indexes)

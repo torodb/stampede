@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.torodb.stampede</groupId>
         <artifactId>stampede-pom</artifactId>
-        <version>1.0.0-beta3</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>reporting</artifactId>
     <name>ToroDB: Stampede reporting</name>

@@ -1,9 +1,10 @@
-<h1>Installation for Fedora/CentOS</h1>
+<h1>Installation For Fedora/CentOS</h1>
 ToroDB Stampede can be installed from a COPR repository in two flavours:
 
-* torodb-stampede: in this package ToroDB Stampede comes without the backend dependency. This package is used when you have PostgreSQL installed in a different machine.
-* torodb-stampede-postgres: in this package ToroDB Stampede comes with a PostgreSQL dependency. 
-This package is handy if you want to minimize configuration steps but have te requirements of install ToroDB Stamepde and PostgreSQL server in separate machines.
+* **torodb-stampede**
+  This package contains ToroDB Stampede and has no PostgreSQL dependency. Use this if you are running PostgreSQL on a different machine.
+* **torodb-stampede-postgres**  
+  This package contains ToroDB Stampede and has a PostreSQL dependency. Use this for minimal configuration effort if you are running ToroDB Stampede and PostgreSQL on the same machine.
 
 ## Install package torodb-stampede
 
@@ -69,7 +70,7 @@ You will be prompted to provide MongoDB credentials.
 
 ## Nightly build packages
 
-To install latest unstable nightly build packages just use torodb-dev repository (as root):
+To install latest unstable nightly build packages just use the torodb-dev repository (as root):
 
 ### For Fedora 21 / CentOS
 

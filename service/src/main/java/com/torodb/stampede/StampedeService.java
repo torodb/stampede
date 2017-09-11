@@ -21,9 +21,8 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import com.torodb.core.Shutdowner;
 import com.torodb.core.backend.BackendBundle;
-import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendService;
-import com.torodb.core.backend.ExclusiveWriteBackendTransaction;
+import com.torodb.core.backend.DdlOperationExecutor;
 import com.torodb.core.bundle.Bundle;
 import com.torodb.core.bundle.BundleConfig;
 import com.torodb.core.bundle.BundleConfigImpl;
@@ -37,9 +36,9 @@ import com.torodb.mongodb.repl.ConsistencyHandler;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingBundle;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfig;
 import com.torodb.mongodb.repl.sharding.MongoDbShardingConfigBuilder;
-import com.torodb.torod.SqlTorodBundle;
-import com.torodb.torod.SqlTorodConfig;
 import com.torodb.torod.TorodBundle;
+import com.torodb.torod.impl.sql.SqlTorodBundle;
+import com.torodb.torod.impl.sql.SqlTorodConfig;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
@@ -180,7 +179,8 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
 
     configBuilder.setTorodBundle(torodBundle)
         .setUserReplFilter(stampedeConfig.getUserReplicationFilters())
-        .setLifecycleLoggerFactory(stampedeConfig.getLifecycleLoggerFactory());
+        .setLifecycleLoggerFactory(stampedeConfig.getLifecycleLoggerFactory())
+        .setOffHeapBufferConfig(stampedeConfig.getOffHeapBufferConfig());
 
     stampedeConfig.getShardConfigBuilders().forEach(shardConfBuilder ->
         addShard(configBuilder, shardConfBuilder, consistencyHandler)
@@ -204,10 +204,8 @@ public class StampedeService extends AbstractIdleService implements Supervisor {
 
   private void dropUserData(BackendBundle backendBundle) throws UserException {
     BackendService backendService = backendBundle.getExternalInterface().getBackendService();
-    try (BackendConnection conn = backendService.openConnection();
-        ExclusiveWriteBackendTransaction trans = conn.openExclusiveWriteTransaction()) {
-      trans.dropUserData();
-      trans.commit();
+    try (DdlOperationExecutor ddlEx = backendService.openDdlOperationExecutor()) {
+      ddlEx.dropUserData();
     }
   }
 

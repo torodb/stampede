@@ -1,84 +1,156 @@
 <h1>Quickstart</h1>
 
-## Previous requirements
+This guides provides a step-by-step procedure through your very first ToroDB Stampede sandbox installation. It also covers installation and dummy configuration of MongoDB and PostgreSQL. The sole purpose of this guide is to give ToroDB Stampede a quick try. For other purposes, read the [installation](installation/prerequisites.md) and [configuration](configuration/index.md) chapters.
 
-To work properly, ToroDB Stampede has a few requirement:
+__In case of any problems, consult the [Trouble Shooting Guide](trouble-shooting.md)__
 
-* A proper replica set configuration of MongoDB.
-* One PostgreSQL instance to be used as a relational backend.
-* Java 8 virtual machine.
+## Prerequisites
 
-If one or more of these requirements are not meet, more information and additional documentation can be found in the installation chapters.
+ToroDB Stampede requires a Java 8 runtime environment.
 
-## Backend configuration
+## MongoDB
 
-ToroDB Stampede expects some basic configuration for the relational backend. Then, if PostgreSQL is correctly installed the next steps should be done.
+The following is a short step-by-step guide to install MongoDB with a single-node replica set. In case of doubt, refer to the [MongoDB installation guide](https://docs.mongodb.com/manual/administration/install-community/) and the [rs.initiate command](https://docs.mongodb.com/manual/reference/method/rs.initiate/) for further details.
 
-* Create role `torodb` with permissions to create a database and be able to do login.
-* Create database `torod` with owner `torodb`.
+1. Download [MongoDB 3.4 community server](https://www.mongodb.com/download-center).  
+1. Create a directory for the MongoDB data files (e.g., `/tmp/mongo/`).
+1. Start MongoDB (`mongod` or `mongod.exe`) with the following parameters:  
+    `--dbpath /tmp/mongo/ --replSet rs1`  
+    **Note:** `rs1` is the default replication set name expected by ToroDB Stampede.
 
-This steps can be done with the next commands in a Linux environment:
+By now, you should have a running MongoDB listening on localhost port 27017 without access control. This allows the MongoDB shell as well as ToroDB Stampede to connect without any arguments.
 
-```no-highlight
-sudo -u postgres createuser -S -R -D -P --interactive torodb
+To configure a single-node replica set (named `rs1`), start the MongoDB shell and run the following command in the just started MongoDB server:
 
-sudo -u postgres createdb -O torodb torod
+```
+rs.initiate(
+   {
+      _id: "rs1",
+      version: 1,
+      members: [
+         {
+            _id: 0,
+            host: "127.0.0.1"
+         }
+      ]
+   }
+);
 ```
 
-The easiest way to check if the database can be used is connecting to it using the new role. If it is accessible then ToroDB Stampede should be able to do replication using it.
+## PostgreSQL
+
+ 
+Follow the instructions on the [PostgreSQL downloads](https://www.postgresql.org/download/) page to download and install PostgreSQL.
+
+Once PostgreSQL is running create a user and database for ToroDB Stempede:
+
+1. Use PostgreSQL's `createuser` to create the user `torodb`.  
+   On Linux, this can be done with the following command:  
+    `sudo -u postgres createuser -S -R -D -P --interactive torodb`  
+   You will be asked for a password, which you'll need to tell ToroDB Stampede in a moment.
+1. Create database `torod` with owner `torodb`.  
+   On Linux, this can be done with the following command:  
+    `sudo -u postgres createdb -O torodb torod`
+1. Verify the connectivity.  
+   On Linux, this can be done with the following command:  
+    `psql -U torodb torod`
+
+## ToroDB Stampede
+
+Download the latest ToroDB Stampede **binary distribution** from the [downloads page](https://www.torodb.com/stampede/download) and start it with the `--ask-for-password` option.
+
+On Linux, this can be done with the following commands:
 
 ```no-highlight
-psql -U torodb torod
+wget "https://www.torodb.com/download/torodb-stampede-latest.tar.bz2"
+
+tar xjf torodb-stampede-*.tar.bz2
+
+torodb-stampede-*/bin/torodb-stampede --ask-for-password
 ```
 
-## How to execute ToroDB Stampede binary distribution?
+ToroDB Stampede will ask for the password of the `torodb` PostgreSQL user you just created.
 
-To execute ToroDB Stampede the binary distribution is necessary and it can be downloaded from  [here](https://www.torodb.com/download/torodb-stampede-1.0.0-beta2.tar.bz2). After download and when file is uncompressed then ToroDB Stampede can be launched using the PostgreSQL connection information.
+By now, you should have running sandbox environment. Changes done in MongoDB are replicated to PostgreSQL and stored in the [relational schema](relational-schema.md). The following sections demos ToroDB Stampede by uploading test data into MongoDB and runing a very simple query against this data in the PostgreSQL database.
 
-Following commands will allow ToroDB Stampede to be launched.
+## Uploading Test Data
 
-```no-highlight
-wget "https://www.torodb.com/download/torodb-stampede-1.0.0-beta2.tar.bz2"
+You can import the "primer dataset" into MongoDB as described in the [MongoDB manual](https://docs.mongodb.com/getting-started/shell/import-data/):
 
-tar xjf torodb-stampede-1.0.0-beta2.tar.bz2
-
-torodb-stampede-1.0.0-beta2/bin/torodb-stampede --ask-for-password
-```
-
-ToroDB Stampede will ask for the PostgreSQL torodb user's password to be provided. If all goes fine, ToroDB Stampede is up and running and it will be replicating the operations done in MongoDB.
-
-## Replication example
-
-It is easier to understand what ToroDB Stampede does through an example. One dataset will be imported in MongoDB and all data will be available in PostgreSQL thanks to Stampede replication.
-
-If previous steps are done and ToroDB Stampede is up and running, the dataset can be downloaded from  [here](https://www.torodb.com/download/primer-dataset.json) and the replication done using `mongoimport` command.
+On Linux, the following commands will do the trick:
 
 ```no-highlight
 wget https://www.torodb.com/download/primer-dataset.json
 
-mongoimport -d stampede -c primer primer-dataset.json
+mongoimport --db test --collection restaurants primer-dataset.json
 ```
-
-When `mongoimport` finished and replication complete PostgreSQL should have the replicated structure and data stored in the `stampede` schema, because that was the name selected for the database in the `mongoimport` command. Connecting to PostgreSQL console, the data can be accessed.
+Note that the MongoDB database name (`test`) is mapped to a PostgreSQL **schema**. You can either connect with your favourite GUI to PostgreSQL or use `psql` on the command line:
 
 ```no-highlight
-sudo -u torodb psql torod
+psql -U torodb torod
 
-> set schema 'stampede'
+> set schema 'test'
 ```
 
-The next table structure in the `stampede` schema is created.
+To view the table created by ToroDB Stampede, use the `\d` command in `psql`:
 
 ```no-highlight
-torod=# \d
-                List of relations
-  Schema  |         Name         | Type  | Owner  
-----------+----------------------+-------+--------
- stampede | primer               | table | torodb
- stampede | primer_address       | table | torodb
- stampede | primer_address_coord | table | torodb
- stampede | primer_grades        | table | torodb
+torod=> \d
+                  List of relations
+ Schema |           Name            | Type  | Owner
+--------+---------------------------+-------+--------
+ test   | restaurants               | table | torodb
+ test   | restaurants_address       | table | torodb
+ test   | restaurants_address_coord | table | torodb
+ test   | restaurants_grades        | table | torodb
 (4 rows)
 ```
 
-For more detailed explanation about JSON document mapping to tables in a relational database, read [how to use](how-to-use.md) documentation chapter.
+The chapter [Relational Schema](relational-schema.md) explains how JSON documents are mapped to tables.
+
+## Example Query
+
+To list each ZIP code with the number of restaurants in order of decending number of restaurants:
+
+```no-highlight
+select zipcode_s, count(*)
+  from restaurants_address
+ group by zipcode_s
+ order by count(*) desc;
+```
+
+```no-highlight
+ count | zipcode_s
+-------+-----------
+   686 | 10003
+   675 | 10019
+   611 | 10036
+   520 | 10001
+   485 | 10022
+[...]
+```
+
+
+
+The equivalent MongoDB query would be:
+
+
+```no-highlight
+db.restaurants.aggregate(
+    [
+        { $group: {"_id": "$address.zipcode", count:{ $sum:1} } },
+        { $sort:  { count: -1 } }
+    ]
+);
+```
+
+```no-highlight
+{ "_id" : "10003", "count" : 686 }
+{ "_id" : "10019", "count" : 675 }
+{ "_id" : "10036", "count" : 611 }
+{ "_id" : "10001", "count" : 520 }
+{ "_id" : "10022", "count" : 485 }
+[...]
+```
+
+[TODO]: <> (Change the name of the dataset (aka "primer dataset") to not expose spanish names)

@@ -73,6 +73,16 @@ public class CliConfig {
   @Parameter(names = {"--enable-metrics"}, descriptionKey = "config.generic.enableMetrics")
   private Boolean metricsEnabled;
 
+  @Parameter(names = {"--offHeapBuffer-enabled"}, descriptionKey = "config.offHeapBuffer.enabled")
+  private Boolean offHeapBufferEnabled;
+  @Parameter(names = {"--offHeapBuffer-path"}, descriptionKey = "config.offHeapBuffer.path")
+  private String offHeapBufferPath;
+  @Parameter(names = {
+      "--offHeapBuffer-rollcycle"}, descriptionKey = "config.offHeapBuffer.rollcycle")
+  private String offHeapBufferRollCycle;
+  @Parameter(names = {"--offHeapBuffer-maxFiles"}, descriptionKey = "config.offHeapBuffer.maxFiles")
+  private String offHeapBufferMaxFiles;
+
   @Parameter(names = {"--repl-set-name"}, descriptionKey = "config.mongo.replication.replSetName")
   private String replSetName;
   @Parameter(names = {"--sync-source"}, descriptionKey = "config.mongo.replication.syncSource")
@@ -102,7 +112,8 @@ public class CliConfig {
       "config.mongo.replication.ssl.keyPassword")
   private String sslKeyPassword;
   @SuppressWarnings("checkstyle:LineLength")
-  @Parameter(names = {"--auth-mode"}, descriptionKey = "config.mongo.replication.auth.mode_extended")
+  @Parameter(names = {
+      "--auth-mode"}, descriptionKey = "config.mongo.replication.auth.mode_extended")
   private String authMode;
   @Parameter(names = {"--auth-user"}, descriptionKey = "config.mongo.replication.auth.user")
   private String authUser;
@@ -126,7 +137,20 @@ public class CliConfig {
   private String applicationName;
   @Parameter(names = {"--backend-ssl"}, descriptionKey = "config.backend.postgres.ssl")
   private Boolean backendSsl;
-  
+
+  public static Class<? extends BackendImplementation> getBackendClass(String backend) {
+    backend = backend.toLowerCase(Locale.US);
+
+    for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
+      String backendClassLabel = backendClass.getSimpleName().toLowerCase(Locale.US);
+      if (backend.equals(backendClassLabel)) {
+        return backendClass;
+      }
+    }
+
+    return null;
+  }
+
   public boolean isVersion() {
     return version;
   }
@@ -144,7 +168,7 @@ public class CliConfig {
   }
 
   public boolean hasPrintParams() {
-    return printParams != null 
+    return printParams != null
         && !printParams.isEmpty();
   }
 
@@ -217,6 +241,22 @@ public class CliConfig {
 
   public Boolean getMetricsEnabled() {
     return metricsEnabled;
+  }
+
+  public Boolean getOffHeapBufferEnabled() {
+    return offHeapBufferEnabled;
+  }
+
+  public String getOffHeapBufferPath() {
+    return offHeapBufferPath;
+  }
+
+  public String getOffHeapBufferMaxFiles() {
+    return offHeapBufferMaxFiles;
+  }
+
+  public String getOffHeapBufferRollCycle() {
+    return offHeapBufferRollCycle;
   }
 
   public String getReplSetName() {
@@ -306,7 +346,7 @@ public class CliConfig {
   public Boolean getBackendSsl() {
     return backendSsl;
   }
-  
+
   public void addParams() {
     if (logLevel != null) {
       addParam("/logging/level", logLevel);
@@ -316,6 +356,18 @@ public class CliConfig {
     }
     if (metricsEnabled != null) {
       addParam("/metricsEnabled", metricsEnabled ? "true" : "false");
+    }
+    if (offHeapBufferEnabled != null) {
+      addParam("/offHeapBufferEnabled", offHeapBufferEnabled ? "true" : "false");
+    }
+    if (offHeapBufferPath != null) {
+      addParam("/offHeapBufferPath", offHeapBufferPath);
+    }
+    if (offHeapBufferMaxFiles != null) {
+      addParam("/offHeapBufferMaxFiles", offHeapBufferMaxFiles);
+    }
+    if (offHeapBufferRollCycle != null) {
+      addParam("/offHeapBufferRollCycle", offHeapBufferRollCycle);
     }
     if (replSetName != null) {
       addParam("/replication/replSetName", replSetName);
@@ -403,19 +455,6 @@ public class CliConfig {
         }
       }
     }
-  }
-
-  public static Class<? extends BackendImplementation> getBackendClass(String backend) {
-    backend = backend.toLowerCase(Locale.US);
-
-    for (Class<? extends BackendImplementation> backendClass : Backend.BACKEND_CLASSES.values()) {
-      String backendClassLabel = backendClass.getSimpleName().toLowerCase(Locale.US);
-      if (backend.equals(backendClassLabel)) {
-        return backendClass;
-      }
-    }
-
-    return null;
   }
 
   public static class BackendValueValidator implements IValueValidator<String> {

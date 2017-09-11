@@ -26,13 +26,14 @@ import com.torodb.packaging.config.validation.MutualExclusiveReplSetOrShards;
 import com.torodb.packaging.config.validation.RequiredParametersForAuthentication;
 import com.torodb.packaging.config.validation.SslEnabledForX509Authentication;
 import com.torodb.stampede.config.model.backend.Backend;
+import com.torodb.stampede.config.model.cache.OffHeapBuffer;
 import com.torodb.stampede.config.model.logging.Logging;
 import com.torodb.stampede.config.model.mongo.replication.Replication;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-@JsonPropertyOrder({"logging", "metricsEnabled", "replication", "backend"})
+@JsonPropertyOrder({"logging", "metricsEnabled", "offHeapBuffer", "replication", "backend"})
 public class Config implements MetricsConfig {
 
   @Description("config.logging")
@@ -40,16 +41,22 @@ public class Config implements MetricsConfig {
   @Valid
   @JsonProperty(required = true)
   private Logging logging = new Logging();
+
   @Description("config.generic.metricsEnabled")
   @NotNull
   @JsonProperty(required = true)
   private Boolean metricsEnabled = false;
+
+  @Description("config.offHeapBuffer")
+  private OffHeapBuffer offHeapBuffer = new OffHeapBuffer();
+
   @Valid
   @MutualExclusiveReplSetOrShards
   @SslEnabledForX509Authentication
   @RequiredParametersForAuthentication
   @JsonProperty(required = true)
   private Replication replication = new Replication();
+
   @Description("config.backend")
   @NotNull
   @Valid
@@ -75,13 +82,24 @@ public class Config implements MetricsConfig {
     this.metricsEnabled = metricsEnabled;
   }
 
+
+  public OffHeapBuffer getOffHeapBuffer() {
+    return offHeapBuffer;
+  }
+
+  public void setOffHeapBuffer(OffHeapBuffer offHeapBuffer) {
+    if (offHeapBuffer != null) {
+      this.offHeapBuffer = offHeapBuffer;
+    }
+  }
+
   //TODO: This is a patch that should be changed once TORODB-397 is completed
   @DoNotChange
   @MutualExclusiveReplSetOrShards
   public Replication getReplication() {
     return replication;
   }
-  
+
   public void setReplication(Replication replication) {
     this.replication = replication;
   }

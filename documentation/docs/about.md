@@ -1,42 +1,51 @@
 <h1>What is ToroDB Stampede?</h1>
 
-Connected to a MongoDB replica set, ToroDB Stampede is able to replicate the NoSQL data into a relational backend (right now the only available backend is PostgreSQL) using the oplog.
+ToroDB Stampede is a replication and mapping technology to maintain a live mirror of a MongoDB database (or [sub-set](configuration/filtered-replication.md)) in a SQL database. ToroDB Stampede uses [MongoDB's replica set oplog](https://docs.mongodb.com/manual/core/replica-set-oplog/) to keep track of the modifications in MongoDB.
+
 
 ![ToroDB Stampede Structure](images/toro_stampede_structure.jpg)
 
-There are other solutions that are able to store the JSON document in a relational table using PostgreSQL JSON support, but it doesn't solve the real problem of 'how to really use that data'. 
-ToroDB Stampede replicates the document structure in different relational tables and stores the document data in different tuples using those tables.
+During replication ToroDB Stempede transforms MongoDB's JSON documents into a [relational schema](relational-schema) that allows certain queries (such as aggregates) to complete faster as running against JSON documents.
 
 ![Mapping example](images/toro_stampede_mapping.jpg)
 
-With the relational structure, some given problems from NoSQL solutions are easier to solve, such as aggregated query execution in an admissible time.
 
-## ToroDB Stampede limitations
+## Current Limitations
 
-Not everything could be perfect and there are some known limitations from ToroDB Stampede.
+### SQL Target
 
-* The only current MongoDB version supported is 3.2.
-* [Capped collections](https://docs.mongodb.com/manual/core/capped-collections/) usage is not supported.
-* If character `\0` is used in a string it will be escaped because PostgreSQL doesn't support it.
-* Command `applyOps` reception will stop the replication server.
-* Command `collMod` reception will be ignored.
+Currently, ToroDB Stampede only supports the free open-source database [PostgreSQL](https://www.postgresql.org/) as target.
 
-In addition to the previous limitations, just some kind of indexes are supported:
+### MongoDB
 
-* Index of type ascending and descending (those that ends in 1 and -1 when declared in mongo)
-* Simple indexes of one key
-* All keys path with the exception to the paths resolving in scalar value (eg: `db.test.createIndex({"a": 1})` will not index value of key `a` for the document `{"a": [1,2,3]}`)
+ToroDB Stampede only supports MongoDB 3.2 and 3.4 at the moment.
+
+The following MongoDB features are not yet supported:
+
+* [Capped collections](https://docs.mongodb.com/manual/core/capped-collections/)
+* The [collMod](https://docs.mongodb.com/manual/reference/command/collMod/) command
+* The [applyOps](https://docs.mongodb.com/manual/reference/command/applyOps/) command (will stop the replication server)
+* The character `\0` is escaped in strings because PostgreSQL doesn't support it.
+
+The automatic creation of indexes in the target database is currently limited as follows:
+
+* Only simple one-key indexes (ascending and descending - those that ends in 1 and -1 when declared in MongoDB)
 * Index properties `sparse` and `background` are ignored
+* All keys path with the exception to the paths resolving in scalar value (e.g.: `db.test.createIndex({"a": 1})` will not index value of key `a` for the document `{"a": [1,2,3]}`)
 
-## When ToroDB Stampede might not be the right choice
+## Incompatible Document Designs
 
-As good as Stampede is, there are certain use-cases for which it is a bad choice or simply will not work:
+The main benefit of ToroDB Stampede is to flatten nested documents into tables. There are some patterns that cause the relational tables to end up with a very high number of columns—possibly up to the limitation of the SQL backend (in PostgreSQL about 1600 columns).
 
-* Pattern "key as values". When keys contain values, potentially thousands of different values may appear in keys, leading to an equally high number of columns 
-(which might break with some RDBMS which have limits to the number of columns per row, see next point) and/or tables, which might be terribly inconvenient and slow.
-* Too many fields per document, several of them optional and only some appearing per document, which might lead to thousands of columns. 
-Some RDBMSs do not support such a high number of columns. For PostgreSQL this limit is around 1600 columns.
+* **Pattern "key as values"**  
+  Document key-names are turned into columns of tables. If you store values in the key-names, the table will have as many columns as you have distinct key-names.
 
+* **Too many fields per document**  
+  If several of them are optional and only some of them appear in each document, there might be thousands of columns.
+
+[TODO]: <> ('All keys path with the exception to the paths resolving in scalar value' might be wrong (given the example that relsolved to an array). Might mean "resolving in non-scalar values"?)
+
+[TODO]: <> (Which PostreSQL version is required?)
 
 [TODO]: <> (not supported types, we need a list)
 

@@ -32,7 +32,7 @@ script: |
         then
             bash .travis/build-packages
         else
-            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false verify
+            mvn -Psafer -Pintegration -B -e -T 1C -Dcheckstyle.consoleOutput=false --update-snapshots verify
         fi
 
 after_success:

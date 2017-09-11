@@ -18,11 +18,10 @@
 package com.torodb.stampede;
 
 import com.google.common.base.Preconditions;
-import com.torodb.core.backend.BackendConnection;
 import com.torodb.core.backend.BackendService;
-import com.torodb.core.backend.BackendTransaction;
+import com.torodb.core.backend.DmlTransaction;
 import com.torodb.core.backend.MetaInfoKey;
-import com.torodb.core.backend.WriteBackendTransaction;
+import com.torodb.core.backend.WriteDmlTransaction;
 import com.torodb.core.exceptions.user.UserException;
 import com.torodb.core.retrier.Retrier;
 import com.torodb.core.retrier.RetrierAbortException;
@@ -78,8 +77,7 @@ public abstract class AbstractConsistencyHandler extends IdleTorodbService
   }
 
   private void loadConsistent() {
-    try (BackendConnection conn = backendService.openConnection();
-        BackendTransaction trans = conn.openReadOnlyTransaction()) {
+    try (DmlTransaction trans = backendService.openReadTransaction()) {
       Optional<KvValue<?>> valueOpt = trans.readMetaInfo(getConsistencyKey());
       if (!valueOpt.isPresent()) {
         consistent = false;
@@ -96,20 +94,16 @@ public abstract class AbstractConsistencyHandler extends IdleTorodbService
   }
 
   private void flushConsistentState() throws RollbackException, RetrierGiveUpException {
-    try (BackendConnection conn = backendService.openConnection()) {
-      retrier.retry(() -> flushConsistentState(conn));
-    }
-  }
+    retrier.retry(() -> {
+      try (WriteDmlTransaction trans = backendService.openWriteTransaction()) {
 
-  private Object flushConsistentState(BackendConnection conn) throws RetrierAbortException {
-    try (WriteBackendTransaction trans = conn.openSharedWriteTransaction()) {
-
-      trans.writeMetaInfo(getConsistencyKey(), KvBoolean.from(consistent));
-      trans.commit();
-    } catch (UserException ex) {
-      throw new RetrierAbortException(ex);
-    }
-    return null;
+        trans.writeMetaInfo(getConsistencyKey(), KvBoolean.from(consistent));
+        trans.commit();
+      } catch (UserException ex) {
+        throw new RetrierAbortException(ex);
+      }
+      return null;
+    });
   }
 
 

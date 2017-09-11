@@ -1,22 +1,30 @@
-<h1>Installation with binaries</h1>
+<h1>Installation With Binaries</h1>
 
-One of the recommended ways to use ToroDB Stampede is through the binary distribution. It means that a precompiled distribution is downloaded and then executed using command tools.
+The fastest way to install ToroDB Stampede is to use the binary distribution.
+
+Before starting, make sure the [prerequisites](prerequisites.md) are met.
 
 ## Linux/macOS
 
-Given that [previous requirements](previous-requirements.md) are met and default configuration is used, to launch ToroDB Stampede download distribution from the next [link](https://www.torodb.com/download/torodb-stampede-1.0.0-beta2.tar.bz2), extract and execute it.
+The script below executes the following steps:
+
+1. Download the binary distribution [here](https://www.torodb.com/download/torodb-stampede-latest.tar.bz2).
+
+2. Extract it
+
+3. Start it using the [default configuration](prerequisites.md#postgresql-configuration) (assuming `.toropass` in the home directory)
 
 ```no-highlight
-wget https://www.torodb.com/download/torodb-stampede-1.0.0-beta2.tar.bz2
+wget https://www.torodb.com/download/torodb-stampede-latest.tar.bz2
 
-tar xjf torodb-stampede-1.0.0-beta2.tar.bz2
+tar xjf torodb-stampede-*.tar.bz2
 
-export TOROHOME="$(pwd)/torodb-stampede-1.0.0-beta2"
+export TOROHOME="$(pwd)/torodb-stampede-*"
 
 "$TOROHOME/bin/torodb-stampede"
 ```
 
-### Configure as a Linux systemd service
+### Configure as a Linux systemd Service
 
 You can install ToroDB Stampede as a systemd service following the next steps:
 
@@ -52,7 +60,7 @@ To stop ToroDB Stampede service:
 sudo systemctl stop torodb-stampede
 ```
 
-##### Accessing logs
+##### Accessing the Logs
 
 To view logs of ToroDB Stampede service:
 
@@ -75,11 +83,11 @@ sudo journalctl --no-tail --no-pager -u torodb-stampede
 
 ## Windows
 
-Given that [previous requirements](previous-requirements.md#create-toropass-file) are met, the only step needed to launch ToroDB Stampede is:
+Follow these steps to download and start ToroDB Stampede using the [default configuration](prerequisites.md#postgresql-configuration) (assuming `.toropass` in the home directory):
 
-* Download distribution from the next [link](https://www.torodb.com/download/torodb-stampede-1.0.0-beta2.zip).
-* Uncompress the downloaded Zip file in the final ToroDB Stampede directory (`%TOROHOME%`).
-* Execute the command `C:\>%TOROHOME%\bin\torodb-stampede` or simply, double click on the `torodb-stampede.bat` file located in folder `bin`.
+1. Download the binary distribution from [here](https://www.torodb.com/download/torodb-stampede-latest.zip)
+2. Decompress the downloaded Zip file in the desired ToroDB Stampede directory (`%TOROHOME%`)
+3. Execute the command `C:\>%TOROHOME%\bin\torodb-stampede` or double-click on the `torodb-stampede.bat` file in folder `bin`
 
 
 
