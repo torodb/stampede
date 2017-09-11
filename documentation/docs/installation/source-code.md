@@ -40,9 +40,9 @@ Extract and launch ToroDB Stampede (replace `$TOROHOME` with the desired ToroDB 
 ```no-highlight
 cd "$TOROHOME"
 
-tar xjf "$TOROHOME/stampede/main/target/dist/torodb-stampede-1.0.0-beta2.tar.bz2"
+tar xjf "$TOROHOME/stampede/main/target/dist/torodb-stampede-*.tar.bz2"
 
-torodb-stampede-1.0.0-beta2/bin/torodb-stampede
+torodb-stampede-*/bin/torodb-stampede
 ```
 
 ## Windows
@@ -67,7 +67,7 @@ Create the [`.toropass` file](prerequisites.md#create-toropass-file) in the home
 localhost:5432:torod:torodb:<password>
 ```
 
-Decompress the Zip file in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-1.0.0-beta2.zip` (replace `%TOROHOME%` with the desired ToroDB Stampede installation directory) and  execute the following command:
+Decompress the Zip file in `C:\tmp\torodb\stampede\main\target\dist\torodb-stampede-<version>.zip` (replace `%TOROHOME%` with the desired ToroDB Stampede installation directory) and  execute the following command:
 
 ```no-highlight
 C:\>%TOROHOME%\bin\torodb-stampede
