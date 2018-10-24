@@ -89,9 +89,11 @@ Para comprobar que la configuración del replica set es correcta podemos ejecuta
 
 Para el correcto funcionamiento de ToroDB Stampede es necesario tener un backend disponible, en el que se alamacenarán los datos que se replican en formato relacional.
 
-Actualmente el único backend soportado es PostgreSQL.
+Actualmente los únicos backends soportados son PostgreSQL y MySQL.
 
 ### PostgreSQL
+
+### MySQL
 
 
 #### Ubuntu 16.04 LTS

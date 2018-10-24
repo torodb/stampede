@@ -24,7 +24,7 @@ Contrary to some popular beliefs, RDBMSs are not slow. Indeed, they can be quite
 
 ## What databases does ToroDB support as backends? Are there any plans to support other backends?
 
-Currently, ToroDB supports PostgreSQL as a backend. However, design and code have always kept in mind the possibility of supporting other backends. So it's technically possible and it will happen. Stay tuned!
+Currently, ToroDB supports PostgreSQL and MySQL as a backends. However, design and code have always kept in mind the possibility of supporting other backends. So it's technically possible and it will happen. Stay tuned!
 
 ## How do I optimally configure PostgreSQL for ToroDB?
 
@@ -62,6 +62,8 @@ MongoWP is based on Netty, a great asynchronous network I/O framework for the JV
 ## What other open source components does ToroDB use?
 
 * [PostgreSQL](http://www.postgresql.org/). The most advanced open source database.
+
+* [MySQL](http://www.mysql.com/). The most popular open source database.
 
 * [Netty](http://netty.io/), used by MongoWP. The great asynchronous network I/O framework for the JVM.
 

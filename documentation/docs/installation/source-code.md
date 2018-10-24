@@ -45,6 +45,16 @@ tar xjf "$TOROHOME/stampede/main/target/dist/torodb-stampede-*.tar.bz2"
 torodb-stampede-*/bin/torodb-stampede
 ```
 
+### Development branch
+
+If you want to compile the devel branch (where version in pom has a -SNAPSHOT suffix) you will have to get the parent pom of the project from sonatype repository. This can be achieved by the following command (run it in a folder where no pom.xml is present or it may fail):
+
+```no-highlight
+mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
+  -DremoteRepositories=https://oss.sonatype.org/content/groups/public \
+  -Dartifact=com.torodb:parent-pom:1.0.1-SNAPSHOT:pom
+```
+
 ## Windows
 
 Download source code in a temporary directory:
@@ -74,3 +84,13 @@ C:\>%TOROHOME%\bin\torodb-stampede
 ```
 
 Alternatively, double-click on the `torodb-stampede.bat` file in the `bin` folder.
+
+### Development branch
+
+If you want to compile the devel branch (where version in pom has a -SNAPSHOT suffix) you will have to get the parent pom of the project from sonatype repository. This can be achieved by the following command (run it in a folder where no pom.xml is present or it may fail):
+
+```no-highlight
+C:\tmp>mvn org.apache.maven.plugins:maven-dependency-plugin:2.4:get \
+  -DremoteRepositories=https://oss.sonatype.org/content/groups/public \
+  -Dartifact=com.torodb:parent-pom:1.0.1-SNAPSHOT:pom
+```

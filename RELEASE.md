@@ -1,3 +1,13 @@
+## Release Notes for Stampede 1.0.0
+
+### Changes
+
+* Support MySQL as backend
+
+### Bugs Fixed
+
+* Many many bugfixes (see logs for [MongoWP](https://github.com/torodb/mongowp/commits/0.50.2), [ToroDB Engine](https://github.com/torodb/engine/commits/v0.50.3) and [ToroDB Stampede](https://github.com/torodb/stampede/commits/v1.0.0)
+
 ## Release Notes for Stampede 1.0.0-beta3
 
 ### Changes
