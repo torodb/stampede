@@ -7,7 +7,7 @@ Usage: `torodb-stampede [options]`
 | Option | |
 |--------|-|
 | --application-name | The application name used by driver to connect. |
-| -W, --ask-for-password | Force input of PostgreSQL's database user password. |
+| -W, --ask-for-password | Force input of database user password. |
 | --auth-mode | The authentication mode:<ul><li>disabled: Disable authentication mechanism. No authentication will be done</li><li>negotiate: The client will negotiate best mechanism to authenticate. With server version 3.0 or above, the driver will authenticate using the SCRAM-SHA-1 mechanism. Otherwise, the driver will authenticate using the Challenge Response mechanism</li><li>cr: Challenge Response authentication</li><li>x509: X.509 authentication</li></ul> |
 | --auth-source | The source database where the user is present. |
 | --auth-user | The user that will be authenticate |
@@ -148,6 +148,18 @@ Any parameter not specified here will default to the value specified in the conf
 | /backend/postgres/toropassFile | Path to the file with PostgreSQL access configuration in  `.pgpass` syntax. |
 | /backend/postgres/applicationName | The application name used by driver to connect. |
 | /backend/postgres/ssl | If `true` Enabled the SSL connection with PostgreSQL server, if `false` is disabled. |
+
+### MySQL configuration
+
+| Parameter |  |
+|--------|-|
+| /backend/mysql/host | The host or ip that will be used to connect. |
+| /backend/mysql/port | The port that will be used to connect. |
+| /backend/mysql/database | The database that will be used. |
+| /backend/mysql/user | The user that will be used to connect. |
+| /backend/mysql/toropassFile | Path to the file with MySQL access configuration in  `.pgpass` syntax. |
+| /backend/mysql/applicationName | The application name used by driver to connect. |
+| /backend/mysql/ssl | If `true` Enabled the SSL connection with MySQL server, if `false` is disabled. |
 
 ### ToroDB Stampede pool configuration
 

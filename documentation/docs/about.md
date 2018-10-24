@@ -14,7 +14,7 @@ During replication ToroDB Stempede transforms MongoDB's JSON documents into a [r
 
 ### SQL Target
 
-Currently, ToroDB Stampede only supports the free open-source database [PostgreSQL](https://www.postgresql.org/) as target.
+Currently, ToroDB Stampede only supports the free open-source databases [PostgreSQL](https://www.postgresql.org/) and [MySQL](https://www.mysql.com/) (and compatible databases) as targets.
 
 ### MongoDB
 
@@ -46,6 +46,8 @@ The main benefit of ToroDB Stampede is to flatten nested documents into tables. 
 [TODO]: <> ('All keys path with the exception to the paths resolving in scalar value' might be wrong (given the example that relsolved to an array). Might mean "resolving in non-scalar values"?)
 
 [TODO]: <> (Which PostreSQL version is required?)
+
+[TODO]: <> (Which MySQL version is required?)
 
 [TODO]: <> (not supported types, we need a list)
 

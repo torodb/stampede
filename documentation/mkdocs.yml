@@ -15,6 +15,7 @@ pages:
   - Configuration:
     - 'Options or File': configuration/index.md
     - 'PostgreSQL Connectivity': configuration/postgresql-connectivity.md
+    - 'MySQL Connectivity': configuration/mysql-connectivity.md
     - 'MongoDB Connectivity': configuration/mongodb-connectivity.md
     - 'Filtered Replication': configuration/filtered-replication.md
     - 'Off Heap Buffer': configuration/bufferOffHeap.md
