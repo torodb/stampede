@@ -70,6 +70,7 @@
             <properties>
 		<docs.version>${project.version}</docs.version>
                 <s3.push>false</s3.push>
+                <docs.version>${project.version}</docs.version>
             </properties>
             <build>
                 <plugins>
